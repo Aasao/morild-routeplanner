@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>RoutePlanner v2 — Spike 2: ensemble-ytelse</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#0a1420; --panel:#0f2031; --panel2:#13293d; --line:#22405a;
+    --txt:#e6edf3; --muted:#90a4b8; --accent:#2dd4bf; --warn:#fbbf24; --bad:#f87171; --good:#34d399;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px}
+  body{padding:20px 24px 60px;max-width:1100px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 4px}
+  h1 .sub{color:var(--accent)}
+  .tag{color:var(--muted);font-size:12px;margin-bottom:18px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0 0 10px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-family:var(--mono);font-size:12.5px}
+  .grid2 div b{color:var(--muted);font-weight:500}
+  button{cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:11px 18px;
+        background:var(--accent);color:#04222b;font-size:14px;font-weight:700}
+  button:disabled{opacity:.5;cursor:default}
+  button.ghost{background:transparent;color:var(--txt);font-weight:600;padding:7px 12px;font-size:12px}
+  #status{font-size:12.5px;color:var(--accent);min-height:18px;margin-top:10px;font-family:var(--mono)}
+  #log{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:pre-wrap;max-height:180px;
+       overflow-y:auto;margin-top:8px;border-top:1px solid var(--line);padding-top:8px;display:none}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:6px}
+  th,td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted);text-transform:uppercase;font-size:10.5px;letter-spacing:.4px}
+  tr.hl td{color:var(--accent)}
+  tr.bad td{color:var(--bad)}
+  textarea{width:100%;height:220px;background:var(--bg);color:var(--txt);border:1px solid var(--line);
+        border-radius:7px;padding:10px;font-family:var(--mono);font-size:11px;resize:vertical}
+  .note{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .badge{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:5px;
+         padding:1px 7px;font-size:10.5px;color:var(--muted);margin-left:6px}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>RoutePlanner v2 <span class="sub">Spike 2 — ensemble-ytelse</span></h1>
+  <div class="tag">v1-motoren (verbatim uttrekk fra morild_weather_router.html), 30 syntetiske medlemmer i Web Workers.
+    Fase 0 / K4 (docs/research/review-arkitekt.md). Kjør helt uten nett.</div>
+
+  <div class="card">
+    <h2>Enhetsinfo</h2>
+    <div class="grid2" id="deviceInfo"></div>
+  </div>
+
+  <div class="card">
+    <h2>Scenario</h2>
+    <div class="grid2" id="scenarioInfo"></div>
+  </div>
+
+  <div class="card">
+    <button id="runBtn">Kjør alle målinger</button>
+    <button class="ghost" id="selectJsonBtn" style="margin-left:8px">Velg JSON-resultat</button>
+    <div id="status">Klar. Trykk «Kjør alle målinger».</div>
+    <div id="log"></div>
+  </div>
+
+  <div class="card">
+    <h2>Resultater</h2>
+    <table id="resultsTable">
+      <thead>
+        <tr><th>Scenario</th><th>Land</th><th>Kurs-oppl.</th><th>Delt felt</th><th>Kjøringer</th>
+            <th>Total (ms)</th><th>Snitt/kjøring (ms)</th><th>Min (ms)</th><th>Maks (ms)</th></tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    <div class="note">
+      «Kontroll» = 1 kjøring, 6° kursoppløsning, ingen perturbasjon. «Sekvensiell» = 30 medlemmer etter hverandre i
+      én Worker. «Pool» = 30 medlemmer fordelt over <span id="poolSizeNote">?</span> Workers parallelt (total er
+      vegg-klokke for hele poolen, ikke summen av kjøringene). «Delt felt» viser samme pool-kjøring med
+      A*-vannavstandsfeltet bygget én gang og gjenbrukt (fieldData) i stedet for bygget på nytt per medlem.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Minne</h2>
+    <div class="grid2" id="memInfo"></div>
+    <div class="note">performance.memory finnes kun i Chrome/Chromium og måler <b>kun hovedtrådens</b> JS-heap —
+      arbeidet skjer i Worker-tråder med egne heaper som ikke er med i dette tallet. Se rapporten for vurdering.</div>
+  </div>
+
+  <div class="card">
+    <h2>Alle resultater som JSON</h2>
+    <textarea id="jsonOut" readonly spellcheck="false"></textarea>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Uttrekk fra C:\RoutePlanner\morild_weather_router.html — ORDRETT,
+   ikke refaktorert (dette er en målespike, troskap mot v1 er poenget).
+   Kildelinjer referert i docs/research/spike-ensemble-perf.md.
+   Eneste bevisste avvik: computeRoute sin kurs-løkke er parametrisert
+   med opt.headingStep (default 6, v1 hardkoder 6) — nødvendig for å
+   måle F3.5-strategien (10–12° kursoppløsning for medlemmer). Alt annet
+   er kopiert uendret.
+   ============================================================ */
+
+/* ---------- geo / matematikk (v1 linje ~282–291) ---------- */
+const RNM=3440.065, d2r=d=>d*Math.PI/180, r2d=r=>r*180/Math.PI;
+function haversineNm(a,b){const dLat=d2r(b.lat-a.lat),dLon=d2r(b.lon-a.lon),la1=d2r(a.lat),la2=d2r(b.lat);
+  const h=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+  return 2*RNM*Math.asin(Math.min(1,Math.sqrt(h)));}
+function bearing(a,b){const la1=d2r(a.lat),la2=d2r(b.lat),dLon=d2r(b.lon-a.lon);
+  const y=Math.sin(dLon)*Math.cos(la2),x=Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dLon);
+  return (r2d(Math.atan2(y,x))+360)%360;}
+function stepLatLon(lat,lon,h,d){const dLat=d*Math.cos(d2r(h))/60,dLon=d*Math.sin(d2r(h))/(60*Math.cos(d2r(lat)));
+  return {lat:lat+dLat,lon:lon+dLon};}
+function angDiff(a,b){return Math.abs(((a-b+540)%360)-180);}
+
+/* ---------- Dufour 41 VPP-polarer (v1 linje ~293–326) ---------- */
+const TWS=[4,6,8,10,12,14,16,20,25,30];
+const TWA=[36,40,45,52,60,70,75,80,90,110,120,135,150,165,180];
+const POLARS={
+ PTE:[
+  [2.76,4.12,5.21,6.04,6.62,6.95,7.14,7.33,7.42,7.43],[3.08,4.55,5.67,6.53,7.04,7.29,7.44,7.60,7.71,7.75],
+  [3.44,4.98,6.12,6.95,7.38,7.58,7.71,7.87,7.97,8.03],[3.84,5.43,6.60,7.29,7.67,7.87,7.99,8.16,8.30,8.39],
+  [4.17,5.79,6.92,7.51,7.88,8.13,8.25,8.45,8.62,8.74],[4.41,6.04,7.10,7.64,8.03,8.32,8.54,8.77,9.00,9.17],
+  [4.46,6.10,7.14,7.67,8.06,8.37,8.64,8.93,9.18,9.37],[4.48,6.11,7.15,7.68,8.07,8.40,8.69,9.08,9.36,9.58],
+  [4.98,6.80,7.67,8.16,8.46,8.67,8.85,9.30,9.72,10.06],[4.92,6.67,7.56,8.10,8.56,8.99,9.34,9.80,10.38,11.10],
+  [4.59,6.33,7.36,7.93,8.39,8.84,9.29,10.14,10.90,11.75],[3.83,5.48,6.76,7.49,7.99,8.42,8.87,9.85,11.63,13.02],
+  [2.96,4.42,5.69,6.76,7.44,7.91,8.32,9.14,10.51,12.71],[2.39,3.61,4.77,5.82,6.75,7.40,7.87,8.67,9.75,11.47],
+  [2.18,3.30,4.38,5.39,6.31,7.08,7.60,8.39,9.36,10.70]]
+};
+function iax(ax,v){if(v<=ax[0])return[0,0,0];if(v>=ax[ax.length-1])return[ax.length-1,ax.length-1,0];
+  for(let i=0;i<ax.length-1;i++)if(v>=ax[i]&&v<=ax[i+1])return[i,i+1,(v-ax[i])/(ax[i+1]-ax[i])];return[ax.length-1,ax.length-1,0];}
+function polar(tws,twa,T){
+  twa=Math.abs(twa);if(twa>180)twa=360-twa;
+  let tw=Math.min(Math.max(tws,0),30),sl=1; if(tw<4){sl=tw/4;tw=4;}
+  if(twa<36){if(twa<30)return 0;return polar(tw,36,T)*((twa-30)/6)*sl;}
+  const[ti,tj,tf]=iax(TWS,tw),[ai,aj,af]=iax(TWA,twa);
+  const v00=T[ai][ti],v01=T[ai][tj],v10=T[aj][ti],v11=T[aj][tj];
+  const top=v00+(v01-v00)*tf,bot=v10+(v11-v10)*tf;
+  return (top+(bot-top)*af)*sl;
+}
+
+/* ---------- vær-aksessor, kjørbar i hovedtråd og Worker (v1 linje ~392–450) ---------- */
+function makeW(raw){
+  const {gLats,gLons,times,U,V,waveT,waveGrid,waveDirGrid,curT,curU,curV,maxTws,maxCur}=raw;
+  const nLat=gLats.length, nLon=gLons.length, nT=times.length;
+  const t0=times[0], tN=times[nT-1];
+  function idxLat(lat){if(lat<gLats[0]||lat>gLats[nLat-1])return -1;for(let i=0;i<nLat-1;i++)if(lat>=gLats[i]&&lat<=gLats[i+1])return i;return nLat-2;}
+  function idxLon(lon){if(lon<gLons[0]||lon>gLons[nLon-1])return -1;for(let i=0;i<nLon-1;i++)if(lon>=gLons[i]&&lon<=gLons[i+1])return i;return nLon-2;}
+  function wind(lat,lon,epoch){
+    if(epoch<t0||epoch>tN) return null;
+    const ila=idxLat(lat), ilo=idxLon(lon); if(ila<0||ilo<0) return null;
+    const fla=(lat-gLats[ila])/(gLats[ila+1]-gLats[ila]);
+    const flo=(lon-gLons[ilo])/(gLons[ilo+1]-gLons[ilo]);
+    let ti=Math.floor((epoch-t0)/3600); if(ti>=nT-1)ti=nT-2; if(ti<0)ti=0;
+    const ft=(epoch-times[ti])/(times[ti+1]-times[ti]);
+    const k00=ila*nLon+ilo, k01=ila*nLon+ilo+1, k10=(ila+1)*nLon+ilo, k11=(ila+1)*nLon+ilo+1;
+    function samp(arr){const a=arr[k00][ti]+(arr[k00][ti+1]-arr[k00][ti])*ft;
+      const b=arr[k01][ti]+(arr[k01][ti+1]-arr[k01][ti])*ft;
+      const c=arr[k10][ti]+(arr[k10][ti+1]-arr[k10][ti])*ft;
+      const d=arr[k11][ti]+(arr[k11][ti+1]-arr[k11][ti])*ft;
+      const top=a+(b-a)*flo, bot=c+(d-c)*flo; return top+(bot-top)*fla;}
+    const u=samp(U), v=samp(V);
+    const spd=Math.hypot(u,v); const dir=(r2d(Math.atan2(-u,-v))+360)%360;
+    return {spd,dir};
+  }
+  function wave(lat,lon,epoch){
+    if(!waveGrid||!waveT)return null;
+    const ila=idxLat(lat),ilo=idxLon(lon); if(ila<0||ilo<0)return null;
+    const kk=ila*nLon+ilo;
+    let ti=Math.round((epoch-waveT[0])/3600); if(ti<0||ti>=waveT.length)return null;
+    const val=waveGrid[kk][ti]; return (val==null)?null:val;
+  }
+  function waveInfo(lat,lon,epoch){
+    if(!waveGrid||!waveT)return null;
+    const ila=idxLat(lat),ilo=idxLon(lon); if(ila<0||ilo<0)return null;
+    const kk=ila*nLon+ilo;
+    let ti=Math.round((epoch-waveT[0])/3600); if(ti<0||ti>=waveT.length)return null;
+    const h=waveGrid[kk][ti]; if(h==null)return null;
+    const dir=waveDirGrid?waveDirGrid[kk][ti]:null;
+    return {h, dir:(dir==null?null:dir)};
+  }
+  function current(lat,lon,epoch){
+    if(!curU||!curT)return null;
+    const ila=idxLat(lat),ilo=idxLon(lon); if(ila<0||ilo<0)return null;
+    const ct0=curT[0], ctN=curT[curT.length-1]; if(epoch<ct0||epoch>ctN)return null;
+    const fla=(lat-gLats[ila])/(gLats[ila+1]-gLats[ila]);
+    const flo=(lon-gLons[ilo])/(gLons[ilo+1]-gLons[ilo]);
+    let ti=Math.floor((epoch-ct0)/3600); if(ti>=curT.length-1)ti=curT.length-2; if(ti<0)ti=0;
+    const ft=(epoch-curT[ti])/(curT[ti+1]-curT[ti]);
+    const k00=ila*nLon+ilo,k01=ila*nLon+ilo+1,k10=(ila+1)*nLon+ilo,k11=(ila+1)*nLon+ilo+1;
+    function samp(arr){const a=arr[k00][ti]+(arr[k00][ti+1]-arr[k00][ti])*ft;
+      const b=arr[k01][ti]+(arr[k01][ti+1]-arr[k01][ti])*ft;
+      const c=arr[k10][ti]+(arr[k10][ti+1]-arr[k10][ti])*ft;
+      const d=arr[k11][ti]+(arr[k11][ti+1]-arr[k11][ti])*ft;
+      const top=a+(b-a)*flo,bot=c+(d-c)*flo; return top+(bot-top)*fla;}
+    const u=samp(curU), v=samp(curV);
+    const spd=Math.hypot(u,v); const dir=(r2d(Math.atan2(u,v))+360)%360;
+    return {u,v,spd,dir};
+  }
+  return {wind,wave,waveInfo,current,hasCurrent:!!curU,hasWaveDir:!!waveDirGrid,maxTws,maxCur,t0,tN,nT,times};
+}
+
+/* ---------- land: segInt/buildLandMask (v1 linje ~453–494) ---------- */
+function segInt(a,b,c,d){
+  function ccw(p,q,r){return (r.lon-p.lon)*(q.lat-p.lat)-(q.lon-p.lon)*(r.lat-p.lat);}
+  const d1=ccw(c,d,a),d2=ccw(c,d,b),d3=ccw(a,b,c),d4=ccw(a,b,d);
+  return ((d1>0&&d2<0)||(d1<0&&d2>0))&&((d3>0&&d4<0)||(d3<0&&d4>0));}
+function buildLandMask(ways,cellDeg){
+  const segs=[]; for(const w of ways) for(let i=0;i<w.length-1;i++) segs.push([w[i],w[i+1]]);
+  const nS=segs.length;
+  const bLa0=new Float64Array(nS),bLa1=new Float64Array(nS),bLo0=new Float64Array(nS),bLo1=new Float64Array(nS);
+  for(let i=0;i<nS;i++){const[a,b]=segs[i];
+    bLa0[i]=Math.min(a.lat,b.lat);bLa1[i]=Math.max(a.lat,b.lat);
+    bLo0[i]=Math.min(a.lon,b.lon);bLo1[i]=Math.max(a.lon,b.lon);}
+  const cd=cellDeg||0.05, grid=new Map(); const GK=(la,lo)=>la*100000+lo;
+  for(let si=0;si<nS;si++){
+    for(let la=Math.floor(bLa0[si]/cd);la<=Math.floor(bLa1[si]/cd);la++)for(let lo=Math.floor(bLo0[si]/cd);lo<=Math.floor(bLo1[si]/cd);lo++){
+      const k=GK(la,lo);let arr=grid.get(k);if(!arr){arr=[];grid.set(k,arr);}arr.push(si);}}
+  function crosses(p,q){const la0=Math.min(p.lat,q.lat),la1=Math.max(p.lat,q.lat),lo0=Math.min(p.lon,q.lon),lo1=Math.max(p.lon,q.lon);
+    const seen=new Set();
+    for(let la=Math.floor(la0/cd);la<=Math.floor(la1/cd);la++)for(let lo=Math.floor(lo0/cd);lo<=Math.floor(lo1/cd);lo++){
+      const arr=grid.get(GK(la,lo));if(!arr)continue;
+      for(const si of arr){if(seen.has(si))continue;seen.add(si);
+        if(bLa1[si]<la0||bLa0[si]>la1||bLo1[si]<lo0||bLo0[si]>lo1)continue;
+        const[a,b]=segs[si];if(segInt(p,q,a,b))return true;}}
+    return false;}
+  function near(p,nm){
+    const latR=d2r(p.lat), dLa=nm/60, dLo=nm/(60*Math.cos(latR));
+    const rLa=Math.ceil(dLa/cd), rLo=Math.ceil(dLo/cd);
+    const cla=Math.floor(p.lat/cd), clo=Math.floor(p.lon/cd);
+    const pla0=p.lat-dLa,pla1=p.lat+dLa,plo0=p.lon-dLo,plo1=p.lon+dLo;
+    const seen=new Set(); const kx=60*Math.cos(latR), ky=60;
+    for(let la=cla-rLa;la<=cla+rLa;la++)for(let lo=clo-rLo;lo<=clo+rLo;lo++){
+      const arr=grid.get(GK(la,lo));if(!arr)continue;
+      for(const si of arr){if(seen.has(si))continue;seen.add(si);
+        if(bLa1[si]<pla0||bLa0[si]>pla1||bLo1[si]<plo0||bLo0[si]>plo1)continue;
+        const[a,b]=segs[si];
+        const ax=a.lon*kx,ay=a.lat*ky,bx=b.lon*kx,by=b.lat*ky,px=p.lon*kx,py=p.lat*ky;
+        const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+        let t=l2>0?((px-ax)*dx+(py-ay)*dy)/l2:0; t=Math.max(0,Math.min(1,t));
+        if(Math.hypot(px-(ax+t*dx),py-(ay+t*dy))<nm)return true;}}
+    return false;}
+  return {crosses,near,count:nS,ways};}
+
+/* ---------- isokron-hjelpere (v1 linje ~582–598, ~599–606) ---------- */
+function consolidate(path,land){
+  if(path.length<3)return path;
+  const out=[path[0]];
+  for(let i=1;i<path.length-1;i++){
+    const prev=out[out.length-1], cur=path[i], nxt=path[i+1];
+    const h1=bearing(prev,cur), h2=bearing(cur,nxt);
+    if(Math.abs(((h1-h2+540)%360)-180)<8 && !(land&&land.crosses(prev,nxt))) continue;
+    out.push(cur);
+  }
+  out.push(path[path.length-1]); return out;
+}
+function waveFactor(h,rel){
+  if(h==null||h<=0)return 1;
+  const k = rel<60 ? 0.09 : (rel<=120 ? 0.045 : 0.02);
+  return Math.max(0.45, 1 - k*h);
+}
+function hPush(H,pri,val){H.push([pri,val]);let i=H.length-1;
+  while(i>0){const p=(i-1)>>1;if(H[p][0]<=H[i][0])break;const t=H[p];H[p]=H[i];H[i]=t;i=p;}}
+function hPop(H){const top=H[0],last=H.pop();
+  if(H.length){H[0]=last;let i=0;for(;;){let l=2*i+1,r=l+1,m=i;
+    if(l<H.length&&H[l][0]<H[m][0])m=l; if(r<H.length&&H[r][0]<H[m][0])m=r;
+    if(m===i)break;const t=H[m];H[m]=H[i];H[i]=t;i=m;}}
+  return top;}
+
+/* ---------- A*-vannavstandsfelt (v1 linje ~617–672) ---------- */
+function buildDistField(start,dest,land){
+  const dLa=Math.abs(start.lat-dest.lat), dLo=Math.abs(start.lon-dest.lon);
+  const mrg=Math.min(2.0,Math.max(0.4,0.3*Math.max(dLa,dLo)));
+  const la0=Math.min(start.lat,dest.lat)-mrg, la1=Math.max(start.lat,dest.lat)+mrg;
+  const lo0=Math.min(start.lon,dest.lon)-mrg, lo1=Math.max(start.lon,dest.lon)+mrg;
+  let FD=0.02, FW=Math.max(2,Math.round((lo1-lo0)/FD)), FH=Math.max(2,Math.round((la1-la0)/FD));
+  const cap=120000;
+  if(FW*FH>cap){ FD*=Math.sqrt(FW*FH/cap);
+    FW=Math.max(2,Math.round((lo1-lo0)/FD)); FH=Math.max(2,Math.round((la1-la0)/FD)); }
+  const D=new Float64Array(FW*FH).fill(Infinity);
+  const C=(ix,iy)=>({lat:la0+(iy+0.5)*FD, lon:lo0+(ix+0.5)*FD});
+  const IX=lon=>Math.floor((lon-lo0)/FD), IY=lat=>Math.floor((lat-la0)/FD);
+  const di=IX(dest.lon), dj=IY(dest.lat);
+  if(di<0||dj<0||di>=FW||dj>=FH)return null;
+  D[dj*FW+di]=0;
+  const H=[]; hPush(H,0,dj*FW+di);
+  while(H.length){
+    const [pd,idx]=hPop(H); if(pd>D[idx])continue;
+    const iy=(idx/FW)|0, ix=idx%FW, c=C(ix,iy);
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+      if(!dx&&!dy)continue;
+      const nx=ix+dx, ny=iy+dy; if(nx<0||ny<0||nx>=FW||ny>=FH)continue;
+      const nidx=ny*FW+nx, nc=C(nx,ny);
+      const w=haversineNm(c,nc), nd=pd+w;
+      if(nd>=D[nidx])continue;
+      if(land&&land.crosses(c,nc))continue;
+      D[nidx]=nd; hPush(H,nd,nidx);
+    }
+  }
+  return { at(lat,lon){ const ix=IX(lon),iy=IY(lat);
+      if(ix<0||iy<0||ix>=FW||iy>=FH)return undefined;
+      const v=D[iy*FW+ix]; return isFinite(v)?v:undefined; },
+    atNear(lat,lon){
+      const ix=IX(lon),iy=IY(lat); let best;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const nx=ix+dx,ny=iy+dy; if(nx<0||ny<0||nx>=FW||ny>=FH)continue;
+        const v=D[ny*FW+nx]; if(isFinite(v)&&(best===undefined||v<best))best=v; }
+      return best; },
+    cells:FW*FH, data:{la0,lo0,FD,FW,FH,D} };
+}
+function fieldFromData(d){
+  const {la0,lo0,FD,FW,FH,D}=d;
+  const IX=lon=>Math.floor((lon-lo0)/FD), IY=lat=>Math.floor((lat-la0)/FD);
+  return { at(lat,lon){ const ix=IX(lon),iy=IY(lat);
+      if(ix<0||iy<0||ix>=FW||iy>=FH)return undefined;
+      const v=D[iy*FW+ix]; return isFinite(v)?v:undefined; },
+    atNear(lat,lon){ const ix=IX(lon),iy=IY(lat); let best;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const nx=ix+dx,ny=iy+dy; if(nx<0||ny<0||nx>=FW||ny>=FH)continue;
+        const v=D[ny*FW+nx]; if(isFinite(v)&&(best===undefined||v<best))best=v; }
+      return best; },
+    cells:FW*FH, data:d };
+}
+
+/* ---------- computeRoute (v1 linje ~673–818) ----------
+   AVVIK fra v1: headings-løkken bruker opt.headingStep (default 6) i
+   stedet for hardkodet 6, slik at F3.5s 10–12°-strategi kan måles.
+   Alt annet er uendret. */
+async function computeRoute(start,dest,W,opt){
+  const step=opt.step,reef=opt.reef,T=opt.table,maxw=opt.maxw,useCur=opt.useCur&&W.current,land=opt.land;
+  const maxHs=opt.maxHs||0, waveSlow=!!opt.waveSlow, motorThr=opt.motorThr||0, motorSpd=opt.motorSpd||6.5;
+  const minOff=opt.minOff||0;
+  const headings=[];for(let h=0;h<360;h+=(opt.headingStep||6))headings.push(h);
+  const hSin=headings.map(h=>Math.sin(d2r(h))), hCos=headings.map(h=>Math.cos(d2r(h)));
+  const brgSD=bearing(start,dest), cone=land?165:115, cell=opt.cellDeg||0.02, tackPen=opt.tackPen||90;
+  const CK=(la,lo)=>Math.round(la/cell)*100000+Math.round(lo/cell);
+  const nearCache = (land&&minOff>0) ? new Map() : null;
+  const all=[{lat:start.lat,lon:start.lon,t:0,p:-1,tws:0,twd:0,bsp:0,hdg:null,cu:0,cv:0,eng:0}];
+  const reachedCell=new Map(); reachedCell.set(CK(start.lat,start.lon),0);
+  let frontier=[0], bestIdx=0, bestD=haversineNm(start,dest);
+  const reach=Math.max(2.0, step/3600*4*0.5), maxIter=1500, nodeCap=140000;
+  const iso=[]; let reached=false, lastSnap=0, lastImp=0;
+
+  function speedFor(w,wv,h){
+    const twa=angDiff(w.dir,h);
+    let f=1;
+    if(waveSlow && wv && wv.h!=null){
+      const rel = (wv.dir!=null) ? angDiff(wv.dir,h) : twa;
+      f=waveFactor(wv.h,rel);
+    }
+    let bsp=polar(w.spd,twa,T)*reef*f, eng=0;
+    if(motorThr>0 && bsp<motorThr){ bsp=motorSpd*f; eng=1; }
+    return {bsp,eng};
+  }
+
+  let field=null, Tub=null, Vmax=0, prunedDead=0, prunedBound=0;
+  { let mt = (W.maxTws!=null && isFinite(W.maxTws)) ? Math.min(W.maxTws,30) : 30;
+    if(maxw>0) mt=Math.min(mt,maxw);
+    let mp=0; for(const a of TWA){const v=polar(mt,a,T); if(v>mp)mp=v;}
+    const mc = (W.maxCur!=null && isFinite(W.maxCur)) ? W.maxCur : 2.0;
+    Vmax=Math.max(mp*reef, motorThr>0?motorSpd:0) + mc + 0.3; }
+  if(opt.fieldData){ field=fieldFromData(opt.fieldData); }
+  else { try{ field=buildDistField(start,dest,land); }catch(e){ field=null; } }
+  if(field && field.atNear(start.lat,start.lon)===undefined) field=null;
+  if(field){
+    let g={lat:start.lat,lon:start.lon,t:0,hdg:null};
+    for(let s=0;s<600;s++){
+      const w=W.wind(g.lat,g.lon,opt.departEpoch+g.t); if(!w)break;
+      if(maxw>0&&w.spd>maxw)break;
+      const wv2=W.waveInfo?W.waveInfo(g.lat,g.lon,opt.departEpoch+g.t):null;
+      if(maxHs>0&&wv2&&wv2.h!=null&&wv2.h>maxHs)break;
+      let gu=0,gv=0; if(useCur){const c=W.current(g.lat,g.lon,opt.departEpoch+g.t); if(c){gu=c.u;gv=c.v;}}
+      let Dg=field.at(g.lat,g.lon); if(Dg===undefined)Dg=field.atNear(g.lat,g.lon); if(Dg===undefined)break;
+      let bt=null;
+      for(let h=0;h<360;h+=15){
+        const sp=speedFor(w,wv2,h); if(sp.bsp<=0.05)continue;
+        const su=sp.bsp*Math.sin(d2r(h))+gu, sv=sp.bsp*Math.cos(d2r(h))+gv, sog=Math.hypot(su,sv); if(sog<=0.05)continue;
+        const np=stepLatLon(g.lat,g.lon,(r2d(Math.atan2(su,sv))+360)%360,sog*step/3600);
+        let Dn=field.at(np.lat,np.lon); if(Dn===undefined)Dn=field.atNear(np.lat,np.lon); if(Dn===undefined)continue;
+        if(land){
+          if(nearCache){
+            const gk=CK(np.lat,np.lon);
+            let nr=nearCache.get(gk);
+            if(nr===undefined){ nr=land.near(np,minOff); nearCache.set(gk,nr); }
+            if(nr && haversineNm(np,start)>3 && haversineNm(np,dest)>3) continue;
+          }
+          if(land.crosses(g,np)) continue;
+        }
+        let nt2=g.t+step; if(g.hdg!=null&&angDiff(h,g.hdg)>15)nt2+=tackPen;
+        const gain=Dg-Dn;
+        if(bt==null||gain>bt.gain)bt={np,nt:nt2,h,gain};
+      }
+      if(!bt||bt.gain<=0.01)break;
+      g={lat:bt.np.lat,lon:bt.np.lon,t:bt.nt,hdg:bt.h};
+      if(haversineNm(g,dest)<reach){Tub=g.t;break;}
+    }
+  }
+
+  for(let iter=1;iter<=maxIter;iter++){
+    const newNodes=[];
+    for(const idx of frontier){
+      const n=all[idx]; const epoch=opt.departEpoch+n.t;
+      const w=W.wind(n.lat,n.lon,epoch); if(!w)continue;
+      if(maxw>0 && w.spd>maxw) continue;
+      const wv = W.waveInfo ? W.waveInfo(n.lat,n.lon,epoch) : null;
+      if(maxHs>0 && wv && wv.h!=null && wv.h>maxHs) continue;
+      let cu=0,cv=0; if(useCur){const c=W.current(n.lat,n.lon,epoch); if(c){cu=c.u;cv=c.v;}}
+      for(let hi=0;hi<headings.length;hi++){
+        const h=headings[hi];
+        const sp=speedFor(w,wv,h); let bsp=sp.bsp; if(bsp<=0.05)continue;
+        const su=bsp*hSin[hi]+cu, sv=bsp*hCos[hi]+cv, sog=Math.hypot(su,sv); if(sog<=0.05)continue;
+        const sogDir=(r2d(Math.atan2(su,sv))+360)%360, dist=sog*step/3600, np=stepLatLon(n.lat,n.lon,sogDir,dist);
+        let nt=n.t+step;
+        if(n.hdg!=null && angDiff(h,n.hdg)>15) nt+=tackPen;
+        const key=CK(np.lat,np.lon), ex=reachedCell.get(key);
+        if(ex!==undefined && all[ex].t<=nt) continue;
+        if(field){
+          let Dn=field.at(np.lat,np.lon);
+          if(Dn===undefined)Dn=field.atNear(np.lat,np.lon);
+          if(Dn===undefined){prunedDead++; continue;}
+          if(Tub!=null && nt + Dn*3600/(1.09*Vmax) > Tub+step+tackPen){prunedBound++; continue;}
+        }
+        const bf=bearing(start,np), rel=Math.abs(((bf-brgSD+540)%360)-180); if(rel>cone) continue;
+        if(land){
+          if(nearCache){
+            let nr=nearCache.get(key);
+            if(nr===undefined){ nr=land.near(np,minOff); nearCache.set(key,nr); }
+            if(nr && haversineNm(np,start)>3 && haversineNm(np,dest)>3) continue;
+          }
+          if(land.crosses(n,np)) continue;
+        }
+        const ni=all.length; all.push({lat:np.lat,lon:np.lon,t:nt,p:idx,tws:w.spd,twd:w.dir,bsp,hdg:h,cu,cv,eng:sp.eng});
+        reachedCell.set(key,ni); newNodes.push(ni);
+      }
+    }
+    if(newNodes.length===0||all.length>nodeCap)break;
+    let improved=false;
+    for(const i of newNodes){const dd=haversineNm(all[i],dest); if(dd<bestD-0.05){bestD=dd;bestIdx=i;improved=true;} else if(dd<bestD){bestD=dd;bestIdx=i;}}
+    if(improved)lastImp=iter;
+    if(iter-lastImp>80)break;
+    frontier=newNodes;
+    if(opt.onProg && iter%10===0) opt.onProg(iter,bestD,all.length);
+    const hrs=iter*step/3600;
+    if(hrs-lastSnap>=6-1e-6){lastSnap=hrs;
+      const fr=newNodes.map(i=>all[i]).map(n=>({lat:n.lat,lon:n.lon,bf:bearing(start,n)})).sort((a,b)=>a.bf-b.bf);
+      iso.push({hrs,pts:fr.map(p=>[p.lat,p.lon])});}
+    if(bestD<reach){reached=true;break;}
+    if(iter%20===0) await new Promise(r=>setTimeout(r,0));
+  }
+  let path=[]; let cur=bestIdx; while(cur>=0){path.push(all[cur]);cur=all[cur].p;} path.reverse();
+  const pathRaw=path.slice();
+  path=consolidate(path,land);
+  const last=path[path.length-1], dleft=haversineNm(last,dest);
+  if(dleft>0.3 && !(land&&land.crosses(last,dest))){
+    const epoch=opt.departEpoch+last.t;
+    const w=W.wind(last.lat,last.lon,epoch)||{spd:0,dir:0};
+    const wv=W.waveInfo?W.waveInfo(last.lat,last.lon,epoch):null;
+    let cu=0,cv=0; if(useCur){const c=W.current(last.lat,last.lon,epoch); if(c){cu=c.u;cv=c.v;}}
+    const fh=bearing(last,dest), sp=speedFor(w,wv,fh), fb=sp.bsp;
+    const su=fb*Math.sin(d2r(fh))+cu, sv=fb*Math.cos(d2r(fh))+cv, sog=Math.hypot(su,sv), ft=sog>0.1?dleft/sog*3600:0;
+    const fin={lat:dest.lat,lon:dest.lon,t:last.t+ft,p:0,tws:w.spd,twd:w.dir,bsp:fb,hdg:fh,cu,cv,eng:sp.eng};
+    path.push(fin); pathRaw.push(fin);
+  }
+  let td=0; for(let i=1;i<path.length;i++)td+=haversineNm(path[i-1],path[i]);
+  let engS=0; for(let i=1;i<pathRaw.length;i++){ if(pathRaw[i].eng) engS+=pathRaw[i].t-pathRaw[i-1].t; }
+  return {path,pathRaw,reached,totalNm:td,hours:path[path.length-1].t/3600,iso,minDist:bestD,
+          directNm:haversineNm(start,dest),nodes:all.length,engineH:engS/3600,
+          _Tub:Tub,_Vmax:Vmax,_prunedDead:prunedDead,_prunedBound:prunedBound,_fieldOn:!!field,_field:field};
+}
+
+/* ---------- Worker-mønster (v1 linje ~820–868), tilpasset for benchmark ---------- */
+let _workerURL=null;
+function workerSource(){
+  const fns=[haversineNm,bearing,stepLatLon,angDiff,iax,polar,waveFactor,hPush,hPop,
+             segInt,buildLandMask,buildDistField,fieldFromData,consolidate,makeW,computeRoute]
+    .map(f=>f.toString()).join('\n');
+  return 'const RNM=3440.065, d2r=d=>d*Math.PI/180, r2d=r=>r*180/Math.PI;\n'
+    +'const TWS='+JSON.stringify(TWS)+';\nconst TWA='+JSON.stringify(TWA)+';\n'
+    +fns+'\n'
+    +'onmessage=async(e)=>{const {jobId,raw,ways,start,dest,opt}=e.data;\n'
+    +'  try{ const W=makeW(raw);\n'
+    +'    if(ways&&ways.length) opt.land=buildLandMask(ways,0.05);\n'
+    +'    opt.onProg=(it,dd,nn)=>postMessage({type:"prog",jobId,iter:it,dd,nodes:nn});\n'
+    +'    const R=await computeRoute(start,dest,W,opt);\n'
+    +'    if(R._field){R._fieldData=R._field.data; delete R._field;}\n'
+    +'    delete R.path; delete R.pathRaw; delete R.iso;\n' // vi trenger kun timing/telling i denne spiken
+    +'    postMessage({type:"done",jobId,R});\n'
+    +'  }catch(err){ postMessage({type:"err",jobId,msg:err.message||String(err)}); }\n'
+    +'};';
+}
+function getWorkerURL(){
+  if(!_workerURL) _workerURL=URL.createObjectURL(new Blob([workerSource()],{type:'text/javascript'}));
+  return _workerURL;
+}
+
+/* ============================================================
+   Syntetiske vindfelt + landmaske (NYTT for denne spiken — ikke fra v1)
+   ============================================================ */
+function mulberry32(seed){
+  let a=seed>>>0;
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+// bbox+gitter nøyaktig som v1 (linje ~936–943): 0,4°-celler, 3..11 punkter per akse
+function buildBBoxGrid(start,dest){
+  const dLa=Math.abs(start.lat-dest.lat), dLo=Math.abs(start.lon-dest.lon);
+  const margin=Math.min(2.0,Math.max(0.4,0.3*Math.max(dLa,dLo)));
+  const minLat=Math.min(start.lat,dest.lat)-margin, maxLat=Math.max(start.lat,dest.lat)+margin;
+  const minLon=Math.min(start.lon,dest.lon)-margin, maxLon=Math.max(start.lon,dest.lon)+margin;
+  const nLat=Math.min(11,Math.max(3,Math.ceil((maxLat-minLat)/0.4)+1));
+  const nLon=Math.min(11,Math.max(3,Math.ceil((maxLon-minLon)/0.4)+1));
+  const gLats=[...Array(nLat)].map((_,i)=>minLat+(maxLat-minLat)*i/(nLat-1));
+  const gLons=[...Array(nLon)].map((_,i)=>minLon+(maxLon-minLon)*i/(nLon-1));
+  return {gLats,gLons,minLat,maxLat,minLon,maxLon};
+}
+function memberParams(idx){
+  if(idx===0) return {seed:0,ampMul:1,dirOff:0,phase:0,label:'control'};
+  const rnd=mulberry32(1000+idx);
+  const ampMul=1+(rnd()*2-1)*0.20;      // ±20% styrke
+  const dirOff=(rnd()*2-1)*25;          // ±25° retning
+  const phase=rnd()*2*Math.PI;          // faseforskyvning i tid
+  return {seed:1000+idx,ampMul,dirOff,phase,label:'m'+idx};
+}
+// SV-bris 8–14 kn m/romlig+tidsmessig variasjon, deterministisk pr. medlem
+function buildSyntheticRaw(grid,nT,hoursStep,t0Epoch,member){
+  const {gLats,gLons}=grid;
+  const nLat=gLats.length, nLon=gLons.length;
+  const centerLat=(gLats[0]+gLats[nLat-1])/2, centerLon=(gLons[0]+gLons[nLon-1])/2;
+  const latSpan=Math.max(1e-6,gLats[nLat-1]-gLats[0]), lonSpan=Math.max(1e-6,gLons[nLon-1]-gLons[0]);
+  const times=[]; for(let t=0;t<nT;t++) times.push(t0Epoch+t*hoursStep*3600);
+  const U=[],V=[]; let maxTws=0;
+  for(let ila=0;ila<nLat;ila++){
+    for(let ilo=0;ilo<nLon;ilo++){
+      const lat=gLats[ila], lon=gLons[ilo];
+      const sLat=(lat-centerLat)/latSpan, sLon=(lon-centerLon)/lonSpan;
+      const u=new Float32Array(nT), v=new Float32Array(nT);
+      for(let t=0;t<nT;t++){
+        const spatial=2*Math.sin(sLat*Math.PI*1.3+sLon*Math.PI*0.7);
+        const temporal=1.5*Math.sin((t/nT)*2*Math.PI*1.5+member.phase);
+        let spd=(11+spatial*0.6+temporal)*member.ampMul;
+        spd=Math.max(3,Math.min(20,spd));
+        const dirVar=10*Math.sin(sLat*Math.PI*0.9-sLon*Math.PI*1.1+(t/nT)*2*Math.PI*0.8);
+        const dir=(225+dirVar+member.dirOff+360)%360;
+        const dd=d2r(dir);
+        if(spd>maxTws)maxTws=spd;
+        u[t]=-spd*Math.sin(dd); v[t]=-spd*Math.cos(dd);
+      }
+      U.push(u); V.push(v);
+    }
+  }
+  return {gLats,gLons,times,U,V,waveT:null,waveGrid:null,waveDirGrid:null,curT:null,curU:null,curV:null,
+          maxTws,maxCur:null};
+}
+// syntetisk kystlinje: én bølgende linje + noen få øyer, noen hundre segmenter
+function buildSyntheticCoastline(grid){
+  const {minLat,maxLat,minLon,maxLon}=grid;
+  const baseLon=minLon+(maxLon-minLon)*0.35;
+  const N=280;
+  const way=[];
+  for(let i=0;i<=N;i++){
+    const f=i/N;
+    const lat=minLat+(maxLat-minLat)*f;
+    const lon=baseLon+0.12*Math.sin(f*Math.PI*9)+0.05*Math.sin(f*Math.PI*23+1.3);
+    way.push({lat,lon});
+  }
+  const ways=[way];
+  const rnd=mulberry32(42);
+  for(let k=0;k<4;k++){
+    const clat=minLat+rnd()*(maxLat-minLat);
+    const clon=baseLon+0.15+rnd()*0.35;
+    const s=0.02+rnd()*0.02;
+    ways.push([
+      {lat:clat-s,lon:clon-s},{lat:clat-s,lon:clon+s},
+      {lat:clat+s,lon:clon+s},{lat:clat+s,lon:clon-s},
+      {lat:clat-s,lon:clon-s}
+    ]);
+  }
+  return ways;
+}
+
+/* ============================================================
+   Benchmark-orkestrering
+   ============================================================ */
+const START={lat:59.182,lon:10.855};   // Skjæløy
+const DEST ={lat:57.72, lon:10.58};    // Skagen
+const N_T=61, HOURS_STEP=1;
+const N_MEMBERS=30;
+const T0_EPOCH=Math.floor(Date.now()/3600000)*3600; // nærmeste hele time, sekunder
+
+const grid=buildBBoxGrid(START,DEST);
+const coastWays=buildSyntheticCoastline(grid);
+
+function runOneInWorker(worker,jobId,raw,ways,start,dest,opt){
+  return new Promise((resolve,reject)=>{
+    function handler(ev){
+      const m=ev.data; if(m.jobId!==jobId) return;
+      if(m.type==='prog') return;
+      worker.removeEventListener('message',handler);
+      if(m.type==='done') resolve(m.R); else reject(new Error(m.msg));
+    }
+    worker.addEventListener('message',handler);
+    worker.postMessage({jobId,raw,ways,start,dest,opt});
+  });
+}
+
+async function runSequential(rawList,ways,opt,onEach){
+  const worker=new Worker(getWorkerURL());
+  const perRun=[];
+  const t0=performance.now();
+  for(let i=0;i<rawList.length;i++){
+    const ts=performance.now();
+    await runOneInWorker(worker,i,rawList[i],ways,START,DEST,opt);
+    perRun.push(performance.now()-ts);
+    onEach&&onEach(i+1,rawList.length);
+  }
+  const total=performance.now()-t0;
+  worker.terminate();
+  return {total,perRun};
+}
+
+async function runPool(rawList,ways,opt,poolSize,onEach){
+  const workers=[...Array(poolSize)].map(()=>new Worker(getWorkerURL()));
+  const perRun=new Array(rawList.length);
+  let nextIdx=0, done=0;
+  const t0=performance.now();
+  async function loop(w){
+    while(nextIdx<rawList.length){
+      const i=nextIdx++;
+      const ts=performance.now();
+      await runOneInWorker(w,i,rawList[i],ways,START,DEST,opt);
+      perRun[i]=performance.now()-ts;
+      done++; onEach&&onEach(done,rawList.length);
+    }
+  }
+  await Promise.all(workers.map(loop));
+  const total=performance.now()-t0;
+  workers.forEach(w=>w.terminate());
+  return {total,perRun};
+}
+
+function stats(arr){
+  if(!arr.length) return {min:0,max:0,avg:0};
+  let min=Infinity,max=-Infinity,sum=0;
+  for(const v of arr){ if(v<min)min=v; if(v>max)max=v; sum+=v; }
+  return {min,max,avg:sum/arr.length};
+}
+function fmt(n){ return n==null?'—':n.toFixed(1); }
+
+function baseOpt(headingStep,land,fieldData){
+  return {
+    step:HOURS_STEP*3600, reef:1, table:POLARS.PTE, maxw:0, useCur:false,
+    cellDeg:0.02, tackPen:90, minOff:0, maxHs:0, waveSlow:false, motorThr:0, motorSpd:6.5,
+    departEpoch:T0_EPOCH, headingStep, fieldData
+  };
+}
+
+const results=[];
+function pushResult(row){
+  results.push(row);
+  renderResultsRow(row);
+}
+function renderResultsRow(row){
+  const tr=document.createElement('tr');
+  if(row.highlight) tr.className='hl';
+  tr.innerHTML =
+    '<td>'+row.name+'</td><td>'+(row.land?'ja':'nei')+'</td><td>'+row.headingStep+'°</td>'+
+    '<td>'+(row.sharedField?'ja':'nei')+'</td><td>'+row.count+'</td>'+
+    '<td>'+fmt(row.total)+'</td><td>'+fmt(row.avg)+'</td><td>'+fmt(row.min)+'</td><td>'+fmt(row.max)+'</td>';
+  document.getElementById('resultsBody').appendChild(tr);
+}
+
+function logLine(s){
+  const el=document.getElementById('log');
+  el.style.display='block';
+  el.textContent += s+'\n';
+  el.scrollTop=el.scrollHeight;
+}
+function setStatus(s){ document.getElementById('status').textContent=s; }
+
+function memSample(){
+  if(performance.memory) return performance.memory.usedJSHeapSize;
+  return null;
+}
+
+async function runAll(){
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;
+  document.getElementById('resultsBody').innerHTML='';
+  document.getElementById('log').textContent='';
+  results.length=0;
+
+  const poolSize=Math.max(1,Math.min(6,(navigator.hardwareConcurrency||4)-1));
+  document.getElementById('poolSizeNote').textContent=poolSize;
+
+  // forhåndsbygg alle 31 (kontroll + 30) syntetiske vindfelt — samme felt gjenbrukes
+  // på tvers av alle land/oppløsnings-scenarier for en rettferdig sammenligning.
+  setStatus('Bygger syntetiske vindfelt for kontroll + 30 medlemmer…');
+  const rawControl=buildSyntheticRaw(grid,N_T,HOURS_STEP,T0_EPOCH,memberParams(0));
+  const rawMembers=[];
+  for(let i=1;i<=N_MEMBERS;i++) rawMembers.push(buildSyntheticRaw(grid,N_T,HOURS_STEP,T0_EPOCH,memberParams(i)));
+
+  const memBefore=memSample();
+  let memPeak=memBefore;
+  function trackMem(){ const v=memSample(); if(v!=null && (memPeak==null||v>memPeak)) memPeak=v; }
+
+  const landConfigs=[
+    {land:false, ways:null},
+    {land:true,  ways:coastWays}
+  ];
+
+  for(const lc of landConfigs){
+    const landTag=lc.land?'MED land':'UTEN land';
+
+    // --- Kontroll (6°, 1 kjøring) ---
+    setStatus('Kontrollkjøring, '+landTag+'…');
+    {
+      const w=new Worker(getWorkerURL());
+      const ts=performance.now();
+      await runOneInWorker(w,0,rawControl,lc.ways,START,DEST,baseOpt(6,lc.land,undefined));
+      const dt=performance.now()-ts; w.terminate(); trackMem();
+      pushResult({name:'Kontroll (6°, 1t steg)',land:lc.land,headingStep:6,sharedField:false,
+                  count:1,total:dt,avg:dt,min:dt,max:dt,highlight:true});
+      logLine('Kontroll '+landTag+': '+fmt(dt)+' ms');
+    }
+
+    // --- 30 medlemmer sekvensielt i én worker, 6° ---
+    setStatus('30 medlemmer sekvensielt (6°), '+landTag+'…');
+    {
+      const r=await runSequential(rawMembers,lc.ways,baseOpt(6,lc.land,undefined),
+        (i,n)=>setStatus('Sekvensiell 6° '+landTag+': '+i+'/'+n));
+      const s=stats(r.perRun); trackMem();
+      pushResult({name:'Sekvensiell, 1 worker (6°)',land:lc.land,headingStep:6,sharedField:false,
+                  count:N_MEMBERS,total:r.total,avg:s.avg,min:s.min,max:s.max});
+      logLine('Sekvensiell 6° '+landTag+': total '+fmt(r.total)+' ms, snitt '+fmt(s.avg)+' ms');
+    }
+
+    // --- 30 medlemmer over pool, 6° ---
+    setStatus('30 medlemmer over pool (6°), '+landTag+'…');
+    {
+      const r=await runPool(rawMembers,lc.ways,baseOpt(6,lc.land,undefined),poolSize,
+        (i,n)=>setStatus('Pool 6° '+landTag+': '+i+'/'+n));
+      const s=stats(r.perRun); trackMem();
+      pushResult({name:'Pool ×'+poolSize+' (6°)',land:lc.land,headingStep:6,sharedField:false,
+                  count:N_MEMBERS,total:r.total,avg:s.avg,min:s.min,max:s.max,highlight:true});
+      logLine('Pool 6° '+landTag+': total (vegg-klokke) '+fmt(r.total)+' ms');
+    }
+
+    // --- samme med 12° kursoppløsning (F3.5-strategien) ---
+    setStatus('30 medlemmer sekvensielt (12°), '+landTag+'…');
+    {
+      const r=await runSequential(rawMembers,lc.ways,baseOpt(12,lc.land,undefined),
+        (i,n)=>setStatus('Sekvensiell 12° '+landTag+': '+i+'/'+n));
+      const s=stats(r.perRun); trackMem();
+      pushResult({name:'Sekvensiell, 1 worker (12°)',land:lc.land,headingStep:12,sharedField:false,
+                  count:N_MEMBERS,total:r.total,avg:s.avg,min:s.min,max:s.max});
+      logLine('Sekvensiell 12° '+landTag+': total '+fmt(r.total)+' ms, snitt '+fmt(s.avg)+' ms');
+    }
+    setStatus('30 medlemmer over pool (12°), '+landTag+'…');
+    {
+      const r=await runPool(rawMembers,lc.ways,baseOpt(12,lc.land,undefined),poolSize,
+        (i,n)=>setStatus('Pool 12° '+landTag+': '+i+'/'+n));
+      const s=stats(r.perRun); trackMem();
+      pushResult({name:'Pool ×'+poolSize+' (12°)',land:lc.land,headingStep:12,sharedField:false,
+                  count:N_MEMBERS,total:r.total,avg:s.avg,min:s.min,max:s.max,highlight:true});
+      logLine('Pool 12° '+landTag+': total (vegg-klokke) '+fmt(r.total)+' ms  <-- F3.5-kandidat');
+    }
+
+    // --- delt A*-felt: bygg én gang, gjenbruk i pool-kjøring (12°) ---
+    setStatus('Bygger delt A*-felt, '+landTag+'…');
+    const landObj = lc.land ? buildLandMask(lc.ways,0.05) : null;
+    const sharedField = buildDistField(START,DEST,landObj);
+    setStatus('30 medlemmer over pool (12°, delt felt), '+landTag+'…');
+    {
+      const opt=baseOpt(12,lc.land, sharedField?sharedField.data:undefined);
+      const r=await runPool(rawMembers,lc.ways,opt,poolSize,
+        (i,n)=>setStatus('Pool 12° delt felt '+landTag+': '+i+'/'+n));
+      const s=stats(r.perRun); trackMem();
+      pushResult({name:'Pool ×'+poolSize+' (12°, delt A*-felt)',land:lc.land,headingStep:12,sharedField:true,
+                  count:N_MEMBERS,total:r.total,avg:s.avg,min:s.min,max:s.max,highlight:true});
+      logLine('Pool 12° delt felt '+landTag+': total '+fmt(r.total)+' ms');
+    }
+  }
+
+  const memAfter=memSample();
+  document.getElementById('memInfo').innerHTML =
+    '<div><b>Før</b></div><div>'+(memBefore!=null?(memBefore/1048576).toFixed(1)+' MB':'ikke målbart')+'</div>'+
+    '<div><b>Etter</b></div><div>'+(memAfter!=null?(memAfter/1048576).toFixed(1)+' MB':'ikke målbart')+'</div>'+
+    '<div><b>Høyeste observerte (hovedtråd)</b></div><div>'+(memPeak!=null?(memPeak/1048576).toFixed(1)+' MB':'ikke målbart')+'</div>';
+
+  setStatus('Ferdig. '+results.length+' scenarier kjørt.');
+  document.getElementById('jsonOut').value=JSON.stringify({
+    generatedAt:new Date().toISOString(),
+    device:{userAgent:navigator.userAgent,hardwareConcurrency:navigator.hardwareConcurrency||null,poolSize},
+    grid:{nLat:grid.gLats.length,nLon:grid.gLons.length,nT:N_T,hoursStep:HOURS_STEP},
+    landSegments:coastWays.reduce((a,w)=>a+w.length-1,0),
+    memoryBytes:{before:memBefore,after:memAfter,peakMainThread:memPeak},
+    results
+  },null,2);
+  btn.disabled=false;
+}
+
+/* ---------- UI init ---------- */
+function initInfo(){
+  document.getElementById('deviceInfo').innerHTML =
+    '<div><b>userAgent</b></div><div>'+navigator.userAgent+'</div>'+
+    '<div><b>hardwareConcurrency</b></div><div>'+(navigator.hardwareConcurrency||'ukjent')+'</div>'+
+    '<div><b>performance.memory</b></div><div>'+(performance.memory?'tilgjengelig':'ikke tilgjengelig i denne nettleseren')+'</div>';
+  document.getElementById('scenarioInfo').innerHTML =
+    '<div><b>Start</b></div><div>Skjæløy '+START.lat+', '+START.lon+'</div>'+
+    '<div><b>Mål</b></div><div>Skagen '+DEST.lat+', '+DEST.lon+'</div>'+
+    '<div><b>Gitter</b></div><div>'+grid.gLats.length+' × '+grid.gLons.length+' punkter, 0,4° celler</div>'+
+    '<div><b>Tidssteg</b></div><div>'+N_T+' × 1 t</div>'+
+    '<div><b>Medlemmer</b></div><div>'+N_MEMBERS+' (±20% styrke, ±25° retning, faseforskjøvet)</div>'+
+    '<div><b>Syntetisk kystlinje</b></div><div>'+coastWays.reduce((a,w)=>a+w.length-1,0)+' segmenter</div>';
+}
+document.getElementById('runBtn').addEventListener('click',()=>{ runAll().catch(e=>{
+  setStatus('Feil: '+(e.message||e)); console.error(e);
+});});
+document.getElementById('selectJsonBtn').addEventListener('click',()=>{
+  document.getElementById('jsonOut').select();
+});
+initInfo();
+</script>
+</body>
+</html>
