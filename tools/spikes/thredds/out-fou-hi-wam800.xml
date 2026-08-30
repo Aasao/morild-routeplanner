@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" name="THREDDS Server met.no Catalogue" version="1.2">
+  <service name="allServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <service name="virtualServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <dataset name="MyWaveWam 800m wave model with effect of currents">
+    <metadata inherited="true">
+      <serviceName>virtualServices</serviceName>
+      <authority>no.met</authority>
+      <dataFormat>NetCDF</dataFormat>
+      <documentation type="rights">CC BY 3.0: http://creativecommons.org/licenses/by/3.0</documentation>
+      <documentation type="summary">MET Norway operational numerical wave model MyWaveWam is run on a 800m grid covering five Norwegian coastal zones. The model is run daily with ECMWF and AROME atmospheric forcing to give forecasts to +66 hrs</documentation>
+      <documentation xlink:href="http://met.no/Hav_og_is/" xlink:title="met.no Ocean and Sea Ice" />
+      <creator>
+        <name>Norwegian Meteorological Institute</name>
+        <contact url="http://met.no" email="info@met.no" />
+      </creator>
+      <publisher>
+        <name vocabulary="DIF">Norwegian Meteorological Institute</name>
+        <contact url="http://met.no" email="info@met.no" />
+      </publisher>
+    </metadata>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800f_curr/catalog.xml" xlink:title="met.no MyWaveWam800m Finnmark Latest" ID="mywavewam800m_curr_finnmark" name="met.no MyWaveWam800m Finnmark Latest">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800n_curr/catalog.xml" xlink:title="met.no MyWaveWam800m NordNorge Latest" ID="mywavewam800m_curr_nordnorge" name="met.no MyWaveWam800m NordNorge Latest">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800m_curr/catalog.xml" xlink:title="met.no MyWaveWam800m MidtNorge Latest" ID="mywavewam800m_curr_midtnorge" name="met.no MyWaveWam800m MidtNorge Latest">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800v_curr/catalog.xml" xlink:title="met.no MyWaveWam800m Vestlandet Latest" ID="mywavewam800m_curr_vestlandet" name="met.no MyWaveWam800m Vestlandet Latest">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800s_curr/catalog.xml" xlink:title="met.no MyWaveWam800m Skagerrak Latest" ID="mywavewam800m_curr_skagerrak" name="met.no MyWaveWam800m Skagerrak Latest">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800f_currhf/catalog.xml" xlink:title="met.no MyWaveWam800m cycle 4.7 Finnmark Hourly Files" ID="mywavewam800m_curr_finnmark_hourly_files" name="met.no MyWaveWam800m cycle 4.7 Finnmark Hourly Files">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <dataset name="met.no MyWaveWam800m cycle 4.7 Finnmark Hourly Aggregation" ID="mywavewam800m_curr_finnmark_hourly" urlPath="fou-hi/mywavewam800f_curr_be">
+      <dataType>Grid</dataType>
+    </dataset>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800n_currhf/catalog.xml" xlink:title="met.no MyWaveWam800m cycle 4.7 NordNorge Hourly Files" ID="mywavewam800m_curr_nordnorge_hourly_files" name="met.no MyWaveWam800m cycle 4.7 NordNorge Hourly Files">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <dataset name="met.no MyWaveWam800m cycle 4.7 NordNorge Hourly Aggregation" ID="mywavewam800m_curr_nordnorge_hourly" urlPath="fou-hi/mywavewam800n_curr_be">
+      <dataType>Grid</dataType>
+    </dataset>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800m_currhf/catalog.xml" xlink:title="met.no MyWaveWam800m cycle 4.7 MidtNorge Hourly Files" ID="mywavewam800m_curr_midtnorge_hourly_files" name="met.no MyWaveWam800m cycle 4.7 MidtNorge Hourly Files">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <dataset name="met.no MyWaveWam800m cycle 4.7 MidtNorge Hourly Aggregation" ID="mywavewam800m_curr_midtnorge_hourly" urlPath="fou-hi/mywavewam800m_curr_be">
+      <dataType>Grid</dataType>
+    </dataset>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800v_currhf/catalog.xml" xlink:title="met.no MyWaveWam800m cycle 4.7 Vestlandet Hourly Files" ID="mywavewam800m_curr_vestlandet_hourly_files" name="met.no MyWaveWam800m cycle 4.7 Vestlandet Hourly Files">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <dataset name="met.no MyWaveWam800m cycle 4.7 Vestlandet Hourly Aggregation" ID="mywavewam800m_curr_vestlandet_hourly" urlPath="fou-hi/mywavewam800v_curr_be">
+      <dataType>Grid</dataType>
+    </dataset>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/mywavewam800s_currhf/catalog.xml" xlink:title="met.no MyWaveWam800m cycle 4.7 Skagerrak Hourly Files" ID="mywavewam800m_curr_skagerrak_hourly_files" name="met.no MyWaveWam800m cycle 4.7 Skagerrak Hourly Files">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <dataset name="met.no MyWaveWam800m cycle 4.7 Skagerrak Hourly Aggregation" ID="mywavewam800m_curr_skagerrak_hourly" urlPath="fou-hi/mywavewam800s_curr_be">
+      <dataType>Grid</dataType>
+    </dataset>
+  </dataset>
+</catalog>

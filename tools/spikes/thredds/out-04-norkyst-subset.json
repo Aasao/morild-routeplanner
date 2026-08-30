@@ -1,0 +1,71 @@
+{
+  "bbox": {
+    "south": 57.3,
+    "north": 59.6,
+    "west": 9,
+    "east": 11.5
+  },
+  "grid": {
+    "ny": 1148,
+    "nx": 2747
+  },
+  "steps": [
+    {
+      "label": "coarse",
+      "strideY": 25,
+      "strideX": 40,
+      "window": {
+        "yMin": 0,
+        "yMax": 525,
+        "xMin": 0,
+        "xMax": 840
+      }
+    },
+    {
+      "label": "fine",
+      "searchWindow": {
+        "yLo": 0,
+        "yHi": 555,
+        "xLo": 0,
+        "xHi": 870
+      },
+      "window": {
+        "yMin": 21,
+        "yMax": 341,
+        "xMin": 21,
+        "xMax": 341
+      }
+    }
+  ],
+  "finalWindow": {
+    "yMin": 21,
+    "yMax": 341,
+    "xMin": 21,
+    "xMax": 341
+  },
+  "pointCountEstimate": 103041,
+  "oneDaySubset": {
+    "timeIndexRange": [
+      23297,
+      23320
+    ],
+    "depthIndex": 0,
+    "pointsPerTimestep": 103041,
+    "results": [
+      {
+        "varName": "u_eastward",
+        "status": 200,
+        "ms": 3981.8738000000003,
+        "bytes": 9895030,
+        "url": "https://thredds.met.no/thredds/dodsC/fou-hi/norkystv3_800m_m00_be.dods?u_eastward%5B23297%3A1%3A23320%5D%5B0%3A1%3A0%5D%5B21%3A1%3A341%5D%5B21%3A1%3A341%5D"
+      },
+      {
+        "varName": "v_northward",
+        "status": 200,
+        "ms": 4369.0733,
+        "bytes": 9895032,
+        "url": "https://thredds.met.no/thredds/dodsC/fou-hi/norkystv3_800m_m00_be.dods?v_northward%5B23297%3A1%3A23320%5D%5B0%3A1%3A0%5D%5B21%3A1%3A341%5D%5B21%3A1%3A341%5D"
+      }
+    ]
+  }
+}

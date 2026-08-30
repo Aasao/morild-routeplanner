@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" name="FOU-HI" version="1.2">
+  <dataset name="Ocean and Sea Ice">
+    <catalogRef xlink:href="norkystv3.xml" xlink:title="met.no ROMS NorKyst v3 coastal ocean forecasting system (2024-)" name="met.no ROMS NorKyst v3 coastal ocean forecasting system (2024-)" />
+    <catalogRef xlink:href="norshelf.xml" xlink:title="met.no ROMS Norshelf 2.4km regional ocean forecasting system" name="met.no ROMS Norshelf 2.4km regional ocean forecasting system" />
+    <catalogRef xlink:href="topaz5-arc-1hr.xml" xlink:title="met.no Topaz5 Arctic Physical ocean and sea ice forecasting system (hourly forecast only)" name="met.no Topaz5 Arctic Physical ocean and sea ice forecasting system (hourly forecast only)" />
+    <catalogRef xlink:href="barents_eps.xml" xlink:title="met.no Barents-2.5km regional ocean and sea ice forecasting system (ROMS EPS)" name="met.no Barents-2.5km regional ocean and sea ice forecasting system (ROMS EPS)" />
+    <catalogRef xlink:href="aice.xml" xlink:title="met.no AICE - data-driven forecasts of sea ice concentration coherent with passive microwave products" name="met.no AICE - data-driven forecasts of sea ice concentration coherent with passive microwave products" />
+  </dataset>
+  <dataset name="Waves">
+    <catalogRef xlink:href="ww3_4km.xml" xlink:title="met.no WAVEWATCH III 4km Regional wave forecasting system (latest and archive)" name="met.no WAVEWATCH III 4km Regional wave forecasting system (latest and archive)" />
+    <catalogRef xlink:href="mywavewam3.xml" xlink:title="met.no MyWaveWAM3km Nordic Seas wave forecasting system (latest model runs only)" name="met.no MyWaveWAM3km Nordic Seas wave forecasting system (latest model runs only)" />
+    <catalogRef xlink:href="mywavewam800current.xml" xlink:title="met.no MyWaveWAM800m Norwegian Coastal wave forecasting system - with current" name="met.no MyWaveWAM800m Norwegian Coastal wave forecasting system - with current" />
+  </dataset>
+  <dataset name="Cooperative operations">
+    <catalogRef xlink:href="../myocean/myocean.xml" xlink:title="CMEMS (formerly MyOcean)" name="CMEMS (formerly MyOcean)" />
+    <catalogRef xlink:href="../osisaf/osisaf.xml" xlink:title="OSI SAF" name="OSI SAF" />
+  </dataset>
+  <catalogRef xlink:href="discontinued.xml" xlink:title="Discontinued models" name="Discontinued models" />
+</catalog>

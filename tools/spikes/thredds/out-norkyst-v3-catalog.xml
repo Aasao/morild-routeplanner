@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2">
+  <service name="dap_and_http" serviceType="Compound" base="">
+    <service name="dapService" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+  </service>
+  <service name="virtualServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+    <service name="subsetServer" serviceType="NetcdfSubset" base="/thredds/ncss/grid/" />
+    <service name="ncml" serviceType="NCML" base="/thredds/ncml/" />
+    <service name="uddc" serviceType="UDDC" base="/thredds/uddc/" />
+    <service name="iso" serviceType="ISO" base="/thredds/iso/" />
+  </service>
+  <dataset name="norkyst_v3/">
+    <property name="DatasetScan" value="true" />
+    <metadata inherited="true">
+      <serviceName>dap_and_http</serviceName>
+    </metadata>
+    <dataset name="norkyst_v3_sdepth_aggr.ncml" ID="romshindcast/norkyst_v3/norkyst_v3_sdepth_aggr.ncml" urlPath="romshindcast/norkyst_v3/norkyst_v3_sdepth_aggr.ncml">
+      <dataSize units="Mbytes">2.038</dataSize>
+      <date type="modified">2026-03-25T08:57:29Z</date>
+    </dataset>
+    <dataset name="norkyst_v3_zdepth_aggr.ncml" ID="romshindcast/norkyst_v3/norkyst_v3_zdepth_aggr.ncml" urlPath="romshindcast/norkyst_v3/norkyst_v3_zdepth_aggr.ncml">
+      <dataSize units="Mbytes">2.038</dataSize>
+      <date type="modified">2026-03-25T08:57:29Z</date>
+    </dataset>
+    <catalogRef xlink:href="forcing/catalog.xml" xlink:title="forcing" ID="romshindcast/norkyst_v3/forcing" name="forcing">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="sdepth/catalog.xml" xlink:title="sdepth" ID="romshindcast/norkyst_v3/sdepth" name="sdepth">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="zdepth/catalog.xml" xlink:title="zdepth" ID="romshindcast/norkyst_v3/zdepth" name="zdepth">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+  </dataset>
+</catalog>

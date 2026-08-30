@@ -1,0 +1,58 @@
+[
+  {
+    "label": "MEPS latest catalog.xml",
+    "url": "https://thredds.met.no/thredds/catalog/mepslatest/catalog.xml",
+    "status": 200,
+    "ms": 128.1393,
+    "bytes": 26079
+  },
+  {
+    "label": "MEPS eps archive catalog.xml",
+    "url": "https://thredds.met.no/thredds/catalog/meps25epsarchive/catalog.xml",
+    "status": 200,
+    "ms": 63.45049999999998,
+    "bytes": 3866
+  },
+  {
+    "label": "NorKyst800m-1h catalog.xml",
+    "url": "https://thredds.met.no/thredds/catalog/fou-hi/norkyst800m-1h/catalog.xml",
+    "status": 200,
+    "ms": 1075.6799,
+    "bytes": 987433
+  },
+  {
+    "label": "NorKyst v2 page (html)",
+    "url": "https://thredds.met.no/thredds/fou-hi/norkyst800v2.html",
+    "status": 404,
+    "ms": 18.85010000000011,
+    "bytes": 753
+  },
+  {
+    "label": "NorKyst v2 catalog attempt",
+    "url": "https://thredds.met.no/thredds/catalog/fou-hi/norkyst800v2/catalog.xml",
+    "status": 404,
+    "ms": 28.322699999999713,
+    "bytes": 39
+  },
+  {
+    "label": "NorKyst v3 catalog attempt",
+    "url": "https://thredds.met.no/thredds/catalog/fou-hi/norkyst800v3/catalog.xml",
+    "status": 404,
+    "ms": 14.38130000000001,
+    "bytes": 39
+  },
+  {
+    "label": "ocean.met.no models page",
+    "url": "https://ocean.met.no/models",
+    "status": 200,
+    "ms": 86.22490000000016,
+    "bytes": 96101
+  },
+  {
+    "label": "fou-hi top catalog.xml",
+    "url": "https://thredds.met.no/thredds/catalog/fou-hi/catalog.xml",
+    "status": 404,
+    "ms": 12.377199999999903,
+    "bytes": 39
+  }
+]

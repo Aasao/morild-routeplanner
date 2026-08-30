@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/geo" },
+    { "path": "packages/protocol" },
+    { "path": "packages/charts" },
+    { "path": "packages/weather" },
+    { "path": "packages/polar" },
+    { "path": "packages/routing" },
+    { "path": "tools/arch-tests" }
+  ]
+}

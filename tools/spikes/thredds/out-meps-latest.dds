@@ -1,0 +1,157 @@
+Dataset {
+    Float64 time[time = 62];
+    Float64 forecast_reference_time;
+    Int16 ensemble_member[ensemble_member = 30];
+    Float32 pressure[pressure = 2];
+    Float32 height_above_msl[height_above_msl = 1];
+    Float32 height0[height0 = 1];
+    Float32 height1[height1 = 1];
+    Float32 height2[height2 = 1];
+    Int32 projection_lambert;
+    Float32 x[x = 949];
+    Float32 y[y = 1069];
+    Grid {
+     ARRAY:
+        Float64 longitude[y = 1069][x = 949];
+     MAPS:
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } longitude;
+    Grid {
+     ARRAY:
+        Float64 latitude[y = 1069][x = 949];
+     MAPS:
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } latitude;
+    Grid {
+     ARRAY:
+        Float32 x_wind_pl[time = 62][pressure = 2][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 pressure[pressure = 2];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } x_wind_pl;
+    Grid {
+     ARRAY:
+        Float32 y_wind_pl[time = 62][pressure = 2][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 pressure[pressure = 2];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } y_wind_pl;
+    Grid {
+     ARRAY:
+        Float32 air_temperature_pl[time = 62][pressure = 2][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 pressure[pressure = 2];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } air_temperature_pl;
+    Grid {
+     ARRAY:
+        Float32 air_temperature_2m[time = 62][height0 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height0[height0 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } air_temperature_2m;
+    Grid {
+     ARRAY:
+        Float32 relative_humidity_2m[time = 62][height0 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height0[height0 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } relative_humidity_2m;
+    Grid {
+     ARRAY:
+        Float32 x_wind_10m[time = 62][height2 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height2[height2 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } x_wind_10m;
+    Grid {
+     ARRAY:
+        Float32 y_wind_10m[time = 62][height2 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height2[height2 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } y_wind_10m;
+    Grid {
+     ARRAY:
+        Float32 cloud_area_fraction[time = 62][height1 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height1[height1 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } cloud_area_fraction;
+    Grid {
+     ARRAY:
+        Float32 air_pressure_at_sea_level[time = 62][height_above_msl = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height_above_msl[height_above_msl = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } air_pressure_at_sea_level;
+    Grid {
+     ARRAY:
+        Float32 precipitation_amount_acc[time = 62][height1 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height1[height1 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } precipitation_amount_acc;
+    Grid {
+     ARRAY:
+        Float32 snowfall_amount_acc[time = 62][height1 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height1[height1 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } snowfall_amount_acc;
+    Grid {
+     ARRAY:
+        Float32 wind_speed_of_gust[time = 62][height2 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height2[height2 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } wind_speed_of_gust;
+    Grid {
+     ARRAY:
+        Float32 fog_area_fraction[time = 62][height1 = 1][ensemble_member = 30][y = 1069][x = 949];
+     MAPS:
+        Float64 time[time = 62];
+        Float32 height1[height1 = 1];
+        Int16 ensemble_member[ensemble_member = 30];
+        Float32 y[y = 1069];
+        Float32 x[x = 949];
+    } fog_area_fraction;
+} mepslatest/meps_lagged_6_h_latest_2_5km_20260830T15Z.nc;

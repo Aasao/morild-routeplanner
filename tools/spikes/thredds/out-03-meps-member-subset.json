@@ -1,0 +1,72 @@
+{
+  "bboxIndexWindow": {
+    "yMin": 269,
+    "yMax": 374,
+    "xMin": 269,
+    "xMax": 374
+  },
+  "pointsPerTimestepPerMember": 11236,
+  "timesteps": 62,
+  "avgSingleMemberFetchMs": 854.2422499999999,
+  "avgSingleMemberFetchBytes": 2788326,
+  "extrapolation_30members_sequential": {
+    "totalSeconds": 25.6272675,
+    "totalBytesFloat32Raw": 83649780,
+    "note": "x_wind_10m only; double for x+y components; NorKyst is separate dataset/request"
+  },
+  "results": [
+    {
+      "test": "single-member",
+      "varName": "x_wind_10m",
+      "memberIdx": 0,
+      "status": 200,
+      "ms": 679.9312,
+      "bytes": 2788326,
+      "url": "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_20260830T15Z.nc.dods?x_wind_10m%5B0%3A1%3A61%5D%5B0%3A1%3A0%5D%5B0%3A1%3A0%5D%5B269%3A1%3A374%5D%5B269%3A1%3A374%5D"
+    },
+    {
+      "test": "single-member",
+      "varName": "y_wind_10m",
+      "memberIdx": 0,
+      "status": 200,
+      "ms": 946.2800000000002,
+      "bytes": 2788326,
+      "url": "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_20260830T15Z.nc.dods?y_wind_10m%5B0%3A1%3A61%5D%5B0%3A1%3A0%5D%5B0%3A1%3A0%5D%5B269%3A1%3A374%5D%5B269%3A1%3A374%5D"
+    },
+    {
+      "test": "3-members-x_wind_10m",
+      "varName": "x_wind_10m",
+      "memberIdx": 0,
+      "status": 200,
+      "ms": 126.69869999999992,
+      "bytes": 2788326,
+      "url": "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_20260830T15Z.nc.dods?x_wind_10m%5B0%3A1%3A61%5D%5B0%3A1%3A0%5D%5B0%3A1%3A0%5D%5B269%3A1%3A374%5D%5B269%3A1%3A374%5D"
+    },
+    {
+      "test": "3-members-x_wind_10m",
+      "varName": "x_wind_10m",
+      "memberIdx": 1,
+      "status": 200,
+      "ms": 794.9110999999998,
+      "bytes": 2788326,
+      "url": "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_20260830T15Z.nc.dods?x_wind_10m%5B0%3A1%3A61%5D%5B0%3A1%3A0%5D%5B1%3A1%3A1%5D%5B269%3A1%3A374%5D%5B269%3A1%3A374%5D"
+    },
+    {
+      "test": "3-members-x_wind_10m",
+      "varName": "x_wind_10m",
+      "memberIdx": 2,
+      "status": 200,
+      "ms": 1815.4279999999999,
+      "bytes": 2788326,
+      "url": "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_20260830T15Z.nc.dods?x_wind_10m%5B0%3A1%3A61%5D%5B0%3A1%3A0%5D%5B2%3A1%3A2%5D%5B269%3A1%3A374%5D%5B269%3A1%3A374%5D"
+    },
+    {
+      "test": "combined-3-members",
+      "varName": "x_wind_10m",
+      "status": 200,
+      "ms": 283.0694999999996,
+      "bytes": 8361390,
+      "url": "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_20260830T15Z.nc.dods?x_wind_10m%5B0%3A1%3A61%5D%5B0%3A1%3A0%5D%5B0%3A1%3A2%5D%5B269%3A1%3A374%5D%5B269%3A1%3A374%5D"
+    }
+  ]
+}

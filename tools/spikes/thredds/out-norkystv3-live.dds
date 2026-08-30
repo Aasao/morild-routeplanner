@@ -1,0 +1,107 @@
+Dataset {
+    Grid {
+     ARRAY:
+        Float64 h[Y = 1148][X = 2747];
+     MAPS:
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } h;
+    Grid {
+     ARRAY:
+        Float64 lon[Y = 1148][X = 2747];
+     MAPS:
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } lon;
+    Grid {
+     ARRAY:
+        Float64 lat[Y = 1148][X = 2747];
+     MAPS:
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } lat;
+    Int32 projection_stere;
+    Int32 X[X = 2747];
+    Int32 Y[Y = 1148];
+    Float64 depth[depth = 15];
+    Float64 forecast_reference_time;
+    Float64 time[time = 23327];
+    Grid {
+     ARRAY:
+        Int16 zeta[time = 23327][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } zeta;
+    Grid {
+     ARRAY:
+        Int16 u_eastward[time = 23327][depth = 15][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Float64 depth[depth = 15];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } u_eastward;
+    Grid {
+     ARRAY:
+        Int16 v_northward[time = 23327][depth = 15][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Float64 depth[depth = 15];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } v_northward;
+    Grid {
+     ARRAY:
+        Int16 w[time = 23327][depth = 15][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Float64 depth[depth = 15];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } w;
+    Grid {
+     ARRAY:
+        Int16 temperature[time = 23327][depth = 15][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Float64 depth[depth = 15];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } temperature;
+    Grid {
+     ARRAY:
+        Int16 salinity[time = 23327][depth = 15][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Float64 depth[depth = 15];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } salinity;
+    Grid {
+     ARRAY:
+        Float32 AKs[time = 23327][depth = 15][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Float64 depth[depth = 15];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } AKs;
+    Grid {
+     ARRAY:
+        Int16 Uwind_eastward[time = 23327][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } Uwind_eastward;
+    Grid {
+     ARRAY:
+        Int16 Vwind_northward[time = 23327][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 23327];
+        Int32 Y[Y = 1148];
+        Int32 X[X = 2747];
+    } Vwind_northward;
+} fou-hi/norkystv3_800m_m00_be;

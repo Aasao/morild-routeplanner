@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2">
+  <service name="allServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <service name="virtualServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <dataset name="met.no MyWaveWam800m Skagerrak Latest">
+    <property name="DatasetScan" value="true" />
+    <metadata inherited="true">
+      <serviceName>allServices</serviceName>
+      <authority>no.met</authority>
+      <dataFormat>NetCDF</dataFormat>
+      <documentation type="rights">CC BY 3.0: http://creativecommons.org/licenses/by/3.0</documentation>
+      <documentation type="summary">MET Norway operational numerical wave model MyWaveWam is run on a 800m grid covering five Norwegian coastal zones. The model is run daily with ECMWF and AROME atmospheric forcing to give forecasts to +66 hrs</documentation>
+      <documentation xlink:href="http://met.no/Hav_og_is/" xlink:title="met.no Ocean and Sea Ice" />
+      <creator>
+        <name>Norwegian Meteorological Institute</name>
+        <contact url="http://met.no" email="info@met.no" />
+      </creator>
+      <publisher>
+        <name vocabulary="DIF">Norwegian Meteorological Institute</name>
+        <contact url="http://met.no" email="info@met.no" />
+      </publisher>
+    </metadata>
+    <dataset name="MyWave_wam800_curr_c4SPC00.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4SPC00.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4SPC00.nc">
+      <dataSize units="Mbytes">222.9</dataSize>
+      <date type="modified">2026-08-30T04:21:13Z</date>
+    </dataset>
+    <dataset name="MyWave_wam800_curr_c4SPC06.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4SPC06.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4SPC06.nc">
+      <dataSize units="Mbytes">222.9</dataSize>
+      <date type="modified">2026-08-30T10:21:13Z</date>
+    </dataset>
+    <dataset name="MyWave_wam800_curr_c4SPC12.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4SPC12.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4SPC12.nc">
+      <dataSize units="Mbytes">222.9</dataSize>
+      <date type="modified">2026-08-30T16:33:09Z</date>
+    </dataset>
+    <dataset name="MyWave_wam800_curr_c4SPC18.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4SPC18.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4SPC18.nc">
+      <dataSize units="Mbytes">222.9</dataSize>
+      <date type="modified">2026-08-29T21:57:10Z</date>
+    </dataset>
+    <dataset name="MyWave_wam800_curr_c4WAVE00.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4WAVE00.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4WAVE00.nc">
+      <dataSize units="Mbytes">294.8</dataSize>
+      <date type="modified">2026-08-30T04:21:11Z</date>
+    </dataset>
+    <dataset name="MyWave_wam800_curr_c4WAVE06.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4WAVE06.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4WAVE06.nc">
+      <dataSize units="Mbytes">294.9</dataSize>
+      <date type="modified">2026-08-30T10:21:11Z</date>
+    </dataset>
+    <dataset name="MyWave_wam800_curr_c4WAVE12.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4WAVE12.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4WAVE12.nc">
+      <dataSize units="Mbytes">295.0</dataSize>
+      <date type="modified">2026-08-30T16:33:07Z</date>
+    </dataset>
+    <dataset name="MyWave_wam800_curr_c4WAVE18.nc" ID="mywavewam800m_curr_skagerrak/MyWave_wam800_curr_c4WAVE18.nc" urlPath="fou-hi/mywavewam800s_curr/MyWave_wam800_curr_c4WAVE18.nc">
+      <dataSize units="Mbytes">293.9</dataSize>
+      <date type="modified">2026-08-29T21:57:08Z</date>
+    </dataset>
+  </dataset>
+</catalog>

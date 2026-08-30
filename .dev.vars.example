@@ -1,0 +1,12 @@
+# Kopier til .dev.vars lokalt (aldri commit .dev.vars — se .gitignore).
+# Brukt av tools/weather-pack (ADR-0003: GitHub Actions cron + lokal fallback)
+# og apps/worker.
+
+# Cloudflare API-token, skopet til R2-bucketen under (D1/R2-skopet, ikke bredere).
+CLOUDFLARE_API_TOKEN=
+
+# Navnet på R2-bucketen værpakker/kartpakker publiseres til.
+R2_BUCKET_NAME=
+
+# URL batch-jobben pinger ved hver kjøring (varsling ved pipeline død > 12 t, F2.4).
+HEALTHCHECK_URL=

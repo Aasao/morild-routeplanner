@@ -1,0 +1,104 @@
+Dataset {
+    Float64 X[X = 2747];
+    Float64 Y[Y = 1148];
+    Float64 depth[depth = 25];
+    Grid {
+     ARRAY:
+        Float32 h[Y = 1148][X = 2747];
+     MAPS:
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } h;
+    Grid {
+     ARRAY:
+        Float64 lat[Y = 1148][X = 2747];
+     MAPS:
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } lat;
+    Grid {
+     ARRAY:
+        Float64 lon[Y = 1148][X = 2747];
+     MAPS:
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } lon;
+    Int32 projection_stere;
+    Grid {
+     ARRAY:
+        Byte sea_mask[Y = 1148][X = 2747];
+     MAPS:
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } sea_mask;
+    Grid {
+     ARRAY:
+        Int16 Uwind_eastward[time = 119016][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } Uwind_eastward;
+    Grid {
+     ARRAY:
+        Int16 Vwind_northward[time = 119016][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } Vwind_northward;
+    Grid {
+     ARRAY:
+        Int16 ln_AKs[time = 119016][depth = 25][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 depth[depth = 25];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } ln_AKs;
+    Grid {
+     ARRAY:
+        Int16 salinity[time = 119016][depth = 25][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 depth[depth = 25];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } salinity;
+    Grid {
+     ARRAY:
+        Int16 temperature[time = 119016][depth = 25][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 depth[depth = 25];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } temperature;
+    Float64 time[time = 119016];
+    Grid {
+     ARRAY:
+        Int16 u_eastward[time = 119016][depth = 25][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 depth[depth = 25];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } u_eastward;
+    Grid {
+     ARRAY:
+        Int16 v_northward[time = 119016][depth = 25][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 depth[depth = 25];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } v_northward;
+    Grid {
+     ARRAY:
+        Int16 zeta[time = 119016][Y = 1148][X = 2747];
+     MAPS:
+        Float64 time[time = 119016];
+        Float64 Y[Y = 1148];
+        Float64 X[X = 2747];
+    } zeta;
+} romshindcast/norkyst_v3/norkyst_v3_zdepth_aggr.ncml;

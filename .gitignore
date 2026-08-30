@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dist-tsc/
+.dev.vars
+*.tsbuildinfo
+.DS_Store
+coverage/

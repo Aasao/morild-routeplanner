@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" name="THREDDS Server Default Catalog : MetNo Config" version="1.2">
+  <service name="allServices" serviceType="Compound" base="">
+    <service name="dapService" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="wcsService" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <catalogRef xlink:href="arcticdata/arcticdata.xml" xlink:title="ArcticDataCentre" name="ArcticDataCentre" />
+  <catalogRef xlink:href="metno.xml" xlink:title="Weather forecasts" name="Weather forecasts" />
+  <catalogRef xlink:href="fou-kl.xml" xlink:title="Climate Modelling and Air Pollution" name="Climate Modelling and Air Pollution" />
+  <catalogRef xlink:href="obs.xml" xlink:title="Observations" name="Observations" />
+  <catalogRef xlink:href="fou-hi/fou-hi.xml" xlink:title="Ocean and Ice" name="Ocean and Ice" />
+  <catalogRef xlink:href="projects.xml" xlink:title="Projects" name="Projects" />
+  <catalogRef xlink:href="users.xml" xlink:title="User areas" name="User areas" />
+</catalog>

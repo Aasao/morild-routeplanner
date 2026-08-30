@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Aktiver pnpm via corepack
+        run: corepack enable
+
+      - name: Installer avhengigheter
+        run: pnpm install --frozen-lockfile
+
+      - name: Typesjekk + lint
+        run: pnpm check
+
+      - name: Enhets- og integrasjonstester
+        run: pnpm test
+
+      - name: Arkitekturgrense-tester
+        run: pnpm test:arch

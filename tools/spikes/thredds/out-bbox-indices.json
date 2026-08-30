@@ -1,0 +1,49 @@
+{
+  "bbox": {
+    "south": 57.3,
+    "north": 59.6,
+    "west": 9,
+    "east": 11.5
+  },
+  "margin": 0.3,
+  "steps": [
+    {
+      "label": "coarse",
+      "strideY": 15,
+      "strideX": 15,
+      "ms": 185.2224,
+      "bytes": 182442,
+      "window": {
+        "yMin": 210,
+        "yMax": 435,
+        "xMin": 210,
+        "xMax": 435
+      }
+    },
+    {
+      "label": "fine",
+      "window": {
+        "yMin": 269,
+        "yMax": 374,
+        "xMin": 269,
+        "xMax": 374
+      },
+      "ms": 156.68259999999998,
+      "bytes": 2748283,
+      "searchWindow": {
+        "yLo": 190,
+        "yHi": 455,
+        "xLo": 190,
+        "xHi": 455
+      }
+    }
+  ],
+  "finalWindow": {
+    "yMin": 269,
+    "yMax": 374,
+    "xMin": 269,
+    "xMax": 374
+  },
+  "gridResolutionKm": 2.5,
+  "pointCountEstimate": 11236
+}

@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2">
+  <service name="allServices" serviceType="Compound" base="">
+    <service name="dapService" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <service name="dapOnly" serviceType="Compound" base="">
+    <service name="dapService" serviceType="OpenDAP" base="/thredds/dodsC/" />
+  </service>
+  <service name="ncssServices" serviceType="Compound" base="">
+    <service name="dapService" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+    <service name="subsetServer" serviceType="NetcdfSubset" base="/thredds/ncss/grid/" />
+  </service>
+  <service name="DODShttp" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+  </service>
+  <service name="virtualServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <dataset name="2026/07/15/">
+    <property name="DatasetScan" value="true" />
+    <metadata inherited="true">
+      <serviceName>dapOnly</serviceName>
+    </metadata>
+    <dataset name="meps_det_2_5km_20260715T00Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T00Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T00Z.nc">
+      <dataSize units="Gbytes">69.59</dataSize>
+      <date type="modified">2026-07-15T03:27:10Z</date>
+    </dataset>
+    <dataset name="meps_det_2_5km_20260715T03Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T03Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T03Z.nc">
+      <dataSize units="Gbytes">69.63</dataSize>
+      <date type="modified">2026-07-15T06:23:56Z</date>
+    </dataset>
+    <dataset name="meps_det_2_5km_20260715T06Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T06Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T06Z.nc">
+      <dataSize units="Gbytes">69.62</dataSize>
+      <date type="modified">2026-07-15T09:29:56Z</date>
+    </dataset>
+    <dataset name="meps_det_2_5km_20260715T09Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T09Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T09Z.nc">
+      <dataSize units="Gbytes">69.74</dataSize>
+      <date type="modified">2026-07-15T12:29:23Z</date>
+    </dataset>
+    <dataset name="meps_det_2_5km_20260715T12Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T12Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T12Z.nc">
+      <dataSize units="Gbytes">69.96</dataSize>
+      <date type="modified">2026-07-15T15:31:40Z</date>
+    </dataset>
+    <dataset name="meps_det_2_5km_20260715T15Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T15Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T15Z.nc">
+      <dataSize units="Gbytes">70.23</dataSize>
+      <date type="modified">2026-07-15T18:29:27Z</date>
+    </dataset>
+    <dataset name="meps_det_2_5km_20260715T18Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T18Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T18Z.nc">
+      <dataSize units="Gbytes">70.28</dataSize>
+      <date type="modified">2026-07-15T21:29:20Z</date>
+    </dataset>
+    <dataset name="meps_det_2_5km_20260715T21Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T21Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_2_5km_20260715T21Z.nc">
+      <dataSize units="Gbytes">70.53</dataSize>
+      <date type="modified">2026-07-16T00:27:18Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T00Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T00Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T00Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T01:41:51Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T03Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T03Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T03Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T04:40:37Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T06Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T06Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T06Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T07:41:43Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T09Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T09Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T09Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T10:44:59Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T12Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T12Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T12Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T13:43:31Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T15Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T15Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T15Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T16:43:03Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T18Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T18Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T18Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T19:44:12Z</date>
+    </dataset>
+    <dataset name="meps_det_hl_20260715T21Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_hl_20260715T21Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_hl_20260715T21Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T22:41:57Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T00Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T00Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T00Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T02:42:09Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T03Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T03Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T03Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T05:44:42Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T06Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T06Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T06Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T08:30:58Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T09Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T09Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T09Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T11:39:56Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T12Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T12Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T12Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T14:41:56Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T15Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T15Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T15Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T17:39:21Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T18Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T18Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T18Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T20:45:20Z</date>
+    </dataset>
+    <dataset name="meps_det_ml_20260715T21Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_ml_20260715T21Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_ml_20260715T21Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T23:41:14Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T00Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T00Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T00Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T01:48:41Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T03Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T03Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T03Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T04:46:24Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T06Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T06Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T06Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T07:48:53Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T09Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T09Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T09Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T10:47:59Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T12Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T12Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T12Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T13:47:40Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T15Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T15Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T15Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T16:46:52Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T18Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T18Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T18Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T19:48:04Z</date>
+    </dataset>
+    <dataset name="meps_det_pl_20260715T21Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_pl_20260715T21Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_pl_20260715T21Z.ncml">
+      <dataSize units="Kbytes">8.052</dataSize>
+      <date type="modified">2026-07-15T22:42:57Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T00Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T00Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T00Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T01:55:36Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T03Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T03Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T03Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T04:43:19Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T06Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T06Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T06Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T07:52:57Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T09Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T09Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T09Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T10:46:39Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T12Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T12Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T12Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T13:48:32Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T15Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T15Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T15Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T16:48:51Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T18Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T18Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T18Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T19:51:42Z</date>
+    </dataset>
+    <dataset name="meps_det_sfc_20260715T21Z.ncml" ID="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T21Z.ncml" urlPath="meps25epsarchive/2026/07/15/meps_det_sfc_20260715T21Z.ncml">
+      <dataSize units="Kbytes">8.119</dataSize>
+      <date type="modified">2026-07-15T22:44:03Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T00Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T00Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T00Z.nc">
+      <dataSize units="Gbytes">3.738</dataSize>
+      <date type="modified">2026-07-15T01:43:49Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T03Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T03Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T03Z.nc">
+      <dataSize units="Gbytes">3.738</dataSize>
+      <date type="modified">2026-07-15T04:44:34Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T06Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T06Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T06Z.nc">
+      <dataSize units="Gbytes">3.737</dataSize>
+      <date type="modified">2026-07-15T07:51:09Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T09Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T09Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T09Z.nc">
+      <dataSize units="Gbytes">3.739</dataSize>
+      <date type="modified">2026-07-15T10:50:23Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T12Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T12Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T12Z.nc">
+      <dataSize units="Gbytes">3.750</dataSize>
+      <date type="modified">2026-07-15T13:45:05Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T15Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T15Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T15Z.nc">
+      <dataSize units="Gbytes">3.756</dataSize>
+      <date type="modified">2026-07-15T16:48:10Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T18Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T18Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T18Z.nc">
+      <dataSize units="Gbytes">3.761</dataSize>
+      <date type="modified">2026-07-15T19:55:38Z</date>
+    </dataset>
+    <dataset name="meps_det_vc_2_5km_20260715T21Z.nc" ID="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T21Z.nc" urlPath="meps25epsarchive/2026/07/15/meps_det_vc_2_5km_20260715T21Z.nc">
+      <dataSize units="Gbytes">3.762</dataSize>
+      <date type="modified">2026-07-15T22:53:03Z</date>
+    </dataset>
+    <catalogRef xlink:href="00/catalog.xml" xlink:title="00" ID="meps25epsarchive/2026/07/15/00" name="00">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="01/catalog.xml" xlink:title="01" ID="meps25epsarchive/2026/07/15/01" name="01">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="02/catalog.xml" xlink:title="02" ID="meps25epsarchive/2026/07/15/02" name="02">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="03/catalog.xml" xlink:title="03" ID="meps25epsarchive/2026/07/15/03" name="03">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="04/catalog.xml" xlink:title="04" ID="meps25epsarchive/2026/07/15/04" name="04">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="05/catalog.xml" xlink:title="05" ID="meps25epsarchive/2026/07/15/05" name="05">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="06/catalog.xml" xlink:title="06" ID="meps25epsarchive/2026/07/15/06" name="06">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="07/catalog.xml" xlink:title="07" ID="meps25epsarchive/2026/07/15/07" name="07">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="08/catalog.xml" xlink:title="08" ID="meps25epsarchive/2026/07/15/08" name="08">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="09/catalog.xml" xlink:title="09" ID="meps25epsarchive/2026/07/15/09" name="09">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="10/catalog.xml" xlink:title="10" ID="meps25epsarchive/2026/07/15/10" name="10">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="11/catalog.xml" xlink:title="11" ID="meps25epsarchive/2026/07/15/11" name="11">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="12/catalog.xml" xlink:title="12" ID="meps25epsarchive/2026/07/15/12" name="12">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="13/catalog.xml" xlink:title="13" ID="meps25epsarchive/2026/07/15/13" name="13">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="14/catalog.xml" xlink:title="14" ID="meps25epsarchive/2026/07/15/14" name="14">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="15/catalog.xml" xlink:title="15" ID="meps25epsarchive/2026/07/15/15" name="15">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="16/catalog.xml" xlink:title="16" ID="meps25epsarchive/2026/07/15/16" name="16">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="17/catalog.xml" xlink:title="17" ID="meps25epsarchive/2026/07/15/17" name="17">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="18/catalog.xml" xlink:title="18" ID="meps25epsarchive/2026/07/15/18" name="18">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="19/catalog.xml" xlink:title="19" ID="meps25epsarchive/2026/07/15/19" name="19">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="20/catalog.xml" xlink:title="20" ID="meps25epsarchive/2026/07/15/20" name="20">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="21/catalog.xml" xlink:title="21" ID="meps25epsarchive/2026/07/15/21" name="21">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="22/catalog.xml" xlink:title="22" ID="meps25epsarchive/2026/07/15/22" name="22">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+    <catalogRef xlink:href="23/catalog.xml" xlink:title="23" ID="meps25epsarchive/2026/07/15/23" name="23">
+      <property name="DatasetScan" value="true" />
+    </catalogRef>
+  </dataset>
+</catalog>

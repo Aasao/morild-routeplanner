@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" name="THREDDS Server met.no Catalogue" version="1.2">
+  <service name="allServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="httpService" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <service name="virtualServices" serviceType="Compound" base="">
+    <service name="thisDODS" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+    <service name="wcs" serviceType="WCS" base="/thredds/wcs/" />
+  </service>
+  <dataset name="ROMS NorKyst v3 coastal ocean forecasting system">
+    <metadata inherited="true">
+      <serviceName>virtualServices</serviceName>
+      <authority>no.met</authority>
+      <dataFormat>NetCDF</dataFormat>
+      <documentation type="rights">CC BY 3.0: http://creativecommons.org/licenses/by/3.0</documentation>
+    </metadata>
+    <catalogRef xlink:href="/thredds/catalog/fou-hi/norkystv3_his_files/catalog.xml" xlink:title="ROMS Norkyst v3 ZDepth Hourly Files" ID="norkystv3_his_files" name="ROMS Norkyst v3 ZDepth Hourly Files">
+      <property name="DatasetScan" value="true" />
+      <metadata inherited="true">
+        <serviceName>allServices</serviceName>
+      </metadata>
+    </catalogRef>
+    <dataset name="ROMS Norkyst800m ZDepths Hourly Aggregation Best Estimates - reference member 00" ID="norkystv3_800m_m00_be" urlPath="fou-hi/norkystv3_800m_m00_be">
+      <dataType>Grid</dataType>
+      <metadata inherited="true">
+        <serviceName>virtualServices</serviceName>
+      </metadata>
+    </dataset>
+    <dataset name="ROMS Norkyst160m ZDepths Hourly Aggregation Best Estimates - two-way nested member 70 Sulafjord" ID="norkystv3_160m_m70_be" urlPath="fou-hi/norkystv3_160m_m70_be">
+      <dataType>Grid</dataType>
+      <metadata inherited="true">
+        <serviceName>virtualServices</serviceName>
+      </metadata>
+    </dataset>
+    <dataset name="ROMS Norkyst160m ZDepths Hourly Aggregation Best Estimates - two-way nested member 71 Oslofjord" ID="norkystv3_160m_m71_be" urlPath="fou-hi/norkystv3_160m_m71_be">
+      <dataType>Grid</dataType>
+      <metadata inherited="true">
+        <serviceName>virtualServices</serviceName>
+      </metadata>
+    </dataset>
+  </dataset>
+</catalog>
