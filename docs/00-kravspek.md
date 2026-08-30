@@ -254,7 +254,7 @@ dekkes av derating + kryssandel).
 | B1 | Dypgang | **BESLUTTET 2026-08-30: 2,10 m (standardkjøl)**; margin 0,5 m + sjøgangstillegg |
 | B2 | Batch-jobbens hjem | **BESLUTTET 2026-08-30: GitHub Actions cron, offentlig repo**, lokal PC som fallback (→ ADR-0003) |
 | B3 | Robusthets-UI | **BESLUTTET 2026-08-30: trafikklys + P90-plantid + beslutningsregel**; statistikk bak trykk |
-| B4 | Cloudflare Workers-plan | Usikker — **verifiseres med wrangler i fase 0** før cron-/CPU-avhengige valg låses |
+| B4 | Cloudflare Workers-plan | **Delvis lukket 2026-08-30:** wrangler-innlogging verifisert; plannivå bekreftes ved første deploy. B2 (batch i GitHub Actions) gjør spørsmålet lite kritisk — Workeren er kun proxy/cache og lever på gratisplan om nødvendig |
 | B5 | Sverige-ambisjon | **VEDTATT med godkjenningen:** «usikkert»-nivå + sterk farled-bias |
 | B6 | Tilgangsmodell | Avgjøres i ADR (fase 0/5): Access foran Worker-API vs. API-nøkkel |
 | B7 | Motorverdier | **BESLUTTET 2026-08-30: standard 7,0 kn / 4,0 l/t, alltid justerbart i UI**; kalibreres mot logg |
