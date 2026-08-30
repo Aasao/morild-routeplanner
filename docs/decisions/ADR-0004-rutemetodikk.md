@@ -1,8 +1,8 @@
 # ADR-0004: Rutemetodikk — isokron-kjerne med fire korreksjoner fra v1
 
-- Status: **foreslått** (venter på Magnus' godkjenning)
+- Status: **godkjent 2026-08-30 av Magnus**
 - Dato: 2026-08-30
-- Besluttet av: agent-forslag som venter (rutemotor-agent)
+- Besluttet av: Magnus, 2026-08-30 (via strukturert spørsmål; alle punkter etter agentens anbefaling)
 
 ## Kontekst
 
@@ -260,8 +260,8 @@ Slik ser vi i koden at beslutningen faktisk følges:
    kartpakke. Hver algoritmeendring krever ny kjøring med forklart diff i
    spec-ens endringslogg.
 
-Full utdyping i `docs/specs/rutemotor.md` (utkast — avventer godkjenning av
-denne ADR-en).
+Full utdyping i `docs/specs/rutemotor.md` (gjeldende — ADR-0004 godkjent
+2026-08-30).
 
 ## Kilder
 

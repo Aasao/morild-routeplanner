@@ -1,12 +1,11 @@
 # Spec: rutemotor (`packages/routing`)
 
-> **UTKAST — avventer ADR-0004-godkjenning.**
+> **Gjeldende (ADR-0004 godkjent 2026-08-30).**
 > Denne spec-en implementerer `docs/decisions/ADR-0004-rutemetodikk.md`, som
-> har status «foreslått». Ingen kode i `packages/routing` skrives før ADR-en
-> er godkjent av Magnus. Endres ADR-en, endres denne spec-en i samme slengen,
-> med datert endringslogg nederst.
+> Magnus godkjente 2026-08-30. Endres ADR-en, endres denne spec-en i samme
+> slengen, med datert endringslogg nederst.
 
-- Status: utkast
+- Status: gjeldende (ADR-0004 godkjent 2026-08-30)
 - Dato: 2026-08-30
 - Fase: 2 (`docs/01-prosjektplan.md`)
 - Pakke: `packages/routing`, med `packages/geo`, `packages/polar` og
@@ -920,48 +919,69 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
    utkastingen (mer forutsigbart, men kaster kanskje ut nettopp den ruten
    brukeren ville foretrukket). **Spørsmål til Magnus: hva er riktigst — at
    motoren leter der du bryr deg, eller at den leter likt uansett?**
+   **BESLUTTET 2026-08-30 (Magnus):** nøytrale faste vekter i søket;
+   brukerens vekter styrer kun rangering/presentasjon, ikke utkastingen.
 2. **Trenger kostnadsvektoren en femte dimensjon «kryss i mørket»?** F3.4 vil
    vise kryss-timer i mørket separat. Utledet fra `beatS` og `nightS` er det
    ikke — de to kan overlappe vilkårlig. Vi foreslår å **beregne den som eget
    felt i `totals`** (fra `steps`) uten å ta den inn i Pareto-vektoren, siden
    en femte dimensjon øker antall ikke-dominerte etiketter merkbart. Bekreftes.
+   **BESLUTTET 2026-08-30 (Magnus):** beregnes i `totals` (fra `steps`),
+   holdes UTE av Pareto-vektoren — dette er Magnus' tekniske valg,
+   konsistent med de nøytrale søkevektene i spm. 1.
 3. **ε-dominans:** aktiveres den, og med hvilke konstanter? Standard er av
    (§4.6). Bør vurderes hvis måling 2 i §7 viser etikett-eksplosjon i
-   skjærgård.
+   skjærgård. **BESLUTTET 2026-08-30 (Magnus):** av som standard;
+   revurderes kun ved målt etikett-eksplosjon.
 4. **`tubMarginFrac = 0,25`** er et gjetningsbasert startpunkt. Riktig verdi
    må måles: hvor mye Pareto-materiale mister vi ved 0 / 0,1 / 0,25 / ∞?
+   **BESLUTTET 2026-08-30 (Magnus):** kalibreres empirisk i implementasjonen
+   (golden-målinger), ikke besluttet på forhånd.
 5. **Sektorantall 8 vs. 12 vs. 16** — låst til 8 i v2.0, men skal måles på
    Bohuslän-tilfellet (§7 måling 2) før tallet regnes som endelig. Samme
    spørsmål: bør **halseside** likevel bli en egen nøkkeldimensjon (×2) hvis
-   kryssruter viser seg dårlige?
+   kryssruter viser seg dårlige? **BESLUTTET 2026-08-30 (Magnus):** start 8;
+   12/16 kun hvis golden-avvik viser behov.
 6. **Skal kjeglen fjernes helt fra koden**, eller beholdes som en `undefined`
    -som-standard sikkerhetsventil? Spec-en velger det siste (kode som ligger
    der og ikke brukes er en risiko i seg selv, men å måtte skrive den på nytt
-   i felt er verre). Bekreftes.
+   i felt er verre). Bekreftes. **BESLUTTET 2026-08-30 (Magnus):** beholdes
+   som valgfri sikkerhetsventil, av som standard (som ADR-en sier).
 7. **v1s stagnasjonsvakt på 80 iterasjoner** ble kalibrert mot v1s skalare
    pruning. Med Pareto-etiketter forbedres «beste avstand til mål» kanskje
    sjeldnere fordi flere etiketter overlever i bredden. Terskelen må
    re-kalibreres mot golden-rutene — 80 er et startpunkt, ikke en fasit.
+   **BESLUTTET 2026-08-30 (Magnus):** kalibreres empirisk i implementasjonen
+   (golden-målinger), ikke besluttet på forhånd.
 8. **`tssCrossMinDeg = 60°`.** Regel 10 sier «så nær rett vinkel som praktisk
    mulig», ikke et tall. Hvilken vinkel er riktig for en 41-fots seilbåt som
    krysser Skagen-TSS-en i bidevind? **Dette berører sikkerhets-/regelsemantikk
-   og skal ikke besluttes av en agent.**
+   og skal ikke besluttes av en agent.** **BESLUTTET 2026-08-30 (Magnus): ±30°
+   fra tvers (kurs 60–120° på ledretningen godtas).**
 9. **Maks sammenhengende etappetid (F3.4, mannskapstak).** Dette er en
    sti-historikk-egenskap («tid siden siste brukbare havn»), ikke en
    node-egenskap — å håndheve det hardt i søket krever en femte
    tilstandsdimensjon og er tett koblet til bail-out-listen (F4.6, fase 4).
    **Forslag: i v2.0 håndheves det som en etterfilter/flagging på ferdige
    ruter, ikke som en hard constraint i søket.** Bekreftes.
+   **BESLUTTET 2026-08-30 (Magnus):** etterfilter/flagging i v2.0 (som
+   foreslått).
 10. **Sjøgangstillegget (F1.2)** kan ikke gjøre en statisk maske strengere i
     ettertid. Vi flagger (§6). Er det godt nok, eller skal kartpakken bygges i
     to marginvarianter (0,5 m og 0,5 m + typisk sjøgang) som motoren velger
     mellom per segment? Avhenger av `specs/farbarhetsmaske.md`.
+    **BESLUTTET 2026-08-30 (Magnus): avvis når bølgedata finnes** —
+    Hs-tillegget går inn i klaringstallet ved oppslag; flagg der data
+    mangler.
 11. **Golden-fiksturer med ekte MEPS-data** finnes ikke før fase 3 (F2.5).
     Bekreft at syntetiske, deterministiske felt er akseptabelt som
     golden-grunnlag i fase 2, med bytte til ekte uttrekk i fase 3.
+    **BESLUTTET 2026-08-30 (Magnus):** ja — syntetiske deterministiske felt i
+    fase 2, ekte MEPS-uttrekk i fase 3.
 12. **Dagslys-ankomst:** gjelder det hardt kun sluttankomsten, eller også
     anløp av mellomhavner? v2.0 har ikke mellomhavner i rutemodellen, så
-    spec-en antar **kun sluttankomst**. Bekreftes.
+    spec-en antar **kun sluttankomst**. Bekreftes. **BESLUTTET 2026-08-30
+    (Magnus):** ja — kun sluttankomst i v2.0.
 13. **Grensesnittnavnene i §4.1** må avstemmes mot
     `docs/specs/farbarhetsmaske.md` når den lander.
 
@@ -969,6 +989,11 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- **2026-08-30 — ADR-0004 godkjent; §9 avklart.** Magnus godkjente
+  ADR-0004 (via strukturert spørsmål, alle punkter etter anbefaling).
+  Spec-status endret fra utkast til gjeldende. §9 spm. 1, 2, 3, 5, 6, 8, 9,
+  10, 11, 12 markert BESLUTTET; spm. 4 og 7 besluttet kalibrert empirisk i
+  implementasjonen (golden-målinger), ikke låst på forhånd.
 - **2026-08-30 — utkast v0.1.** Første versjon, skrevet mot
   `docs/decisions/ADR-0004-rutemetodikk.md` (status foreslått). Ingen kode
   skrives før ADR-en er godkjent. Grensesnittet mot farbarhetsmasken (§4.1)

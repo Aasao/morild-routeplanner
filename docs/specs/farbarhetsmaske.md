@@ -487,11 +487,20 @@ ikke tåler samme størrelse. Foreslåtte, **ikke verifiserte** tall:
 
 ## 8. Åpne spørsmål til Magnus
 
+**Sjøgang (jf. `docs/specs/rutemotor.md` §9 spm. 10) — BESLUTTET 2026-08-30
+(Magnus):** klaringstallet som sendes inn ved oppslag (`kravTilDybdeM` i
+§3.6s `ChartSource`-kontrakt) skal inkludere Hs-tillegget f(Hs); der
+bølgedata finnes, gir det **hard avvisning** (`no-go`) på samme måte som
+resten av klaringskravet, ikke bare et flagg. Der bølgedata mangler,
+flagges segmentet i stedet (§5-mønsteret for degradering).
+
 1. **Luftspenn-datum (høy prioritet, sikkerhetskritisk):** hvilken
    vannstandsreferanse bruker Kartverkets «Sjøkart – maritim
    infrastruktur»-datasett for oppgitt fri høyde under bruer/luftspenn?
    Feil antakelse her er en direkte mastehøyde-sikkerhetsfeil, ikke bare en
-   unøyaktighet.
+   unøyaktighet. **Uavklart 2026-08-30 — konservativ regel inntil
+   verifisert:** et luftspenn med uverifisert datum gir maks `usikkert`,
+   aldri `trygt`; verifiseres mot Kartverket før regelen kan lempes.
 2. **Datakvalitetslaget:** finnes Kartverkets sjøkart-datakvalitet som
    maskinlesbart vektorlag/attributt, eller kun som WMS-rasterbilde? Dette
    avgjør om §3.4 steg 4s `trygt`-gate er byggbar som spesifisert eller må
@@ -500,28 +509,36 @@ ikke tåler samme størrelse. Foreslåtte, **ikke verifiserte** tall:
 3. **Skjær-/grunne-buffer-radius:** 15–25 m foreslått i §4 steg 4 — hvilket
    tall gjenspeiler faktisk posisjonsusikkerhet i Kartverkets
    50 m-graderte punkttetthet, og bør det variere med sondering-alder?
+   **BESLUTTET 2026-08-30 (Magnus), foreløpig:** standard **20 m**,
+   konfigurerbar — markert «foreløpig, Magnus kan justere», ikke eksplisitt
+   låst.
 4. **Miljødirektoratets Naturbase-API:** krever trolig forhåndsavtale
    («all bruk av API-et skal avtales med Miljødataseksjonen på forhånd») —
    skal dette avklares nå (fase 0/1) eller skal norske kystverneområder
-   utsettes til svenske Bohuslän-soner er på plass?
+   utsettes til svenske Bohuslän-soner er på plass? **BESLUTTET 2026-08-30
+   (Magnus):** utsettes; v2.0 bruker statiske uttrekk.
 5. **UI-skille mellom «mangler kartdekning» og «kartlagt no-go»:** §5
    krever at disse ikke vises likt, men denne spec-en definerer ikke
    symbolikken — hører det til `specs/kartvisning.md` (ikke skrevet ennå),
    eller skal et minimumskrav (f.eks. skravur vs. fylt rødt) fastsettes her?
 6. **Gammel-pakke-terskelen** (12 måneder foreslått i §5) — fornuftig, eller
    bør den kobles til en kjent Kartverket-revisjonssyklus/Efs-frekvens i
-   stedet for et fast tall?
+   stedet for et fast tall? **BESLUTTET 2026-08-30 (Magnus):** ja
+   (12 måneder).
 7. **`tools/arch-tests`-utvidelse:** bør `packages/charts` legges til
    `ALLOWED_PACKAGE_IMPORTS`-grensesnittet i
    `tools/arch-tests/import-boundaries.ts` på samme måte som
    `packages/geo`/`packages/routing` nå (ren, ingen I/O, ingen
    `packages/weather`-import)? Dette er en implementasjonsdetalj, men
-   bør besluttes før `packages/charts` får ekte kode.
+   bør besluttes før `packages/charts` får ekte kode. **BESLUTTET
+   2026-08-30 (Magnus):** ja — implementeres i fase 1-bygget.
 8. **Turf vs. geos-wasm:** er en dedikert liten fase 1-spike (prøvekjør
    turf mot en ekte Kartverket-eksport, se om boolsk algebra holder) verdt
    en dags arbeid før hele pipelinen legges opp rundt turf, slik
-   THREDDS-/ensemble-spikene ble gjort for værsiden?
+   THREDDS-/ensemble-spikene ble gjort for værsiden? **BESLUTTET 2026-08-30
+   (Magnus):** ja, én dags spike først i chart-pack-bygget.
 9. **Svensk hovedled-ekvivalent:** finnes det et åpent, maskinlesbart
    farled-datasett for svensk skjærgård (tilsvarende Kystverkets
    `Hovedled og biled`) som kan gi farled-bias i Bohuslän, eller må det
    leses ut av OpenSeaMap-tagging (lavere kvalitet, jf. research §3)?
+   **BESLUTTET 2026-08-30 (Magnus):** undersøkes i fase 1-implementasjonen.

@@ -268,6 +268,15 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-08-30 (tillegg etter godkjenning):** `docs/decisions/ADR-0004-rutemetodikk.md`
+  (rutemetodikk) godkjent av Magnus. Tekniske avklaringer besluttet samme
+  dag: TSS-krysningsvinkel **±30° fra tvers** (kurs 60–120° på
+  ledretningen godtas, F1.5/F3.4), **nøytrale faste søkevekter** i
+  rutemotoren (brukervekter styrer kun rangering/presentasjon, ikke
+  søkerommet, F3.4), og **hard avvisning ved sjøgang** når bølgedata
+  finnes (Hs-tillegget inngår i klaringstallet ved oppslag, F1.2). Se
+  `docs/specs/rutemotor.md` §9 og `docs/specs/farbarhetsmaske.md` §8 for
+  full liste over avklaringer.
 - **v1.0 (2026-08-30): GODKJENT.** Motorstandard justert til 7,0 kn /
   4,0 l/t (alltid justerbart i UI). B1–B3, B5, B7, B8 lukket; B4
   verifiseres i fase 0; B6 avgjøres i ADR. Norske apper fra Båtens
