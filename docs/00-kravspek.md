@@ -52,6 +52,11 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
 
 ### F1 Kart og farbarhet (kjerne 1: «kart som tolkes»)
 
+- **F1.0** **Prefabrikkert-prinsipp** (Magnus' føring 2026-08-30): all
+  kystlinje-, dybde- og farbarhetsprosessering skjer i byggetid
+  (chart-pack-pipeline → ferdige pakker i R2) — aldri runtime-henting/
+  -beregning i klienten slik v1 gjorde med Overpass. Klienten laster kun
+  ferdigberegnede, versjonerte pakker.
 - **F1.1** Farbarhetsmaske for norske farvann fra Kartverkets åpne vektordata
   (dybdepunkt, dybdekurver, tørrfall, grunne, skjær) + Kystverkets farleder.
   **V1-semantikk: ren polygonalgebra** — sjøareal ∖ (areal grunnere enn
@@ -122,11 +127,16 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
 
 ### F3 Rutemotor
 
-- **F3.1** v1s isokron-søk portert til testet TypeScript (celle-pruning,
-  bautstraff, segmentvis sikkerhetsettersjekk mot fin maske). **A*-feltet er
-  et heuristikkfelt på grov oppløsning (500 m–1 km)** med farbarhet som
-  kant-stenging — dekoblet fra maskens oppløsning (arver ellers v1s stengte
-  sund eller minneeksplosjon). Ren, deterministisk kjerne.
+- **F3.1** Rutemotoren designes fra **beste praksis og teori** (metodikk-
+  gjennomgang → ADR før implementasjon: isokron-familien er bransjestandard
+  for seilruting, men graf-/tidsekspanderte alternativer og nyere
+  litteratur vurderes eksplisitt). **v1 er referanse og fasit-baseline** —
+  innsiktene derfra (celle-pruning, bautstraff, A*-vannavstandsfelt på grov
+  oppløsning 500 m–1 km dekoblet fra maskens, segmentvis
+  sikkerhetsettersjekk, stagnasjonsvakt) tas med der metodikkgjennomgangen
+  bekrefter dem, ikke portert ukritisk. Ren, deterministisk kjerne.
+  *(Presisert etter Magnus' føring 2026-08-30: ikke legg for mye vekt på
+  v1s løsninger.)*
 - **F3.2** Båtmodell fra v1: polarer (PTE/GTE), cruising-faktor, motorseiling
   m/drivstoff (standard **7,0 kn / 4,0 l/t**, alltid justerbart i UI —
   besluttet 2026-08-30), maks TWS. Bølgegrenser og derating som funksjon av

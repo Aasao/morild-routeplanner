@@ -63,10 +63,17 @@ Android-nettbrett via Pages-preview. — *Agenter: kartdata (spec+pipeline),
 implementer, qa-runner, code-reviewer. Modell: sonnet; geometrialgoritmer
 som blir vanskelige → rutemotor-agent (opus).*
 
-### Fase 2 — Rutemotor-port + polar-kalibrering
-**Mål:** v1-motoren som testet, ren TypeScript-pakke — nå mot farbarhetsmaske.
-- Spec: `specs/rutemotor.md` (port-plan fra v1-funksjonsanalysen, semantiske
-  endringer eksplisitt: farbarhet i stedet for kystlinje).
+### Fase 2 — Rutemotor + polar-kalibrering
+**Mål:** rutemotor bygget på beste praksis, som testet, ren TypeScript-pakke
+mot farbarhetsmaske. (Magnus' føring 2026-08-30: v1 er referanse/baseline,
+ikke porteringsmål.)
+- **Metodikk-gjennomgang først** (rutemotor-agent + research: akademisk
+  litteratur fra vaerdata-ensemble.md §7, Expedition/qtVlm/OpenCPN-praksis,
+  isokron vs. graf-/tidsekspanderte metoder) → **ADR-0004 rutemetodikk**
+  før spec.
+- Spec: `specs/rutemotor.md` (valgt metodikk; v1-innsikter tas inn der
+  gjennomgangen bekrefter dem; semantiske endringer eksplisitt: farbarhet i
+  stedet for kystlinje).
 - `packages/geo`, `packages/polar`, `packages/routing` med enhetstester;
   golden-route-harness (frosne værfelt i testdata).
 - Golden-tester sammenligner geometri/tid med toleranse, ikke bit-eksakt
