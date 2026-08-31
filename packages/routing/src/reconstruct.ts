@@ -19,22 +19,36 @@ import {
   FLAG_KRYSS,
   FLAG_MOTOR,
   FLAG_NATT,
+  FLAG_USIKKER_TILLIT,
   flagNames,
   scaledRankingWeights,
 } from "./cost.js";
 import { daylightArrival } from "./daylight.js";
+import { courseToSteer, DEFAULT_EVALUATE_OPTIONS } from "./evaluate.js";
+import {
+  checkHardNode,
+  checkSegment,
+  checkTssStep,
+  environmentAt,
+  MIN_SPEED_KN,
+  softContribution,
+  stepKinematics,
+} from "./expand.js";
 import type { LabelStore } from "./label-store.js";
 import type { RouteOptions } from "./options.js";
 import type {
   AbortReason,
+  FinalLegStatus,
   IsochroneSnapshot,
   RouteAlternative,
+  RouteFinalLeg,
   RouteLeg,
   RouteResult,
   RouteStep,
   SegmentRef,
 } from "./result.js";
 import type { RouteInput } from "./search.js";
+import { tackOf, tackPenaltyS } from "./tack.js";
 import type { TssRuleParams } from "./tss.js";
 import { applyTssRule, DEFAULT_TSS_PARAMS } from "./tss.js";
 
@@ -254,6 +268,31 @@ export function recheckRoute(
   return { failing, flagged };
 }
 
+/**
+ * Ender ruten faktisk i målet? Det er **ikke** det samme som `reached`, som
+ * bare sier at søket fant en etikett innenfor `reachRadius` — sluttetappen
+ * (§5.8) kan ha blitt avvist etterpå, og da stopper ruten `shortfallNm` unna.
+ */
+export function reachesDestination(status: FinalLegStatus): boolean {
+  return status === "lagt-til" || status === "ikke-nodvendig";
+}
+
+/**
+ * Ble sluttetappen aktivt avvist av en av sjekkene i §5.8? Skiller seg fra
+ * `!reachesDestination(...)` ved at `"ikke-forsokt"` ikke teller: der nådde
+ * søket aldri målet i det hele tatt, og `reached: false` sier det allerede
+ * høyt på toppnivå. Det farlige tilfellet er nettopp motsigelsen
+ * `reached: true` + avvist sluttetappe.
+ */
+export function finalLegWasRejected(status: FinalLegStatus): boolean {
+  return (
+    status === "avvist-farbarhet" ||
+    status === "avvist-vaer" ||
+    status === "avvist-baatgrenser" ||
+    status === "avvist-fart"
+  );
+}
+
 /** Ikke-dominerte etiketter i en mengde, i input-rekkefølge. */
 function nonDominated(arena: LabelArena, indices: readonly number[]): number[] {
   const out: number[] = [];
@@ -294,12 +333,56 @@ export function buildResult(ctx: ResultContext): RouteResult {
     // Total komparator — arena-indeksen er alltid unik.
     return a - b;
   });
-  const primary = ranked[0] ?? ctx.bestIndex;
+  const fallback = ranked[0] ?? ctx.bestIndex;
 
-  const rawSteps = labelChain(arena, primary).map((index, i) =>
-    stepFrom(arena, index, input.departEpochS, i === 0),
-  );
-  const withEnd = appendDirectFinalStep(rawSteps, ctx);
+  /** Kjeden fram til en kandidat, med sluttetappen påført. */
+  const assemble = (index: number): DirectFinalStep =>
+    appendDirectFinalStep(
+      labelChain(arena, index).map((i, at) =>
+        stepFrom(arena, i, input.departEpochS, at === 0),
+      ),
+      ctx,
+    );
+
+  /**
+   * R4 (funn 2026-08-31): søkets dagslyssjekk (§5.3 steg 16) måler på
+   * etiketten *før* den direkte sluttetappen er lagt på — en teleportering
+   * inn til målet. Med reell sluttetappetid kan ankomsten falle utenfor
+   * dagslysvinduet likevel. Vi velger derfor primærrute blant de
+   * ikke-dominerte kandidatene som fortsatt holder kravet med reell
+   * ankomsttid. Holder ingen, returneres den best rangerte likevel, men med
+   * `totals.violatesDaylightRequirement` satt — ruten leveres aldri stille.
+   *
+   * **Funn 1a (code-review runde 2, 2026-08-31):** kandidaten må i tillegg
+   * faktisk *nå målet*. Uten det kravet kunne en kandidat med avvist
+   * sluttetappe «vinne» dagslyskravet nettopp fordi den stopper tidlig — den
+   * stanser et stykke unna, og «ankomsten» er da bare tidspunktet den ga
+   * opp. En rute som ikke kommer fram har ikke oppfylt et krav om ankomst i
+   * dagslys, og skal aldri kunne slå en rute som faktisk kommer fram.
+   */
+  let primary = fallback;
+  let withEnd: DirectFinalStep | undefined;
+  if (opts.requireDaylightArrival && ctx.reached) {
+    let first: DirectFinalStep | undefined;
+    for (const candidate of ranked) {
+      const attempt = assemble(candidate);
+      first ??= attempt;
+      if (!reachesDestination(attempt.finalLeg.status)) continue;
+      const end = attempt.steps[attempt.steps.length - 1];
+      if (
+        end !== undefined &&
+        daylightArrival(end.lat, end.lon, end.epochS).isDaylight
+      ) {
+        primary = candidate;
+        withEnd = attempt;
+        break;
+      }
+    }
+    // Ingen kandidat nådde målet i dagslys: behold den best rangerte, og la
+    // `violatesDaylightRequirement` + `safety` fortelle det.
+    withEnd ??= first;
+  }
+  withEnd ??= assemble(primary);
   const steps = withEnd.steps;
 
   const consolidated = consolidateSteps(steps, input.mask, opts.tssParams);
@@ -308,21 +391,39 @@ export function buildResult(ctx: ResultContext): RouteResult {
 
   const totalsBase = totalsFromSteps(steps, ctx);
   const arrivalEpochS = input.departEpochS + totalsBase.durationS;
+  // Dagslys måles der ruten faktisk ender — ikke i målet når sluttetappen ble
+  // avvist og ruten stopper et stykke unna.
+  const endPoint = steps[steps.length - 1] ?? input.dest;
   const arrival = daylightArrival(
-    input.dest.lat,
-    input.dest.lon,
+    endPoint.lat,
+    endPoint.lon,
     arrivalEpochS,
   );
 
   const { failing, flagged } = recheckRoute(legs, input.mask, opts);
   const maskCoverage = input.mask?.coverage ?? "none";
   const recheckPassed = input.mask !== undefined && failing.length === 0;
-  const verdict: RouteResult["safety"]["verdict"] =
+  const endsAtDest = reachesDestination(withEnd.finalLeg.status);
+  const segmentVerdict: RouteResult["safety"]["verdict"] =
     input.mask === undefined || failing.length > 0
       ? "usikker-rute"
       : flagged.length > 0 || maskCoverage !== "full"
         ? "usikkert"
         : "trygt";
+  /**
+   * Funn 1b (code-review runde 2, 2026-08-31): en avvist sluttetappe skal
+   * ikke kunne skjule seg bak et rent «trygt». Segmentene i ruten kan godt
+   * alle være farbare — men når `reached: true` samtidig som ruten stopper
+   * `shortfallNm` fra havn, er «trygt» en sannhet som villeder. Gulvet er
+   * derfor `usikkert`, og `safety.reachesDestination` sier det maskinlesbart.
+   * Vi hever ikke til `usikker-rute`: ingen del av ruten som faktisk tegnes
+   * er farlig, og å blande sammen «farlig linje» med «kom ikke fram» ville
+   * gjort begge signalene mindre nyttige.
+   */
+  const verdict: RouteResult["safety"]["verdict"] =
+    finalLegWasRejected(withEnd.finalLeg.status) && segmentVerdict === "trygt"
+      ? "usikkert"
+      : segmentVerdict;
 
   const alternatives = buildAlternatives(ctx, front, primary, rankingWeights);
 
@@ -335,12 +436,18 @@ export function buildResult(ctx: ResultContext): RouteResult {
       ...totalsBase,
       arrivalEpochS,
       daylightArrival: arrival.isDaylight,
+      // Kravet er «ankomst *i målet* i dagslys». En rute som stopper før
+      // målet har ikke oppfylt det, uansett hvor lyst det er der den stoppet.
+      violatesDaylightRequirement:
+        opts.requireDaylightArrival && (!arrival.isDaylight || !endsAtDest),
       exceedsMaxContinuousLeg:
         opts.maxContinuousLegS !== undefined &&
         totalsBase.durationS > opts.maxContinuousLegS,
     },
+    finalLeg: withEnd.finalLeg,
     safety: {
       verdict,
+      reachesDestination: endsAtDest,
       recheckPassed,
       failingSegments: failing,
       flaggedSegments: flagged,
@@ -366,85 +473,207 @@ export function buildResult(ctx: ResultContext): RouteResult {
   };
 }
 
+interface DirectFinalStep {
+  readonly steps: RouteStep[];
+  readonly hasDirectEnd: boolean;
+  readonly finalLeg: RouteFinalLeg;
+}
+
+function rejectedFinalLeg(
+  out: RouteStep[],
+  status: FinalLegStatus,
+  reason: string,
+  shortfallNm: number,
+): DirectFinalStep {
+  return {
+    steps: out,
+    hasDirectEnd: false,
+    finalLeg: { status, reason, shortfallNm },
+  };
+}
+
 /**
  * Direkte sluttetappe (v1-arv): når målet er nådd men siste punkt er mer enn
- * 0,3 nm unna, legges en etappe rett til målet — **kun** hvis segmentet er
- * farbart. Den merkes eksplisitt slik at UI kan si det.
+ * 0,3 nm unna, legges en etappe rett til målet — **kun** hvis den består de
+ * samme harde sjekkene som ethvert søkesteg. Den merkes eksplisitt
+ * `direkteSlutt: true` i `legs`, slik at UI kan si det.
+ *
+ * **Kinematikken er søkets egen** (`environmentAt` + `stepKinematics` +
+ * `softContribution`), ikke en kopi. Bug funnet 2026-08-31 av evaluatoren og
+ * fikset her: den gamle koden regnet fart uten strøm og uten fartssjekk, slik
+ * at `bspKn ≈ 0` (mål rett mot vinden, motor av) ga `extraS = 0` — full
+ * distanse uten tid i `totals`. En etappe båten ikke kan seile skal ikke være
+ * gratis; den skal ikke finnes.
+ *
+ * Avvises etappen, legges den **ikke** på. Ruten ender da ved siste ordinære
+ * steg, og `finalLeg` sier eksplisitt hvorfor og hvor langt unna målet den
+ * stoppet — samme ærlighetsfilosofi som `uoppnaelig-mal`-semantikken. Vi
+ * later aldri som om båten kom fram.
  */
 function appendDirectFinalStep(
   steps: readonly RouteStep[],
   ctx: ResultContext,
-): { steps: RouteStep[]; hasDirectEnd: boolean } {
+): DirectFinalStep {
   const out = [...steps];
-  if (!ctx.reached) return { steps: out, hasDirectEnd: false };
   const last = out[out.length - 1];
-  if (last === undefined) return { steps: out, hasDirectEnd: false };
+  if (!ctx.reached || last === undefined) {
+    const shortfallNm =
+      last === undefined ? 0 : haversineNm(last, ctx.input.dest);
+    return {
+      steps: out,
+      hasDirectEnd: false,
+      finalLeg: { status: "ikke-forsokt", reason: null, shortfallNm },
+    };
+  }
 
   const remainingNm = haversineNm(last, ctx.input.dest);
   if (remainingNm <= DIRECT_FINAL_LEG_THRESHOLD_NM) {
-    return { steps: out, hasDirectEnd: false };
-  }
-  // Den direkte sluttetappen må bestå de samme harde sjekkene som ethvert
-  // annet segment. Spec §5.8 nevner bare `segmentVerdict`, men TSS-regelen
-  // gjelder like fullt: golden-kjøringen av «tss-ved-skagen» ga
-  // `usikker-rute` fordi sluttetappen inn til Skagen la seg langs leden mot
-  // trafikkretningen. Etterbehandling skal aldri kunne innføre et brudd
-  // søket selv ville avvist.
-  const mask = ctx.input.mask;
-  if (
-    mask !== undefined &&
-    !mergeIsSafe(mask, last, destAsStep(ctx), ctx.opts.tssParams)
-  ) {
-    return { steps: out, hasDirectEnd: false };
+    return {
+      steps: out,
+      hasDirectEnd: false,
+      finalLeg: { status: "ikke-nodvendig", reason: null, shortfallNm: 0 },
+    };
   }
 
-  const headingDeg = bearing(last, ctx.input.dest);
-  const wind = ctx.input.weather.wind(last.lat, last.lon, last.epochS);
-  const waves = ctx.input.weather.waves(last.lat, last.lon, last.epochS);
-  const boat = ctx.input.boat;
-  let bspKn = 0;
-  let flags = last.flags & (FLAG_MOTOR | FLAG_NATT | FLAG_KRYSS);
-  if (wind !== undefined) {
-    const twa = angDiff(wind.fromDeg, headingDeg);
-    const waveF =
-      waves === undefined
-        ? 1
-        : boat.waveFactor(
-            waves.hsM,
-            waves.tpS,
-            waves.fromDeg === undefined
-              ? twa
-              : angDiff(waves.fromDeg, headingDeg),
-          );
-    bspKn = boat.boatSpeedKn(wind.speedKn, twa) * waveF;
-    if (boat.motorThresholdKn > 0 && bspKn < boat.motorThresholdKn) {
-      bspKn = boat.motorSpeedKn * waveF;
-      flags |= FLAG_MOTOR;
-    }
-    flags = twa < 60 ? flags | FLAG_KRYSS : flags & ~FLAG_KRYSS;
+  // Farbarhet og TSS. Spec §5.8 nevner bare `segmentVerdict`, men TSS-regelen
+  // gjelder like fullt: golden-kjøringen av «tss-ved-skagen» ga
+  // `usikker-rute` fordi sluttetappen inn til Skagen la seg langs leden mot
+  // trafikkretningen. Etterbehandling skal aldri kunne innføre et brudd søket
+  // selv ville avvist.
+  const mask = ctx.input.mask;
+  const dest = destAsStep(ctx);
+  const segment = checkSegment(mask, last, dest);
+  if (!segment.ok) {
+    return rejectedFinalLeg(out, "avvist-farbarhet", segment.reason, remainingNm);
   }
-  const extraS = bspKn > 0.1 ? Math.round((remainingNm / bspKn) * 3600) : 0;
-  const tS = last.tS + extraS;
-  const extraBeatS = (flags & FLAG_KRYSS) !== 0 ? extraS : 0;
-  const extraMotorS = (flags & FLAG_MOTOR) !== 0 ? extraS : 0;
-  const extraNightS = (flags & FLAG_NATT) !== 0 ? extraS : 0;
+  const tss = checkTssStep(mask, last, dest, ctx.opts.tssParams);
+  if (!tss.check.ok) {
+    return rejectedFinalLeg(
+      out,
+      "avvist-farbarhet",
+      tss.check.reason,
+      remainingNm,
+    );
+  }
+
+  const { weather, boat } = ctx.input;
+  if (last.epochS < weather.validFromS || last.epochS > weather.validToS) {
+    return rejectedFinalLeg(
+      out,
+      "avvist-vaer",
+      "sluttetappen starter utenfor værfeltets gyldige tidsvindu",
+      remainingNm,
+    );
+  }
+  const env = environmentAt(weather, last, last.epochS);
+  if (env === undefined) {
+    return rejectedFinalLeg(
+      out,
+      "avvist-vaer",
+      "ingen vinddata i rutens siste punkt",
+      remainingNm,
+    );
+  }
+  const nodeCheck = checkHardNode(env, boat);
+  if (!nodeCheck.ok) {
+    return rejectedFinalLeg(
+      out,
+      "avvist-baatgrenser",
+      nodeCheck.reason,
+      remainingNm,
+    );
+  }
+
+  // Kursen gjennom vannet som holder linjen mot målet etter strøm — samme
+  // styr-mot-veipunkt-semantikk som evaluatoren (§5.11).
+  const courseDeg = bearing(last, ctx.input.dest);
+  const steer = courseToSteer(
+    last,
+    courseDeg,
+    env,
+    boat,
+    ctx.opts.timeStepS,
+    DEFAULT_EVALUATE_OPTIONS.courseToSteerIterations,
+  );
+  const kin = stepKinematics(
+    last,
+    steer.headingDeg,
+    env,
+    boat,
+    ctx.opts.timeStepS,
+  );
+  if (kin === undefined) {
+    return rejectedFinalLeg(
+      out,
+      "avvist-fart",
+      `båten gjør ikke fart på kurs ${steer.headingDeg.toFixed(1)}° mot målet`,
+      remainingNm,
+    );
+  }
+  // Framdrift *mot målet*: fart over grunn projisert på peilingen. Lot vi
+  // strømmen sette båten sidelengs uten å korrigere for det (`corrected =
+  // false`), er projeksjonen mindre enn `sogKn` — og den skal det regnes med.
+  const madeGoodKn =
+    kin.sogKn * Math.cos((angDiff(kin.sogDirDeg, courseDeg) * Math.PI) / 180);
+  if (madeGoodKn <= MIN_SPEED_KN) {
+    return rejectedFinalLeg(
+      out,
+      "avvist-fart",
+      `ingen framdrift mot målet (${madeGoodKn.toFixed(2)} kn over grunn på peilingen)`,
+      remainingNm,
+    );
+  }
+
+  // Bautstraff som ethvert annet steg. Halsen inn til `last` regnes fra
+  // kursen inn dit og vinden i `last` — en tilnærming (søket brukte vinden i
+  // forelderen), men å utelate straffen ville underrapportert tid, som er
+  // nettopp bugen denne funksjonen fikser.
+  const sailS = (remainingNm / madeGoodKn) * 3600;
+  const penaltyS =
+    last.headingDeg === null
+      ? 0
+      : tackPenaltyS(
+          last.headingDeg,
+          steer.headingDeg,
+          tackOf(last.headingDeg, env.wind.fromDeg, ctx.opts.beatTwaDeg),
+          tackOf(steer.headingDeg, env.wind.fromDeg, ctx.opts.beatTwaDeg),
+          env.wind.speedKn,
+          ctx.opts.tackParams,
+        );
+
+  // Flagg og kostbidrag fra samme funksjon som søket bruker — det er her
+  // R5 (hardkodet 60°) forsvinner: `beatTwaDeg` er en parameter.
+  const contribution = softContribution(
+    kin,
+    env,
+    sailS,
+    penaltyS,
+    ctx.opts.beatTwaDeg,
+  );
+  const flags =
+    contribution.flags | tss.flags | (last.flags & FLAG_USIKKER_TILLIT);
+  const tS = last.tS + Math.round(contribution.dtS);
   out.push({
     lat: ctx.input.dest.lat,
     lon: ctx.input.dest.lon,
     tS,
     epochS: ctx.input.departEpochS + tS,
-    headingDeg,
-    beatS: last.beatS + extraBeatS,
-    motorS: last.motorS + extraMotorS,
-    nightS: last.nightS + extraNightS,
-    twsKn: wind?.speedKn ?? 0,
-    twdDeg: wind?.fromDeg ?? 0,
-    bspKn,
-    hsM: waves?.hsM ?? 0,
+    headingDeg: steer.headingDeg,
+    beatS: last.beatS + Math.round(contribution.beatS),
+    motorS: last.motorS + Math.round(contribution.motorS),
+    nightS: last.nightS + Math.round(contribution.nightS),
+    twsKn: env.wind.speedKn,
+    twdDeg: env.wind.fromDeg,
+    bspKn: kin.bspKn,
+    hsM: env.waves?.hsM ?? 0,
     flags,
     flagNames: flagNames(flags),
   });
-  return { steps: out, hasDirectEnd: true };
+  return {
+    steps: out,
+    hasDirectEnd: true,
+    finalLeg: { status: "lagt-til", reason: null, shortfallNm: 0 },
+  };
 }
 
 interface TotalsBase {

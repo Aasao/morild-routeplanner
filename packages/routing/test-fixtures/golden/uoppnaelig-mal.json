@@ -5,12 +5,15 @@
     "reached": false,
     "abortReason": "labelCap",
     "safetyVerdict": "trygt",
+    "reachesDestination": false,
     "recheckPassed": true,
     "failingSegmentCount": 0,
     "maskCoverage": "full",
     "weatherCoverage": "full",
     "fieldUsed": false,
-    "daylightArrival": true
+    "daylightArrival": true,
+    "finalLegStatus": "ikke-forsokt",
+    "violatesDaylightRequirement": false
   },
   "totals": {
     "durationS": 36028,

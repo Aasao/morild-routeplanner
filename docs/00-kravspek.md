@@ -268,6 +268,15 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-08-31 (beslutninger etter ekspertpanel-rundene, se
+  `docs/research/ekspertpanel-*.md`):** `Grunne`-punktfarer tolkes etter
+  VALSOU-modellen (no-go kun når angitt dybde < krav eller dybde mangler,
+  F1.1); ytelsesmålet for kontrollkjøring er §7-budsjettet <5 s på
+  nettbrett + progressiv tegning (F3.5) — <1 s forkastet; geometrisk
+  forenkling av sikkerhetspolygoner i routing-pakken forbys i
+  farbarhetsmaske-spec; golden-fasitpunkter verifiseres kart-først
+  (forventning notert før testkjøring). Ensemble-mekanismen (E1′)
+  avgjøres empirisk i målepakken før ADR-0005.
 - **2026-08-30 (tillegg etter godkjenning):** `docs/decisions/ADR-0004-rutemetodikk.md`
   (rutemetodikk) godkjent av Magnus. Tekniske avklaringer besluttet samme
   dag: TSS-krysningsvinkel **±30° fra tvers** (kurs 60–120° på

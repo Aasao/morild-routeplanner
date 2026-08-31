@@ -22,6 +22,7 @@ export * from "./tack.js";
 export * from "./tss.js";
 export * from "./daylight.js";
 export * from "./expand.js";
+export * from "./evaluate.js";
 export * from "./options.js";
 export * from "./result.js";
 export * from "./reconstruct.js";

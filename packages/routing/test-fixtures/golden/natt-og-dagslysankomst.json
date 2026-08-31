@@ -5,19 +5,22 @@
     "reached": true,
     "abortReason": null,
     "safetyVerdict": "trygt",
+    "reachesDestination": true,
     "recheckPassed": true,
     "failingSegmentCount": 0,
     "maskCoverage": "full",
     "weatherCoverage": "partial",
     "fieldUsed": true,
-    "daylightArrival": false
+    "daylightArrival": false,
+    "finalLegStatus": "lagt-til",
+    "violatesDaylightRequirement": false
   },
   "totals": {
-    "durationS": 29905,
+    "durationS": 29931,
     "distanceNm": 44.4021,
     "beatS": 0,
     "motorS": 0,
-    "nightS": 29905,
+    "nightS": 29931,
     "beatAtNightS": 0,
     "fuelL": 0
   },

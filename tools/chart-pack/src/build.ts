@@ -35,6 +35,7 @@ import {
   buildFarledZones,
   buildTilePayloads,
   subtractHazardsFromBands,
+  validateSoundingsAgainstBands,
 } from "./pipeline.js";
 
 const TESTDATA_RAW = join(import.meta.dirname, "..", "testdata", "raw");
@@ -135,6 +136,28 @@ function main(): void {
       `| Farled: ${farledZones.length} soner | Datakvalitet: ${dataQualityZones.length} soner`,
   );
 
+  // QA-validator (beslutning 2026-08-31, felle 2): sjekk Grunne-punktene
+  // (ground-truth-proxy for ekte dybdepunkt-soundinger, se pipeline.ts-
+  // kommentaren) mot de RÅ dybdebåndene FØR skjær/grunne trekkes fra dem —
+  // poenget er å avsløre kurve-/bånd-konstruksjonsfeil, ikke å teste
+  // sluttresultatet etter at hazard-geometrien allerede har skåret hull i
+  // bandet rundt akkurat disse punktene.
+  const soundingQa = validateSoundingsAgainstBands(bandResult.bands, grunne);
+  console.log(
+    `QA dybdepunkt-vs-bånd: ${soundingQa.violations.length} brudd av ${soundingQa.checkedCount} sjekkede Grunne-soundinger` +
+      (soundingQa.violations.length > 0
+        ? ` (se header.sourceStatus/layers[dybdebaand].sourceStatus for detaljer)`
+        : ""),
+  );
+  if (soundingQa.violations.length > 0) {
+    for (const v of soundingQa.violations.slice(0, 10)) {
+      console.warn(
+        `  BRUDD: ${v.featureId} sondert til ${v.soundedDepthM} m, men ligger i bånd ${v.bandLowerBoundM}-${v.bandUpperBoundM} m ` +
+          `ved (${v.point[1]}, ${v.point[0]})`,
+      );
+    }
+  }
+
   const allTiles = buildTilePayloads(
     bandsFinal,
     dryFallResult.zones,
@@ -183,7 +206,10 @@ function main(): void {
       reason:
         `${bandResult.skippedOpenRings} av ${dybdekurver.length} dybdekurver i testområdet er åpne ` +
         "(krysser kartbladgrense) og er utelatt fra dybdebåndene — se README 'Avvik fra spec'. " +
-        "Luftspenn/TSS/vernesone er ikke ingestert i denne bølgen.",
+        "Luftspenn/TSS/vernesone er ikke ingestert i denne bølgen. " +
+        `QA-validator (beslutning 2026-08-31): ${soundingQa.violations.length} av ` +
+        `${soundingQa.checkedCount} sjekkede dybdepunkt-soundinger er grunnere enn båndet de ` +
+        "geometrisk havner i (se README 'QA-validator').",
     },
     boundingBox: [10.6, 59.05, 11.0, 59.3],
     tileGrid: GRID,
@@ -195,10 +221,20 @@ function main(): void {
         datum: "K0",
         vintage: "2026-08-24",
         baselineTillit: "n/a",
-        sourceStatus: {
-          status: "degraded",
-          reason: `${bandResult.skippedOpenRings} åpne konturlinjer utelatt (se README)`,
-        },
+        sourceStatus:
+          soundingQa.violations.length > 0
+            ? {
+                status: "degraded",
+                reason:
+                  `${bandResult.skippedOpenRings} åpne konturlinjer utelatt (se README). ` +
+                  `QA-validator (beslutning 2026-08-31): ${soundingQa.violations.length} av ` +
+                  `${soundingQa.checkedCount} sjekkede dybdepunkt-soundinger er grunnere enn båndet ` +
+                  "de geometrisk havner i — mulig kurve-/topologifeil, se konsollogg for detaljer.",
+              }
+            : {
+                status: "degraded",
+                reason: `${bandResult.skippedOpenRings} åpne konturlinjer utelatt (se README)`,
+              },
       },
       {
         id: "torrfall",
@@ -220,8 +256,13 @@ function main(): void {
         id: "grunne",
         kilde: "Kartverket Sjøkart – Dybdedata (Grunne)",
         datum: "MHW",
+        // VALSOU-modellen (E4, beslutning 2026-08-31): Grunne setter ikke
+        // lenger en blank no-go-baseline — no-go avgjøres per punkt ved
+        // oppslag ut fra dybdeattributt (§3.4). "n/a" her er korrekt av
+        // samme grunn som TSS/luftspenn: laget bidrar ikke et fast
+        // tillitsnivå i seg selv.
+        baselineTillit: "n/a",
         vintage: "2026-08-24",
-        baselineTillit: "no-go",
         sourceStatus: { status: "ok" },
       },
       {

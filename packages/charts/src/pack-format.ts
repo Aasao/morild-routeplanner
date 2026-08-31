@@ -124,11 +124,39 @@ export interface DryFallZone {
   readonly polygon: PackedPolygon;
 }
 
-/** Skjær/grunne-punkt, allerede buffret til en polygon ved byggetid (§4 steg 4). */
+/**
+ * Skjær/grunne-punkt, allerede buffret til en polygon ved byggetid (§4 steg 4).
+ *
+ * **VALSOU-modellen (E4, beslutning 2026-08-31, se §3.4):** `dybdeM` bæres nå
+ * gjennom fra kildedataens `app:dybde`-attributt for `kind: "grunne"` — den
+ * avgjør ved OPPSLAGSTID (i `packages/charts`, ikke her ved byggetid) om
+ * punktet faktisk blokkerer: no-go kun når `dybdeM < kravTilDybdeM` eller
+ * `dybdeM` mangler, ellers ingen blokkering fra dette punktet alene. `Skjær`
+ * har ALDRI dybdeattributt i kildedataene (bekreftet i fase 1-bølge 2,
+ * 578 av 578 uten `app:dybde`) og forblir derfor alltid no-go uavhengig av
+ * `dybdeM` — feltet er kun meningsfullt for `kind: "grunne"`.
+ */
 export interface BufferedHazardPoint {
   readonly kind: "skjaer" | "grunne";
   readonly bufferRadiusM: number;
   readonly polygon: PackedPolygon;
+  /** Kun for `kind: "grunne"` — se VALSOU-merknaden over. `undefined` = ukjent dybde (no-go). */
+  readonly dybdeM?: number;
+  /**
+   * Kildepunktets opprinnelige posisjon, FØR buffring til `polygon` (R1-fiks,
+   * code-review 2026-08-31 — se §4.1 «Punkt+radius i stedet for ferdig-
+   * bufrede polygoner»). Bevares gjennom flisklipping uendret (i motsetning
+   * til `polygon`, som kan bli en avskåret sirkelbue ved flisgrensen).
+   * Brukes av `segmentTest()`s eksakte avstand-fra-kord-til-punkt-test mot
+   * `bufferRadiusM` — mer presist (ingen sirkel-tilnærmings-polygon å teste
+   * mot) OG mer konservativt (en sirkel omslutter alltid minst like mye areal
+   * som turfs innskrevne polygon-tilnærming) enn å teste korden mot
+   * `polygon`. Valgfri kun for bakoverkompatibilitet med håndbygde
+   * syntetiske testfiksturer fra før dette feltet fantes — ekte pakker bygget
+   * av `tools/chart-pack` setter det alltid.
+   */
+  readonly centerLon?: number;
+  readonly centerLat?: number;
 }
 
 /**

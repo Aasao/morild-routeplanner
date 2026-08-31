@@ -6,6 +6,7 @@ import {
   buildDryFallZones,
   buildTilePayloads,
   subtractHazardsFromBands,
+  validateSoundingsAgainstBands,
 } from "./pipeline.js";
 import { pointInFeature } from "./geometry.js";
 import * as turf from "@turf/turf";
@@ -97,6 +98,71 @@ describe("§6.1 skjær-buffer: punkt innenfor buffer-radius → no-go; rett uten
   });
 });
 
+describe("VALSOU-modellen: dybdeattributt bæres gjennom for Grunne, ikke Skjær (E4)", () => {
+  it("Grunne-punkt med dybdeattributt gir dybdeM i pakket BufferedHazardPoint", () => {
+    const grunnePunkt: PointFeature = { id: "grunne1", point: [10.7, 59.1], dybdeM: 4.2 };
+    const { points } = buildBufferedHazards([], [grunnePunkt], 20);
+    expect(points).toHaveLength(1);
+    expect(points[0]).toMatchObject({ kind: "grunne", dybdeM: 4.2 });
+  });
+
+  it("Grunne-punkt uten dybdeattributt gir dybdeM=undefined (ikke f.eks. 0)", () => {
+    const grunnePunkt: PointFeature = { id: "grunne2", point: [10.7, 59.1] };
+    const { points } = buildBufferedHazards([], [grunnePunkt], 20);
+    expect(points).toHaveLength(1);
+    expect(points[0]?.dybdeM).toBeUndefined();
+  });
+
+  it("Skjær-punkt bærer ikke dybdeM videre selv om PointFeature skulle ha en (skjær har aldri dybde i kildedataene)", () => {
+    const skjaerPunkt: PointFeature = { id: "skjer1", point: [10.7, 59.1] };
+    const { points } = buildBufferedHazards([skjaerPunkt], [], 20);
+    expect(points).toHaveLength(1);
+    expect(points[0]).toMatchObject({ kind: "skjaer" });
+    expect(points[0]?.dybdeM).toBeUndefined();
+  });
+});
+
+describe("QA-validator: dybdepunkt-sondering vs. bånd (felle 2, beslutning 2026-08-31)", () => {
+  it("en sondering dypere enn eller lik båndets nedre grense gir ingen brudd", () => {
+    const curve: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.0, 59.0, 10.2, 59.2) };
+    const { bands } = buildDepthBands([curve]);
+    // Bandet er 0-5 m. En sondering på 3 m innenfor bandet er konsistent
+    // (3 m er "grunnere enn 5 m", akkurat det bandet påstår).
+    const sounding: PointFeature = { id: "grunne.ok", point: [10.1, 59.1], dybdeM: 3 };
+    const result = validateSoundingsAgainstBands(bands, [sounding]);
+    expect(result.checkedCount).toBe(1);
+    expect(result.violations).toEqual([]);
+  });
+
+  it("en sondering grunnere enn båndets NEDRE grense flagges som brudd, aldri stille slukt", () => {
+    const inner: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.0, 59.0, 10.05, 59.05) };
+    const outer: DybdekurveFeature = { id: "c10", dybdeM: 10, ring: closedRing(9.9, 58.9, 10.15, 59.15) };
+    const { bands } = buildDepthBands([inner, outer]);
+    // Bandet 5-10 m påstår "dypere enn 5 m". En sondering på 2 m som havner
+    // geometrisk i DETTE bandet (i "skallet" mellom kurvene) er en
+    // topologifeil — flagges, blokkerer ikke bygget.
+    const badSounding: PointFeature = { id: "grunne.brudd", point: [9.95, 58.95], dybdeM: 2 };
+    const result = validateSoundingsAgainstBands(bands, [badSounding]);
+    expect(result.checkedCount).toBe(1);
+    expect(result.violations).toHaveLength(1);
+    expect(result.violations[0]).toMatchObject({
+      featureId: "grunne.brudd",
+      soundedDepthM: 2,
+      bandLowerBoundM: 5,
+      bandUpperBoundM: 10,
+    });
+  });
+
+  it("soundinger uten dybdeattributt telles ikke og gir aldri brudd", () => {
+    const curve: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.0, 59.0, 10.2, 59.2) };
+    const { bands } = buildDepthBands([curve]);
+    const unknown: PointFeature = { id: "grunne.ukjent", point: [10.1, 59.1] };
+    const result = validateSoundingsAgainstBands(bands, [unknown]);
+    expect(result.checkedCount).toBe(0);
+    expect(result.violations).toEqual([]);
+  });
+});
+
 describe("datakvalitet (CATZOC)", () => {
   it("bygger soner kun for features med catzoc-attributt", () => {
     const withQuality: PolygonFeature = {
@@ -123,5 +189,29 @@ describe("§3.1 fliseinndeling: bygger og klipper til 0,5°x0,25°-rutenettet", 
     for (const tile of tiles) {
       expect(tile.bands.length).toBeGreaterThan(0);
     }
+  });
+
+  it("R2-regresjon (code-review 2026-08-31): smal polygon over tre fliser uten hjørne i midtflisen tas likevel med", () => {
+    // Rektangel fra lon 10,6 til 11,6 (lat 59,05-59,10, innenfor én breddeflis).
+    // De eneste to distinkte lengdegradene blant ring-hjørnene er 10,6 og
+    // 11,6 — med 0,5°-flisbredde gir det TRE fliser i lengderetning
+    // (lonIndex 21: 10,5-11,0 | 22: 11,0-11,5 | 23: 11,5-12,0), og den
+    // midterste (22) har INGEN ring-hjørne i seg selv, kun rent
+    // gjennomgangsareal. Den gamle hjørne-baserte `touchedTiles`
+    // (før R2-fiksen) mistet denne flisen stille — ingen feilmelding, bare
+    // et hull i dekningen for ruteren.
+    const curve: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.6, 59.05, 11.6, 59.1) };
+    const { bands } = buildDepthBands([curve]);
+    const grid = { lonStepDeg: 0.5, latStepDeg: 0.25 };
+    const tiles = buildTilePayloads(bands, [], [], [], [], grid);
+
+    const westTile = tiles.find((t) => t.id.lonIndex === 21 && t.id.latIndex === 236);
+    const middleTile = tiles.find((t) => t.id.lonIndex === 22 && t.id.latIndex === 236);
+    const eastTile = tiles.find((t) => t.id.lonIndex === 23 && t.id.latIndex === 236);
+
+    expect(westTile).toBeDefined();
+    expect(eastTile).toBeDefined();
+    expect(middleTile).toBeDefined();
+    expect(middleTile?.bands.length ?? 0).toBeGreaterThan(0);
   });
 });

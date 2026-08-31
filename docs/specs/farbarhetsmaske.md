@@ -1,10 +1,14 @@
 # Spec: Farbarhetsmaske
 
 - Status: utkast — venter på Magnus' gjennomgang før `tools/chart-pack` bygges
-- Dato: 2026-08-30
+- Dato: 2026-08-30, oppdatert 2026-08-31 (se «Endringslogg» nederst)
 - Grunnlag: `docs/00-kravspek.md` F1.0–F1.9, N1/N2/N3/N5/N6 · `docs/research/kartdata-skandinavia.md`
   · `docs/research/review-seiler.md` · `docs/research/review-arkitekt.md` (M3, M4, B7)
   · `docs/decisions/ADR-0001…0003` · `packages/protocol/src/package-header.ts`
+  · `docs/research/ekspertpanel-2026-08-31.md` og
+  `docs/research/ekspertpanel-runde2-2026-08-31.md` §7 (Magnus' kartdata-
+  beslutninger 2026-08-31: E4 VALSOU, E7 forenklingsforbud, E8 kart-først-lite,
+  QA-validator, kjent-svakhet-golden)
 
 ## 1. Formål og kravsporing
 
@@ -170,14 +174,35 @@ bånd(c_i, c_{i+1}) = areal_grunnere_enn(c_{i+1}) ∖ areal_grunnere_enn(c_i)
 
 der `areal_grunnere_enn(c)` er polygonet innenfor dybdekurve `c` (standard
 sjøkartkonvensjon: kurven omslutter alt grunnere vann). Fra **alle** bånd og
-fra sjø/land-basispolygonet trekkes tørrfall og buffrede skjær/grunner —
-disse er alltid `no-go` uavhengig av dypgangskrav, siden de er presise
-punkt-/arealfarer, ikke dybdekurve-baserte.
+fra sjø/land-basispolygonet trekkes tørrfall og buffrede skjær/grunner som
+geometri (§4 steg 4) — men **Grunne** og **Skjær** har ulik no-go-semantikk
+ved selve oppslaget, se VALSOU-boksen under.
+
+**VALSOU-modellen for `Grunne` (E4, beslutning 2026-08-31, Magnus).**
+Punktfarer av typen `Grunne` gir **no-go KUN når** det angitte
+dybdeattributtet er mindre enn kravet ved oppslag (`kravTilDybdeM`), **eller**
+når dybdeattributtet mangler; **ellers ingen blokkering** fra selve
+grunne-punktet. Dette erstatter den tidligere regelen («alt buffret Grunne er
+alltid `no-go`, uansett dybde») — den regelen ble forkastet fordi en
+30 m-grunne som sperrer en 2,6 m-krav-rute lærer brukeren å ignorere masken
+(falske sperringer undergraver tillit, jf. marinkartolog-vurderingens felle 3
+og ekspertpanelets samstemte anbefaling E4). `Skjær` beholder den gamle,
+strengere regelen: **alltid** `no-go` når punktet er innenfor bufferen,
+uavhengig av dybde — bekreftet i fase 1-bølge 2-fixturen at `Skjær` aldri har
+et dybdeattributt i kildedataene (578 av 578 uten `app:dybde`), så det finnes
+ikke noe tall å avveie mot; `Skjær` er en presis, ikke-dybdebasert punktfare
+på samme måte som tørrfall. `Grunne` har derimot alltid et dybdeattributt i
+observerte data (3913 av 3913 i samme fixture, spredning fra -0,92 m til
+218 m, median 4,7 m) — VALSOU-regelens «dybde mangler»-gren er dermed reell
+kode (dekket av en fasit-test), men ikke observert i ekte data ennå.
 
 Ved oppslag med et gitt klaringskrav `k` (i meter):
 
-1. Finn hvilket bånd punktet ligger i (eller tørrfall/skjær/utenfor-pakke).
-2. Er punktet i tørrfall/skjær → `no-go`.
+1. Finn hvilket bånd punktet ligger i (eller tørrfall/skjær/grunne/utenfor-pakke).
+2. Er punktet i tørrfall eller innenfor en Skjær-buffer → `no-go`. Er punktet
+   innenfor en Grunne-buffer → `no-go` KUN hvis Grunnens dybdeattributt
+   mangler eller er `< k` (VALSOU-modellen over); ellers fortsett til steg 3
+   som om Grunne-punktet ikke fantes.
 3. Er båndets nedre grense < nødvendig sikkerhetskontur (nærmeste kartlagte
    kurve ≥ `k`, jf. F1.1s ordlyd — eksempelet i kravspeken er 2,6 m → 5 m-
    kurven) → `no-go`.
@@ -188,6 +213,16 @@ Ved oppslag med et gitt klaringskrav `k` (i meter):
 Dette er den viktigste designbeslutningen i denne spec-en og bør
 kvalitetssikres av kartdata-agenten mot faktiske Kartverket-eksporter før
 fase 1-bygging starter (se §8).
+
+**QA-validator for dybdebånd-konstruksjonen (felle 2, beslutning
+2026-08-31).** Bånd-konstruksjonen i §4 steg 4 antar at «kurven omslutter
+alt grunnere» — ikke alltid sant for reelle S-57-avledede data
+(depresjonskurver, selvskjæring, kartblad-topologifeil). Byggepipelinen skal
+derfor validere DEPARE-uavhengig ground-truth mot de ferdige båndene: **ingen
+dybdepunkt-sondering som havner geometrisk innenfor et bånd skal ha en målt
+dybde grunnere enn båndets nedre grense.** Brudd flagges i byggerapporten og
+i pakkens `sourceStatus`/`layers[].sourceStatus` (aldri stille sluket, N2) —
+se §4 og §6 for byggetids- og testkrav.
 
 ### 3.5 De øvrige lagene
 
@@ -295,6 +330,13 @@ Invarianter (håndheves av enhetstester og bør legges til
 - Samme input → samme output. Ingen systemklokke, ingen skjult tilstand.
 - `farbar`/`segmentTest` gjør **ingen** I/O — flisdata er allerede lastet
   inn i minnet av kallerkoden (Web Worker) før `ChartSource` konstrueres.
+- **`farbar` og `segmentTest` bruker samme geometri for samme lag** (funn 2,
+  code-review runde 2 2026-08-31). For punktfarer (skjær/grunne) betyr det
+  eksakt sirkel — avstand til `centerLat`/`centerLon` mot `bufferRadiusM` —
+  i *begge*, ikke sirkel i den ene og den bufrede polygon-tilnærmingen i den
+  andre. Konkret invariant: `segmentTest(p, p, …)` (degenerert korde) gir
+  samme `nivaa` som `farbar(p, …)`. Polygon-fallbacken beholdes kun for
+  fikstyrer/pakker uten senter-felt.
 
 ## 4. Byggepipeline (`tools/chart-pack`)
 
@@ -344,6 +386,23 @@ Steg:
    skjær/grunner fra alle bånd og fra sjø/land-basisen. Buffer-radius for
    skjærpunkter (posisjonsusikkerhet) er **ikke fastsatt** — foreslå
    15–25 m som utgangspunkt, bekreftes av Magnus/seiler-erfaring (§8).
+   Grunne-punktenes dybdeattributt bæres gjennom til pakkeformatet i stedet
+   for å forkastes ved buffring — no-go-avgjørelsen for Grunne skjer ved
+   oppslag, ikke her (VALSOU-modellen, §3.4).
+4a. **QA-valider dybdebåndene mot kjente dybdepunkt-soundinger** (felle 2,
+   beslutning 2026-08-31) — FØR skjær/grunne trekkes fra båndene, slik at
+   validatoren tester selve kurve-/bånd-konstruksjonen, ikke sluttresultatet
+   etter at hazard-geometri allerede har skåret hull rundt de samme
+   punktene. Enhver sondering med kjent dybde som havner geometrisk innenfor
+   et bånd, men er grunnere enn båndets nedre grense, er et brudd:
+   flagges/telles i byggerapporten og gjør pakkens/lagets `sourceStatus`
+   `"degraded"` med antall brudd — bygget **stopper ikke** (en enkelt
+   avvikende sondering skal ikke blokkere en hel nattlig kjøring, samme
+   filosofi som geometrivalideringen i steg 3), men bruddet er aldri stille
+   sluket (N2). Ground-truth-kilde i fase 1-bølge 2: `Grunne`-punktene (som
+   allerede har `app:dybde`) brukes som proxy siden et eget
+   `Dybdepunkt`-lag (generelle enkeltsonderinger) ikke er ingestert ennå —
+   dokumentert degradering, ikke skjult.
 5. **Overlegg** farled, datakvalitet, TSS, vernesone og luftspenn som egne
    attributt-bærende lag (ikke smeltet inn i dybdebåndene).
 6. **Flis** alle lag til 0,5°×0,25°-rutenettet (§3.1), klipp polygoner ved
@@ -372,6 +431,52 @@ Steg:
 | Vektorfliser/PMTiles | `tippecanoe` | Bransjestandard, native PMTiles-output (`-o out.pmtiles`). Native binær — må installeres i GitHub Actions-jobben (apt/prebuilt), dokumenteres i workflow-filen når den skrives. |
 | Geometrivalidering | turf `kinks` + egen gyldighetssjekk | Fanger vanligste feilklasse (malformert kildeeksport) før algebra kjøres. |
 
+### 4.1 Forbud mot geometrisk forenkling av sikkerhetspolygoner (E7, beslutning 2026-08-31)
+
+**Vertex-forenkling (Douglas-Peucker og lignende algoritmer) av
+sikkerhetspolygoner er eksplisitt forbudt** i `packages/charts` og
+`packages/routing` — og skal ikke brukes i `tools/chart-pack` heller for
+routing-artefaktet (steg 7 «Kvantiser & pakk»). Begrunnelse (marinkartolog-
+vurderingen): forenkling flytter polygonkanter i en retning som ikke er
+garantert konservativ — en forenklet skjær-/grunne-kontur kan bli MINDRE enn
+originalen på steder der presisjon er sikkerhetskritisk, stikk i strid med
+F1.1s krav om eksakt polygonalgebra. Dette er nøyaktig grunnen til at §4
+steg 10 allerede skiller PMTiles-visningsartefaktet (lossy, zoom-forenklet)
+fra routing-pakken (eksakt) — forbudet her gjør det skillet eksplisitt og
+ufravikelig, ikke bare en arkitekturkommentar.
+
+Flis-/størrelsesbudsjettet i §7 skal i stedet angripes med disse **trygge**
+grepene, som ikke flytter noen sikkerhetsgrense:
+
+- **Punkt+radius i stedet for ferdig-bufrede polygoner** for skjær/grunne —
+  klienten gjør en enkel avstandssjekk (`point-in-polygon.ts` har allerede
+  avstandsprimitiver). Dette er faktisk MER konservativt enn en bufret
+  polygon fra turf (en sirkel omslutter alltid minst like mye areal som
+  turfs innskrevne tilnærming). **Gjelder både `segmentTest` og `farbar`**
+  (funn 2, code-review runde 2 2026-08-31): differansen mellom den
+  innskrevne polygonkanten og den sanne sirkelbuen er et reelt areal — for
+  et 100 m-buffer lagret som innskrevet firkant er sliveren opp mot 29 m
+  bred — og et punkt der ga tidligere ikke `no-go` fra `farbar`, mens
+  `segmentTest` (som allerede brukte sirkelen) sa `no-go`.
+- **Heltalls-/deltakoding** av koordinater ved lagring.
+- **Desimalreduksjon** til 5–6 desimaler (7 desimaler ≈ 1 cm er over-presist
+  mot kildedatas ±5 m posisjonsusikkerhet) — allerede delvis gjort
+  (`round7` i `tools/chart-pack/src/geometry.ts`; vurder å senke videre til
+  5–6 i neste bølge).
+- **Fjerning av kolineære punkter** — tre eller flere punkter på samme rette
+  linje representeres like eksakt med to, ingen arealendring.
+- **Sammenslåing av dype bånd** (f.eks. > 20–30 m) til ett — presisjonen der
+  er uansett irrelevant for et fritidsfartøys klaringskrav, og dette endrer
+  ikke grensene til NOE bånd som faktisk kan bli en sikkerhetskontur for
+  Morilds dypgang.
+
+Felles egenskap for alle fem: den geometriske grensen som avgjør `no-go`
+flytter seg **aldri**, kun representasjonen av den. Dette skal håndheves
+som en kodegranskings-regel (ingen `simplify()`/Douglas-Peucker-import i
+`packages/charts`, `packages/routing` eller routing-artefakt-stien i
+`tools/chart-pack`) inntil et eventuelt automatisk lint-/arch-test kan
+verifisere det (se §8).
+
 ## 5. Degraderingsadferd (obligatorisk, N1/N2)
 
 | Situasjon | Adferd |
@@ -393,7 +498,22 @@ formler:
 - Tørrfall-subtraksjon fjerner riktig areal fra alle bånd og fra
   sjø/land-basisen.
 - Skjær-buffer: punkt innenfor buffer-radius → `no-go`; rett utenfor →
-  ikke påvirket av skjæret.
+  ikke påvirket av skjæret. **Inkludert sliver-testen** (funn 2): et punkt
+  som ligger utenfor den innskrevne polygon-tilnærmingen, men innenfor den
+  sanne sirkelen, skal gi `no-go` — og `farbar` og `segmentTest` skal være
+  enige om det.
+- **Geometriprimitivene testes direkte, ikke bare gjennom `segmentTest`**
+  (funn 3, code-review runde 2 2026-08-31). `segmentsIntersect`,
+  `segmentIntersectsPolygon`, `segmentEntirelyWithinAnyPolygon` og
+  `distanceToSegmentNm` avgjør om et rutesegment er farbart; grensetilfellene
+  deres skal pinnes eksplisitt, med den valgte konvensjonen skrevet ut:
+  kollineær overlapp (delvis, inneslutning, felles endepunkt), endepunkt på
+  motpartens indre (T-form), tangering av hjørne og av kant (begge teller som
+  treff — føre-var), hull i polygon (kord inne i hullet er *ikke* treff; kord
+  fra hullet og ut er det), og degenererte segmenter der `fra === til`
+  (punkt-i-polygon-semantikk, og `distanceToSegmentNm` faller tilbake til
+  punkt-til-punkt-avstand). Filen er
+  `packages/charts/src/point-in-polygon.test.ts`.
 - **Nøkkeltest for §3.4-designet:** en syntetisk 3 m-sondering uten
   omkringliggende dybdekurve mellom 2,6 m og 5 m skal gi `no-go` for et
   klaringskrav på 2,6 m — selv om 3 m > 2,6 m — fordi nærmeste kartlagte
@@ -415,10 +535,38 @@ fiksturen — ingen nettverksavhengighet i testkjøring.
 
 ### 6.3 Golden-oppslagstester — 50+ kuraterte fasit-punkter
 
+**Kart-først-protokollen (E8, beslutning 2026-08-31, «lite»-variant).**
+Et golden-punkt skrives inn i tabellen under FØR testkoden skrives eller
+kjøres, i denne rekkefølgen: (1) Magnus velger et punkt i et offisielt
+sjøkart (Kartverkets «Se sjøkart»/WMTS, eller papirkart) og leser av det
+forventede svaret der — IKKE ved å kjøre koden mot fikstur-geometrien og se
+hva den svarer; (2) koordinat + kartreferanse (kartblad/WMTS-utsnitt +
+dato/versjon) og forventet nivå skrives i tabellen; (3) testen skrives og
+kjøres, og skal reprodusere det allerede noterte forventede svaret. Dette
+er den fulle rekkefølgen som gjør testen til en uavhengig sjekk av koden mot
+virkeligheten — det motsatte av å plukke et punkt FRA geometrien som testes
+(som kun beviser intern konsistens, se boksen under). Proveniens-apparatet
+er bevisst forenklet i denne runden (Magnus, ikke et fullt CI-skjema): én
+tabellrad per punkt er nok, ingen egen skjermbilde-/signaturprosess.
+
+**De 11 eksisterende punktene i
+`packages/charts/src/golden-oslofjord-hvaler.test.ts` (merket «MÅ
+VERIFISERES AV MAGNUS», inkl. de som kun er merket «intern konsistens») er
+IKKE bygget etter denne protokollen** — de ble plukket med
+`turf.pointOnFeature`/`turf.centroid` FRA den samme fikstur-geometrien som
+testes (se filens toppkommentar). De beviser at koden gjør det den sier den
+gjør mot ekte innlest geometri, men ikke at akkurat DETTE punktet faktisk er
+en skjærgård/led/grunne i virkeligheten — sirkulær verifisering. Alle 11 skal
+**re-verifiseres av Magnus** mot et offisielt sjøkart etter protokollen over
+før de kan regnes som testfasit i N5-forstand; til det er gjort forblir de
+merket som de er (regresjonsvern for koden, ikke uavhengig sannhetssjekk).
+
 Kandidatene under er **forslag til startpunkter, ikke fasit** — hvert
-merket punkt må verifiseres av Magnus mot et offisielt sjøkart (papir eller
-Kartverkets «Se sjøkart»/WMTS) før det låses som testfasit. Koordinater er
-grove/omtrentlige der de er oppgitt.
+merket punkt må velges/verifiseres av Magnus mot et offisielt sjøkart (papir
+eller Kartverkets «Se sjøkart»/WMTS) FØR testkjøring, etter protokollen
+over, før det låses som testfasit. Koordinater er grove/omtrentlige der de
+er oppgitt; tabellen bør utvides med en «Kartreferanse»-kolonne
+(kartblad/WMTS-utsnitt + dato) idet hvert punkt faktisk verifiseres.
 
 | Kategori | Kandidat | Ca. posisjon | Forventet | Status |
 |---|---|---|---|---|
@@ -444,6 +592,41 @@ Dette gir 15 geografiske kandidater + 1 algoritmisk = 16 startpunkter.
 under fase 1-bygging** ved manuell gjennomgang av faktisk sjøkart — denne
 spec-en foreslår kategoribredden (no-go/åpen led/luftspenn/TSS/vernesone/
 utenlandsk), ikke den fulle listen.
+
+### 6.3.1 Kjent-svakhet-golden: åpne-kurver-hullet (felle 1, N2, beslutning 2026-08-31)
+
+§4 steg 3/4 dropper i dag alle ÅPNE dybdekurve-ringer (de som krysser
+kartbladgrensen, se `tools/chart-pack/README.md` «Avvik fra spec» #1) — i
+fase 1-bølge 2-fixturen 66 % av dybdekurvene. Dette er en fail-safe for
+`trygt`-retningen (en droppet kurve gjør ALDRI et areal falskt trygt via
+bånd-logikken alene), men er et reelt sikkerhetshull i `no-go`-retningen: en
+faktisk kartlagt grunne hvis avgrensende kurve krysser kartbladgrensen
+havner utenfor alle bånd og faller til føre-var-standardregelen
+(`usikkert`), ikke `no-go` — selv om Kartverkets egen dybdekurve på det
+stedet dokumenterer en reell grunne. Ruteren behandler `usikkert` som
+seilbart-med-flagg, ikke som blokkert — dette er tap av kartlagt
+fareinformasjon i verste retning (marinkartolog-vurderingens felle 1).
+
+**Krav:** testsvitten for `packages/charts` skal inneholde **minst ett
+eksplisitt dokumentert kjent-svakhet-testpunkt** for dette hullet — et punkt
+der (a) en droppet åpen dybdekurve fra kildedataene dokumenterer en reell,
+navngitt grunne/dybde, og (b) dagens maske svarer `usikkert` i stedet for
+`no-go`. Testen skal:
+
+- Referere den konkrete kildefeaturen (f.eks. `dybdekurve.<id>` og dens
+  `app:dybde`-attributt) som bevis for at dette er en ekte, autoritativ
+  dybdeopplysning, ikke en syntetisk konstruksjon.
+- Assertere dagens (uønskede) `usikkert`-oppførsel eksplisitt, med en
+  kommentar som gjør det klart at dette er en KJENT SVAKHET, ikke korrekt
+  atferd — testen er en regresjonsvakt mot at hullet blir usynlig, ikke en
+  påstand om at oppførselen er riktig.
+- Lenke til `tools/chart-pack/README.md` «Avvik fra spec» #1 og til denne
+  seksjonen, slik at testen oppdateres (endres til å forvente `no-go`) den
+  dagen kurve-stitching på tvers av kartblad er implementert (§4 «Neste
+  bølge» — stitching kommer ved skala, ikke i denne bølgen).
+- IKKE slettes eller løsnes uten at det underliggende hullet faktisk er
+  lukket — testen finnes eksplisitt for at regresjon i denne retningen aldri
+  skjer stille.
 
 ### 6.4 Ytelseskrav
 
@@ -542,3 +725,112 @@ flagges segmentet i stedet (§5-mønsteret for degradering).
    `Hovedled og biled`) som kan gi farled-bias i Bohuslän, eller må det
    leses ut av OpenSeaMap-tagging (lavere kvalitet, jf. research §3)?
    **BESLUTTET 2026-08-30 (Magnus):** undersøkes i fase 1-implementasjonen.
+
+## 9. Endringslogg
+
+- **2026-08-31 (code-review runde 2, funn 2 og 3):**
+  - **Funn 2 (viktig): `evaluatePoint` testet punktfarer mot polygonet, ikke
+    mot sirkelen.** R1-fiksen ga `segmentTest()` eksakt sirkelgeometri
+    (`centerLat`/`centerLon` + `bufferRadiusM`), men `farbar()` fortsatte å
+    bruke `pointInPolygon` mot den ferdig-bufrede polygon-tilnærmingen. Den
+    tilnærmingen er **innskrevet** (§4.1) og under-dekker derfor den sanne
+    sirkelen mellom hjørnene: i sliveren mellom kord og bue lå punktet
+    innenfor `bufferRadiusM`, men utenfor polygonet — og punkttesten slapp
+    det gjennom mens segmenttesten ville stoppet det. To tester på samme
+    fare kunne altså gi motsatt svar, og den mildeste av dem var den
+    punktvise. Fikset med felles hjelper `pointWithinHazardBuffer` i
+    `packages/charts/src/chart-source.ts`: eksakt punkt-i-sirkel når
+    senter-feltene finnes, polygon-fallback ellers (kun for eldre/håndbygde
+    fikstyrer, se `BufferedHazardPoint`). Ny invariant i §3.6; §4.1 og §6.1
+    oppdatert. **+5 tester** i `index.test.ts`, inkludert sliver-testen
+    (100 m buffer lagret som innskrevet firkant, punkt 85 m fra senter i
+    kant-midtretningen: utenfor polygonet, innenfor sirkelen → `no-go`) og
+    en test på at `farbar` og `segmentTest` nå er enige.
+  - **Funn 3 (mindre): geometriprimitivene manglet direkte enhetstester.**
+    `segmentsIntersect`, `segmentIntersectsPolygon`,
+    `segmentEntirelyWithinAnyPolygon` og `distanceToSegmentNm` var kun
+    dekket indirekte via `segmentTest()`. Ny fil
+    `packages/charts/src/point-in-polygon.test.ts` (**+43 tester**) pinner
+    grensetilfellene: kollineær overlapp, endepunkt-på-kant/T-form,
+    tangering av hjørne og kant, hull i polygon, tomme polygonlister og
+    degenererte (punkt-)segmenter. Konvensjonene som testene låser er
+    dokumentert i §6.1 — spesielt at berøring teller som treff (føre-var)
+    og at `segmentEntirelyWithinAnyPolygon` heller gir falskt «ikke
+    innenfor» enn falskt «innenfor».
+- **2026-08-31 (Magnus, etter ekspertpanel-vurdering — se
+  `docs/research/ekspertpanel-2026-08-31.md` §4 og
+  `docs/research/ekspertpanel-runde2-2026-08-31.md` §5–§7):**
+  - **E4 VALSOU-modellen for `Grunne`** innført i §3.4: no-go kun ved
+    dybde `< kravTilDybdeM` eller manglende dybdeattributt, ellers ingen
+    blokkering. Erstatter den tidligere «alltid no-go»-regelen for buffrede
+    Grunne-punkter (Skjær er uendret: alltid no-go, har aldri
+    dybdeattributt i kildedataene). Implementert i
+    `packages/charts/src/chart-source.ts` (`evaluatePoint` steg 2) og
+    `tools/chart-pack/src/pipeline.ts` (`buildBufferedHazards` bærer nå
+    `dybdeM` gjennom for Grunne).
+  - **E7 forbud mot geometrisk forenkling** av sikkerhetspolygoner
+    (Douglas-Peucker/vertex-forenkling) i `packages/charts`,
+    `packages/routing` og routing-artefaktet i `tools/chart-pack` — nytt
+    §4.1, med liste over hvilke fem grep som ER trygge (punkt+radius,
+    heltalls-/deltakoding, desimalreduksjon, kolineær-fjerning,
+    bånd-sammenslåing).
+  - **E8-lite kart-først-protokoll** for golden-fasitpunkter innført i
+    §6.3: punkt velges i offisielt sjøkart med forventet svar notert FØR
+    testkjøring, koordinat + kartreferanse i tabell. De 11 eksisterende
+    punktene i `golden-oslofjord-hvaler.test.ts` (plukket fra samme
+    geometri som testes) er eksplisitt markert som IKKE bygget etter denne
+    protokollen og må re-verifiseres av Magnus.
+  - **QA-validator for dybdebånd** (felle 2) lagt til §3.4/§4 steg 4a:
+    byggetids-sjekk av at ingen dybdepunkt-sondering innenfor et bånd er
+    grunnere enn båndets nedre grense; brudd flagges i byggerapport og
+    `sourceStatus`, stopper ikke bygget. Implementert som
+    `validateSoundingsAgainstBands` i `tools/chart-pack/src/pipeline.ts`,
+    kjørt mot `Grunne`-punktene som ground-truth-proxy (intet eget
+    `Dybdepunkt`-lag ingestert ennå).
+  - **Kjent-svakhet-golden for åpne-kurver-hullet** (felle 1, N2) krevd i
+    ny §6.3.1: minst ett dokumentert testpunkt der en droppet åpen
+    dybdekurve dokumenterer en reell grunne, men masken i dag svarer
+    `usikkert` i stedet for `no-go` — regresjonsvakt til stitching lukker
+    hullet (§4 «Neste bølge», ikke denne bølgen).
+- **2026-08-31 (kartdata-agent, code-review-fiks R1/R2):**
+  - **R1 (kritisk): `segmentTest()` var 20-punkts sampling, ikke eksakt
+    geometritest** — i strid med §2/§6.4s krav om at den segmentvise
+    ettersjekken er autoritativ. En smal fare plassert mellom to
+    prøvepunkter kunne passere uoppdaget. Fikset i
+    `packages/charts/src/chart-source.ts`: `segmentTest()` finner nå ALLE
+    fliser korden faktisk krysser (`tilesAlongSegment`, rutenett-
+    grensekrysning langs korden — ikke en bounding box-overapproksimasjon)
+    og tester korden mot den faktiske ring-/polygongeometrien i hver
+    (`evaluateChordAgainstTile`, ny segment-mot-polygon-skjæringsprimitiv i
+    `point-in-polygon.ts`: `segmentIntersectsPolygon`/-`AnyPolygon`/
+    `segmentEntirelyWithinAnyPolygon`). Punktfarer (skjær/grunne) testes med
+    eksakt avstand-fra-kord-til-senterpunkt mot `bufferRadiusM` (§4.1) —
+    mer presist og mer konservativt enn å teste mot den ferdig-bufrede
+    polygon-tilnærmingen. Dette krevde et nytt, valgfritt
+    `centerLon`/`centerLat`-felt på `BufferedHazardPoint` (pack-format),
+    satt av `tools/chart-pack/src/pipeline.ts` sin `buildBufferedHazards`
+    fra kildepunktet FØR buffring (bevart uendret gjennom flisklipping, i
+    motsetning til selve `polygon`-feltet). VALSOU-regelen (E4) gjelder
+    identisk i den nye segment-testen. Målt ytelse: ~15–17 µs/kall på
+    utviklingsmaskin (§6.4-mål: ≤100 µs) — ikke-verifisert budsjett, men
+    god margin. Regresjonstest lagt til i
+    `packages/charts/src/index.test.ts` (`segmentTest — strengeste nivå +
+    union av årsaker`).
+  - **R2 (viktig): flisoppdeling i byggetid (`touchedTiles`,
+    `tools/chart-pack/src/pipeline.ts`) fant fliser kun via
+    polygon-ring-HJØRNER** — en polygon som dekker en mellomflis uten selv å
+    ha et hjørne der (f.eks. en smal, langstrakt polygon over tre fliser på
+    rad) falt stille ut av den mellomste flisen. Fikset til bbox-basert
+    flisoppdagelse (polygonets bounding box mot flis-rutenettets indekser,
+    bevisst over-approksimasjon — etterfølgende `clipPolygonToTile` fjerner
+    det som ikke faktisk overlapper); fliser der ALLE lag ble tomme etter
+    klipping filtreres bort igjen, slik at «tom flis utelates fra
+    manifestet»-kontrakten i §4 steg 6 fortsatt holder. Regresjonstest i
+    `tools/chart-pack/src/pipeline.test.ts`. Testfiksturene
+    (`tools/chart-pack/testdata/pack/` og `packages/charts/testdata/`) er
+    regenerert med begge fiksene; flis-/geometriinnholdet for
+    Oslofjorden/Hvaler-testområdet var UENDRET av R2 (verifisert ved
+    A/B-sammenligning av bygget med gammel vs. ny `touchedTiles` — ingen
+    farled-/hazard-/bånd-polygon i dette konkrete rådatasettet traff
+    hjørne-bugen), men fikk `centerLon`/`centerLat` lagt til på alle 4494
+    buffrede punktfarer fra R1.

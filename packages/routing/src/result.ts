@@ -56,6 +56,40 @@ export interface RouteLeg {
   readonly direkteSlutt: boolean;
 }
 
+/**
+ * Utfallet av den direkte sluttetappen (§5.8).
+ *
+ * Sluttetappen er en **etterbehandling**, ikke et søkesteg, og den kan avvises
+ * av samme grunner som ethvert annet steg. Blir den avvist, stopper ruten et
+ * stykke fra målet — og det skal stå eksplisitt, ikke utledes av at sporet ser
+ * kort ut (N2 «ærlig degradering»).
+ */
+export type FinalLegStatus =
+  /** Søket nådde aldri målet; `abortReason` forklarer hvorfor. */
+  | "ikke-forsokt"
+  /** Siste steg er allerede i mål (≤ 0,3 nm) — ingen etappe trengs. */
+  | "ikke-nodvendig"
+  | "lagt-til"
+  /** `segmentVerdict` eller TSS-regelen avviste etappen. */
+  | "avvist-farbarhet"
+  /** Ingen vinddata i siste punkt, eller utenfor værfeltets tidsvindu. */
+  | "avvist-vaer"
+  /** TWS/Hs over båtens grenser i siste punkt. */
+  | "avvist-baatgrenser"
+  /** Båten gjør ikke framdrift mot målet på den kursen (typisk rent kryss). */
+  | "avvist-fart";
+
+export interface RouteFinalLeg {
+  readonly status: FinalLegStatus;
+  /** Menneskelesbar årsak ved avvisning, ellers `null`. */
+  readonly reason: string | null;
+  /**
+   * Avstand fra rutens **siste** punkt til målet. 0 når etappen ble lagt til.
+   * Er den > 0 med en `avvist-*`-status, ender ruten kort av målet.
+   */
+  readonly shortfallNm: number;
+}
+
 export interface SegmentRef {
   readonly legIndex: number;
   readonly fromLat: number;
@@ -82,12 +116,52 @@ export interface RouteTotals {
   readonly fuelL: number;
   readonly arrivalEpochS: number;
   readonly daylightArrival: boolean;
+  /**
+   * `requireDaylightArrival` er satt, men den **reelle** ankomsttiden — altså
+   * inkludert den direkte sluttetappen (§5.8) — faller utenfor dagslysvinduet.
+   *
+   * Søkets dagslyssjekk (§5.3 steg 16) måler på etiketten *før* sluttetappen
+   * er lagt på, og kan derfor slippe gjennom en rute som i virkeligheten
+   * ankommer etter mørkets frembrudd. Rekonstruksjonen velger primærrute blant
+   * de ikke-dominerte kandidatene som **både** når målet og fortsatt holder
+   * kravet med reell ankomsttid; holder **ingen** av dem, returneres den best
+   * rangerte likevel, men med dette flagget satt. Ruten skal da aldri
+   * presenteres som at den oppfyller kravet.
+   *
+   * Flagget settes også når ruten ikke ender i målet
+   * (`safety.reachesDestination === false`): kravet er «ankomst *i målet* i
+   * dagslys», og en rute som stopper 1,5 nm unna har ikke oppfylt det,
+   * uansett hvor lyst det er der den stoppet (funn 1, code-review runde 2
+   * 2026-08-31).
+   */
+  readonly violatesDaylightRequirement: boolean;
   /** Etterfilter (spec §9 spm. 9): overskrider ruten mannskapstaket? */
   readonly exceedsMaxContinuousLeg: boolean;
 }
 
 export interface RouteSafety {
+  /**
+   * Kan linjen på kartet følges?
+   *
+   * **Kan aldri stå som `"trygt"` når `finalLeg.status` er en `avvist-*`-
+   * status** (funn 1b, code-review runde 2 2026-08-31): da hevder `reached`
+   * at målet er nådd samtidig som ruten stopper `shortfallNm` unna, og en
+   * naiv konsument som bare ser på `verdict` ville presentert en avkortet
+   * rute som en komplett, trygg rute. Verdikten gulves derfor til minst
+   * `"usikkert"`. (For `"ikke-forsokt"` gjøres det ikke — der sier
+   * `reached: false` allerede hele sannheten på toppnivå.)
+   */
   readonly verdict: "trygt" | "usikkert" | "usikker-rute";
+  /**
+   * Ender ruten faktisk i målet? Sant kun når `finalLeg.status` er
+   * `"lagt-til"` eller `"ikke-nodvendig"`.
+   *
+   * Dette er den boolske som nedstrøms kode skal spørre om «kom vi fram» —
+   * ikke `reached`, som er søkets eget svar på det svakere spørsmålet «fant
+   * søket en etikett innenfor `reachRadius`». De to kan være uenige, og når
+   * de er det, er det denne som forteller sannheten (§5.8).
+   */
+  readonly reachesDestination: boolean;
   /** Resultatet av den uavhengige ettersjekken (§5.10). */
   readonly recheckPassed: boolean;
   readonly failingSegments: readonly SegmentRef[];
@@ -140,6 +214,8 @@ export interface RouteResult {
   readonly legs: readonly RouteLeg[];
   readonly steps: readonly RouteStep[];
   readonly totals: RouteTotals;
+  /** Utfallet av den direkte sluttetappen (§5.8). */
+  readonly finalLeg: RouteFinalLeg;
   readonly safety: RouteSafety;
   readonly coverage: RouteCoverage;
   readonly alternatives: readonly RouteAlternative[];

@@ -4,13 +4,16 @@
   "exact": {
     "reached": true,
     "abortReason": null,
-    "safetyVerdict": "trygt",
+    "safetyVerdict": "usikkert",
+    "reachesDestination": false,
     "recheckPassed": true,
     "failingSegmentCount": 0,
     "maskCoverage": "full",
     "weatherCoverage": "full",
     "fieldUsed": true,
-    "daylightArrival": true
+    "daylightArrival": true,
+    "finalLegStatus": "avvist-farbarhet",
+    "violatesDaylightRequirement": false
   },
   "totals": {
     "durationS": 18024,

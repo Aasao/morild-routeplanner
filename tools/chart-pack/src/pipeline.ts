@@ -15,7 +15,7 @@ import type {
   CatzocClass,
   PackedPolygon,
 } from "@morild/charts";
-import { tileIdForPoint, tileBounds } from "@morild/charts";
+import { tileBounds } from "@morild/charts";
 import type { ChartTileId } from "@morild/charts";
 import * as turf from "@turf/turf";
 import type { BBox } from "geojson";
@@ -227,7 +227,19 @@ export interface HazardBuildResult {
   readonly features: readonly PolyFeature[];
 }
 
-/** §4 steg 4: buffer skjær/grunne-punkter med `bufferRadiusM` (standard 20 m, konfigurerbar). */
+/**
+ * §4 steg 4: buffer skjær/grunne-punkter med `bufferRadiusM` (standard 20 m,
+ * konfigurerbar).
+ *
+ * **VALSOU-modellen (E4, beslutning 2026-08-31):** Grunne-punktets
+ * `dybde`-attributt bæres nå gjennom til pakkeformatet
+ * (`BufferedHazardPoint.dybdeM`) i stedet for å bli forkastet. Selve
+ * no-go-avgjørelsen for Grunne flyttes til oppslagstidspunktet i
+ * `packages/charts` (§3.4) — her bygges kun geometrien + det rå tallet.
+ * Skjær har ALDRI dybdeattributt i kildedataene (578 av 578 uten
+ * `app:dybde` i fase 1-bølge 2-fixturen) og forblir alltid no-go, se
+ * `chart-source.ts`.
+ */
 export function buildBufferedHazards(
   skjaer: readonly PointFeature[],
   grunne: readonly PointFeature[],
@@ -239,19 +251,100 @@ export function buildBufferedHazards(
     const buffered = bufferPoint(p.point[0], p.point[1], bufferRadiusM);
     features.push(buffered);
     const polygon = toPackedPolygons(buffered)[0];
-    if (polygon) points.push({ kind: "skjaer", bufferRadiusM, polygon });
+    if (polygon)
+      points.push({
+        kind: "skjaer",
+        bufferRadiusM,
+        polygon,
+        centerLon: p.point[0],
+        centerLat: p.point[1],
+      });
   }
   for (const p of grunne) {
-    // Merk: Grunne-punkter behandles alltid som no-go når buffret, uansett
-    // ev. dybdeattributt (spec §3.4: "presise punkt-/arealfarer, ikke
-    // dybdekurve-baserte") — se docs/legal-notat i README om hvorfor dette
-    // er en bevisst konservativ tolkning verdt å bekrefte med Magnus.
     const buffered = bufferPoint(p.point[0], p.point[1], bufferRadiusM);
     features.push(buffered);
     const polygon = toPackedPolygons(buffered)[0];
-    if (polygon) points.push({ kind: "grunne", bufferRadiusM, polygon });
+    if (polygon)
+      points.push({
+        kind: "grunne",
+        bufferRadiusM,
+        polygon,
+        centerLon: p.point[0],
+        centerLat: p.point[1],
+        ...(p.dybdeM !== undefined ? { dybdeM: p.dybdeM } : {}),
+      });
   }
   return { points, features };
+}
+
+export interface SoundingBandViolation {
+  readonly featureId: string;
+  readonly soundedDepthM: number;
+  readonly bandLowerBoundM: number;
+  readonly bandUpperBoundM: number;
+  readonly point: readonly [number, number]; // [lon, lat]
+}
+
+export interface SoundingQaResult {
+  readonly violations: readonly SoundingBandViolation[];
+  /** Antall soundinger som faktisk hadde et dybdeattributt og ble sjekket. */
+  readonly checkedCount: number;
+}
+
+/**
+ * QA-validator (byggetids-steg, beslutning 2026-08-31, marinkartolog-
+ * vurderingens felle 2): et bånd `(lowerBoundM, upperBoundM)` er konstruert
+ * for å bety "dette arealet er dypere enn `lowerBoundM`". En dybdepunkt-
+ * sondering med kjent dybde som havner GEOMETRISK innenfor et bånd, men
+ * viser en dybde grunnere enn båndets nedre grense, avslører enten en
+ * feilkonstruert kurve (selvskjæring, sammenblanding med en
+ * depresjonskurve — "kurven omslutter alt grunnere" er IKKE alltid sant for
+ * S-57-data) eller en reell topologifeil i kildedataene. Brudd
+ * rapporteres/flagges her — ALDRI stille slukt (N2) — men stopper ikke
+ * bygget alene: en enkelt avvikende sondering skal ikke blokkere en hel
+ * nattlig kjøring (samme filosofi som `BuildIssue[]` i `buildDepthBands`).
+ * Kalleren (`build.ts`) setter pakkens `sourceStatus` til `"degraded"` med
+ * antall brudd hvis denne rapporten er ikke-tom, slik at bruddet er synlig
+ * i pakkemetadata i stedet for i en byggefeil-logg ingen leser.
+ *
+ * **Datagrunnlag i denne bølgen:** kildeuttrekket har ingen egen
+ * `Dybdepunkt`-lag (generelle enkeltsonderinger) — validatoren kjøres derfor
+ * mot `Grunne`-punktene (som har `app:dybde` og er reelle, navngitte
+ * dybdemålinger) som tilgjengelig ground-truth-proxy. Et ekte
+ * `Dybdepunkt`-lag bør legges til i en senere bølge for full dekning
+ * (ærlig degradering: proxy-dekningen er dokumentert, ikke skjult).
+ */
+export function validateSoundingsAgainstBands(
+  bands: readonly DepthBand[],
+  soundings: readonly PointFeature[],
+): SoundingQaResult {
+  const violations: SoundingBandViolation[] = [];
+  let checkedCount = 0;
+  for (const sounding of soundings) {
+    if (sounding.dybdeM === undefined) continue;
+    checkedCount++;
+    for (const band of bands) {
+      const hit = band.polygons.some((poly) => {
+        const feature = turf.polygon(
+          poly.rings.map((ring) => ring.map(([lon, lat]) => [lon, lat])),
+        );
+        return turf.booleanPointInPolygon(
+          turf.point([sounding.point[0], sounding.point[1]]),
+          feature,
+        );
+      });
+      if (hit && sounding.dybdeM < band.lowerBoundM) {
+        violations.push({
+          featureId: sounding.id,
+          soundedDepthM: sounding.dybdeM,
+          bandLowerBoundM: band.lowerBoundM,
+          bandUpperBoundM: band.upperBoundM,
+          point: sounding.point,
+        });
+      }
+    }
+  }
+  return { violations, checkedCount };
 }
 
 export function buildFarledZones(
@@ -298,16 +391,56 @@ export function buildDataQualityZones(
   return zones;
 }
 
+/** Bounding box (`[west, south, east, north]`) over ALLE ringer i et polygon. */
+function polygonBBox(polygon: PackedPolygon): BBox | undefined {
+  let west = Infinity;
+  let south = Infinity;
+  let east = -Infinity;
+  let north = -Infinity;
+  for (const ring of polygon.rings) {
+    for (const [lon, lat] of ring) {
+      if (lon < west) west = lon;
+      if (lon > east) east = lon;
+      if (lat < south) south = lat;
+      if (lat > north) north = lat;
+    }
+  }
+  return Number.isFinite(west) ? [west, south, east, north] : undefined;
+}
+
+/**
+ * Fliser et polygon KAN berøre — R2-fiks (code-review 2026-08-31): den
+ * forrige implementasjonen samlet kun flisen for hvert ring-HJØRNE, så et
+ * polygon som dekker en mellomflis fullstendig UTEN å ha noe hjørne inni den
+ * (f.eks. en smal, langstrakt polygon som strekker seg over tre fliser på
+ * rad) falt stille ut av den mellomste flisen — ingen feilmelding, bare et
+ * hull i dekningen.
+ *
+ * Fiksen bruker i stedet polygonets bounding box mot flis-rutenettets
+ * indekser: alle fliser hvis grenser overlapper bboksen tas med. Dette er en
+ * bevisst OVER-approksimasjon (en L-formet polygon sin bbox kan dekke et
+ * hjørne polygonet aldri faktisk berører) — trygt her fordi den påfølgende
+ * `clipPolygonToTile` uansett fjerner alt som ikke faktisk overlapper
+ * flisen (se `buildTilePayloads`, som filtrerer bort fliser der ALLE lag ble
+ * tomme etter klipping). Over-inkludering koster kun litt ekstra klipping,
+ * aldri en stille tapt geometri — motsatt av hjørne-tilnærmingen.
+ */
 function touchedTiles(
   polygons: readonly PackedPolygon[],
   grid: { readonly lonStepDeg: number; readonly latStepDeg: number },
 ): ChartTileId[] {
   const seen = new Map<string, ChartTileId>();
   for (const p of polygons) {
-    for (const ring of p.rings) {
-      for (const [lon, lat] of ring) {
-        const id = tileIdForPoint(lat, lon, grid);
-        seen.set(`${id.latIndex}_${id.lonIndex}`, id);
+    const bbox = polygonBBox(p);
+    if (!bbox) continue;
+    const [west, south, east, north] = bbox;
+    const lonMin = Math.floor(west / grid.lonStepDeg);
+    const lonMax = Math.floor(east / grid.lonStepDeg);
+    const latMin = Math.floor(south / grid.latStepDeg);
+    const latMax = Math.floor(north / grid.latStepDeg);
+    for (let latIndex = latMin; latIndex <= latMax; latIndex++) {
+      for (let lonIndex = lonMin; lonIndex <= lonMax; lonIndex++) {
+        seen.set(`${latIndex}_${lonIndex}`, { lonIndex, latIndex });
       }
     }
   }
@@ -404,6 +537,20 @@ export function buildTilePayloads(
       const p = clipPolygonToTile(d.polygon, bounds);
       return p ? [{ ...d, polygon: p }] : [];
     });
+    // R2-fiks: `touchedTiles` er nå bbox-basert (bevisst over-approksimasjon,
+    // se kommentaren der) — en flis kan derfor havne i `allTiles` uten at
+    // NOE lag faktisk overlapper den etter eksakt klipping. Slike tomme
+    // fliser filtreres bort her, slik at manifest-kontrakten over («en flis
+    // som ikke berøres av noe lag utelates») fortsatt holder.
+    if (
+      clippedBands.length === 0 &&
+      clippedDryFall.length === 0 &&
+      clippedHazards.length === 0 &&
+      clippedFarled.length === 0 &&
+      clippedQuality.length === 0
+    ) {
+      continue;
+    }
     result.push({
       id,
       bands: clippedBands,

@@ -109,6 +109,30 @@ koordinater, og/eller å representere buffrede skjær/grunne-punkter som
 gjør selv en enkel avstandssjekk — billigere å lagre, og
 `point-in-polygon.ts` har allerede avstandsprimitiver som kunne dekke det).
 
+## 4a. QA-validator: dybdepunkt-sondering vs. bånd (felle 2, beslutning 2026-08-31)
+
+`validateSoundingsAgainstBands` (`src/pipeline.ts`) sjekker, FØR skjær/grunne
+trekkes fra dybdebåndene, at ingen dybdepunkt-sondering med kjent dybde
+havner geometrisk i et bånd den er grunnere enn (bånd `(lower, upper)`
+påstår "dypere enn `lower`"). Kjørt mot `Grunne`-punktene som
+ground-truth-proxy (se §3.4-notatet i spec-en: intet eget `Dybdepunkt`-lag
+er ingestert i denne bølgen).
+
+**Ekte funn i denne fixturen: 503 av 3913 (12,9 %) Grunne-soundinger
+bryter regelen** — typisk mønster: en Grunne sondert til 32–39 m havner
+geometrisk i 40–50 m-bandet. Årsak, mest sannsynlig: åpne-kurver-hullet
+(§5 avvik #1) — når en avgrensende mellomliggende kurve (f.eks. 30 m- eller
+40 m-konturen akkurat der) er droppet fordi den krysser kartbladgrensen,
+blir 40–50 m-bandet kunstig for stort og sluker areal som i virkeligheten
+er grunnere. Dette er IKKE en feil i selve differanse-algoritmen (§6.1s
+fasit-tester på syntetisk geometri viser at den er korrekt) — det er et
+konkret, målt symptom på samme rotårsak som felle 1 (åpne kurver), synlig
+her fordi validatoren sammenligner mot uavhengige punktmålinger i stedet
+for kun å stole på kurvetopologien. Brudd flagges i
+`header.layers[dybdebaand].sourceStatus` (og løfter toppnivå-`sourceStatus`
+til `"degraded"` med antall) — bygget stoppes ikke, i tråd med N2 (synlig,
+ikke blokkerende). Se `docs/specs/farbarhetsmaske.md` §4 steg 4a.
+
 ## 5. Avvik fra spec (med begrunnelse)
 
 1. **Kun lukkede dybdekurve-ringer brukes** (1291 av 3762, 34 %). Kartverkets
@@ -139,13 +163,22 @@ gjør selv en enkel avstandssjekk — billigere å lagre, og
    TSS/vernesone lå utenfor oppdragets eksplisitte omfang for denne bølgen
    ("dybdebånd... ∖ tørrfall ∖ buffrede skjær/grunner... farled...
    tillitsgrid").
-5. **`Grunne`-punkter behandles som alltid no-go når buffret**, uansett
-   `dybde`-attributt (observert opptil 30 m i testdataene) — dette følger
-   spec-teksten bokstavelig ("presise punkt-/arealfarer, ikke
-   dybdekurve-baserte"), men er verdt å bekrefte med Magnus: en "grunne" på
-   30 m er ikke en fare for en 2,6 m klaring i seg selv — poenget er trolig
-   at *posisjonen* er en anomali verdt forsiktighet, ikke selve dybdetallet.
-   Flagget i kode (`pipeline.ts`, `buildBufferedHazards`).
+5. **LØST (2026-08-31, VALSOU-modellen, E4).** `Grunne`-punkter ga tidligere
+   alltid no-go når buffret, uansett `dybde`-attributt (observert opptil
+   218 m i testdataene, median 4,7 m av 3913 målte — se
+   `docs/specs/farbarhetsmaske.md` §3.4). Magnus besluttet 2026-08-31 at
+   dette var feil vei: en falsk sperring (30 m-grunne som blokkerer en
+   2,6 m-klaring) undergraver tilliten til hele masken. `buildBufferedHazards`
+   bærer nå `dybde`-attributtet gjennom til pakkeformatet
+   (`BufferedHazardPoint.dybdeM`); selve no-go-avgjørelsen flyttet til
+   oppslagstidspunktet i `packages/charts/src/chart-source.ts`: no-go kun
+   når `dybdeM < kravTilDybdeM` eller `dybdeM` mangler. **Funn i denne
+   fixturen: 3913 av 3913 Grunne-objekter (100 %) har et `app:dybde`-
+   attributt** — "mangler dybde"-grenen i VALSOU-regelen er reell kode
+   (dekket av en syntetisk fasit-test), men ikke observert i ekte data ennå.
+   `Skjær` beholder den gamle regelen (alltid no-go) — bekreftet at 578 av
+   578 Skjær-objekter ALDRI har `app:dybde` i kildedataene, så det finnes
+   ikke noe tall å avveie mot der.
 6. **`vintage`/`init` i pakkeheaderen bruker uttaksdatoen** (`datauttaksdato`
    fra WFS-responsen), ikke en sammenslåing av hvert objekts
    `førsteDatafangstdato`/`oppdateringsdato`. Ærlig, dokumentert forenkling

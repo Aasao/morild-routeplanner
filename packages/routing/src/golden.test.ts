@@ -18,6 +18,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { haversineNm } from "@morild/geo";
 import { goldenScenarios } from "../test-fixtures/golden-scenarios.js";
 import {
   corridorDeviationNm,
@@ -45,12 +46,17 @@ interface GoldenSnapshot {
     readonly reached: boolean;
     readonly abortReason: string | null;
     readonly safetyVerdict: string;
+    /** §5.8/funn 1b — «kom ruten faktisk fram», uavhengig av `reached`. */
+    readonly reachesDestination: boolean;
     readonly recheckPassed: boolean;
     readonly failingSegmentCount: number;
     readonly maskCoverage: string;
     readonly weatherCoverage: string;
     readonly fieldUsed: boolean;
     readonly daylightArrival: boolean;
+    /** §5.8 — endres denne, har sluttetappens semantikk endret seg. */
+    readonly finalLegStatus: string;
+    readonly violatesDaylightRequirement: boolean;
   };
   readonly totals: {
     readonly durationS: number;
@@ -79,12 +85,15 @@ function snapshotOf(result: RouteResult, purpose: string): GoldenSnapshot {
       reached: result.reached,
       abortReason: result.abortReason,
       safetyVerdict: result.safety.verdict,
+      reachesDestination: result.safety.reachesDestination,
       recheckPassed: result.safety.recheckPassed,
       failingSegmentCount: result.safety.failingSegments.length,
       maskCoverage: result.coverage.mask,
       weatherCoverage: result.coverage.weather,
       fieldUsed: result.coverage.fieldUsed,
       daylightArrival: result.totals.daylightArrival,
+      finalLegStatus: result.finalLeg.status,
+      violatesDaylightRequirement: result.totals.violatesDaylightRequirement,
     },
     totals: {
       durationS: result.totals.durationS,
@@ -223,6 +232,71 @@ describe("golden-ruter er deterministiske", () => {
       const first = JSON.stringify(planRoute(scenario.input));
       const second = JSON.stringify(planRoute(scenario.input));
       expect(second, `${scenario.name} er ikke deterministisk`).toBe(first);
+    }
+  }, 120_000);
+});
+
+/**
+ * Invarianten som ville fanget E-funnet 2026-08-31 (tidsfri sluttetappe) uten
+ * at noen måtte lete etter den: **ingen distanse uten tid**. Et steg som
+ * flytter båten må koste sekunder — ellers har vi teleportert, og både
+ * varighet, ankomsttid og alle avledede tall er feil.
+ */
+describe("kinematisk invariant på golden-rutene", () => {
+  it("hvert steg som flytter båten koster tid", () => {
+    for (const scenario of goldenScenarios()) {
+      const result = planRoute(scenario.input);
+      for (let i = 1; i < result.steps.length; i++) {
+        const prev = result.steps[i - 1]!;
+        const cur = result.steps[i]!;
+        const movedNm = haversineNm(prev, cur);
+        if (movedNm <= 1e-6) continue;
+        expect(
+          cur.tS - prev.tS,
+          `${scenario.name} steg ${i}: ${movedNm.toFixed(3)} nm på 0 s`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  }, 120_000);
+
+  /**
+   * Sluttetappen (§5.8) er enten lagt til — og da ender ruten i målet — eller
+   * avvist, og da skal `shortfallNm` fortelle nøyaktig hvor langt unna ruten
+   * stoppet. Ingen mellomting, ingen stille kortslutning.
+   */
+  it("finalLeg beskriver avstanden fra rutens siste punkt til målet", () => {
+    for (const scenario of goldenScenarios()) {
+      const result = planRoute(scenario.input);
+      const last = result.steps[result.steps.length - 1]!;
+      const actualNm = haversineNm(last, scenario.input.dest);
+      if (result.finalLeg.status === "lagt-til") {
+        expect(actualNm, scenario.name).toBeLessThan(1e-6);
+        expect(result.finalLeg.shortfallNm).toBe(0);
+      } else if (result.finalLeg.status !== "ikke-nodvendig") {
+        expect(result.finalLeg.shortfallNm, scenario.name).toBeCloseTo(
+          actualNm,
+          9,
+        );
+      }
+    }
+  }, 120_000);
+
+  /**
+   * Funn 1b (code-review runde 2, 2026-08-31): en avvist sluttetappe skal
+   * aldri kunne stå som rent «trygt». `safety.reachesDestination` er den
+   * toppnivå-boolske nedstrøms kode skal lese — den kan ikke drifte fra
+   * `finalLeg.status`.
+   */
+  it("en avvist sluttetappe kan aldri stå som «trygt»", () => {
+    for (const scenario of goldenScenarios()) {
+      const result = planRoute(scenario.input);
+      const status = result.finalLeg.status;
+      expect(result.safety.reachesDestination, scenario.name).toBe(
+        status === "lagt-til" || status === "ikke-nodvendig",
+      );
+      if (status.startsWith("avvist-")) {
+        expect(result.safety.verdict, scenario.name).not.toBe("trygt");
+      }
     }
   }, 120_000);
 });

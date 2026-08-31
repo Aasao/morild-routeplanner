@@ -6,13 +6,19 @@
  * spec-en). `dato` er alltid eksplisitt input, aldri systemklokke.
  */
 import type { LatLon } from "@morild/geo";
+import { haversineNm } from "@morild/geo";
 import {
   distanceToPolygonNm,
+  distanceToSegmentNm,
   nearestRingPoint,
   pointInAnyPolygon,
   pointInPolygon,
+  segmentEntirelyWithinAnyPolygon,
+  segmentIntersectsAnyPolygon,
+  segmentIntersectsPolygon,
 } from "./point-in-polygon.js";
 import type {
+  BufferedHazardPoint,
   ChartPackage,
   ChartTilePayload,
   DepthBand,
@@ -135,6 +141,33 @@ function findTile(pkg: ChartPackage, point: LatLon): ChartTilePayload | undefine
   return pkg.tiles.find((t) => tileIdToString(t.id) === tileIdToString(id));
 }
 
+const METERS_PER_NM = 1852;
+
+/**
+ * Ligger punktet innenfor punktfarens buffer?
+ *
+ * **Eksakt sirkel når kilden har senterpunkt** (funn 2, code-review runde 2
+ * 2026-08-31): `polygon` er turfs *innskrevne* polygon-tilnærming av sirkelen
+ * (§4.1) og under-dekker den derfor mellom hjørnene — i sliveren mellom en
+ * korde i tilnærmingen og den sanne sirkelbuen ville et punkt innenfor
+ * `bufferRadiusM` blitt sluppet gjennom. `segmentTest()` bruker allerede
+ * eksakt sirkelgeometri (`distanceToSegmentNm` mot `bufferRadiusM`); at
+ * `farbar()` samtidig brukte polygonet gjorde punkt- og segmenttesten
+ * uenige om den samme faren — og punkttesten var den mildeste av de to.
+ *
+ * Polygon-fallback beholdes for eldre/håndbygde fikstyrer uten senter-felt
+ * (feltene er valgfrie kun av den grunnen, se `BufferedHazardPoint`).
+ */
+function pointWithinHazardBuffer(point: LatLon, hz: BufferedHazardPoint): boolean {
+  if (hz.centerLat === undefined || hz.centerLon === undefined) {
+    return pointInPolygon(point, hz.polygon);
+  }
+  return (
+    haversineNm(point, { lat: hz.centerLat, lon: hz.centerLon }) <=
+    hz.bufferRadiusM / METERS_PER_NM
+  );
+}
+
 /** Kjernevurderingen for ett enkelt punkt — §3.4 steg 1–4 + §3.5 luftspenn/vernesone. */
 function evaluatePoint(
   tile: ChartTilePayload,
@@ -159,15 +192,47 @@ function evaluatePoint(
     }
   }
   for (const hz of tile.bufferedHazards) {
-    if (pointInPolygon(point, hz.polygon)) {
+    // Eksakt sirkel når kilden har senterpunkt — se `pointWithinHazardBuffer`.
+    if (!pointWithinHazardBuffer(point, hz)) continue;
+    if (hz.kind === "skjaer") {
+      // Skjær har aldri dybdeattributt i kildedataene (verifisert, se
+      // pack-format.ts) og er en presis punktfare uavhengig av dypgang —
+      // uendret fra tidligere: alltid no-go.
       nivaa = worstTrust(nivaa, "no-go");
       aarsaker.push({
         kind: "skjaer-buffer",
-        detail: `Punktet ligger innenfor ${hz.bufferRadiusM} m buffer rundt et kartlagt ${hz.kind === "skjaer" ? "skjær" : "grunne"}.`,
-        sourceLayer: hz.kind,
+        detail: `Punktet ligger innenfor ${hz.bufferRadiusM} m buffer rundt et kartlagt skjær.`,
+        sourceLayer: "skjaer",
       });
       break;
     }
+    // kind === "grunne": VALSOU-modellen (E4, beslutning 2026-08-31, §3.4).
+    // No-go KUN når dybdeattributt mangler eller er grunnere enn kravet ved
+    // oppslag — ellers ingen blokkering fra dette punktet (en 30 m-grunne
+    // skal ikke sperre en 2,6 m-krav-rute; det var nettopp den falske
+    // sperringen som undergravde tilliten til masken under den gamle
+    // blank-no-go-regelen).
+    if (hz.dybdeM === undefined) {
+      nivaa = worstTrust(nivaa, "no-go");
+      aarsaker.push({
+        kind: "skjaer-buffer",
+        detail: `Punktet ligger innenfor ${hz.bufferRadiusM} m buffer rundt en kartlagt grunne uten kjent dybde — VALSOU-regelen blokkerer ved manglende dybdeattributt.`,
+        sourceLayer: "grunne",
+      });
+      break;
+    }
+    if (hz.dybdeM < kravTilDybdeM) {
+      nivaa = worstTrust(nivaa, "no-go");
+      aarsaker.push({
+        kind: "skjaer-buffer",
+        detail: `Punktet ligger innenfor ${hz.bufferRadiusM} m buffer rundt en kartlagt grunne på ${hz.dybdeM} m, grunnere enn krav ${kravTilDybdeM} m.`,
+        sourceLayer: "grunne",
+      });
+      break;
+    }
+    // hz.dybdeM >= kravTilDybdeM: grunnen er dyp nok for dette kravet —
+    // ingen blokkering fra denne punktfaren. Vurderingen fortsetter til
+    // steg 3/4 (dybdebånd/tillitsløft) som normalt.
   }
 
   // Steg 3: dybdebånd mot sikkerhetskontur. Merk: hvis INGEN kartlagt kurve
@@ -256,6 +321,233 @@ function evaluatePoint(
   return tss ? { nivaa, aarsaker, tss } : { nivaa, aarsaker };
 }
 
+/**
+ * Eksakt segmentvis ettersjekk (§6.4, R1-fiks code-review 2026-08-31) — samme
+ * struktur som `evaluatePoint`, men hvert lag testes med kordens
+ * (`fra`→`til`) faktiske geometri i stedet for et enkeltpunkt:
+ *
+ * - Tørrfall/dybdebånd: segment-mot-polygon-skjæring (`segmentIntersectsPolygon`/
+ *   `-AnyPolygon`) — treffer polygonet HVOR SOM HELST langs korden, ikke bare
+ *   ved forhåndsvalgte prøvepunkter.
+ * - Skjær/grunne (punktfarer): avstand fra korden til kildepunktets
+ *   `centerLon`/`centerLat` mot `bufferRadiusM` — eksakt sirkelgeometri,
+ *   mer presis OG mer konservativt enn å teste mot den ferdig-bufrede
+ *   polygon-tilnærmingen (§4.1). Faller tilbake til
+ *   `segmentIntersectsPolygon` mot den bufrede polygonen for eldre/håndbygde
+ *   fikstyrer uten senter-felt (se `BufferedHazardPoint`-kommentaren).
+ * - Steg 4 (tillitsløft): `segmentEntirelyWithinAnyPolygon` — hele korden må
+ *   ligge i farled/god datakvalitet for `trygt`; ellers `usikkert` (samme
+ *   føre-var-retning som §3.4 steg 4 for enkeltpunkt).
+ *
+ * VALSOU-regelen (E4) gjelder identisk med `evaluatePoint`: en `Grunne` med
+ * `dybdeM >= kravTilDybdeM` blokkerer ikke.
+ */
+function evaluateChordAgainstTile(
+  tile: ChartTilePayload,
+  fra: LatLon,
+  til: LatLon,
+  kravTilDybdeM: number,
+  kravTilLuftspennM: number,
+  dato: string,
+): { readonly nivaa: TrustLevel; readonly aarsaker: HazardReason[]; readonly tss?: TssAnnotation } {
+  const aarsaker: HazardReason[] = [];
+  let nivaa: TrustLevel = "trygt";
+
+  // Steg 2: tørrfall.
+  for (const zone of tile.dryFall) {
+    if (segmentIntersectsPolygon(fra, til, zone.polygon)) {
+      nivaa = worstTrust(nivaa, "no-go");
+      aarsaker.push({
+        kind: "torrfall",
+        detail: "Segmentet krysser et tørrfallsområde (tørrlagt ved lavvann).",
+        sourceLayer: "torrfall",
+      });
+      break;
+    }
+  }
+
+  // Steg 2: skjær/grunne-buffer — presise punktfarer, eksakt avstandstest.
+  for (const hz of tile.bufferedHazards) {
+    const withinBuffer =
+      hz.centerLat !== undefined && hz.centerLon !== undefined
+        ? distanceToSegmentNm({ lat: hz.centerLat, lon: hz.centerLon }, fra, til) <=
+          hz.bufferRadiusM / METERS_PER_NM
+        : segmentIntersectsPolygon(fra, til, hz.polygon);
+    if (!withinBuffer) continue;
+    if (hz.kind === "skjaer") {
+      nivaa = worstTrust(nivaa, "no-go");
+      aarsaker.push({
+        kind: "skjaer-buffer",
+        detail: `Segmentet passerer innenfor ${hz.bufferRadiusM} m buffer rundt et kartlagt skjær.`,
+        sourceLayer: "skjaer",
+      });
+      break;
+    }
+    // kind === "grunne": VALSOU-modellen — se `evaluatePoint`.
+    if (hz.dybdeM === undefined) {
+      nivaa = worstTrust(nivaa, "no-go");
+      aarsaker.push({
+        kind: "skjaer-buffer",
+        detail: `Segmentet passerer innenfor ${hz.bufferRadiusM} m buffer rundt en kartlagt grunne uten kjent dybde — VALSOU-regelen blokkerer ved manglende dybdeattributt.`,
+        sourceLayer: "grunne",
+      });
+      break;
+    }
+    if (hz.dybdeM < kravTilDybdeM) {
+      nivaa = worstTrust(nivaa, "no-go");
+      aarsaker.push({
+        kind: "skjaer-buffer",
+        detail: `Segmentet passerer innenfor ${hz.bufferRadiusM} m buffer rundt en kartlagt grunne på ${hz.dybdeM} m, grunnere enn krav ${kravTilDybdeM} m.`,
+        sourceLayer: "grunne",
+      });
+      break;
+    }
+    // hz.dybdeM >= kravTilDybdeM: ingen blokkering fra denne punktfaren.
+  }
+
+  // Steg 3: dybdebånd mot sikkerhetskontur — segmentet blokkerer hvis det
+  // krysser et bånd grunnere enn konturen HVOR SOM HELST langs korden.
+  const c = safetyContourFor(tile.bands, kravTilDybdeM);
+  let inShallowBand = false;
+  if (c !== undefined) {
+    for (const band of tile.bands) {
+      if (band.upperBoundM <= (c as number) && segmentIntersectsAnyPolygon(fra, til, band.polygons)) {
+        inShallowBand = true;
+        nivaa = worstTrust(nivaa, "no-go");
+        aarsaker.push({
+          kind: "grunnere-enn-sikkerhetskontur",
+          detail: `Segmentet krysser båndet opp til ${band.upperBoundM} m, grunnere enn sikkerhetskonturen ${c} m (krav ${kravTilDybdeM} m).`,
+          sourceLayer: "dybdebaand",
+        });
+      }
+    }
+  }
+
+  if (!inShallowBand && nivaa !== "no-go") {
+    const trustLiftPolygons = [
+      ...tile.farled.map((f) => f.polygon),
+      ...tile.dataQuality
+        .filter((z) => z.catzoc === "A1" || z.catzoc === "A2" || z.catzoc === "B")
+        .map((z) => z.polygon),
+    ];
+    if (segmentEntirelyWithinAnyPolygon(fra, til, trustLiftPolygons)) {
+      nivaa = worstTrust(nivaa, "trygt");
+    } else {
+      nivaa = worstTrust(nivaa, "usikkert");
+      const hasAnyQualityZone = tile.dataQuality.some((z) => segmentIntersectsPolygon(fra, til, z.polygon));
+      aarsaker.push({
+        kind: hasAnyQualityZone ? "lav-datakvalitet" : "utenfor-farled-lav-tetthet",
+        detail: hasAnyQualityZone
+          ? "Segmentet krysser (helt eller delvis) en sone med lav kartlagt datakvalitet (CATZOC C/D/U)."
+          : "Segmentet ligger (helt eller delvis) utenfor farled og uten dokumentert datakvalitet — føre-var-regelen (F1.3).",
+        sourceLayer: "datakvalitet",
+      });
+    }
+  }
+
+  // §3.5 Luftspenn.
+  for (const zone of tile.airDraft) {
+    if (segmentIntersectsPolygon(fra, til, zone.polygon)) {
+      if (zone.friHoydeM < kravTilLuftspennM) {
+        nivaa = worstTrust(nivaa, "usikkert");
+        aarsaker.push({
+          kind: "for-lav-luftspenn",
+          detail: `${zone.navn}: oppgitt fri høyde ${zone.friHoydeM} m < krav ${kravTilLuftspennM} m, men datum (${zone.datum}) er uverifisert — kan ikke heves til no-go.`,
+          sourceLayer: "luftspenn",
+        });
+      }
+      if (zone.datum !== "K0") {
+        aarsaker.push({
+          kind: "ukjent-eller-uegnet-datum",
+          detail: `${zone.navn}: vertikal referanse (${zone.datum}) er ikke bekreftet sjøkartnull.`,
+          sourceLayer: "luftspenn",
+        });
+      }
+    }
+  }
+
+  // §3.5 Vernesone.
+  for (const zone of tile.protectedZones) {
+    if (segmentIntersectsPolygon(fra, til, zone.polygon) && isDateInSeason(dato, zone)) {
+      nivaa = worstTrust(nivaa, zone.regel === "no-go" ? "no-go" : "usikkert");
+      aarsaker.push({
+        kind: "vernesone-aktiv",
+        detail: `${zone.navn} er aktiv (${zone.gyldigFraMD}–${zone.gyldigTilMD}), regel: ${zone.regel}.`,
+        sourceLayer: "vernesone",
+      });
+    }
+  }
+
+  // §3.5 TSS — ingen trust-endring, kun annotasjon.
+  let tss: TssAnnotation | undefined;
+  for (const lane of tile.tss) {
+    if (segmentIntersectsPolygon(fra, til, lane.polygon)) {
+      tss = { lane: lane.navn, aksebæringGrader: lane.aksebæringGrader };
+      break;
+    }
+  }
+
+  return tss ? { nivaa, aarsaker, tss } : { nivaa, aarsaker };
+}
+
+/**
+ * Finner alle fliser korden (fra→til) faktisk krysser (ikke bare
+ * endepunktenes fliser) — R1/R2-analog for oppslagstidspunktet: et langt
+ * segment kan krysse flere fliser i rutenettet (§3.1), og hver av dem må
+ * bidra sine egne lag til den eksakte ettersjekken.
+ *
+ * Metode: finn alle parameterverdier `t` der korden krysser en rutenett-
+ * grenselinje (lengde- eller breddegrad), sorter dem, og slå opp flisen for
+ * midtpunktet av hvert delintervall. Dette gir de eksakte flisene korden
+ * passerer gjennom (ikke en over-approksimasjon via bounding box), med et
+ * antall oppslag proporsjonalt med antall fliser krysset — typisk 1-3 for
+ * et rutesegment, aldri et helt rutenett.
+ *
+ * `allCovered: false` betyr minst én del av korden mangler flisdekning —
+ * fail-closed (§5): hele segmentet regnes da som `utenfor-pakke`, selv om
+ * andre deler er dekket (samme prinsipp som det gamle sample-baserte
+ * short-circuit-oppslaget).
+ */
+function tilesAlongSegment(
+  pkg: ChartPackage,
+  fra: LatLon,
+  til: LatLon,
+): { readonly tiles: readonly ChartTilePayload[]; readonly allCovered: boolean } {
+  const grid = pkg.header.tileGrid;
+  const dLon = til.lon - fra.lon;
+  const dLat = til.lat - fra.lat;
+  const breakpoints = new Set<number>([0, 1]);
+
+  const addCrossings = (from: number, to: number, delta: number, step: number) => {
+    if (delta === 0) return;
+    const idxLo = Math.floor(Math.min(from, to) / step);
+    const idxHi = Math.floor(Math.max(from, to) / step);
+    for (let i = idxLo + 1; i <= idxHi; i++) {
+      const t = (i * step - from) / delta;
+      if (t > 0 && t < 1) breakpoints.add(t);
+    }
+  };
+  addCrossings(fra.lon, til.lon, dLon, grid.lonStepDeg);
+  addCrossings(fra.lat, til.lat, dLat, grid.latStepDeg);
+
+  const sorted = [...breakpoints].sort((x, y) => x - y);
+  const tiles = new Map<string, ChartTilePayload>();
+  let allCovered = true;
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const tLo = sorted[i] as number;
+    const tHi = sorted[i + 1] as number;
+    const tMid = (tLo + tHi) / 2;
+    const midPoint: LatLon = { lat: fra.lat + dLat * tMid, lon: fra.lon + dLon * tMid };
+    const tile = findTile(pkg, midPoint);
+    if (tile) {
+      tiles.set(tileIdToString(tile.id), tile);
+    } else {
+      allCovered = false;
+    }
+  }
+  return { tiles: [...tiles.values()], allCovered };
+}
+
 export function createChartSource(pkg: ChartPackage): ChartSource {
   function farbar(
     punkt: LatLon,
@@ -279,41 +571,41 @@ export function createChartSource(pkg: ChartPackage): ChartSource {
       : { dekning: "dekket", nivaa, aarsaker };
   }
 
+  /**
+   * Eksakt segmentvis ettersjekk (§6.4, §2 — «autoritativ», R1-fiks
+   * code-review 2026-08-31). Erstatter den tidligere 20-punkts samplingen:
+   * en smal fare plassert mellom to gamle prøvepunkter kunne tidligere
+   * passere uoppdaget (se `segmentTest — smal fare mellom prøvepunkter`-
+   * testen i `index.test.ts`). Nå testes korden mot den faktiske
+   * polygongeometrien (`evaluateChordAgainstTile`) i ALLE fliser den
+   * faktisk krysser (`tilesAlongSegment`), ikke bare et fast antall
+   * stikkprøver.
+   */
   function segmentTest(
     fra: LatLon,
     til: LatLon,
     kravTilDybdeM: number,
     kravTilLuftspennM: number,
     dato: string,
-    /** Antall interne prøvepunkter — enkel, deterministisk tilnærming for
-     * v2.0 (ekte kant-mot-kant polygonoverlapp er en senere forbedring). */
-    samples = 20,
   ): FarbarhetResultat {
+    const { tiles, allCovered } = tilesAlongSegment(pkg, fra, til);
+    if (!allCovered || tiles.length === 0) {
+      return {
+        dekning: "utenfor-pakke",
+        grunn: `Minst én del av segmentet fra (${fra.lat}, ${fra.lon}) til (${til.lat}, ${til.lon}) mangler flisdekning.`,
+      };
+    }
+
     let nivaa: TrustLevel = "trygt";
     const aarsakerMap = new Map<string, HazardReason>();
     let tss: TssAnnotation | undefined;
-    let dekket = false;
-
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const point: LatLon = {
-        lat: fra.lat + (til.lat - fra.lat) * t,
-        lon: fra.lon + (til.lon - fra.lon) * t,
-      };
-      const result = farbar(point, kravTilDybdeM, kravTilLuftspennM, dato);
-      if (result.dekning === "utenfor-pakke") {
-        return result;
-      }
-      dekket = true;
+    for (const tile of tiles) {
+      const result = evaluateChordAgainstTile(tile, fra, til, kravTilDybdeM, kravTilLuftspennM, dato);
       nivaa = worstTrust(nivaa, result.nivaa);
       for (const reason of result.aarsaker) {
         aarsakerMap.set(`${reason.kind}:${reason.sourceLayer}`, reason);
       }
       if (result.tss) tss = result.tss;
-    }
-
-    if (!dekket) {
-      return { dekning: "utenfor-pakke", grunn: "Tomt segment." };
     }
     const aarsaker = [...aarsakerMap.values()];
     return tss ? { dekning: "dekket", nivaa, aarsaker, tss } : { dekning: "dekket", nivaa, aarsaker };

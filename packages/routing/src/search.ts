@@ -12,15 +12,12 @@
  * ingen kostnadskomponent kan bli negativ. Den invarianten enhetstestes.
  */
 import type { LatLon } from "@morild/geo";
-import { angDiff, bearing, haversineNm, isNightAt } from "@morild/geo";
+import { angDiff, bearing, haversineNm } from "@morild/geo";
 import { LabelArena } from "./arena.js";
 import type {
   BoatModel,
-  CurrentSample,
   NavigabilityMask,
-  WaveSample,
   WeatherField,
-  WindSample,
 } from "./contracts.js";
 import { maskAsEdgeGate, OPEN_EDGE_GATE } from "./contracts.js";
 import type { CostVector } from "./cost.js";
@@ -39,7 +36,7 @@ import {
   checkHardNode,
   checkSegment,
   checkTssStep,
-  isWindAgainstCurrent,
+  environmentAt,
   softContribution,
   stepKinematics,
 } from "./expand.js";
@@ -333,36 +330,20 @@ class RouteSearch implements Search {
     }
   }
 
+  /**
+   * Miljøoppslaget deles med evaluatoren og sluttetappen (`expand.ts`); det
+   * eneste søket legger på er bokføringen av delvis værdekning.
+   */
   private environmentAt(
     pos: LatLon,
     epochS: number,
   ): NodeEnvironment | undefined {
-    const wind: WindSample | undefined = this.input.weather.wind(
-      pos.lat,
-      pos.lon,
-      epochS,
-    );
-    if (wind === undefined) return undefined;
-    const waves: WaveSample | undefined = this.input.weather.waves(
-      pos.lat,
-      pos.lon,
-      epochS,
-    );
-    const current: CurrentSample | undefined = this.input.weather.current(
-      pos.lat,
-      pos.lon,
-      epochS,
-    );
-    if (waves === undefined || current === undefined)
+    const env = environmentAt(this.input.weather, pos, epochS);
+    if (env === undefined) return undefined;
+    if (env.waves === undefined || env.current === undefined) {
       this.weatherPartial = true;
-    return {
-      wind,
-      waves,
-      current,
-      isNight: isNightAt(pos.lat, pos.lon, epochS),
-      epochS,
-      windAgainstCurrent: isWindAgainstCurrent(wind, current),
-    };
+    }
+    return env;
   }
 
   // ------------------------------------------------------------- hovedløkken

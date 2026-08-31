@@ -6,7 +6,7 @@
 > slengen, med datert endringslogg nederst.
 
 - Status: gjeldende (ADR-0004 godkjent 2026-08-30)
-- Dato: 2026-08-30
+- Dato: 2026-08-30, sist endret 2026-08-31 (§5.11 evaluator, §7 E2)
 - Fase: 2 (`docs/01-prosjektplan.md`)
 - Pakke: `packages/routing`, med `packages/geo`, `packages/polar` og
   `packages/charts` som avhengigheter
@@ -420,10 +420,33 @@ interface RouteResult {
     readonly fuelL: number;
     readonly arrivalEpochS: number;
     readonly daylightArrival: boolean;
+    /** Hardt krav brutt (§5.8). Settes både når den reelle ankomsten er i
+     *  mørket OG når ruten ikke ender i målet i det hele tatt — kravet er
+     *  «ankomst i målet i dagslys». */
+    readonly violatesDaylightRequirement: boolean;
+  };
+
+  /** Utfallet av den direkte sluttetappen (§5.8). */
+  readonly finalLeg: {
+    readonly status:
+      | "ikke-forsokt"        // reached = false; abortReason forklarer
+      | "ikke-nodvendig"      // siste steg er allerede i mål (≤ 0,3 nm)
+      | "lagt-til"
+      | "avvist-farbarhet"    // segmentVerdict eller TSS-regelen
+      | "avvist-vaer"         // ingen vinddata / utenfor værfeltets tidsvindu
+      | "avvist-baatgrenser"  // TWS/Hs over båtens grenser
+      | "avvist-fart";        // ingen framdrift mot målet
+    readonly reason: string | null;
+    readonly shortfallNm: number;          // avstand fra siste steg til målet
   };
 
   readonly safety: {
+    /** Kan aldri være "trygt" når finalLeg.status er en avvist-*-status (§5.8). */
     readonly verdict: "trygt" | "usikkert" | "usikker-rute";
+    /** Ender ruten faktisk i målet? Sant kun for finalLeg.status
+     *  ∈ {"lagt-til", "ikke-nodvendig"}. Dette — ikke `reached` — er
+     *  spørsmålet «kom vi fram» (§5.8). */
+    readonly reachesDestination: boolean;
     readonly recheckPassed: boolean;       // §5.10 — uavhengig ettersjekk
     readonly failingSegments: readonly SegmentRef[];
     readonly flaggedSegments: readonly SegmentRef[];  // usikkert, sjøgang, vind-mot-strøm, TSS
@@ -550,7 +573,7 @@ innsetting**, med én bevisst nyanse (se boksen under).
 | 13 | **Hard:** kystbuffer — `mask.clearanceNm(np, minOffing) < minOffing`, unntatt < `offingExemptNearEndsNm` fra start/mål. Svar caches per `cellKey` (v1-mønster) | middels | cachet |
 | 14 | **Hard:** `mask.segmentVerdict(n, np).passable === false` → forkast | **dyr** | geometri |
 | 15 | **Hard:** TSS-regelen (§5.4) | middels | — |
-| 16 | **Hard:** dagslys-ankomst hvis `requireDaylightArrival` og `np` er innenfor `reachRadius` av målet | billig | — |
+| 16 | **Hard:** dagslys-ankomst hvis `requireDaylightArrival` og `np` er innenfor `reachRadius` av målet. Merk: dette er en *teleportering* — sjekken måler tiden i `np`, ikke etter den direkte sluttetappen. Den reelle ankomsten sjekkes på nytt i §5.8 | billig | — |
 | 17 | Flagg: `usikkert`-tillit, sjøgangsmargin, vind-mot-strøm, TSS-langs | billig | — |
 | 18 | **Innsetting** i tilstanden med dominans + tak (§5.7) | billig | — |
 
@@ -724,9 +747,80 @@ Rekonstruksjon følger `parent`-kjeden bakover fra valgt etikett og reverserer.
 F4.4); `legs` er konsolidert (§5.9).
 
 **Direkte sluttetappe** (v1-arv): når `reached` er sant men siste punkt er
-`> 0,3 nm` fra målet, legges en direkte etappe til målet **kun hvis**
-`mask.segmentVerdict(siste, mål).passable`. Etappen merkes eksplisitt
-`direkteSlutt: true` i `legs`, slik at UI kan si det.
+`> 0,3 nm` fra målet, legges en direkte etappe til målet. Etappen merkes
+eksplisitt `direkteSlutt: true` i `legs`, slik at UI kan si det.
+
+Sluttetappen er en **etterbehandling, ikke et søkesteg** — men den er en reell
+seilas, og skal derfor bestå de samme sjekkene som ethvert søkesteg, i denne
+rekkefølgen (skjerpet 2026-08-31, se §10):
+
+1. `mask.segmentVerdict(siste, mål).passable` **og** TSS-regelen (§5.4).
+   Etterbehandling skal aldri kunne innføre et brudd søket selv ville avvist.
+2. Værfeltets gyldige tidsvindu, og `wind(siste, t_siste) !== undefined`.
+3. `checkHardNode` — båtens ytelsesgrenser (§5.3 steg 3).
+4. **Kinematikk med søkets egne funksjoner:** `environmentAt` +
+   `courseToSteer` + `stepKinematics` + `softContribution`, altså *inkludert
+   strøm*, motorterskel, bølgefaktor og `beatTwaDeg`. Tiden på etappen er
+   `distanse / VMG` der `VMG = SOG · cos(∠(SOG-retning, peiling til mål))` —
+   fart over grunn projisert på peilingen. Bautstraff (§5.3.1) påløper som
+   for ethvert annet steg.
+5. `VMG ≤ 0,05 kn` (`MIN_SPEED_KN`) ⇒ etappen er ikke seilbar.
+
+Feiler **noen** av disse, legges etappen **ikke** til. Ruten ender da ved
+siste ordinære steg, og `finalLeg` sier eksplisitt hvilken sjekk som stoppet
+den (`status`, `reason`) og hvor langt fra målet ruten stoppet
+(`shortfallNm`). Vi later aldri som om båten kom fram, og vi legger aldri til
+en etappe med distanse men uten tid (N2). `reached` beholdes som søkets eget
+svar — «innenfor `reachRadius`» — fordi det er dét det betyr; det er
+`finalLeg` som forteller om ruten faktisk ender i målet.
+
+> **Hvorfor ikke bare la den useilbare etappen stå med 0 s?** Fordi da lyver
+> `totals`: distansen er med, tiden er ikke, og ankomsttid, `fuelL` og alle
+> avledede tall blir feil. Golden-invarianten «hvert steg som flytter båten
+> koster tid» pinner dette.
+
+**Reell dagslysankomst.** Søkets dagslyssjekk (§5.3 steg 16) måler på
+etiketten *før* sluttetappen, altså på en teleportering inn til målet. Etter at
+sluttetappen har fått reell tid, kjøres kravet på nytt: primærruten velges som
+den **først rangerte ikke-dominerte kandidaten som både når målet
+(`finalLeg.status ∈ {"lagt-til", "ikke-nodvendig"}`) og oppfyller
+`requireDaylightArrival` med reell ankomsttid**. Holder ingen av kandidatene
+kravet, returneres den best rangerte likevel — men med
+`totals.violatesDaylightRequirement: true`. Ruten leveres aldri stille med
+`daylightArrival: false` når brukeren har satt kravet hardt.
+
+> **Hvorfor «når målet» er en del av kravet** (funn 1a, code-review runde 2
+> 2026-08-31): uten det leddet kan en kandidat med *avvist* sluttetappe vinne
+> dagslyskravet nettopp fordi den gir opp tidlig nok. «Ankomsten» er da bare
+> tidspunktet ruten stoppet, et stykke fra havn — og en kandidat som faktisk
+> kommer fram, men i mørket, ville tapt for den. Et krav om ankomst i dagslys
+> kan aldri oppfylles av en rute som ikke ankommer.
+
+`totals.daylightArrival` måles **der ruten faktisk ender**, ikke i målet — ble
+sluttetappen avvist, er det siste ordinære steg som er ankomstpunktet.
+`totals.violatesDaylightRequirement` settes tilsvarende når kravet er satt og
+ruten ikke ender i målet, uansett hvor lyst det er der den stoppet.
+
+**Ærlig flagging av en avvist sluttetappe.** `finalLeg.status` alene er ikke
+nok: den ligger et nivå ned i resultatet, og alle *toppnivå*-signalene
+(`reached: true`, `safety.verdict: "trygt"`, `safety.recheckPassed: true`,
+`failingSegments: []`) sa tidligere «komplett, trygg rute» om en rute som
+endte 1,7 nm fra havn. To ting sikrer at det ikke kan overses:
+
+1. **`safety.reachesDestination`** — sant kun når `finalLeg.status` er
+   `"lagt-til"` eller `"ikke-nodvendig"`. Dette er boolsken nedstrøms kode
+   skal lese for «kom vi fram». `reached` er og forblir søkets eget, svakere
+   svar («fant en etikett innenfor `reachRadius`»); de to kan være uenige, og
+   da er det `reachesDestination` som forteller sannheten.
+2. **`safety.verdict` gulves til minst `"usikkert"`** når `finalLeg.status` er
+   en `avvist-*`-status. Verdikten heves *ikke* til `"usikker-rute"`: ingen
+   del av linjen som faktisk tegnes er farlig, og å blande «farlig linje»
+   sammen med «kom ikke fram» ville gjort begge signalene mindre nyttige.
+
+Gulvet gjelder bevisst **ikke** `"ikke-forsokt"`. Der er `reached: false`
+allerede et toppnivå-signal som sier hele sannheten, og ruten er en ærlig
+delrute (samme semantikk som `uoppnaelig-mal`-fiksturen). Det farlige
+tilfellet er motsigelsen `reached: true` samtidig med en avvist sluttetappe.
 
 ### 5.9 Konsolidering
 
@@ -761,6 +855,81 @@ At ettersjekken noen gang feiler er per definisjon en bug i søket. Derfor:
 hver gang den feiler i test eller drift, skrives en golden-test som
 reproduserer tilfellet før feilen fikses.
 
+### 5.11 Rute-evaluator (`evaluateRoute`)
+
+> **Besluttet 2026-08-31 (Magnus).** Evaluator-kjernen bygges nå, før
+> ytelsesarbeidet, som måleinfrastruktur for E1′-valideringen (skalart søk vs.
+> korridor-evaluering per ensemble-medlem) og som byggekloss for fase 4.
+> Bakgrunn: `docs/research/ekspertpanel-runde2-2026-08-31.md` §5
+> (ytelsesingeniørens fallgruveliste), §6 punkt 4 og §7. Dette er
+> **evaluator-kontrakten**, ikke en metodebeslutning om ensemble-mekanismen —
+> den er fortsatt åpen (E1′).
+
+**Formål.** Gitt en rute (en sekvens veipunkter) og et *vilkårlig* værfelt:
+seil ruten gjennom feltet og rapporter samme kostnadsvektor, samme flagg og
+samme harde dom som søket ville gitt. Det er dette som gjør det mulig å spørre
+«hvordan går kontrollruten i medlem 17?» uten å søke på nytt, og å måle hva et
+billigere søk taper mot full Pareto.
+
+**Én-sannhet-prinsippet (ufravikelig).** Evaluatoren er en **tynn løkke over de
+samme frie funksjonene søket bruker** — `stepKinematics`, `softContribution`,
+`accumulateSoft`, `checkHardNode`, `checkClearance`, `checkSegment`,
+`checkTssStep` (`expand.ts`), `tackOf`/`tackPenaltyS` (`tack.ts`),
+`daylightArrival` (`daylight.ts`). Ingen kopiert kinematikk, ingen kopiert
+kostlogikk, ingen «nesten lik» variant. Avviker de to, er det en bug i én av
+dem, og egenskapstesten under skal fange den. Trenger evaluatoren noe søket
+ikke eksponerer, er svaret å eksportere funksjonen — ikke å skrive den om
+igjen.
+
+**Semantikk: styr-mot-veipunkt, ikke replay-av-kurs.** Ruten er en geometri,
+ikke en kursliste. Under perturbert vind og strøm driver båten av linjen, og en
+seiler korrigerer for det. Evaluatoren setter derfor per tidssteg den kursen
+gjennom vannet som gjør at **resultanten etter strøm** peker mot neste
+veipunkt (klassisk strømtriangel, løst ved fastpunktiterasjon fordi polarfarten
+selv avhenger av kursen), og går videre til neste veipunkt når det er nådd.
+Konsekvenser som skal stå tydelig:
+
+- Er strømmen sterkere enn båtfarten på tvers av linjen, finnes ingen slik
+  kurs. Da styres det rett mot veipunktet og avdriften aksepteres — best
+  effort, og steget flagges i rapporten.
+- Retning og avstand til neste veipunkt regnes med **samme flate
+  approksimasjon som `stepLatLon`** (`packages/geo`). Det er den nøyaktige
+  inversen av kinematikken søket flytter båten med; storsirkelpeiling ville
+  innført et systematisk avvik på inntil ~0,1° per steg som søket ikke har.
+- Siste steg inn til et veipunkt er et **delsteg**: varigheten skaleres med
+  hvor stor del av steget som faktisk trengs. Uten det ville evaluatoren
+  akkumulert et helt tidssteg for de siste hundre metrene.
+
+**Tilstand som tres gjennom.** Kurs inn, halseside (`tackOf`) og
+sektoretikett bæres fra steg til steg nøyaktig som i søket. Startpunktet har
+etiketten `NO_COURSE`, og **første steg får derfor bautstraff 0** — ellers
+ville evaluatoren straffet en kurs båten ikke kom fra.
+
+**Harde sjekker re-kjøres.** Klaring (med sjøgangstillegg), segment-farbarhet,
+TSS-regelen og dagslys-ankomst kjøres på nytt i evalueringen, mot evaluatorens
+egen maske og eget værfelt — uten cache fra noe søk. Det er samme forsvar i
+dybden som §5.10, og det er det som gjør evaluatoren brukbar som
+gjennomførbarhetstest.
+
+**Rapportering, ikke boolean.** En hard avvisning returneres som en post med
+`reason`, `lat`, `lon`, `tS`, `epochS` og hvilket veipunkt/steg den oppstod
+i — «medlem 17 feiler» er ubrukelig, «medlem 17 mister klaringen 0,31 nm sør
+for Vinga etter 9 t 30 min» er det som kan handles på. Evalueringen stopper
+ved første harde avvisning; delresultatet fram dit returneres (N2).
+
+**Renhet.** Samme regler som motoren ellers (§5.1): ingen I/O, ingen klokke,
+ingen `Math.random`, ingen `await`. Samme input → samme evaluering, alltid.
+
+**Egenskapstest — én-sannhet-testen (obligatorisk, §8.3).** For hver
+golden-fikstur: kjør søket, evaluer den funne ruten mot *samme* værfelt, maske,
+båt og `timeStepS`, og krev at evaluatorens kostnadsvektor er lik søkets
+innenfor toleranse. Testen kjøres mot den **ukonsoliderte stegsekvensen**
+(`RouteResult.steps`/etikettkjeden), aldri mot `legs`: konsolideringen (§5.9)
+er en presentasjonsoperasjon som med vilje endrer geometrien, og å evaluere den
+ville målt konsolideringen i stedet for kjernen. Toleransen er «noen få
+sekunder», ikke ±2 % — dette er ikke en toleranse mot V8-forskjeller, det er en
+identitetstest mellom to kodeveier i samme prosess.
+
 ---
 
 ## 6. Ærlig degradering (obligatorisk seksjon, N2)
@@ -783,6 +952,20 @@ reproduserer tilfellet før feilen fikses.
 ## 7. Ytelses- og minnebudsjett
 
 Fra F3.5 og N6, med tallgrunnlag fra `docs/research/spike-ensemble-perf.md`.
+
+> **BESLUTTET 2026-08-31 (Magnus, E2).** Ytelsesmålet for én deterministisk
+> rute er **denne seksjonens < 5 s på nettbrett, kombinert med progressiv
+> tegning** (§5.6). Et foreslått < 1 s-mål er **forkastet**; tube-/korridor-
+> begrensning av søkerommet er reserve hvis interaktiv bruk senere krever mer,
+> ikke et mål i seg selv. Bakgrunn og full argumentasjon:
+> `docs/research/ekspertpanel-runde2-2026-08-31.md` §6–§7 og
+> `docs/research/ekspertpanel-fysikk-2026-08-31.md`.
+>
+> To rekkefølge-føringer følger av samme beslutning: (a) nettbrett-måling med
+> instrumentert bygg går **foran** alt ytelsesarbeid — tallene under er fortsatt
+> PC-ekstrapolasjoner; (b) evaluator-kjernen (§5.11) bygges **før** optimering
+> av den varme løkka, slik at optimeringen har måleinfrastruktur og ikke
+> dupliserer arbeid i de delte kjernefunksjonene.
 
 | Budsjett | Mål | Grunnlag |
 |---|---|---|
@@ -894,6 +1077,10 @@ vet):
   iterasjon at ingen tilstands etikettliste inneholder et dominert par.
 - **Ingen negative kostnadsbidrag.** `tS`, `beatS`, `motorS`, `nightS` vokser
   monotont langs enhver forelderkjede — grunnlaget for label-setting (§5.2).
+- **Én sannhet (evaluator vs. søk).** For hver golden-fikstur gir
+  `evaluateRoute(søkets ukonsoliderte stegsekvens, samme felt/maske/båt/
+  timeStepS)` samme kostnadsvektor som søket rapporterte, innenfor noen få
+  sekunder, og uten hard avvisning. Se §5.11.
 - **Sikkerhetsinvariant.** For hver returnert rute med
   `safety.verdict !== "usikker-rute"`: hvert segment består en uavhengig
   `segmentVerdict`. Kjøres på alle golden-ruter og på et sett tilfeldig
@@ -989,6 +1176,152 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- **2026-08-31 (3) — funn 1 fra code-review runde 2: dagslysomvalget kunne
+  velge en rute som ikke kom fram.** Se
+  `docs/research/steg2-status-2026-08-31.md`.
+  - **Buggen (KRITISK).** R4-omvalgsløkken i `reconstruct.ts` krevde kun at
+    kandidaten ankom i dagslys, ikke at den faktisk nådde målet. En kandidat
+    med `finalLeg.status: "avvist-*"` kunne dermed *vinne* dagslyskravet
+    nettopp fordi den stoppet tidlig nok — og bli presentert med
+    `reached: true`, `daylightArrival: true`,
+    `violatesDaylightRequirement: false` og `safety.verdict: "trygt"` mens den
+    endte 1,5+ nm fra havn. Kombinasjonen finnes i to av de sju
+    golden-fiksturene, så den var ikke hypotetisk.
+  - **1a — omvalget krever nå at ruten når målet** (§5.8): kandidaten må ha
+    `finalLeg.status ∈ {"lagt-til", "ikke-nodvendig"}` **i tillegg til**
+    dagslys. Holder ingen kandidat begge deler, returneres den best rangerte
+    som før, men flagget.
+  - **1b — shortfall kan ikke lenger overses av naiv nedstrøms kode**
+    (§4.8, §5.8). Valgt mekanisme, to deler:
+    1. **Nytt felt `safety.reachesDestination: boolean`** — sant kun for
+       `"lagt-til"`/`"ikke-nodvendig"`. Dette er «kom vi fram»-boolsken;
+       `reached` beholder sin egen, svakere betydning.
+    2. **`safety.verdict` gulves til `"usikkert"`** når sluttetappen ble
+       avvist. *Ikke* `"usikker-rute"` — linjen som tegnes er farbar, og de to
+       signalene skal ikke blandes. Gulvet gjelder ikke `"ikke-forsokt"`, der
+       `reached: false` allerede sier alt (samme semantikk som
+       `uoppnaelig-mal`).
+    3. `totals.violatesDaylightRequirement` settes også når kravet er satt og
+       ruten ikke ender i målet: kravet er «ankomst *i målet* i dagslys».
+    - **Vurdert og forkastet:** å legge shortfall inn som et
+      `flaggedSegments`-element. Et `SegmentRef` peker på en `legIndex` som
+      finnes i ruten; den manglende etappen gjør per definisjon ikke det, og
+      en syntetisk `legIndex: -1` ville forurenset en liste hvis kontrakt er
+      «segmenter i denne ruten».
+  - **Nye tester (+6):** fem i `reconstruct.test.ts` som bygger
+    `ResultContext` direkte (kandidat A: når målet, ankommer i mørke;
+    kandidat B: når IKKE målet, «ankommer» i dagslys, dårligere rangert) —
+    B velges aldri over A, fallbacken flagges ærlig, gulvet på `verdict`
+    gjelder også uten dagslyskrav, og `"ikke-forsokt"` endrer ikke
+    verdikten. Pluss én ny golden-invariant: «en avvist sluttetappe kan aldri
+    stå som trygt», som også pinner at `reachesDestination` ikke kan drifte
+    fra `finalLeg.status`. Buggen er verifisert reprodusert: med
+    reach-kravet slått av faller den nye testen.
+  - **Golden-diff (regenerert).** Ingen totaler, ingen geometri og ingen
+    `finalLegStatus` er endret. To felt:
+
+    | Fikstur | Diff | Forklaring |
+    |---|---|---|
+    | alle sju | `+ reachesDestination` | Nytt felt i `exact`-blokken, slik at det ikke kan drifte stille. `true` for de fire som ender i målet, `false` for `ren-kryssetappe`, `tss-ved-skagen` (avvist sluttetappe) og `uoppnaelig-mal`/`hull-i-vaerfeltet` (`reached: false`) |
+    | ren-kryssetappe | `safetyVerdict` **trygt → usikkert** | `finalLegStatus: "avvist-fart"`; ruten ender 1,65 nm fra målet. Alle segmentene består fortsatt ettersjekken (`failingSegmentCount: 0`, `recheckPassed: true`) — det er nettopp derfor «trygt» var villedende |
+    | tss-ved-skagen | `safetyVerdict` **trygt → usikkert** | `finalLegStatus: "avvist-farbarhet"`; ruten ender 1,71 nm fra målet. Samme begrunnelse |
+
+  - **Konsekvens for UI:** «kom vi fram» leses fra
+    `safety.reachesDestination`, aldri fra `reached` alene. En rute med
+    `verdict: "usikkert"` og `reachesDestination: false` skal vise
+    `finalLeg.shortfallNm` og `finalLeg.reason` eksplisitt.
+- **2026-08-31 (2) — sluttetappen fikset: E-funn, R4 og R5.** Fikse-bølgen
+  etter code-review + evaluator-bygg, se
+  `docs/research/steg2-status-2026-08-31.md`.
+  - **E-funn (§5.8) — useilbar og tidsfri sluttetappe.** `reconstruct.ts`
+    regnet sluttetappens kinematikk selv, uten strøm og uten fartssjekk:
+    `extraS = bspKn > 0.1 ? … : 0`. Med målet rett mot vinden og motoren av
+    ble `bspKn ≈ 0`, og etappen fikk **full distanse uten tid** i `totals`.
+    Fikset ved at etappen nå bruker søkets egne funksjoner (`environmentAt`,
+    `courseToSteer`, `stepKinematics`, `softContribution`) og at farten måles
+    som VMG mot målet. **Valgt semantikk (spec §5.8 over):** en etappe båten
+    ikke kan seile legges *ikke* til; ruten ender ved siste ordinære steg og
+    `finalLeg` sier hvorfor og hvor langt unna. Det er samme svar som allerede
+    gjaldt når `segmentVerdict`/TSS avviste etappen — forskjellen er at det nå
+    er synlig i stedet for stille. Alternativet «legg til med reell tid
+    likevel» finnes ikke: det er nettopp det båten ikke kan.
+  - **R4 (§5.3 steg 16 + §5.8) — hardt dagslyskrav sjekket før sluttetappen
+    hadde tid.** Søkets sjekk er en teleportering. Kravet kjøres nå på nytt
+    med reell ankomsttid: primærruten velges blant de ikke-dominerte
+    kandidatene som fortsatt holder kravet, og holder ingen, settes
+    `totals.violatesDaylightRequirement`. Ny felt i ut-kontrakten (§4.8).
+  - **R5 (§5.8)** — hardkodet `60` erstattet av `opts.beatTwaDeg`; forsvinner
+    strukturelt ved at `softContribution` nå brukes i stedet for egen
+    flagg-logikk.
+  - **Én sannhet:** `environmentAt` flyttet fra `search.ts`/`evaluate.ts` til
+    `expand.ts` og deles nå av søket, evaluatoren og sluttetappen.
+  - **Ny ut-kontrakt:** `RouteResult.finalLeg` og
+    `totals.violatesDaylightRequirement` (§4.8). Begge er med i
+    golden-snapshotens `exact`-blokk, så de kan ikke drifte stille.
+  - **Nye tester (+7, 190 grønt i `@morild/routing`):** «funn 2026-08-31»
+    snudd til å pinne korrekt adferd + positiv motpart mot evaluatoren;
+    R5-test med `beatTwaDeg ∈ {45, 60, 80}` på en sluttetappe med TWA 70,8°;
+    tre R4-tester (brudd flagges / dagslys holder / kravet ikke satt); to nye
+    golden-invarianter («hvert steg som flytter båten koster tid» og
+    «`finalLeg.shortfallNm` = faktisk avstand til målet»).
+  - **Golden-diff (regenerert, hver endring attributert).** Geometrien er
+    uendret i alle sju; `natt-og-dagslysankomst` er den eneste med endret
+    `nightS` (= endret varighet).
+
+    | Fikstur | `finalLegStatus` | Diff | Forklaring |
+    |---|---|---|---|
+    | skjaeloy-skagen-apent | lagt-til | +57 s (beatS/motorS +57, fuelL +0,06 L) | 1,686 nm sluttetappe: **+52 s strøm** (SOG 5,82 kn mot BSP 6,12 kn — motstrøm som ikke ble regnet med før) **+5 s manøverstraff** (16,3° kursendring) |
+    | bohuslan-trange-sund | lagt-til | +24 s | 1,843 nm: **+4 s** strøm/kurskorreksjon, **+20 s manøverstraff** (60,2°) |
+    | natt-og-dagslysankomst | lagt-til | +26 s (durationS og nightS) | 1,850 nm, felt uten strøm ⇒ **hele diffen er manøverstraffen** (77,0° kursendring inn på sluttetappen) |
+    | ren-kryssetappe | **avvist-fart** | distanse 49,06 → 47,41 nm (−1,652), steg 25 → 24, etapper 8 → 7, **durationS uendret (41 464 s)** | Selve E-funnet: den fjernede etappen kostet 0 s. At varigheten ikke endres er beviset på at etappen var gratis |
+    | tss-ved-skagen | **avvist-farbarhet** | ingen tall endret | Etappen ble allerede avvist av TSS-regelen (fiks fra forrige sesjon) — nå er avvisningen synlig, 1,713 nm fra målet |
+    | uoppnaelig-mal, hull-i-vaerfeltet | ikke-forsokt | ingen tall endret | `reached = false`; ingen sluttetappe forsøkes |
+
+  - **Konsekvens som ikke skal skjules:** `ren-kryssetappe` og
+    `tss-ved-skagen` rapporterer nå `reached: true` samtidig som ruten ender
+    hhv. 1,65 og 1,71 nm fra målet. Det er ærligere enn før (da var stumpen
+    enten gratis eller usynlig borte), men det betyr at UI **må** lese
+    `finalLeg` og ikke anta at siste steg er målet.
+- **2026-08-31 — E2-beslutningen inn i §7; ny §5.11 rute-evaluator;
+  evaluatoren implementert.** Kilder:
+  `docs/research/ekspertpanel-runde2-2026-08-31.md` §5–§7 og
+  `docs/research/ekspertpanel-fysikk-2026-08-31.md`.
+  - **§7:** Magnus' E2-beslutning skrevet inn — ytelsesmålet er § 7s < 5 s på
+    nettbrett + progressiv tegning; < 1 s-målet er forkastet, tube/korridor er
+    reserve. To rekkefølge-føringer notert: nettbrett-måling før ytelsesarbeid,
+    evaluator før optimering av den varme løkka.
+  - **§5.11 (ny):** evaluator-kontrakten — formål, én-sannhet-prinsippet,
+    styr-mot-veipunkt-semantikken, tilstand som tres gjennom, harde sjekker
+    re-kjørt, rapportering med posisjon/tid/årsak, renhet, og
+    én-sannhet-egenskapstesten mot ukonsolidert stegsekvens. §8.3 fikk et
+    tilsvarende punkt. Dette er *ikke* ADR-0005 og avgjør ikke E1′.
+  - **Implementasjon:** `packages/routing/src/evaluate.ts` +
+    `src/evaluate.test.ts` (21 tester). Én-sannhet-testen kjører over alle sju
+    golden-fiksturene; målt avvik mot søkets egen kostnadsvektor er **0 s** på
+    alle fire komponentene i alle sju (toleransen i testen er 2 s).
+  - **Avvik fra spec-teksten, gjort bevisst under implementasjonen:**
+    1. **Flat geometri i styringen.** §5.11 sier «samme flate approksimasjon
+       som `stepLatLon`»; det er implementert som lokale hjelpefunksjoner
+       `flatCourseDeg`/`flatDistanceNm` i `evaluate.ts`, ikke i
+       `packages/geo`. Grunn: de er inversen av *motorens* stegmodell, ikke
+       generell navigasjonsmatematikk. Flyttes til `geo` hvis flere pakker
+       trenger dem.
+    2. **`harbourEnds` lagt til i inn-kontrakten.** Kystbuffer-unntaket
+       (§5.3 steg 13) gjelder anløp av havn, ikke enden av det ruteutsnittet
+       man tilfeldigvis ba om. Uten dette ville evaluering av en delrute målt
+       unntaket mot feil punkt.
+    3. **`pointVerdict` re-kjøres også**, selv om §5.11 bare lister klaring,
+       segment, TSS og dagslys. Søket gjør det (§5.3 steg 12), og
+       én-sannhet-prinsippet veier tyngre enn listen.
+  - **Funn (evaluatoren fant det, ikke et menneske): den direkte sluttetappen
+    kan være useilbar.** `reconstruct.ts` (§5.8) legger på sluttetappen inn til
+    målet med sin egen kinematikk — uten strøm, og uten å sjekke at båten kan
+    gjøre fart på kursen. I golden-fiksturen «ren-kryssetappe» ligger målet
+    rett mot vinden med motoren av, og den siste stumpen blir dermed *gratis*:
+    `bspKn ≈ 0` gir `extraS = 0`, altså avstand uten tid i `totals`.
+    `segmentVerdict` og TSS-regelen består, så ingen eksisterende sjekk fanget
+    det. **Fikset i oppføringen «2026-08-31 (2)» over** — dette avsnittet står
+    igjen som historikk for hvordan funnet ble gjort.
 - **2026-08-30 — ADR-0004 godkjent; §9 avklart.** Magnus godkjente
   ADR-0004 (via strukturert spørsmål, alle punkter etter anbefaling).
   Spec-status endret fra utkast til gjeldende. §9 spm. 1, 2, 3, 5, 6, 8, 9,

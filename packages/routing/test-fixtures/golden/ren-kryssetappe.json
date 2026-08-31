@@ -4,17 +4,20 @@
   "exact": {
     "reached": true,
     "abortReason": null,
-    "safetyVerdict": "trygt",
+    "safetyVerdict": "usikkert",
+    "reachesDestination": false,
     "recheckPassed": true,
     "failingSegmentCount": 0,
     "maskCoverage": "full",
     "weatherCoverage": "partial",
     "fieldUsed": true,
-    "daylightArrival": true
+    "daylightArrival": true,
+    "finalLegStatus": "avvist-fart",
+    "violatesDaylightRequirement": false
   },
   "totals": {
     "durationS": 41464,
-    "distanceNm": 49.0615,
+    "distanceNm": 47.4096,
     "beatS": 34200,
     "motorS": 0,
     "nightS": 0,
@@ -22,8 +25,8 @@
     "fuelL": 0
   },
   "counts": {
-    "legs": 8,
-    "steps": 25,
+    "legs": 7,
+    "steps": 24,
     "alternatives": 1
   },
   "track": [
@@ -122,10 +125,6 @@
     {
       "lat": 58.57334,
       "lon": 10.586949
-    },
-    {
-      "lat": 58.6,
-      "lon": 10.6
     }
   ]
 }

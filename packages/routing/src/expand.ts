@@ -12,12 +12,13 @@
  * bærer semantikken er at **innsetting alltid er siste steg**.
  */
 import type { LatLon } from "@morild/geo";
-import { angDiff, norm360, stepLatLon } from "@morild/geo";
+import { angDiff, isNightAt, norm360, stepLatLon } from "@morild/geo";
 import type {
   BoatModel,
   CurrentSample,
   NavigabilityMask,
   WaveSample,
+  WeatherField,
   WindSample,
 } from "./contracts.js";
 import type { CostVector } from "./cost.js";
@@ -55,6 +56,41 @@ export interface NodeEnvironment {
    * kursen — derfor regnet én gang per node, ikke per kurs.
    */
   readonly windAgainstCurrent: boolean;
+}
+
+/**
+ * Miljøet i én posisjon til én tid. **Én sannhet:** søket, evaluatoren og
+ * rekonstruksjonens sluttetappe skal se nøyaktig samme vær i samme punkt, med
+ * samme oppslagsrekkefølge og samme natt-/vind-mot-strøm-avledning.
+ *
+ * Ren: ingen sideeffekter. Kalleren avgjør selv hva det betyr at `waves` eller
+ * `current` mangler (søket setter da `weatherPartial`).
+ */
+export function environmentAt(
+  weather: WeatherField,
+  pos: LatLon,
+  epochS: number,
+): NodeEnvironment | undefined {
+  const wind: WindSample | undefined = weather.wind(pos.lat, pos.lon, epochS);
+  if (wind === undefined) return undefined;
+  const waves: WaveSample | undefined = weather.waves(
+    pos.lat,
+    pos.lon,
+    epochS,
+  );
+  const current: CurrentSample | undefined = weather.current(
+    pos.lat,
+    pos.lon,
+    epochS,
+  );
+  return {
+    wind,
+    waves,
+    current,
+    isNight: isNightAt(pos.lat, pos.lon, epochS),
+    epochS,
+    windAgainstCurrent: isWindAgainstCurrent(wind, current),
+  };
 }
 
 /**
