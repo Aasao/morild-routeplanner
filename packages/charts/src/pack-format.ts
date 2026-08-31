@@ -28,7 +28,8 @@ export type ChartLayerId =
   | "farled"
   | "tss"
   | "vernesone"
-  | "datakvalitet";
+  | "datakvalitet"
+  | "sonderingsguardrail";
 
 export interface ChartLayerMetadata {
   readonly id: ChartLayerId;
@@ -194,6 +195,30 @@ export interface ProtectedZone {
   readonly polygon: PackedPolygon;
 }
 
+/**
+ * Guardrail-sone (byggetids-QA-validator promotert til guardrail,
+ * beslutning 2026-08-31 — se
+ * `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md` og
+ * `docs/specs/farbarhetsmaske.md` §3.4). Et bånd-DELPOLYGON (ett enkelt
+ * element i `DepthBand.polygons`, f.eks. én skjærgårds-/øyform) der minst én
+ * dybdepunkt-sondering (`validateSoundingsAgainstBands` i
+ * `tools/chart-pack`) er grunnere enn båndets nedre grense — bevist
+ * upålitelig bånd-inndeling (503/3913 = 12,9 % i fase 1-bølge 2-fixturen,
+ * trolig åpne-kurver-symptom). Delpolygonet kan ALDRI gi `trygt` ved oppslag
+ * — maks `usikkert` — selv om det ellers ville fått tillitsløft fra
+ * farled/god datakvalitet. Selve sonderingspunktet blokkeres i tillegg
+ * strengere/presist som en egen VALSOU-punktfare i `bufferedHazards`
+ * (`kind: "grunne"`, se `buildSoundingGuardrails` i `tools/chart-pack`) —
+ * denne sonen dekker resten av delpolygonet som ingen punktfare når.
+ */
+export interface SoundingGuardrailZone {
+  readonly polygon: PackedPolygon;
+  /** Antall distinkte QA-brudd (sonderinger) som traff nøyaktig dette delpolygonet. */
+  readonly violationCount: number;
+  readonly bandLowerBoundM: number;
+  readonly bandUpperBoundM: number;
+}
+
 /** Nyttelasten for én flis — alle lag klippet til flisens grense (§3.1). */
 export interface ChartTilePayload {
   readonly id: ChartTileId;
@@ -205,6 +230,7 @@ export interface ChartTilePayload {
   readonly airDraft: readonly AirDraftZone[];
   readonly tss: readonly TssLane[];
   readonly protectedZones: readonly ProtectedZone[];
+  readonly soundingGuardrail: readonly SoundingGuardrailZone[];
 }
 
 export interface ChartPackage {

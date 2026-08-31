@@ -14,6 +14,7 @@ import type {
   DataQualityZone,
   CatzocClass,
   PackedPolygon,
+  SoundingGuardrailZone,
 } from "@morild/charts";
 import { tileBounds } from "@morild/charts";
 import type { ChartTileId } from "@morild/charts";
@@ -347,6 +348,111 @@ export function validateSoundingsAgainstBands(
   return { violations, checkedCount };
 }
 
+export interface SoundingGuardrailBuildResult {
+  /**
+   * VALSOU-punktfarer for hver flagget sondering (§3.4 guardrail-regel) —
+   * `kind: "grunne"` med `dybdeM` satt til den målte, feilklassifiserte
+   * sonderingens dybde. Gjenbruker samme `BufferedHazardPoint`-mekanisme og
+   * VALSOU-oppslagsregel (E4) som `buildBufferedHazards` — no-go ved
+   * oppslag KUN hvis `kravTilDybdeM` er strengere enn den faktiske målte
+   * dybden, akkurat som for et hvilket som helst annet Grunne-punkt.
+   *
+   * **Bevisst en EGEN/eksplisitt mekanisme**, ikke bare en observasjon om at
+   * disse punktene allerede er dekket av `buildBufferedHazards(skjaer,
+   * grunne, …)` (som de er, i denne bølgen — se
+   * `docs/specs/farbarhetsmaske.md` §3.4 «Guardrail»-avsnittet for
+   * begrunnelsen): ground-truth-kilden her er `Grunne`-punkter brukt som
+   * PROXY for ekte dybdepunkt-soundinger (ikke ingestert ennå). Den dagen et
+   * ekte `Dybdepunkt`-lag finnes, vil DE fleste sonderinger IKKE være
+   * `Grunne`-objekter og dermed ikke automatisk bufres av
+   * `buildBufferedHazards` — denne guardrail-mekanismen er da den ENESTE
+   * kilden til punktbeskyttelse for dem. Implementert nå, uavhengig av
+   * proxy-overlappet, for fremtidssikker riktighet.
+   */
+  readonly hazards: readonly BufferedHazardPoint[];
+  /** Ett element per unikt bånd-delpolygon som ble truffet av minst én QA-brudd-sondering. */
+  readonly zones: readonly SoundingGuardrailZone[];
+}
+
+/**
+ * Bygger guardrail-artefaktene fra QA-validatorens brudd-liste (§3.4
+ * «Guardrail for feilklassifiserte bånd», beslutning 2026-08-31 — se
+ * `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`).
+ *
+ * Kjøres mot de RÅ (pre-hazard-subtraksjon) `bands` — samme bånd-sett som
+ * `validateSoundingsAgainstBands` selv ble kjørt mot i `build.ts`. Dette er
+ * bevisst: den nøyaktige sonderingsposisjonen blir uansett senere skåret ut
+ * som et hull i det ferdige båndet (siden ALLE Grunne-punkter — også
+ * ikke-flaggede — bufres og trekkes fra i `subtractHazardsFromBands`), så å
+ * lete etter delpolygonet i det FERDIGE bandet ville aldri funnet et treff.
+ * Guardrail-sonens geometri (den rå bånd-delpolygon-formen) er fortsatt
+ * korrekt å bruke som tillitstak: den dekker nøyaktig det området der
+ * bånd-konstruksjonen er bevist upålitelig, uavhengig av at hazard-subtraksjon
+ * senere skjærer små hull i akkurat de samme punktene.
+ *
+ * `pointBufferRadiusM` er en EGEN parameter (ikke nødvendigvis lik standard
+ * skjær-/grunne-bufferen på 20 m, §8 pkt. 3) — se begrunnelse i
+ * `docs/specs/farbarhetsmaske.md` §3.4 (foreslått: 25 m, halve
+ * sonderingsnettets 50 m-gradering).
+ */
+export function buildSoundingGuardrails(
+  bands: readonly DepthBand[],
+  violations: readonly SoundingBandViolation[],
+  pointBufferRadiusM: number,
+): SoundingGuardrailBuildResult {
+  const hazards: BufferedHazardPoint[] = [];
+  const zoneByKey = new Map<
+    string,
+    { polygon: PackedPolygon; violationCount: number; bandLowerBoundM: number; bandUpperBoundM: number }
+  >();
+
+  for (const violation of violations) {
+    const [lon, lat] = violation.point;
+
+    // (a) VALSOU-punktfare — se `SoundingGuardrailBuildResult.hazards`.
+    const buffered = bufferPoint(lon, lat, pointBufferRadiusM);
+    const polygon = toPackedPolygons(buffered)[0];
+    if (polygon) {
+      hazards.push({
+        kind: "grunne",
+        bufferRadiusM: pointBufferRadiusM,
+        polygon,
+        centerLon: lon,
+        centerLat: lat,
+        dybdeM: violation.soundedDepthM,
+      });
+    }
+
+    // (b) Bånd-delpolygon-flagg — finn nøyaktig hvilket delpolygon (element
+    // i `band.polygons`) sonderingen geometrisk faller i, i det RÅ bandet
+    // med samme grenser som validatoren fant bruddet i.
+    const band = bands.find(
+      (b) => b.lowerBoundM === violation.bandLowerBoundM && b.upperBoundM === violation.bandUpperBoundM,
+    );
+    if (!band) continue;
+    for (const bandPolygon of band.polygons) {
+      const feature = turf.polygon(
+        bandPolygon.rings.map((ring) => ring.map(([ringLon, ringLat]) => [ringLon, ringLat])),
+      );
+      if (!turf.booleanPointInPolygon(turf.point([lon, lat]), feature)) continue;
+      const key = JSON.stringify(bandPolygon.rings);
+      const existing = zoneByKey.get(key);
+      if (existing) {
+        existing.violationCount++;
+      } else {
+        zoneByKey.set(key, {
+          polygon: bandPolygon,
+          violationCount: 1,
+          bandLowerBoundM: violation.bandLowerBoundM,
+          bandUpperBoundM: violation.bandUpperBoundM,
+        });
+      }
+    }
+  }
+
+  return { hazards, zones: [...zoneByKey.values()] };
+}
+
 export function buildFarledZones(
   lines: readonly KystverketLineFeature[],
   multiPolygons: readonly KystverketPolygonFeature[],
@@ -483,6 +589,7 @@ export function buildTilePayloads(
   bufferedHazards: readonly BufferedHazardPoint[],
   farled: readonly FarledZone[],
   dataQuality: readonly DataQualityZone[],
+  soundingGuardrail: readonly SoundingGuardrailZone[],
   grid: { readonly lonStepDeg: number; readonly latStepDeg: number },
 ): {
   id: ChartTileId;
@@ -491,6 +598,7 @@ export function buildTilePayloads(
   bufferedHazards: BufferedHazardPoint[];
   farled: FarledZone[];
   dataQuality: DataQualityZone[];
+  soundingGuardrail: SoundingGuardrailZone[];
 }[] {
   const allTiles = new Map<string, ChartTileId>();
   const noteAll = (polys: readonly PackedPolygon[]) => {
@@ -502,6 +610,7 @@ export function buildTilePayloads(
   noteAll(bufferedHazards.map((h) => h.polygon));
   noteAll(farled.map((f) => f.polygon));
   noteAll(dataQuality.map((d) => d.polygon));
+  noteAll(soundingGuardrail.map((g) => g.polygon));
 
   const result: {
     id: ChartTileId;
@@ -510,6 +619,7 @@ export function buildTilePayloads(
     bufferedHazards: BufferedHazardPoint[];
     farled: FarledZone[];
     dataQuality: DataQualityZone[];
+    soundingGuardrail: SoundingGuardrailZone[];
   }[] = [];
   for (const id of allTiles.values()) {
     const bounds = tileBounds(id, grid);
@@ -537,6 +647,10 @@ export function buildTilePayloads(
       const p = clipPolygonToTile(d.polygon, bounds);
       return p ? [{ ...d, polygon: p }] : [];
     });
+    const clippedGuardrail = soundingGuardrail.flatMap((g) => {
+      const p = clipPolygonToTile(g.polygon, bounds);
+      return p ? [{ ...g, polygon: p }] : [];
+    });
     // R2-fiks: `touchedTiles` er nå bbox-basert (bevisst over-approksimasjon,
     // se kommentaren der) — en flis kan derfor havne i `allTiles` uten at
     // NOE lag faktisk overlapper den etter eksakt klipping. Slike tomme
@@ -547,7 +661,8 @@ export function buildTilePayloads(
       clippedDryFall.length === 0 &&
       clippedHazards.length === 0 &&
       clippedFarled.length === 0 &&
-      clippedQuality.length === 0
+      clippedQuality.length === 0 &&
+      clippedGuardrail.length === 0
     ) {
       continue;
     }
@@ -558,6 +673,7 @@ export function buildTilePayloads(
       bufferedHazards: clippedHazards,
       farled: clippedFarled,
       dataQuality: clippedQuality,
+      soundingGuardrail: clippedGuardrail,
     });
   }
   return result;

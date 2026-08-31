@@ -26,6 +26,7 @@ function init(
     cellKey,
     stateKey: stateKeyOf(cellKey, sector),
     remainingNm: 10,
+    clearanceNm: Number.POSITIVE_INFINITY,
     twsKn: 10,
     twdDeg: 270,
     bspKn: 6,

@@ -26,7 +26,6 @@ import {
   FLAG_KRYSS,
   FLAG_MOTOR,
   FLAG_NATT,
-  FLAG_SJOEGANG_DATA_MANGLER,
   FLAG_TSS_LANGS,
   FLAG_VIND_MOT_STROM,
 } from "./cost.js";
@@ -254,79 +253,12 @@ export function isWindAgainstCurrent(
   return angDiff(currentTowardDeg, windTowardDeg) > 135;
 }
 
-export interface ClearanceParams {
-  readonly minOffingNm: number;
-  readonly offingExemptNearEndsNm: number;
-  readonly seaStateOffingNmPerM: number;
-}
-
-export interface ClearanceResult {
-  readonly check: HardCheck;
-  /** Flagg som skal settes på etiketten uansett utfall. */
-  readonly flags: number;
-}
-
 /**
- * **Hard:** kystbufferen, med sjøgangstillegget bakt inn i selve
- * klaringstallet (besluttet 2026-08-30).
- *
- * Kravet er `minOffingNm + hsM · seaStateOffingNmPerM`. Finnes bølgedata og
- * klaringen er mindre enn kravet, avvises kandidaten hardt — sjøgang som
- * setter båten nærmere grunna er ikke noe man vekter seg forbi.
- *
- * Mangler bølgedata, faller kravet tilbake til den statiske `minOffingNm`,
- * og etiketten flagges `SJOEGANG_DATA_MANGLER`. Vi later ikke som marginen
- * er dekket når vi ikke vet (N2).
- *
- * Unntak nær start og mål (havneanløp) — v1-arv: uten det unntaket kan
- * ingen rute forlate eller anløpe en havn.
+ * Kystbufferen bor i `clearance.ts` (R3, besluttet 2026-08-31): kravet
+ * håndheves langs **hele korden**, ikke bare i endepunktet, og den samme
+ * funksjonen brukes av søket, evaluatoren, konsolideringen, ettersjekken og
+ * sluttetappen. Se `checkClearanceCorridor`.
  */
-export function checkClearance(
-  mask: NavigabilityMask | undefined,
-  point: LatLon,
-  hsM: number | undefined,
-  /**
-   * Avstand til start og mål, **lat** — den kalles bare når klaringen
-   * faktisk er for liten. På åpent hav er de aller fleste kandidatene langt
-   * fra land, og da slipper vi to storsirkelberegninger per kurs (målt til
-   * 6 % av total kjøretid).
-   */
-  distancesToEnds: () => { toStartNm: number; toDestNm: number },
-  params: ClearanceParams,
-  cachedClearanceNm?: number,
-): ClearanceResult {
-  if (mask === undefined || params.minOffingNm <= 0) {
-    return { check: HARD_OK, flags: 0 };
-  }
-
-  const seaStateNm = hsM === undefined ? 0 : hsM * params.seaStateOffingNmPerM;
-  const requiredNm = params.minOffingNm + seaStateNm;
-  const flags = hsM === undefined ? FLAG_SJOEGANG_DATA_MANGLER : 0;
-
-  const clearanceNm =
-    cachedClearanceNm ?? mask.clearanceNm(point.lat, point.lon, requiredNm);
-  if (clearanceNm < requiredNm) {
-    // Unntak nær start og mål (havneanløp) — v1-arv: uten det unntaket kan
-    // ingen rute forlate eller anløpe en havn.
-    const { toStartNm, toDestNm } = distancesToEnds();
-    if (
-      toStartNm <= params.offingExemptNearEndsNm ||
-      toDestNm <= params.offingExemptNearEndsNm
-    ) {
-      return { check: HARD_OK, flags: 0 };
-    }
-    return {
-      check: reject(
-        `Klaring ${clearanceNm.toFixed(2)} nm under kravet ${requiredNm.toFixed(2)} nm` +
-          (seaStateNm > 0
-            ? ` (inkl. sjøgangstillegg ${seaStateNm.toFixed(2)} nm)`
-            : ""),
-      ),
-      flags,
-    };
-  }
-  return { check: HARD_OK, flags };
-}
 
 /** **Hard:** kan båten gå i rett linje fra a til b? Motorens dyreste sjekk. */
 export function checkSegment(

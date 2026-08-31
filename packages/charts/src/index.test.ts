@@ -36,6 +36,7 @@ function emptyTile(overrides: Partial<ChartTilePayload> = {}): ChartTilePayload 
     airDraft: [],
     tss: [],
     protectedZones: [],
+    soundingGuardrail: [],
     ...overrides,
   };
 }
@@ -605,5 +606,95 @@ describe("nermesteFareAvstandNm", () => {
     const result = source.nermesteFareAvstandNm({ lat: 59.09, lon: 10.7 }, 2.6);
     expect(result).not.toBeNull();
     expect(result?.avstandNm).toBeGreaterThan(0);
+  });
+
+  /**
+   * Konservativitets-garanti (beslutning 2026-08-31, se
+   * `docs/specs/farbarhetsmaske.md` "Konservativitets-garanti"): denne
+   * funksjonen mater rutemotorens Lipschitz-gate (R3) — en for STOR
+   * rapportert avstand kan la et faktisk usikkert kordepunkt passere
+   * ukontrollert. `avstandNm` skal derfor ALDRI overestimere den sanne
+   * avstanden til nærmeste kartlagte fare.
+   */
+  describe("konservativitets-garanti: punkt+radius bruker eksakt sirkel, ikke innskrevet polygon", () => {
+    // Samme geometri som "punktfare-buffer: eksakt sirkel"-testen over: 100 m
+    // buffer lagret som innskrevet firkant med hjørner PÅ sirkelen — kant-
+    // midtpunktene ligger da kun 70,7 m fra senter.
+    const CENTER = { lat: 59.06, lon: 10.7 } as const;
+    const RADIUS_M = 100;
+    const R_LAT = RADIUS_M / 111_320;
+    const R_LON = RADIUS_M / (111_320 * Math.cos((CENTER.lat * Math.PI) / 180));
+    const inscribed: Ring = [
+      [CENTER.lon, CENTER.lat + R_LAT],
+      [CENTER.lon + R_LON, CENTER.lat],
+      [CENTER.lon, CENTER.lat - R_LAT],
+      [CENTER.lon - R_LON, CENTER.lat],
+      [CENTER.lon, CENTER.lat + R_LAT],
+    ];
+    // Punkt 300 m fra senter, i retningen der den innskrevne firkanten er på
+    // sitt grunneste (NØ, kant-normalen) — der gapet mellom polygon og sann
+    // sirkel er størst.
+    const FAR_POINT = {
+      lat: CENTER.lat + (3.0 / Math.SQRT2) * R_LAT,
+      lon: CENTER.lon + (3.0 / Math.SQRT2) * R_LON,
+    };
+    const EXPECTED_NM = (300 - RADIUS_M) / 1852; // sann sirkelavstand: 200 m ≈ 0,108 nm
+
+    it("med senterpunkt: avstanden matcher eksakt sirkelformel (senter − radius), ikke polygonkanten", () => {
+      const source = createChartSource(
+        packageOf([
+          emptyTile({
+            bufferedHazards: [
+              { kind: "grunne", bufferRadiusM: RADIUS_M, polygon: poly(inscribed), centerLon: CENTER.lon, centerLat: CENTER.lat },
+            ],
+          }),
+        ]),
+      );
+      const result = source.nermesteFareAvstandNm(FAR_POINT, 2.6);
+      expect(result).not.toBeNull();
+      expect(result?.avstandNm).toBeCloseTo(EXPECTED_NM, 3);
+    });
+
+    it("KJENT BEGRENSNING: uten senterpunkt (polygon-fallback) overestimerer avstanden — kun eldre/håndbygde fikstyrer, aldri ekte pakker", () => {
+      // Dokumentert funn (beslutning 2026-08-31, se spec-ens
+      // "Konservativitets-garanti"): distanse-til-innskrevet-polygon er
+      // BEVISELIG ≥ distanse-til-sann-sirkel for punkter utenfor sirkelen
+      // (triangelulikheten: |QX| ≥ |OQ| − |OX| ≥ |OQ| − r for ethvert
+      // polygonpunkt X, siden |OX| ≤ r). Dette er OVERESTIMERING — den
+      // motsatte retningen av hypotesen i oppdraget («underestimerer»), og
+      // et reelt kontraktsbrudd HVIS denne stien noensinne nås. Den nås
+      // aldri fra `tools/chart-pack`-bygde pakker (som alltid setter
+      // centerLon/centerLat, se `BufferedHazardPoint`-kommentaren) — testen
+      // er en regresjonsvakt/dokumentasjon, ikke en påstand om at fallbacken
+      // er trygg å bruke i produksjon.
+      const source = createChartSource(
+        packageOf([
+          emptyTile({
+            bufferedHazards: [{ kind: "grunne", bufferRadiusM: RADIUS_M, polygon: poly(inscribed) }],
+          }),
+        ]),
+      );
+      const result = source.nermesteFareAvstandNm(FAR_POINT, 2.6);
+      expect(result).not.toBeNull();
+      expect(result?.avstandNm ?? 0).toBeGreaterThan(EXPECTED_NM);
+    });
+  });
+
+  /**
+   * Edge-basert (ikke hjørne-only) nærmeste-punkt for tørrfall — samme
+   * konservativitets-garanti som over, men her ER polygonet den sanne
+   * faregeometrien (ingen sirkel-tilnærming), så fiksen gjør denne banen
+   * eksakt, ikke bare "mindre gal".
+   */
+  it("tørrfall: finner korrekt (kortere) avstand til en lang kants midtpunkt enn til nærmeste hjørne", () => {
+    // Lang, smal øst-vest-stripe INNENFOR standard-flisens grenser
+    // (lon 10,5-11,0, lat 59,0-59,25).
+    const dryFall = { polygon: poly(rect(10.6, 59.05, 10.9, 59.06)) };
+    const source = createChartSource(packageOf([emptyTile({ dryFall: [dryFall] })]));
+    // Rett sør for stripens sørkant-midtpunkt, ~1 nm unna. Nærmeste HJØRNE
+    // (10.6 eller 10.9) ville gitt en mye større (feilaktig) avstand.
+    const result = source.nermesteFareAvstandNm({ lat: 59.05 - 1 / 60, lon: 10.75 }, 2.6);
+    expect(result).not.toBeNull();
+    expect(result?.avstandNm).toBeCloseTo(1.0, 1);
   });
 });

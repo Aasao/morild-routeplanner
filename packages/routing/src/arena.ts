@@ -30,6 +30,18 @@ export interface LabelInit {
    * etiketter med identisk kostnadsvektor — se `LabelStore.insert`.
    */
   readonly remainingNm: number;
+  /**
+   * Klaring til nærmeste ikke-farbare areal i etikettens posisjon, i nm — en
+   * gyldig **nedre skranke** (avkortet ved maskens `maxNm`, eventuelt
+   * Lipschitz-korrigert fra et nabooppslag). `Infinity` når kystbufferen er
+   * slått av eller masken mangler.
+   *
+   * Lagres fordi den er `d(A)` i R3-gaten (`clearance.ts`): korden fra
+   * forelder til barn kan bare sertifiseres når begge endenes klaring er kjent.
+   * Uten dette feltet måtte forelderens klaring slås opp på nytt for hver av
+   * de 60 kursene per etikett.
+   */
+  readonly clearanceNm: number;
   readonly twsKn: number;
   readonly twdDeg: number;
   readonly bspKn: number;
@@ -62,6 +74,7 @@ export class LabelArena {
   cellKey: Int32Array;
   stateKey: Int32Array;
   remainingNm: Float32Array;
+  clearanceNm: Float32Array;
   twsKn: Float32Array;
   twdDeg: Float32Array;
   bspKn: Float32Array;
@@ -85,6 +98,7 @@ export class LabelArena {
     this.cellKey = new Int32Array(n);
     this.stateKey = new Int32Array(n);
     this.remainingNm = new Float32Array(n);
+    this.clearanceNm = new Float32Array(n);
     this.twsKn = new Float32Array(n);
     this.twdDeg = new Float32Array(n);
     this.bspKn = new Float32Array(n);
@@ -120,6 +134,7 @@ export class LabelArena {
     this.cellKey = growI32(this.cellKey, next);
     this.stateKey = growI32(this.stateKey, next);
     this.remainingNm = growF32(this.remainingNm, next);
+    this.clearanceNm = growF32(this.clearanceNm, next);
     this.twsKn = growF32(this.twsKn, next);
     this.twdDeg = growF32(this.twdDeg, next);
     this.bspKn = growF32(this.bspKn, next);
@@ -144,6 +159,7 @@ export class LabelArena {
     this.cellKey[i] = init.cellKey;
     this.stateKey[i] = init.stateKey;
     this.remainingNm[i] = init.remainingNm;
+    this.clearanceNm[i] = init.clearanceNm;
     this.twsKn[i] = init.twsKn;
     this.twdDeg[i] = init.twdDeg;
     this.bspKn[i] = init.bspKn;
@@ -174,6 +190,7 @@ export class LabelArena {
       cellKey: this.cellKey[i]!,
       stateKey: this.stateKey[i]!,
       remainingNm: this.remainingNm[i]!,
+      clearanceNm: this.clearanceNm[i]!,
       twsKn: this.twsKn[i]!,
       twdDeg: this.twdDeg[i]!,
       bspKn: this.bspKn[i]!,
@@ -201,6 +218,7 @@ export class LabelArena {
       this.cellKey.subarray(0, this.size),
       this.stateKey.subarray(0, this.size),
       this.remainingNm.subarray(0, this.size),
+      this.clearanceNm.subarray(0, this.size),
       this.twsKn.subarray(0, this.size),
       this.twdDeg.subarray(0, this.size),
       this.bspKn.subarray(0, this.size),

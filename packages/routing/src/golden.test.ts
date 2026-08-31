@@ -24,8 +24,18 @@ import {
   corridorDeviationNm,
   type TrackPoint,
 } from "../test-fixtures/track-compare.js";
+import { withDefaults } from "./options.js";
 import { planRoute } from "./search.js";
 import type { RouteResult } from "./result.js";
+
+/**
+ * Slakk i R3-invariantens sampling. Motoren garanterer kravet på den lineære
+ * lat/lon-korden; testen måler samme korde, men avstandene i masken regnes med
+ * `cos(lat)` i punktet og ikke i kordens start. Avviket er millimeter — vi
+ * tillater 1e-6 nm (≈ 2 mm) for at testen skal måle semantikk og ikke
+ * flyttallsstøy.
+ */
+const CLEARANCE_SAMPLING_SLACK_NM = 1e-6;
 
 const GOLDEN_DIR = join(import.meta.dirname, "..", "test-fixtures", "golden");
 const UPDATE = process.env["UPDATE_GOLDEN"] === "1";
@@ -299,6 +309,90 @@ describe("kinematisk invariant på golden-rutene", () => {
       }
     }
   }, 120_000);
+});
+
+/**
+ * R3-invarianten (§5.3.2): kystbufferen skal holde **langs hele** hver etappe,
+ * ikke bare i endepunktene. Testen er bevisst uavhengig av motorens egen
+ * korridorkode — den sampler klaringen tett langs etappen og sammenligner med
+ * kravet direkte. Det er dette som gjør den til en ekte ettersjekk og ikke
+ * bare en gjentagelse av implementasjonen.
+ *
+ * Fram til 2026-08-31 feilet den på `bohuslan-trange-sund`: ruten passerte et
+ * skjær med 0,088 nm klaring der kravet var 0,15 nm, fordi bare
+ * kandidatpunktene ble kontrollert.
+ */
+describe("R3: kystbufferen holder langs hele ruten, ikke bare i punktene", () => {
+  const SAMPLES_PER_LEG = 400;
+
+  it("ingen golden-rute går innenfor kravet noe sted mellom to steg", () => {
+    for (const scenario of goldenScenarios()) {
+      const result = planRoute(scenario.input);
+      const mask = scenario.input.mask;
+      if (mask === undefined) continue;
+      const opts = withDefaults(scenario.input.options ?? {});
+      if (opts.minOffingNm <= 0) continue;
+
+      const exempt = (p: { lat: number; lon: number }): boolean =>
+        haversineNm(p, scenario.input.start) <= opts.offingExemptNearEndsNm ||
+        haversineNm(p, scenario.input.dest) <= opts.offingExemptNearEndsNm;
+
+      for (let i = 1; i < result.steps.length; i++) {
+        const a = result.steps[i - 1]!;
+        const b = result.steps[i]!;
+        const requiredNm =
+          opts.minOffingNm + Math.max(a.hsM, b.hsM) * opts.seaStateOffingNmPerM;
+        for (let k = 0; k <= SAMPLES_PER_LEG; k++) {
+          const t = k / SAMPLES_PER_LEG;
+          const p = {
+            lat: a.lat + (b.lat - a.lat) * t,
+            lon: a.lon + (b.lon - a.lon) * t,
+          };
+          if (exempt(p)) continue;
+          const d = mask.clearanceNm(p.lat, p.lon, requiredNm + 1);
+          expect(
+            d,
+            `${scenario.name} steg ${i} (t=${t.toFixed(2)}, ${p.lat.toFixed(4)},${p.lon.toFixed(4)}): ` +
+              `klaring ${d.toFixed(3)} nm under kravet ${requiredNm.toFixed(3)} nm`,
+          ).toBeGreaterThanOrEqual(requiredNm - CLEARANCE_SAMPLING_SLACK_NM);
+        }
+      }
+    }
+  }, 180_000);
+
+  /**
+   * Instrumenteringen henger sammen (§7 måling 3b). Selve *tallene* — hvor
+   * ofte gaten holder, hvor dypt bisectionen går, hvor mange
+   * `clearanceNm`-kall det koster — leses ut av `diagnostics.clearance` på et
+   * hvilket som helst resultat, og er gjengitt per fikstur i spec-ens
+   * endringslogg (§10, oppføring «2026-08-31 (4)»). De er bevisst **ikke**
+   * frosne i golden-filene: de skal endre seg når vi optimerer, uten at det
+   * ser ut som en adferdsendring.
+   *
+   * Det testen derimot pinner, er de to tingene som *er* adferd:
+   *  - ettersjekken avviser aldri (feiler den, er det en bug i søket, §5.10);
+   *  - bisectionen holder seg innenfor dybdetaket.
+   */
+  it("R3-instrumenteringen er konsistent og ettersjekken avviser aldri", () => {
+    for (const scenario of goldenScenarios()) {
+      const { clearance, clearanceRecheck } = planRoute(
+        scenario.input,
+      ).diagnostics;
+      const opts = withDefaults(scenario.input.options ?? {});
+      expect(clearanceRecheck.rejections, scenario.name).toBe(0);
+      expect(clearance.maxDepth, scenario.name).toBeLessThanOrEqual(
+        opts.clearanceCorridorMaxDepth,
+      );
+      // Hver bisection starter i en gate-miss, og hvert midtpunkt hører til en.
+      expect(clearance.midpointChecks).toBeLessThanOrEqual(clearance.gateMiss);
+      if (scenario.input.mask !== undefined && opts.minOffingNm > 0) {
+        expect(
+          clearance.gatePass + clearance.gateMiss,
+          `${scenario.name}: korridorsjekken kjørte ikke i det hele tatt`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  }, 180_000);
 });
 
 describe("sikkerhetsinvariant på golden-rutene", () => {

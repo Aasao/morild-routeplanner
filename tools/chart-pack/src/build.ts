@@ -33,6 +33,7 @@ import {
   buildDepthBands,
   buildDryFallZones,
   buildFarledZones,
+  buildSoundingGuardrails,
   buildTilePayloads,
   subtractHazardsFromBands,
   validateSoundingsAgainstBands,
@@ -78,6 +79,22 @@ function tileOverlapsTarget(bounds: {
 
 /** Standard skjær-/grunnebuffer (m) — konfigurerbar, se docs/specs §4 steg 4 og §8 pkt. 3. */
 const DEFAULT_HAZARD_BUFFER_M = 20;
+
+/**
+ * Guardrail-punktfarens bufferradius (m) — bevisst FORSKJELLIG fra
+ * `DEFAULT_HAZARD_BUFFER_M` (§3.4 «Guardrail for feilklassifiserte bånd»,
+ * beslutning 2026-08-31). `DEFAULT_HAZARD_BUFFER_M` (20 m) begrunnes med
+ * posisjonsusikkerhet for ETT punkt (§8 pkt. 3). Guardrail-radiusen
+ * begrunnes annerledes: sonderingsnettet i denne fixturen er gradert til
+ * 50 m (README "QA-validator") — en flagget sondering representerer derfor
+ * ikke bare sitt eget punkt, men et areal på omtrent den skalaen der
+ * bånd-inndelingen er bevist upålitelig. 25 m (halve sonderingsnettets
+ * gradering) er valgt som et forsiktig, dokumentert anslag — ikke en målt
+ * verdi — for hvor langt fra selve sonderingspunktet den samme
+ * usikkerheten trolig strekker seg før bånd-delpolygon-flagget (som dekker
+ * hele det upålitelige delpolygonet, uavhengig av avstand) uansett tar over.
+ */
+const SOUNDING_GUARDRAIL_BUFFER_M = 25;
 
 function load(file: string): string {
   return gunzipSync(readFileSync(join(TESTDATA_RAW, file))).toString("utf8");
@@ -158,12 +175,29 @@ function main(): void {
     }
   }
 
+  // Guardrail (§3.4, beslutning 2026-08-31): promoter QA-bruddene til (a)
+  // VALSOU-punktfarer og (b) bånd-delpolygon-flagg som aldri kan gi `trygt`.
+  // Kjørt mot de RÅ bandene (samme som validatoren selv brukte) — se
+  // `buildSoundingGuardrails`-kommentaren for hvorfor.
+  const guardrail = buildSoundingGuardrails(
+    bandResult.bands,
+    soundingQa.violations,
+    SOUNDING_GUARDRAIL_BUFFER_M,
+  );
+  console.log(
+    `Guardrail: ${guardrail.hazards.length} VALSOU-punktfarer + ${guardrail.zones.length} ` +
+      `unike bånd-delpolygoner flagget («aldri trygt») fra ${soundingQa.violations.length} QA-brudd`,
+  );
+
+  const allHazardPoints = [...hazardResult.points, ...guardrail.hazards];
+
   const allTiles = buildTilePayloads(
     bandsFinal,
     dryFallResult.zones,
-    hazardResult.points,
+    allHazardPoints,
     farledZones,
     dataQualityZones,
+    guardrail.zones,
     GRID,
   );
   const rawTiles = allTiles.filter((t) =>
@@ -181,6 +215,7 @@ function main(): void {
     bufferedHazards: t.bufferedHazards,
     farled: t.farled,
     dataQuality: t.dataQuality,
+    soundingGuardrail: t.soundingGuardrail,
     // Luftspenn/TSS/vernesone: ingen ekte kilde ingestert i denne bølgen
     // (spec §8 pkt. 1 uverifisert URL / ikke i oppgavens omfang) — tom
     // liste er ærlig degradering, ikke en skjult mangel (se README).
@@ -207,9 +242,10 @@ function main(): void {
         `${bandResult.skippedOpenRings} av ${dybdekurver.length} dybdekurver i testområdet er åpne ` +
         "(krysser kartbladgrense) og er utelatt fra dybdebåndene — se README 'Avvik fra spec'. " +
         "Luftspenn/TSS/vernesone er ikke ingestert i denne bølgen. " +
-        `QA-validator (beslutning 2026-08-31): ${soundingQa.violations.length} av ` +
+        `QA-guardrail (beslutning 2026-08-31, promotert fra QA-varsling): ${soundingQa.violations.length} av ` +
         `${soundingQa.checkedCount} sjekkede dybdepunkt-soundinger er grunnere enn båndet de ` +
-        "geometrisk havner i (se README 'QA-validator').",
+        `geometrisk havner i — ${guardrail.hazards.length} VALSOU-punktfarer og ${guardrail.zones.length} ` +
+        "bånd-delpolygoner («aldri trygt») lagt til som følge (se README 'QA-validator').",
     },
     boundingBox: [10.6, 59.05, 11.0, 59.3],
     tileGrid: GRID,
@@ -227,9 +263,11 @@ function main(): void {
                 status: "degraded",
                 reason:
                   `${bandResult.skippedOpenRings} åpne konturlinjer utelatt (se README). ` +
-                  `QA-validator (beslutning 2026-08-31): ${soundingQa.violations.length} av ` +
+                  `QA-guardrail (beslutning 2026-08-31): ${soundingQa.violations.length} av ` +
                   `${soundingQa.checkedCount} sjekkede dybdepunkt-soundinger er grunnere enn båndet ` +
-                  "de geometrisk havner i — mulig kurve-/topologifeil, se konsollogg for detaljer.",
+                  "de geometrisk havner i — mulig kurve-/topologifeil. Promotert til byggetids-guardrail: " +
+                  `${guardrail.zones.length} bånd-delpolygoner kan aldri gi 'trygt' ved oppslag (se ` +
+                  "'sonderingsguardrail'-laget og konsollogg for detaljer).",
               }
             : {
                 status: "degraded",
@@ -313,6 +351,26 @@ function main(): void {
           status: "degraded",
           reason: "Ingen kilde koblet til i denne bølgen",
         },
+      },
+      {
+        // Byggetids-guardrail (§3.4, beslutning 2026-08-31) — avledet fra
+        // dybdebåndene (samme kilde/datum), ikke en egen kilde. Se
+        // `buildSoundingGuardrails` og README "QA-validator".
+        id: "sonderingsguardrail",
+        kilde: "Avledet fra Kartverket Sjøkart – Dybdedata (QA-validator vs. Grunne-proxy)",
+        datum: "K0",
+        vintage: "2026-08-24",
+        baselineTillit: "n/a",
+        sourceStatus:
+          guardrail.zones.length > 0
+            ? {
+                status: "degraded",
+                reason:
+                  `${guardrail.zones.length} bånd-delpolygoner flagget fra ${soundingQa.violations.length} ` +
+                  `QA-brudd — disse kan aldri gi 'trygt' ved oppslag. ${guardrail.hazards.length} ` +
+                  `tilhørende VALSOU-punktfarer (${SOUNDING_GUARDRAIL_BUFFER_M} m buffer) lagt til i 'grunne'-laget.`,
+              }
+            : { status: "ok" },
       },
     ],
   };

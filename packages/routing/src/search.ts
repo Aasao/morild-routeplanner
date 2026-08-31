@@ -20,6 +20,12 @@ import type {
   WeatherField,
 } from "./contracts.js";
 import { maskAsEdgeGate, OPEN_EDGE_GATE } from "./contracts.js";
+import type { CorridorStats } from "./clearance.js";
+import {
+  checkClearanceCorridor,
+  createCorridorStats,
+  requiredClearanceNm,
+} from "./clearance.js";
 import type { CostVector } from "./cost.js";
 import {
   FLAG_USIKKER_TILLIT,
@@ -32,7 +38,6 @@ import { CellGrid, courseSector, NO_COURSE, stateKeyOf } from "./domain.js";
 import type { NodeEnvironment } from "./expand.js";
 import {
   accumulateSoft,
-  checkClearance,
   checkHardNode,
   checkSegment,
   checkTssStep,
@@ -113,7 +118,18 @@ class RouteSearch implements Search {
   private lastSnapshotHours = 0;
   private readonly reachedIndices: number[] = [];
   private readonly isochrones: IsochroneSnapshot[] = [];
-  private readonly clearanceCache = new Map<number, number>();
+  /**
+   * Klaringscache per celle. Lagrer **hvor** tallet ble målt, ikke bare
+   * verdien — se `clearanceAt` for hvorfor det er nødvendig for at cachen skal
+   * være en gyldig nedre skranke.
+   */
+  private readonly clearanceCache = new Map<
+    number,
+    { readonly lat: number; readonly lon: number; readonly valueNm: number }
+  >();
+  /** `maxNm` alle klaringsoppslag i søket gjøres med. Se `computeClearanceCap`. */
+  private clearanceCapNm = 0;
+  private readonly clearanceStats: CorridorStats = createCorridorStats();
 
   private peakActiveLabels = 0;
   private weatherPartial = false;
@@ -183,6 +199,7 @@ class RouteSearch implements Search {
 
     this.setUpField();
     this.computeVmax();
+    this.computeClearanceCap();
     this.computeTubBound();
 
     const startState = stateKeyOf(startCell, NO_COURSE);
@@ -199,6 +216,15 @@ class RouteSearch implements Search {
       stateKey: startState,
       remainingNm:
         this.field?.atOrNear(start.lat, start.lon) ?? haversineNm(start, dest),
+      // Startetiketten er `d(A)` for første steg og må måles som alle andre.
+      clearanceNm:
+        this.input.mask !== undefined && this.opts.minOffingNm > 0
+          ? this.input.mask.clearanceNm(
+              start.lat,
+              start.lon,
+              this.clearanceCapNm,
+            )
+          : Number.POSITIVE_INFINITY,
       twsKn: 0,
       twdDeg: 0,
       bspKn: 0,
@@ -256,6 +282,65 @@ class RouteSearch implements Search {
     }
     const motor = boat.motorThresholdKn > 0 ? boat.motorSpeedKn : 0;
     this.vmaxKn = Math.max(maxPolar, motor) + weather.maxCurrentKn + 0.3;
+  }
+
+  /**
+   * `maxNm` for alle klaringsoppslag i denne kjøringen.
+   *
+   * R3-gaten kan aldri passere hvis klaringstallet er avkortet under
+   * `krav + L/2` (`clearance.ts`). Vi velger derfor ett fast tak som er en
+   * øvre skranke for `krav + L` i *ethvert* steg:
+   *
+   *   krav ≤ minOffing + seaState·boat.maxHsM   (høyere Hs forkaster noden)
+   *   L    ≤ Vmax · timeStep                    (Vmax er øvre fartsgrense)
+   *
+   * Fast tak er også det som gjør cellecachen brukbar: ett tall per celle,
+   * gyldig uansett bølgehøyde.
+   */
+  private computeClearanceCap(): void {
+    const { boat } = this.input;
+    const maxStepNm = (this.vmaxKn * this.opts.timeStepS) / 3600;
+    this.clearanceCapNm =
+      this.opts.minOffingNm +
+      this.opts.seaStateOffingNmPerM * boat.maxHsM +
+      maxStepNm;
+  }
+
+  /**
+   * Klaringen i et punkt, som en **gyldig nedre skranke**.
+   *
+   * v1s mønster (arvet inn i v2 fram til 2026-08-31) var å cache klaringen per
+   * celle og gjenbruke den rått for alle punkter i cellen. Det er usunt: med
+   * `cellDeg = 0,02` er to punkter i samme celle opptil ~1,2 nm fra hverandre,
+   * og naboens klaringstall kan da *overestimere* klaringen i punktet vi
+   * faktisk spør om — nøyaktig den typen stille lekkasje R3 handler om.
+   *
+   * Fiksen bruker den samme Lipschitz-egenskapen som gaten: klaringen er
+   * 1-Lipschitz, så `d(p) ≥ d(q) − |pq|` for et vilkårlig nabooppslag q.
+   * Holder den korrigerte skranken alene til å bære gaten
+   * (`≥ krav + L/2`), bruker vi den gratis; ellers måler vi eksakt i punktet
+   * og oppdaterer cachen. Nær land måler vi altså alltid; på åpent hav — der
+   * de aller fleste kandidatene ligger — slipper vi oppslaget.
+   */
+  private clearanceAt(
+    mask: NavigabilityMask,
+    cellKey: number,
+    point: LatLon,
+    sufficientNm: number,
+  ): number {
+    const cached = this.clearanceCache.get(cellKey);
+    if (cached !== undefined) {
+      const bound = cached.valueNm - haversineNm(cached, point);
+      if (bound >= sufficientNm) return bound;
+    }
+    const valueNm = mask.clearanceNm(point.lat, point.lon, this.clearanceCapNm);
+    this.clearanceStats.clearanceCalls++;
+    this.clearanceCache.set(cellKey, {
+      lat: point.lat,
+      lon: point.lon,
+      valueNm,
+    });
+    return valueNm;
   }
 
   /**
@@ -628,27 +713,44 @@ class RouteSearch implements Search {
       if (verdict.tillit === "usikkert") flags |= FLAG_USIKKER_TILLIT;
     }
 
-    // 13: kystbuffer med sjøgangstillegg. Svar caches per celle (v1-mønster).
-    // De to storsirkelavstandene er bare nødvendige når bufferen faktisk er
-    // i bruk; å regne dem for hver kandidat kostet to `asin` per kurs.
+    // 13: kystbuffer med sjøgangstillegg — langs **hele korden**, ikke bare i
+    // kandidatpunktet (R3, besluttet 2026-08-31). Lag 1 er Lipschitz-gaten og
+    // koster bare aritmetikk: `d(A)` ligger i arenaen, `d(B)` er cellecachens
+    // oppslag som steget uansett trengte. Bommer gaten, tar `clearance.ts`
+    // over med bisection.
+    let clearanceNm = Number.POSITIVE_INFINITY;
     if (mask !== undefined && opts.minOffingNm > 0) {
       const hsM = env.waves?.hsM;
-      const clearance = checkClearance(
-        mask,
-        next,
+      const requiredNm = requiredClearanceNm(
+        opts.minOffingNm,
         hsM,
-        () => ({
-          toStartNm: haversineNm(next, this.input.start),
-          toDestNm: haversineNm(next, this.input.dest),
-        }),
-        opts,
-        this.cachedClearance(mask, cellKey, next, hsM),
+        opts.seaStateOffingNmPerM,
       );
-      flags |= clearance.flags;
-      if (!clearance.check.ok) {
+      const toClearanceNm = this.clearanceAt(
+        mask,
+        cellKey,
+        next,
+        requiredNm + kin.distanceNm / 2,
+      );
+      const corridor = checkClearanceCorridor({
+        mask,
+        from: pos,
+        to: next,
+        fromClearanceNm: this.arena.clearanceNm[parentIndex]!,
+        toClearanceNm,
+        chordNm: kin.distanceNm,
+        hsM,
+        ends: { start: this.input.start, dest: this.input.dest },
+        params: opts,
+        queryCapNm: this.clearanceCapNm,
+        stats: this.clearanceStats,
+      });
+      flags |= corridor.flags;
+      if (!corridor.check.ok) {
         this.pruned.hardConstraint++;
         return;
       }
+      clearanceNm = corridor.toClearanceNm;
     }
 
     // 14: segmenttesten — den dyre.
@@ -699,6 +801,7 @@ class RouteSearch implements Search {
       cellKey,
       stateKey,
       remainingNm,
+      clearanceNm,
       twsKn: env.wind.speedKn,
       twdDeg: env.wind.fromDeg,
       bspKn: kin.bspKn,
@@ -733,26 +836,6 @@ class RouteSearch implements Search {
       return arena.remainingNm[existing]! <= remainingNm;
     }
     return false;
-  }
-
-  /**
-   * Klaringen caches per celle, som i v1. Cachen er kun gyldig for det
-   * statiske kravet; når sjøgangstillegget er i spill, avhenger svaret av
-   * Hs og vi spør masken direkte.
-   */
-  private cachedClearance(
-    mask: NavigabilityMask | undefined,
-    cellKey: number,
-    point: LatLon,
-    hsM: number | undefined,
-  ): number | undefined {
-    if (mask === undefined || this.opts.minOffingNm <= 0) return undefined;
-    if (hsM !== undefined && hsM > 0) return undefined;
-    const cached = this.clearanceCache.get(cellKey);
-    if (cached !== undefined) return cached;
-    const value = mask.clearanceNm(point.lat, point.lon, this.opts.minOffingNm);
-    this.clearanceCache.set(cellKey, value);
-    return value;
   }
 
   // ---------------------------------------------------------------- resultat
@@ -790,6 +873,7 @@ class RouteSearch implements Search {
       vmaxKn: this.vmaxKn,
       iterations: this.iterations,
       peakActiveLabels: this.peakActiveLabels,
+      clearanceStats: this.clearanceStats,
       pruned: {
         ...this.pruned,
         dominated: this.pruned.dominated + this.store.prunedDominated,

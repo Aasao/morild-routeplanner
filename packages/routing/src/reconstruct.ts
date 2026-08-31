@@ -11,6 +11,17 @@
 
 import { angDiff, bearing, haversineNm } from "@morild/geo";
 import type { LabelArena } from "./arena.js";
+import type {
+  CorridorEnds,
+  CorridorParams,
+  CorridorStats,
+} from "./clearance.js";
+import {
+  checkClearanceCorridor,
+  createCorridorStats,
+  DEFAULT_CORRIDOR_PARAMS,
+  freezeCorridorStats,
+} from "./clearance.js";
 import type { NavigabilityMask } from "./contracts.js";
 import type { CostVector, CostWeights } from "./cost.js";
 import {
@@ -77,6 +88,8 @@ export interface ResultContext {
   readonly vmaxKn: number;
   readonly iterations: number;
   readonly peakActiveLabels: number;
+  /** Søkets korridor-tellere (§5.3.2). Valgfri: tester bygger kontekst direkte. */
+  readonly clearanceStats?: CorridorStats | undefined;
   readonly pruned: {
     readonly dominated: number;
     readonly bound: number;
@@ -148,6 +161,7 @@ export function consolidateSteps(
   steps: readonly RouteStep[],
   mask: NavigabilityMask | undefined,
   tssParams: TssRuleParams = DEFAULT_TSS_PARAMS,
+  corridor: CorridorCheckContext = DEFAULT_CORRIDOR_CONTEXT,
   toleranceDeg: number = CONSOLIDATE_COURSE_TOLERANCE_DEG,
 ): RouteStep[] {
   if (steps.length < 3) return [...steps];
@@ -163,7 +177,7 @@ export function consolidateSteps(
       out.push(cur);
       continue;
     }
-    if (mask !== undefined && !mergeIsSafe(mask, prev, next, tssParams)) {
+    if (mask !== undefined && !mergeIsSafe(mask, prev, next, tssParams, corridor)) {
       out.push(cur);
       continue;
     }
@@ -177,12 +191,58 @@ function destAsStep(ctx: ResultContext): { lat: number; lon: number } {
   return { lat: ctx.input.dest.lat, lon: ctx.input.dest.lon };
 }
 
-/** Består det sammenslåtte segmentet både farbarhet og TSS-regelen? */
+/**
+ * Konteksten korridorsjekken trenger i den autoritative stien (§5.9, §5.10).
+ * `ends` er havneendene unntaket måles mot; `undefined` gir ingen unntak.
+ */
+export interface CorridorCheckContext {
+  readonly params: CorridorParams;
+  readonly ends: CorridorEnds | undefined;
+  readonly stats?: CorridorStats | undefined;
+}
+
+/**
+ * Standardkontekst når kalleren ikke oppgir noe: korridorkravet gjelder
+ * likevel. «Full korridorsjekk alltid i den autoritative stien» skal ikke
+ * kunne slås av ved å glemme et argument.
+ */
+const DEFAULT_CORRIDOR_CONTEXT: CorridorCheckContext = Object.freeze({
+  params: DEFAULT_CORRIDOR_PARAMS,
+  ends: undefined,
+});
+
+/**
+ * Klaringskravet for et ferdig rutesegment. Stegene bærer `hsM` fra selve
+ * seilasen, og det er den sjøgangen kravet skal skjerpes med; for et
+ * sammenslått segment brukes den største av endene (konservativt).
+ *
+ * `hsM = 0` betyr enten «flatt hav» eller «ingen bølgedata» — steget bærer
+ * ikke forskjellen videre. Kravet blir det samme i begge tilfeller
+ * (`minOffingNm`), og `SJOEGANG_DATA_MANGLER` er allerede satt på etiketten av
+ * søket, så ingenting skjules.
+ */
+function segmentHsM(
+  from: { readonly hsM?: number },
+  to: { readonly hsM?: number },
+): number {
+  return Math.max(from.hsM ?? 0, to.hsM ?? 0);
+}
+
+/**
+ * Består det sammenslåtte segmentet farbarhet, TSS-regelen **og**
+ * kystbufferen langs hele korden?
+ *
+ * Korridorkravet er nytt 2026-08-31 (R3). Uten det kunne konsolideringen slå
+ * sammen to korte segmenter som hver holdt bufferen til ett langt som skjærer
+ * innenfor den — nøyaktig samme feilklasse som TSS-regresjonen over, bare på
+ * klaring i stedet for trafikkretning.
+ */
 function mergeIsSafe(
   mask: NavigabilityMask,
-  from: { lat: number; lon: number },
-  to: { lat: number; lon: number },
+  from: RouteStep,
+  to: RouteStep,
   tssParams: TssRuleParams,
+  corridor: CorridorCheckContext,
 ): boolean {
   if (!mask.segmentVerdict(from.lat, from.lon, to.lat, to.lon).passable) {
     return false;
@@ -191,7 +251,16 @@ function mergeIsSafe(
     mask.tssVerdict(from.lat, from.lon, to.lat, to.lon),
     tssParams,
   );
-  return tss.kind !== "reject";
+  if (tss.kind === "reject") return false;
+  return checkClearanceCorridor({
+    mask,
+    from,
+    to,
+    hsM: segmentHsM(from, to),
+    ends: corridor.ends,
+    params: corridor.params,
+    stats: corridor.stats,
+  }).check.ok;
 }
 
 function legsFrom(
@@ -225,6 +294,14 @@ export function recheckRoute(
   legs: readonly RouteLeg[],
   mask: NavigabilityMask | undefined,
   opts: RouteOptions,
+  /**
+   * Havneendene kystbuffer-unntaket måles mot. `undefined` ⇒ ingen unntak,
+   * altså den strengeste tolkningen.
+   */
+  ends: CorridorEnds | undefined = undefined,
+  /** Sjøgang per etappe, indeksert som `legs`. Mangler ⇒ statisk krav. */
+  legHsM: readonly number[] = [],
+  stats: CorridorStats | undefined = undefined,
 ): { failing: SegmentRef[]; flagged: SegmentRef[] } {
   const failing: SegmentRef[] = [];
   const flagged: SegmentRef[] = [];
@@ -257,6 +334,23 @@ export function recheckRoute(
     );
     if (tss.kind === "reject") {
       failing.push(ref("no-go", tss.reason));
+      continue;
+    }
+    // R3: kystbufferen kontrolleres langs hele etappen, av kode som ikke
+    // stoler på noe søket gjorde. Et brudd her er per definisjon en bug i
+    // søket eller i konsolideringen — og da skal ruten merkes, ikke leveres
+    // som om den holdt kravet.
+    const corridor = checkClearanceCorridor({
+      mask,
+      from: { lat: leg.fromLat, lon: leg.fromLon },
+      to: { lat: leg.toLat, lon: leg.toLon },
+      hsM: legHsM[i],
+      ends,
+      params: opts,
+      stats,
+    });
+    if (!corridor.check.ok) {
+      failing.push(ref("no-go", corridor.check.reason));
       continue;
     }
     if (verdict.tillit === "usikkert") {
@@ -313,6 +407,17 @@ function nonDominated(arena: LabelArena, indices: readonly number[]): number[] {
 
 export function buildResult(ctx: ResultContext): RouteResult {
   const { arena, input, opts } = ctx;
+  /**
+   * Korridorsjekken i den autoritative stien får sine egne tellere, adskilt
+   * fra søkets: skalaene er så ulike (hundrevis av segmenter mot
+   * hundretusenvis av kandidater) at en sum ville skjult begge.
+   */
+  const recheckStats = createCorridorStats();
+  const corridorContext: CorridorCheckContext = {
+    params: opts,
+    ends: { start: input.start, dest: input.dest },
+    stats: recheckStats,
+  };
   const rankingWeights: CostWeights = scaledRankingWeights(
     opts.rankingWeights,
     ctx.directDistanceNm,
@@ -342,6 +447,7 @@ export function buildResult(ctx: ResultContext): RouteResult {
         stepFrom(arena, i, input.departEpochS, at === 0),
       ),
       ctx,
+      recheckStats,
     );
 
   /**
@@ -385,9 +491,19 @@ export function buildResult(ctx: ResultContext): RouteResult {
   withEnd ??= assemble(primary);
   const steps = withEnd.steps;
 
-  const consolidated = consolidateSteps(steps, input.mask, opts.tssParams);
+  const consolidated = consolidateSteps(
+    steps,
+    input.mask,
+    opts.tssParams,
+    corridorContext,
+  );
   const directEndIndex = withEnd.hasDirectEnd ? consolidated.length - 1 : -1;
   const legs = legsFrom(consolidated, directEndIndex);
+  // Sjøgangen etappen faktisk ble seilt i, konservativt fra endene.
+  const legHsM: number[] = [];
+  for (let i = 1; i < consolidated.length; i++) {
+    legHsM.push(segmentHsM(consolidated[i - 1]!, consolidated[i]!));
+  }
 
   const totalsBase = totalsFromSteps(steps, ctx);
   const arrivalEpochS = input.departEpochS + totalsBase.durationS;
@@ -400,7 +516,14 @@ export function buildResult(ctx: ResultContext): RouteResult {
     arrivalEpochS,
   );
 
-  const { failing, flagged } = recheckRoute(legs, input.mask, opts);
+  const { failing, flagged } = recheckRoute(
+    legs,
+    input.mask,
+    opts,
+    { start: input.start, dest: input.dest },
+    legHsM,
+    recheckStats,
+  );
   const maskCoverage = input.mask?.coverage ?? "none";
   const recheckPassed = input.mask !== undefined && failing.length === 0;
   const endsAtDest = reachesDestination(withEnd.finalLeg.status);
@@ -425,7 +548,13 @@ export function buildResult(ctx: ResultContext): RouteResult {
       ? "usikkert"
       : segmentVerdict;
 
-  const alternatives = buildAlternatives(ctx, front, primary, rankingWeights);
+  const alternatives = buildAlternatives(
+    ctx,
+    front,
+    primary,
+    rankingWeights,
+    corridorContext,
+  );
 
   return {
     reached: ctx.reached,
@@ -468,6 +597,10 @@ export function buildResult(ctx: ResultContext): RouteResult {
       fieldCells: ctx.fieldCells,
       tubBoundS: ctx.tubBoundS,
       vmaxKn: ctx.vmaxKn,
+      clearance: freezeCorridorStats(
+        ctx.clearanceStats ?? createCorridorStats(),
+      ),
+      clearanceRecheck: freezeCorridorStats(recheckStats),
       pruned: ctx.pruned,
     },
   };
@@ -513,6 +646,7 @@ function rejectedFinalLeg(
 function appendDirectFinalStep(
   steps: readonly RouteStep[],
   ctx: ResultContext,
+  corridorStats: CorridorStats | undefined = undefined,
 ): DirectFinalStep {
   const out = [...steps];
   const last = out[out.length - 1];
@@ -580,6 +714,29 @@ function appendDirectFinalStep(
       out,
       "avvist-baatgrenser",
       nodeCheck.reason,
+      remainingNm,
+    );
+  }
+
+  // R3: kystbufferen gjelder også sluttetappen — den er en reell seilas, ikke
+  // en tegnet linje. Sjøgangen tas fra værfeltet der etappen faktisk starter.
+  // I praksis ligger etappen som regel helt inne i havneunntaket, og da er
+  // dette et gratis nei-svar; ligger den ikke det, skal den kontrolleres.
+  const corridor = checkClearanceCorridor({
+    mask,
+    from: last,
+    to: dest,
+    chordNm: remainingNm,
+    hsM: env.waves?.hsM,
+    ends: { start: ctx.input.start, dest: ctx.input.dest },
+    params: ctx.opts,
+    stats: corridorStats,
+  });
+  if (!corridor.check.ok) {
+    return rejectedFinalLeg(
+      out,
+      "avvist-farbarhet",
+      corridor.check.reason,
       remainingNm,
     );
   }
@@ -729,6 +886,7 @@ function buildAlternatives(
   front: readonly number[],
   primary: number,
   weights: CostWeights,
+  corridor: CorridorCheckContext,
 ): RouteAlternative[] {
   const others = front.filter((index) => index !== primary);
   const ranked = [...others].sort((a, b) => {
@@ -744,7 +902,7 @@ function buildAlternatives(
       stepFrom(ctx.arena, i, ctx.input.departEpochS, at === 0),
     );
     const legs = legsFrom(
-      consolidateSteps(steps, ctx.input.mask, ctx.opts.tssParams),
+      consolidateSteps(steps, ctx.input.mask, ctx.opts.tssParams, corridor),
       -1,
     );
     const cost: CostVector = ctx.arena.costOf(index);

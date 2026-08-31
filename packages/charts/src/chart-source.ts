@@ -6,11 +6,10 @@
  * spec-en). `dato` er alltid eksplisitt input, aldri systemklokke.
  */
 import type { LatLon } from "@morild/geo";
-import { haversineNm } from "@morild/geo";
+import { bearing, haversineNm } from "@morild/geo";
 import {
-  distanceToPolygonNm,
   distanceToSegmentNm,
-  nearestRingPoint,
+  nearestPolygonPoint,
   pointInAnyPolygon,
   pointInPolygon,
   segmentEntirelyWithinAnyPolygon,
@@ -38,7 +37,8 @@ export interface HazardReason {
     | "utenfor-farled-lav-tetthet"
     | "utenlandsk-kilde-lav-tillit"
     | "ukjent-eller-uegnet-datum"
-    | "gammel-pakke";
+    | "gammel-pakke"
+    | "usikker-sondering-i-baand";
   readonly detail: string;
   readonly sourceLayer: string;
 }
@@ -133,6 +133,26 @@ function findBand(point: LatLon, bands: readonly DepthBand[]): DepthBand | undef
 function hasGoodDataQuality(tile: ChartTilePayload, point: LatLon): boolean {
   return tile.dataQuality.some(
     (z) => (z.catzoc === "A1" || z.catzoc === "A2" || z.catzoc === "B") && pointInPolygon(point, z.polygon),
+  );
+}
+
+/**
+ * Sondering-guardrail (byggetids-QA-validator promotert til guardrail,
+ * beslutning 2026-08-31 — se
+ * `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md` og
+ * `docs/specs/farbarhetsmaske.md` §3.4 «Guardrail for feilklassifiserte
+ * bånd»). Bånd-delpolygonet en flagget sondering geometrisk ligger i kan
+ * ALDRI gi `trygt` — maks `usikkert` — fordi bånd-inndelingen der er bevist
+ * upålitelig (503/3913 = 12,9 % i fase 1-bølge 2-fixturen). Selve
+ * sonderingspunktet er i tillegg blokkert strengere/presist som en egen
+ * VALSOU-punktfare (§4 steg 4a i `tools/chart-pack`, se
+ * `buildSoundingGuardrails`) — denne sonen dekker resten av delpolygonet som
+ * ingen punktfare når.
+ */
+function inSoundingGuardrailZone(tile: ChartTilePayload, point: LatLon): boolean {
+  return pointInAnyPolygon(
+    point,
+    tile.soundingGuardrail.map((z) => z.polygon),
   );
 }
 
@@ -260,8 +280,20 @@ function evaluatePoint(
         tile.farled.map((f) => f.polygon),
       );
       const goodQuality = hasGoodDataQuality(tile, point);
-      if (inFarled || goodQuality) {
+      const guardrailed = inSoundingGuardrailZone(tile, point);
+      if ((inFarled || goodQuality) && !guardrailed) {
         nivaa = worstTrust(nivaa, "trygt");
+      } else if ((inFarled || goodQuality) && guardrailed) {
+        // Guardrail-cap (beslutning 2026-08-31): dette delpolygonet ville
+        // normalt fått tillitsløft (farled/god datakvalitet), men er flagget
+        // av byggetids-QA-validatoren — kan aldri gi `trygt`.
+        nivaa = worstTrust(nivaa, "usikkert");
+        aarsaker.push({
+          kind: "usikker-sondering-i-baand",
+          detail:
+            "Punktet ligger i et bånd-delpolygon der en dybdepunkt-sondering er grunnere enn båndets nedre grense (byggetids-QA-guardrail) — kan ikke gis trygt selv med tillitsløft.",
+          sourceLayer: "dybdebaand",
+        });
       } else {
         nivaa = worstTrust(nivaa, "usikkert");
         const hasAnyQualityZone = tile.dataQuality.some((z) => pointInPolygon(point, z.polygon));
@@ -430,8 +462,21 @@ function evaluateChordAgainstTile(
         .filter((z) => z.catzoc === "A1" || z.catzoc === "A2" || z.catzoc === "B")
         .map((z) => z.polygon),
     ];
-    if (segmentEntirelyWithinAnyPolygon(fra, til, trustLiftPolygons)) {
+    const wouldBeTrygt = segmentEntirelyWithinAnyPolygon(fra, til, trustLiftPolygons);
+    const guardrailed = tile.soundingGuardrail.some((z) =>
+      segmentIntersectsPolygon(fra, til, z.polygon),
+    );
+    if (wouldBeTrygt && !guardrailed) {
       nivaa = worstTrust(nivaa, "trygt");
+    } else if (wouldBeTrygt && guardrailed) {
+      // Guardrail-cap (beslutning 2026-08-31) — se `evaluatePoint`.
+      nivaa = worstTrust(nivaa, "usikkert");
+      aarsaker.push({
+        kind: "usikker-sondering-i-baand",
+        detail:
+          "Segmentet krysser et bånd-delpolygon der en dybdepunkt-sondering er grunnere enn båndets nedre grense (byggetids-QA-guardrail) — kan ikke gis trygt selv med tillitsløft.",
+        sourceLayer: "dybdebaand",
+      });
     } else {
       nivaa = worstTrust(nivaa, "usikkert");
       const hasAnyQualityZone = tile.dataQuality.some((z) => segmentIntersectsPolygon(fra, til, z.polygon));
@@ -623,20 +668,37 @@ export function createChartSource(pkg: ChartPackage): ChartSource {
       if (candidate && (!best || candidate.avstandNm < best.avstandNm)) best = candidate;
     };
 
+    // Tørrfall: polygonet ER den sanne faregeometrien (ikke en sirkel-
+    // tilnærming) — edge-basert nærmeste-punkt er derfor korrekt og
+    // konservativitets-trygt (§4.1, «Konservativitets-garanti»-avsnittet).
     for (const zone of tile.dryFall) {
-      consider(nearestRingPoint(punkt, zone.polygon.rings[0] ?? []));
+      consider(nearestPolygonPoint(punkt, zone.polygon));
     }
+    // Skjær/grunne: eksakt sirkelavstand (senter − radius) når kilden har
+    // senter-felt — konsistent med `pointWithinHazardBuffer`/`segmentTest`.
+    // Polygonet (innskrevet tilnærming, §4.1) UNDER-dekker den sanne
+    // sirkelen, så avstand-til-polygon ville OVERESTIMERT avstand til
+    // fare — kontraktsbrudd fikset her (konservativitets-garanti,
+    // beslutning 2026-08-31). Polygon-fallback kun for eldre/håndbygde
+    // fikstyrer uten senter-felt.
     for (const hz of tile.bufferedHazards) {
-      consider(nearestRingPoint(punkt, hz.polygon.rings[0] ?? []));
+      if (hz.centerLat !== undefined && hz.centerLon !== undefined) {
+        const center: LatLon = { lat: hz.centerLat, lon: hz.centerLon };
+        const avstandNm = Math.max(
+          0,
+          haversineNm(punkt, center) - hz.bufferRadiusM / METERS_PER_NM,
+        );
+        consider({ avstandNm, retningGrader: bearing(punkt, center) });
+      } else {
+        consider(nearestPolygonPoint(punkt, hz.polygon));
+      }
     }
     const c = safetyContourFor(tile.bands, kravTilDybdeM);
     if (c !== undefined) {
       for (const band of tile.bands) {
         if (band.upperBoundM <= c) {
           for (const poly of band.polygons) {
-            const d = distanceToPolygonNm(punkt, poly);
-            const ring = poly.rings[0];
-            if (ring) consider({ avstandNm: d, retningGrader: nearestRingPoint(punkt, ring)?.retningGrader ?? 0 });
+            consider(nearestPolygonPoint(punkt, poly));
           }
         }
       }

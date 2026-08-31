@@ -184,6 +184,23 @@ export interface RouteAlternative {
   readonly legs: readonly RouteLeg[];
 }
 
+/**
+ * Kostnaden ved R3s korridorsjekk (§5.3.2). Instrumentert fordi
+ * nettbrett-målingen (§7) skal kunne lese den i stedet for å gjette: holder
+ * Lipschitz-gaten stort sett alene, eller bærer bisectionen kostnaden — og
+ * hvor mange `clearanceNm`-kall koster det i praksis?
+ */
+export interface ClearanceDiagnostics {
+  readonly gatePass: number;
+  readonly gateMiss: number;
+  readonly midpointChecks: number;
+  readonly maxDepth: number;
+  readonly clearanceCalls: number;
+  readonly rejections: number;
+  readonly exemptChords: number;
+  readonly uncertified: number;
+}
+
 export interface RouteDiagnostics {
   readonly iterations: number;
   readonly labelsCreated: number;
@@ -191,6 +208,15 @@ export interface RouteDiagnostics {
   readonly fieldCells: number;
   readonly tubBoundS: number | null;
   readonly vmaxKn: number;
+  /** Korridorsjekken i **søket** (§5.3 steg 13). */
+  readonly clearance: ClearanceDiagnostics;
+  /**
+   * Korridorsjekken i den **autoritative stien**: konsolidering (§5.9),
+   * sluttetappe (§5.8) og den uavhengige ettersjekken (§5.10). Holdt adskilt
+   * fra søkets tall fordi de to har helt ulik skala — hundrevis av segmenter
+   * mot hundretusenvis av kandidater.
+   */
+  readonly clearanceRecheck: ClearanceDiagnostics;
   readonly pruned: {
     readonly dominated: number;
     readonly bound: number;

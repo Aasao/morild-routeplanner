@@ -4,6 +4,7 @@ import {
   buildDataQualityZones,
   buildDepthBands,
   buildDryFallZones,
+  buildSoundingGuardrails,
   buildTilePayloads,
   subtractHazardsFromBands,
   validateSoundingsAgainstBands,
@@ -163,6 +164,87 @@ describe("QA-validator: dybdepunkt-sondering vs. bånd (felle 2, beslutning 2026
   });
 });
 
+describe("Guardrail (§3.4, promotert fra QA-varsling til byggetids-guardrail, beslutning 2026-08-31)", () => {
+  it("en flagget sondering blir en VALSOU-punktfare MED dybdeM satt, og flagger sitt bånd-delpolygon", () => {
+    const inner: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.0, 59.0, 10.05, 59.05) };
+    const outer: DybdekurveFeature = { id: "c10", dybdeM: 10, ring: closedRing(9.9, 58.9, 10.15, 59.15) };
+    const { bands } = buildDepthBands([inner, outer]);
+    const badSounding: PointFeature = { id: "grunne.brudd", point: [9.95, 58.95], dybdeM: 2 };
+    const { violations } = validateSoundingsAgainstBands(bands, [badSounding]);
+    expect(violations).toHaveLength(1);
+
+    const guardrail = buildSoundingGuardrails(bands, violations, 25);
+
+    // (a) VALSOU-punktfare: samme mekanisme som buildBufferedHazards,
+    // dybdeM = den flaggede sonderingens FAKTISKE (feilklassifiserte) dybde.
+    expect(guardrail.hazards).toHaveLength(1);
+    expect(guardrail.hazards[0]).toMatchObject({
+      kind: "grunne",
+      bufferRadiusM: 25,
+      dybdeM: 2,
+      centerLon: 9.95,
+      centerLat: 58.95,
+    });
+
+    // (b) Bånd-delpolygon-flagg: nøyaktig ett delpolygon (5-10 m-bandet i
+    // "skallet" der sonderingen ligger) flagges.
+    expect(guardrail.zones).toHaveLength(1);
+    expect(guardrail.zones[0]).toMatchObject({
+      bandLowerBoundM: 5,
+      bandUpperBoundM: 10,
+      violationCount: 1,
+    });
+    // Selve sonderingspunktet skal geometrisk ligge i det flaggede delpolygonet.
+    const feature = turf.polygon(
+      guardrail.zones[0]!.polygon.rings.map((r) => r.map(([lon, lat]) => [lon, lat])),
+    );
+    expect(pointInFeature(9.95, 58.95, feature)).toBe(true);
+  });
+
+  it("flere brudd i SAMME delpolygon dedupliserer til én sone med korrekt violationCount", () => {
+    const inner: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.0, 59.0, 10.05, 59.05) };
+    const outer: DybdekurveFeature = { id: "c10", dybdeM: 10, ring: closedRing(9.9, 58.9, 10.15, 59.15) };
+    const { bands } = buildDepthBands([inner, outer]);
+    const soundingA: PointFeature = { id: "grunne.a", point: [9.95, 58.95], dybdeM: 2 };
+    const soundingB: PointFeature = { id: "grunne.b", point: [9.92, 58.92], dybdeM: 3 };
+    const { violations } = validateSoundingsAgainstBands(bands, [soundingA, soundingB]);
+    expect(violations).toHaveLength(2);
+
+    const guardrail = buildSoundingGuardrails(bands, violations, 25);
+    expect(guardrail.hazards).toHaveLength(2); // ett punkt hver, aldri deduplisert
+    expect(guardrail.zones).toHaveLength(1); // samme delpolygon
+    expect(guardrail.zones[0]?.violationCount).toBe(2);
+  });
+
+  it("ingen brudd -> ingen guardrail-artefakter", () => {
+    const curve: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.0, 59.0, 10.2, 59.2) };
+    const { bands } = buildDepthBands([curve]);
+    const guardrail = buildSoundingGuardrails(bands, [], 25);
+    expect(guardrail.hazards).toEqual([]);
+    expect(guardrail.zones).toEqual([]);
+  });
+
+  it("buildTilePayloads klipper og bærer soundingGuardrail-sonen gjennom til flisen", () => {
+    const inner: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.0, 59.0, 10.05, 59.05) };
+    const outer: DybdekurveFeature = { id: "c10", dybdeM: 10, ring: closedRing(9.9, 58.9, 10.15, 59.15) };
+    const { bands } = buildDepthBands([inner, outer]);
+    const badSounding: PointFeature = { id: "grunne.brudd", point: [9.95, 58.95], dybdeM: 2 };
+    const { violations } = validateSoundingsAgainstBands(bands, [badSounding]);
+    const guardrail = buildSoundingGuardrails(bands, violations, 25);
+
+    const grid = { lonStepDeg: 0.5, latStepDeg: 0.25 };
+    const tiles = buildTilePayloads(bands, [], guardrail.hazards, [], [], guardrail.zones, grid);
+
+    const totalGuardrailZones = tiles.reduce((sum, t) => sum + t.soundingGuardrail.length, 0);
+    const totalGuardrailHazards = tiles.reduce(
+      (sum, t) => sum + t.bufferedHazards.filter((h) => h.dybdeM === 2).length,
+      0,
+    );
+    expect(totalGuardrailZones).toBeGreaterThan(0);
+    expect(totalGuardrailHazards).toBeGreaterThan(0);
+  });
+});
+
 describe("datakvalitet (CATZOC)", () => {
   it("bygger soner kun for features med catzoc-attributt", () => {
     const withQuality: PolygonFeature = {
@@ -182,7 +264,7 @@ describe("§3.1 fliseinndeling: bygger og klipper til 0,5°x0,25°-rutenettet", 
     const curve: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.6, 59.1, 10.8, 59.4) };
     const { bands } = buildDepthBands([curve]);
     const grid = { lonStepDeg: 0.5, latStepDeg: 0.25 };
-    const tiles = buildTilePayloads(bands, [], [], [], [], grid);
+    const tiles = buildTilePayloads(bands, [], [], [], [], [], grid);
 
     // Rektangelet 59.1-59.4 krysser flisgrensen ved 59.25 -> to fliser.
     expect(tiles.length).toBeGreaterThanOrEqual(2);
@@ -203,7 +285,7 @@ describe("§3.1 fliseinndeling: bygger og klipper til 0,5°x0,25°-rutenettet", 
     const curve: DybdekurveFeature = { id: "c5", dybdeM: 5, ring: closedRing(10.6, 59.05, 11.6, 59.1) };
     const { bands } = buildDepthBands([curve]);
     const grid = { lonStepDeg: 0.5, latStepDeg: 0.25 };
-    const tiles = buildTilePayloads(bands, [], [], [], [], grid);
+    const tiles = buildTilePayloads(bands, [], [], [], [], [], grid);
 
     const westTile = tiles.find((t) => t.id.lonIndex === 21 && t.id.latIndex === 236);
     const middleTile = tiles.find((t) => t.id.lonIndex === 22 && t.id.latIndex === 236);

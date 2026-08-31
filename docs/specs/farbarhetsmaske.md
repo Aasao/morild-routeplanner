@@ -207,8 +207,9 @@ Ved oppslag med et gitt klaringskrav `k` (i meter):
    kurve ≥ `k`, jf. F1.1s ordlyd — eksempelet i kravspeken er 2,6 m → 5 m-
    kurven) → `no-go`.
 4. Ellers: `trygt` hvis punktet er innenfor et farled-polygon **eller** i en
-   sone med god datakvalitet (§3.7); ellers `usikkert` (føre-var-regelen,
-   F1.3 — «areal mellom sonderinger antas aldri trygt»).
+   sone med god datakvalitet (§3.7) **og ikke i en guardrail-sone (under)**;
+   ellers `usikkert` (føre-var-regelen, F1.3 — «areal mellom sonderinger
+   antas aldri trygt»).
 
 Dette er den viktigste designbeslutningen i denne spec-en og bør
 kvalitetssikres av kartdata-agenten mot faktiske Kartverket-eksporter før
@@ -223,6 +224,66 @@ dybdepunkt-sondering som havner geometrisk innenfor et bånd skal ha en målt
 dybde grunnere enn båndets nedre grense.** Brudd flagges i byggerapporten og
 i pakkens `sourceStatus`/`layers[].sourceStatus` (aldri stille sluket, N2) —
 se §4 og §6 for byggetids- og testkrav.
+
+**Guardrail for feilklassifiserte bånd (promotert fra QA-varsling,
+beslutning 2026-08-31 — se
+`docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md` «QA-funnet»).**
+Fase 1-bølge 2-fixturen målte at 503 av 3913 (12,9 %) Grunne-soundinger
+brukt som QA-validatorens ground-truth-proxy bryter regelen over — et
+systematisk, IKKE tilfeldig, mønster (typisk: en 32–39 m-sondering havner i
+et kunstig for stort 40–50 m-bånd, trolig et symptom på åpne-kurver-hullet
+under). Flagging alene i byggerapporten er varsling, ikke beskyttelse: en
+seiler som stoler på masken ser aldri byggeloggen. Validatoren er derfor
+promotert fra ren QA til en byggetids-guardrail som endrer selve pakken:
+
+1. **VALSOU-punktfare.** Hver flagget sondering legges inn i pakkens
+   `bufferedHazards` som et `kind: "grunne"`-punkt (samme mekanisme som §4
+   steg 4/E4), med `dybdeM` satt til den FAKTISK målte (feilklassifiserte)
+   dybden og senterkoordinat i sonderingens posisjon. Oppslagsregelen er
+   identisk E4/VALSOU: `no-go` KUN hvis `kravTilDybdeM` er strengere enn
+   denne dybden, ellers ingen blokkering fra punktet alene. Dette er en
+   EGEN, eksplisitt mekanisme (`buildSoundingGuardrails` i
+   `tools/chart-pack`) — ikke bare en observasjon om at Grunne-punktene
+   allerede får dette via §4 steg 4: ground-truth-kilden i denne bølgen ER
+   Grunne-punkter (proxy), så de to mekanismene overlapper i praksis nå, men
+   den dagen et ekte `Dybdepunkt`-lag (generelle soundinger, IKKE alle
+   VALSOU/Grunne-objekter) finnes, er guardrailen den ENESTE kilden til
+   punktbeskyttelse for dem.
+   - **Bufferradius: 25 m** (halve sonderingsnettets 50 m-gradering, README
+     "QA-validator"), bevisst FORSKJELLIG fra standard skjær-/grunne-
+     bufferen på 20 m (§8 pkt. 3, som begrunnes med posisjonsusikkerhet for
+     ETT punkt). Begrunnelse: en flagget sondering representerer ikke bare
+     sitt eget punkt, men et areal på omtrent sonderingsnettets skala der
+     bånd-inndelingen er bevist upålitelig. Dette er et dokumentert,
+     forsiktig anslag — IKKE en målt verdi — for hvor langt utover selve
+     punktet den samme usikkerheten trolig strekker seg, før bånd-
+     delpolygon-flagget (som dekker hele det upålitelige delpolygonet,
+     uavhengig av avstand) uansett tar over som den reelle beskyttelsen.
+2. **Bånd-delpolygon-tak.** Det spesifikke delpolygonet (ett element i
+   `DepthBand.polygons` — f.eks. én sammenhengende skjærgårds-/øyform) som
+   den flaggede sonderingen geometrisk ligger i, kan ALDRI gi `trygt` ved
+   oppslag — maks `usikkert`, med årsak `usikker-sondering-i-baand` i
+   `aarsaker`, selv om delpolygonet ellers ville fått tillitsløft fra farled
+   eller god datakvalitet (§3.4 steg 4). Dette er den faktiske
+   beskyttelsen for RESTEN av delpolygonet som punktfaren (25 m) ikke når —
+   uten dette ville et delpolygon som er BEVIST upålitelig fortsatt kunne
+   returnere `trygt` et lite stykke fra selve sonderingspunktet. Geometrien
+   flagges fra de RÅ (pre-hazard-subtraksjon) båndene — samme bånd-sett som
+   selve QA-validatoren kjøres mot — fordi sonderingspunktet uansett senere
+   skjæres ut som et hazard-hull i det ferdige bandet (ALLE Grunne-punkter,
+   ikke bare flaggede, bufres og trekkes fra), så et søk i det FERDIGE
+   bandet ville aldri funnet et treff.
+3. **Ufarliggjør uten stitching.** Denne to-delte mekanismen gjør at
+   feilklassifiserte bånd aldri kan lure en bruker til `trygt` — verken
+   punktvis (VALSOU) eller for hele det upålitelige delpolygonet (tak) —
+   UTEN å måtte vente på at åpne-kurver-stitchingen (under) faktisk lukker
+   selve rotårsaken. Guardrailen er et sikkerhetsnett, ikke en fiks av
+   bånd-konstruksjonen; stitching er fortsatt den egentlige løsningen.
+
+Målt i fase 1-bølge 2-fixturen: 503 VALSOU-punktfarer og 273 unike
+bånd-delpolygoner flagget (se `tools/chart-pack/README.md` "QA-validator" og
+`packages/charts/src/guardrail-golden.test.ts` for et faktisk berørt
+fasit-punkt).
 
 ### 3.5 De øvrige lagene
 
@@ -271,7 +332,8 @@ export interface HazardReason {
     | "utenfor-farled-lav-tetthet"
     | "utenlandsk-kilde-lav-tillit"
     | "ukjent-eller-uegnet-datum"
-    | "gammel-pakke";
+    | "gammel-pakke"
+    | "usikker-sondering-i-baand"; // guardrail-tak, §3.4 "Guardrail for feilklassifiserte bånd"
   readonly detail: string;      // menneskelesbar forklaring til UI
   readonly sourceLayer: string; // hvilket lag/kilde årsaken kom fra
 }
@@ -338,6 +400,67 @@ Invarianter (håndheves av enhetstester og bør legges til
   samme `nivaa` som `farbar(p, …)`. Polygon-fallbacken beholdes kun for
   fikstyrer/pakker uten senter-felt.
 
+### 3.6.1 Konservativitets-garanti for `nermesteFareAvstandNm` (forutsetning for R3-gaten)
+
+**Garanti (beslutning 2026-08-31, matematiker-forutsetning i
+`docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md` R3):**
+`nermesteFareAvstandNm` (og enhver klaringsavledning av den, f.eks. i
+rutemotorens Lipschitz-gate `d(A) + d(B) ≥ 2·minOffing + L`) skal **ALDRI
+overestimere** avstanden til nærmeste kartlagte fare. Underestimering er
+tillatt og trygt (gaten blir strengere/mer konservativ, aldri farligere) —
+overestimering er et kontraktsbrudd: en for stor rapportert avstand kan la
+et faktisk usikkert kordepunkt passere gaten ukontrollert.
+
+**Revisjon utført 2026-08-31 — to funn, ett rettet, ett dokumentert som
+kjent, ufarlig begrensning:**
+
+1. **RETTET: vertex-only nærmeste-punkt overestimerte for tørrfall/
+   dybdebånd.** Den tidligere `nearestRingPoint` sammenlignet kun mot
+   ringens HJØRNER, ikke kantens punkter generelt. Siden hjørner er en
+   delmengde av kantens punkter, kan et vertex-only minimum rapportere en
+   STØRRE avstand enn den faktiske korteste avstanden til kanten (f.eks. et
+   punkt rett utenfor midten av en lang kant, langt fra begge hjørner) — en
+   ren overestimering. Erstattet med `nearestPolygonPoint` (edge-basert,
+   `packages/charts/src/point-in-polygon.ts`), som gjenbruker samme
+   projeksjon/nærmeste-punkt-logikk som `distanceToSegmentNm`. For tørrfall
+   og dybdebånd ER polygonet den sanne faregeometrien (ingen
+   sirkel-tilnærming), så denne banen er nå **eksakt** — ingen gjenværende
+   over- eller underestimering.
+2. **DOKUMENTERT, IKKE FJERNET: punkt+radius-farer (skjær/grunne) via
+   senterfelt er nå også eksakt; polygon-FALLBACKEN (uten senterfelt)
+   overestimerer fortsatt, i MOTSATT retning av oppdragets opprinnelige
+   hypotese.** Oppdraget spurte om polygon-fallbacken *underestimerer*
+   avstand til en sirkelfare (siden den innskrevne polygon-tilnærmingen,
+   §4.1, er MINDRE enn den sanne sirkelen). Retningen er sjekket formelt og
+   er **motsatt**: for et punkt `Q` UTENFOR sirkelen (senter `O`, radius
+   `r`) og et hvilket som helst punkt `X` på den innskrevne polygonens kant
+   (som per konstruksjon ligger på eller innenfor sirkelen, `|OX| ≤ r`),
+   gir trekantulikheten `|QX| ≥ |OQ| − |OX| ≥ |OQ| − r`. Minimum over alle
+   slike `X` (avstand til polygonet) er derfor **alltid ≥** avstanden til
+   den sanne sirkelen (`|OQ| − r`) — polygon-fallbacken OVERESTIMERER,
+   aldri underestimerer, akkurat den retningen garantien forbyr.
+   - **Fikset for den path-en som faktisk brukes i produksjon:** når
+     `centerLat`/`centerLon` finnes (som de ALLTID gjør i pakker bygget av
+     `tools/chart-pack`, se `BufferedHazardPoint`-kommentaren i
+     `pack-format.ts`), brukes nå eksakt sirkelformel
+     (`haversineNm(punkt, senter) − bufferRadiusM`, aldri under 0) i stedet
+     for avstand-til-polygon. Denne banen er eksakt — garantien holder
+     uforbeholdent for alle ekte pakker.
+   - **Ikke fikset (bevisst, med begrunnelse):** polygon-fallbacken (kun
+     nådd for eldre/håndbygde fikstyrer UTEN senterfelt — aldri fra ekte
+     `tools/chart-pack`-pakker) har ingen senterpunkt å regne eksakt fra.
+     En fiks ville krevd å GJETTE et senter (f.eks. polygon-centroid), noe
+     som er skjørt for vilkårlig håndbygd testgeometri og ikke verdt
+     kompleksiteten for en kodesti som aldri nås i produksjon. Risikoen er
+     null i praksis (garantien håndheves der det faktisk betyr noe), men er
+     eksplisitt dokumentert og regresjonstestet som en KJENT BEGRENSNING
+     (`packages/charts/src/index.test.ts`, "KJENT BEGRENSNING: uten
+     senterpunkt...") — ærlig degradering (N2), ikke en skjult antakelse.
+3. **Uendret, allerede korrekt: dybdebånd-avstanden.** `distanceToPolygonNm`
+   (nå konsolidert inn i `nearestPolygonPoint`) var allerede edge-basert og
+   eksakt for dybdebånd — bandet ER den sanne faregeometrien, ingen
+   sirkel-tilnærming er involvert.
+
 ## 4. Byggepipeline (`tools/chart-pack`)
 
 **Frekvens — bevisst annerledes enn værpipelinen:** kystlinje og dybdedata
@@ -403,6 +526,15 @@ Steg:
    allerede har `app:dybde`) brukes som proxy siden et eget
    `Dybdepunkt`-lag (generelle enkeltsonderinger) ikke er ingestert ennå —
    dokumentert degradering, ikke skjult.
+4b. **Bygg guardrail-artefaktene** fra 4a-bruddene (§3.4 «Guardrail for
+   feilklassifiserte bånd», beslutning 2026-08-31, promotert fra ren
+   QA-varsling): VALSOU-punktfarer (lagt til `bufferedHazards`, 25 m buffer,
+   `dybdeM` = den faktisk sonderte dybden) + bånd-delpolygon-flagg (lagt til
+   et nytt `soundingGuardrail`-lag) for hvert unike delpolygon minst én
+   flagget sondering ligger i. Kjøres mot de RÅ (pre-hazard-subtraksjon)
+   båndene fra 4a, av samme grunn som 4a selv (sonderingspunktet skjæres
+   uansett ut som et hazard-hull senere). Implementert som
+   `buildSoundingGuardrails` i `tools/chart-pack/src/pipeline.ts`.
 5. **Overlegg** farled, datakvalitet, TSS, vernesone og luftspenn som egne
    attributt-bærende lag (ikke smeltet inn i dybdebåndene).
 6. **Flis** alle lag til 0,5°×0,25°-rutenettet (§3.1), klipp polygoner ved
@@ -524,6 +656,28 @@ formler:
   korrekt beregnet vinkel, ingen `no-go`/trust-endring fra TSS alene.
 - Vernesone-dato: punkt innenfor sesong → `no-go`/`unngå`; samme punkt
   utenfor sesong → `trygt`/`usikkert` som om laget ikke fantes.
+- **Guardrail for feilklassifiserte bånd (§3.4, beslutning 2026-08-31):**
+  i `tools/chart-pack` — en syntetisk sondering grunnere enn båndets nedre
+  grense (`validateSoundingsAgainstBands`-brudd) gir via
+  `buildSoundingGuardrails` (a) en VALSOU-punktfare i `bufferedHazards` med
+  `dybdeM` satt til sonderingens faktiske dybde og (b) nøyaktig det
+  delpolygonet sonderingen geometrisk ligger i, flagget i
+  `soundingGuardrail`; flere brudd i samme delpolygon dedupliserer til én
+  sone med korrekt `violationCount`; `buildTilePayloads` klipper og bærer
+  sonen gjennom til flisen. I `packages/charts` — samme delpolygon kan
+  ALDRI gi `trygt` fra `farbar()`/`segmentTest()` selv når det ellers ville
+  fått tillitsløft fra farled/god datakvalitet, med årsak
+  `usikker-sondering-i-baand`; punktfaren følger uendret E4/VALSOU (no-go
+  kun hvis kravet er strengere enn den sonderte dybden).
+- **Konservativitets-garanti for `nermesteFareAvstandNm` (§3.6.1):**
+  `nearestPolygonPoint` finner en kortere (korrekt) avstand til midten av en
+  lang kant enn til nærmeste hjørne (regresjon mot den tidligere vertex-only
+  overestimeringen); punkt+radius-farer med senterfelt gir eksakt
+  sirkelavstand (`senter − radius`), ikke avstand til den innskrevne
+  polygon-tilnærmingen; polygon-fallbacken UTEN senterfelt er dekket av en
+  eksplisitt «KJENT BEGRENSNING»-test som dokumenterer at den fortsatt
+  overestimerer (se §3.6.1 pkt. 2) — en regresjonsvakt, ikke en påstand om
+  at fallbacken er trygg i produksjon.
 
 ### 6.2 Frossen ekte test-fikstur
 
@@ -622,11 +776,41 @@ navngitt grunne/dybde, og (b) dagens maske svarer `usikkert` i stedet for
   påstand om at oppførselen er riktig.
 - Lenke til `tools/chart-pack/README.md` «Avvik fra spec» #1 og til denne
   seksjonen, slik at testen oppdateres (endres til å forvente `no-go`) den
-  dagen kurve-stitching på tvers av kartblad er implementert (§4 «Neste
-  bølge» — stitching kommer ved skala, ikke i denne bølgen).
+  dagen kurve-stitching på tvers av kartblad er implementert. **Timing
+  justert 2026-08-31** (se `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`
+  «QA-funnet» pkt. 3): stitching rykker frem fra «fase 5/ved skala» til «FØR
+  første reelle rute utenfor farled brukes reelt» — en 1-av-8 feilrate i
+  bånd-tilordning (12,9 %-funnet) er for høy til å hvile permanent på
+  sonderingsnettet, selv med guardrailen (§3.4) som midlertidig sikkerhetsnett.
 - IKKE slettes eller løsnes uten at det underliggende hullet faktisk er
   lukket — testen finnes eksplisitt for at regresjon i denne retningen aldri
   skjer stille.
+
+### 6.3.2 Guardrail-fasit mot et faktisk berørt fixture-punkt (beslutning 2026-08-31)
+
+I tillegg til de kart-først-protokollerte punktene i §6.3 (som verifiserer
+maskens tolkning mot et OFFISIELT sjøkart) og kjent-svakhet-punktet i §6.3.1
+(dokumenterer et hull), skal testsvitten inneholde minst én fasit-test som
+verifiserer guardrailen (§3.4) mot et FAKTISK QA-brudd-punkt fra den frosne
+fixturen selv — ikke en syntetisk konstruksjon, og heller ikke et punkt som
+krever uavhengig sjøkart-verifisering (guardrailen validerer intern
+konsistens mellom sondering og bånd, ikke en påstand om hva som er sant i
+virkeligheten). Testen skal:
+
+- Navngi den konkrete kildefeaturen (f.eks. `grunne.7257`, sondert 39 m,
+  liggende i det geometrisk overlappende 40–50 m-bandet).
+- Assertere at standard klaringskrav ALDRI gir `trygt` på dette punktet
+  (uansett tillitsløft), med årsak `usikker-sondering-i-baand`.
+- Assertere VALSOU-punktfarens virkemåte uendret: `no-go` når kravet er
+  strengere enn den sonderte dybden, ingen blokkering fra punktet alene
+  ellers.
+- Rapportere fixturens faktiske guardrail-omfang (antall flaggede
+  delpolygoner/punktfarer) som en eksplisitt regresjonsvakt — et tall som
+  ENDRER seg når kildedata oppdateres eller stitching lukker hullet, og som
+  skal synes i testfeil, ikke bare i byggeloggen.
+
+Filen er `packages/charts/src/guardrail-golden.test.ts`. Fase 1-bølge
+2-fixturen: 503 VALSOU-punktfarer og 273 unike bånd-delpolygoner flagget.
 
 ### 6.4 Ytelseskrav
 
@@ -728,6 +912,50 @@ flagges segmentet i stedet (§5-mønsteret for degradering).
 
 ## 9. Endringslogg
 
+- **2026-08-31 (kartdata-agent, QA-guardrail-promotering + konservativitets-
+  revisjon — se `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`
+  «QA-funnet», Magnus' beslutning samme dag):**
+  - **Guardrail for feilklassifiserte bånd** (nytt avsnitt i §3.4, §4 steg
+    4b, §6.1, §6.3.2): byggetids-QA-validatoren (§4 steg 4a) er promotert
+    fra ren varsling til en guardrail som endrer pakken. Hver flagget
+    sondering blir (a) en VALSOU-punktfare (`bufferedHazards`, 25 m buffer
+    — begrunnet som halve sonderingsnettets 50 m-gradering, §3.4) med
+    `dybdeM` = den faktisk sonderte dybden, og (b) et flagg på det
+    spesifikke bånd-delpolygonet den ligger i (nytt `soundingGuardrail`-lag,
+    `SoundingGuardrailZone` i `pack-format.ts`) som gjør at delpolygonet
+    ALDRI kan gi `trygt` — maks `usikkert`, årsak `usikker-sondering-i-baand`
+    (ny `HazardReason.kind`). Implementert som `buildSoundingGuardrails` i
+    `tools/chart-pack/src/pipeline.ts`, kalt fra `build.ts`, lest av
+    `evaluatePoint`/`evaluateChordAgainstTile` i
+    `packages/charts/src/chart-source.ts`. **Målt i fase 1-bølge
+    2-fixturen: 503 VALSOU-punktfarer og 273 unike bånd-delpolygoner
+    flagget** fra de 503 QA-bruddene (12,9 % av 3913 sjekkede Grunne-
+    soundinger). Ny fasit-test mot et faktisk berørt punkt
+    (`grunne.7257`, sondert 39 m i 40–50 m-bandet) i
+    `packages/charts/src/guardrail-golden.test.ts` (§6.3.2) og
+    guardrail-enhetstester i `tools/chart-pack/src/pipeline.test.ts` (§6.1).
+    Fixturen regenerert (`packages/charts/testdata/oslofjord-hvaler.json.gz`);
+    alle 12 eksisterende tester i `golden-oslofjord-hvaler.test.ts` (inkl. de
+    4 som forventer `trygt`) består uendret — ingen av dem treffer et av de
+    273 flaggede delpolygonene (bekreftet ved at testsvitten fortsatt er
+    grønn: en `trygt`-forventende test ville feilet umiddelbart hvis den
+    hadde truffet en guardrail-sone).
+  - **Stitching-timing justert** (§6.3.1): fra «fase 5/ved skala» til «FØR
+    første reelle rute utenfor farled brukes reelt» — guardrailen er et
+    sikkerhetsnett, ikke en erstatning for å lukke selve åpne-kurver-hullet.
+  - **Konservativitets-garanti for `nermesteFareAvstandNm` spec-festet og
+    revidert** (nytt §3.6.1, forutsetning for R3-gaten i rutemotoren): denne
+    funksjonen skal ALDRI overestimere avstand til fare. Revisjon fant og
+    rettet én reell overestimering (vertex-only nærmeste-punkt for
+    tørrfall/punktfare-polygon, erstattet av edge-basert
+    `nearestPolygonPoint`) og dokumenterte én gjenværende, men ufarlig,
+    begrensning: punkt+radius-farer får nå eksakt sirkelavstand når
+    senterfelt finnes (alle ekte pakker), mens den gamle polygon-FALLBACKEN
+    (kun eldre/håndbygde fikstyrer uten senterfelt) fortsatt overestimerer —
+    **motsatt retning av oppdragets opprinnelige hypotese** (som antok
+    underestimering); bevist formelt med trekantulikheten i §3.6.1 og
+    dekket av en eksplisitt «KJENT BEGRENSNING»-regresjonstest i
+    `packages/charts/src/index.test.ts`.
 - **2026-08-31 (code-review runde 2, funn 2 og 3):**
   - **Funn 2 (viktig): `evaluatePoint` testet punktfarer mot polygonet, ikke
     mot sirkelen.** R1-fiksen ga `segmentTest()` eksakt sirkelgeometri

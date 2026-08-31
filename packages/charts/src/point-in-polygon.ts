@@ -186,10 +186,14 @@ export function segmentEntirelyWithinAnyPolygon(
   return true;
 }
 
-/** Korteste avstand (nm) fra punkt til et linjesegment, flat approksimasjon. */
-export function distanceToSegmentNm(point: LatLon, a: LatLon, b: LatLon): number {
-  // Enkel projeksjon i grader (gyldig for korte segmenter/skjærgårdsskala,
-  // samme presisjonsnivå som packages/geo sin stepLatLon-approksimasjon).
+/**
+ * Nærmeste punkt på et linjesegment, flat gradeprojeksjon (samme
+ * presisjonsnivå som `packages/geo`s `stepLatLon`-approksimasjon — gyldig
+ * for korte segmenter/skjærgårdsskala). Delt hjelper for `distanceToSegmentNm`
+ * og `nearestPolygonPoint` slik at begge er garantert konsistente (samme
+ * projeksjon, samme nærmeste-punkt-logikk).
+ */
+function nearestPointOnSegment(point: LatLon, a: LatLon, b: LatLon): LatLon {
   const cosLat = Math.cos((point.lat * Math.PI) / 180);
   const ax = a.lon * cosLat;
   const ay = a.lat;
@@ -203,8 +207,12 @@ export function distanceToSegmentNm(point: LatLon, a: LatLon, b: LatLon): number
   const lenSq = dx * dx + dy * dy;
   let t = lenSq === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / lenSq;
   t = Math.max(0, Math.min(1, t));
-  const nearest: LatLon = { lat: ay + t * dy, lon: (ax + t * dx) / cosLat };
-  return haversineNm(point, nearest);
+  return { lat: ay + t * dy, lon: (ax + t * dx) / cosLat };
+}
+
+/** Korteste avstand (nm) fra punkt til et linjesegment, flat approksimasjon. */
+export function distanceToSegmentNm(point: LatLon, a: LatLon, b: LatLon): number {
+  return haversineNm(point, nearestPointOnSegment(point, a, b));
 }
 
 /** Korteste avstand (nm) fra punkt til ringens kant (ikke til interiøret). */
@@ -230,22 +238,45 @@ export function distanceToPolygonNm(point: LatLon, polygon: PackedPolygon): numb
 }
 
 /**
- * Nærmeste punkt på ringens kant, med avstand (nm) og initial peiling
- * (grader) fra `point` til det punktet — brukt av `nermesteFareAvstandNm`.
+ * Nærmeste punkt PÅ POLYGONETS KANT — edge-basert, ikke bare hjørner
+ * (konservativitets-fiks, beslutning 2026-08-31, se
+ * `docs/specs/farbarhetsmaske.md` "Konservativitets-garanti"). Brukt av
+ * `nermesteFareAvstandNm` for lag der polygonet ER den sanne
+ * faregeometrien (tørrfall, dybdebånd) — IKKE for punkt+radius-farer
+ * (skjær/grunne), der senterpunkt+radius er den sanne geometrien og
+ * `polygon` kun er en innskrevet tilnærming (§4.1); for de lagene skal
+ * kalleren bruke eksakt sirkelavstand i stedet (samme mønster som
+ * `pointWithinHazardBuffer`/`distanceToSegmentNm`-bruken i `segmentTest`).
+ *
+ * **Erstatter den tidligere `nearestRingPoint`**, som kun sammenlignet mot
+ * ringens HJØRNER. Hjørner er en delmengde av kantens punkter, så et
+ * vertex-only minimum kan rapportere en STØRRE avstand enn den faktiske
+ * korteste avstanden til kanten (f.eks. et punkt rett utenfor midten av en
+ * lang kant, langt fra begge hjørnene) — det er OVERESTIMERING av avstand
+ * til fare, et kontraktsbrudd for `nermesteFareAvstandNm` (spec-en krever at
+ * denne funksjonen ALDRI overestimerer).
  */
-export function nearestRingPoint(
+export function nearestPolygonPoint(
   point: LatLon,
-  ring: Ring,
+  polygon: PackedPolygon,
 ): { readonly avstandNm: number; readonly retningGrader: number } | null {
   let min = Infinity;
   let nearest: LatLon | undefined;
-  for (const c of ring) {
-    if (!c) continue;
-    const candidate: LatLon = { lon: c[0], lat: c[1] };
-    const d = haversineNm(point, candidate);
-    if (d < min) {
-      min = d;
-      nearest = candidate;
+  for (const ring of polygon.rings) {
+    for (let i = 0; i < ring.length - 1; i++) {
+      const a = ring[i];
+      const b = ring[i + 1];
+      if (!a || !b) continue;
+      const candidate = nearestPointOnSegment(
+        point,
+        { lon: a[0], lat: a[1] },
+        { lon: b[0], lat: b[1] },
+      );
+      const d = haversineNm(point, candidate);
+      if (d < min) {
+        min = d;
+        nearest = candidate;
+      }
     }
   }
   if (!nearest) return null;

@@ -21,6 +21,7 @@ import { describe, expect, it } from "vitest";
 import type { PackedPolygon, Ring } from "./pack-format.js";
 import {
   distanceToSegmentNm,
+  nearestPolygonPoint,
   pointInPolygon,
   segmentEntirelyWithinAnyPolygon,
   segmentIntersectsAnyPolygon,
@@ -406,5 +407,66 @@ describe("distanceToSegmentNm", () => {
       distanceToSegmentNm(p, b, a),
       9,
     );
+  });
+});
+
+/**
+ * Konservativitets-garanti-regresjon (beslutning 2026-08-31, se
+ * `docs/specs/farbarhetsmaske.md` "Konservativitets-garanti" og
+ * `nermesteFareAvstandNm` i `chart-source.ts`): funksjonen som gir
+ * "nærmeste punkt på polygonets kant" må ALDRI overestimere avstanden — den
+ * mates inn i rutemotorens Lipschitz-gate, der en for STOR rapportert
+ * avstand kan la et faktisk usikkert kordepunkt passere ukontrollert.
+ *
+ * `nearestPolygonPoint` erstatter den tidligere `nearestRingPoint`, som kun
+ * sammenlignet mot ringens HJØRNER. Testene under viser konkret at
+ * hjørne-only ville gitt et for STORT tall for et punkt midt på en lang
+ * kant, langt fra begge hjørner — nøyaktig den regresjonen fiksen skal
+ * forhindre.
+ */
+describe("nearestPolygonPoint — edge-basert, ikke bare hjørner (konservativitets-garanti)", () => {
+  it("finner korrekt (kortere) avstand til midten av en lang kant enn til nærmeste hjørne", () => {
+    // Firkant med hjørner langt fra hverandre (100x1 grader — en lang, smal
+    // kant fra (0,0) til (100,0)).
+    const square: PackedPolygon = {
+      rings: [rect(0, 0, 100, 1)],
+    };
+    // Punkt rett sør for kantens midtpunkt, 1 nm unna.
+    const p = { lat: -1 / 60, lon: 50 };
+    const result = nearestPolygonPoint(p, square);
+    expect(result).not.toBeNull();
+    // Korrekt (edge-basert) svar er ~1 nm — et hjørne-only (vertex-only)
+    // søk ville målt avstanden til (0,0) eller (100,0), som er enormt mye
+    // lenger (nesten 50° ~ 3000 nm) — en grov OVERESTIMERING.
+    expect(result?.avstandNm).toBeCloseTo(ONE_ARCMINUTE_NM, 1);
+    expect(result?.avstandNm ?? Infinity).toBeLessThan(10);
+  });
+
+  it("er konsistent med distanceToSegmentNm for en trekant (samme geometri, to funksjoner)", () => {
+    const triangle: PackedPolygon = {
+      rings: [
+        [
+          [10.0, 59.0],
+          [10.2, 59.0],
+          [10.1, 59.1],
+          [10.0, 59.0],
+        ],
+      ],
+    };
+    const p = { lat: 59.02, lon: 10.1 };
+    const result = nearestPolygonPoint(p, triangle);
+    expect(result).not.toBeNull();
+    // Direkte kryssjekk: avstanden skal ikke være større enn avstanden til
+    // NOEN av kantene enkeltvis (edge-basert minimum, ikke hjørne-only).
+    const edgeDistances = [
+      distanceToSegmentNm(p, { lat: 59.0, lon: 10.0 }, { lat: 59.0, lon: 10.2 }),
+      distanceToSegmentNm(p, { lat: 59.0, lon: 10.2 }, { lat: 59.1, lon: 10.1 }),
+      distanceToSegmentNm(p, { lat: 59.1, lon: 10.1 }, { lat: 59.0, lon: 10.0 }),
+    ];
+    expect(result?.avstandNm).toBeCloseTo(Math.min(...edgeDistances), 6);
+  });
+
+  it("returnerer null for et polygon uten ringer", () => {
+    expect(nearestPolygonPoint({ lat: 59.0, lon: 10.0 }, { rings: [] })).toBeNull();
   });
 });

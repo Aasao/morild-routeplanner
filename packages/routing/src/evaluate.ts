@@ -9,8 +9,9 @@
  *
  * **Én-sannhet-prinsippet er hele poenget med denne filen.** Den er en tynn
  * løkke over de samme frie funksjonene søket bruker — `stepKinematics`,
- * `softContribution`, `accumulateSoft`, `checkHardNode`, `checkClearance`,
- * `checkSegment`, `checkTssStep`, `tackOf`/`tackPenaltyS`, `daylightArrival`.
+ * `softContribution`, `accumulateSoft`, `checkHardNode`,
+ * `checkClearanceCorridor`, `checkSegment`, `checkTssStep`,
+ * `tackOf`/`tackPenaltyS`, `daylightArrival`.
  * Her finnes ingen kopiert kinematikk og ingen kopiert kostlogikk. Avviker
  * evaluatoren fra søket, er det en bug i én av dem, og
  * `evaluate.test.ts`-egenskapstesten over alle golden-fiksturene skal fange
@@ -32,6 +33,12 @@ import type {
   NavigabilityMask,
   WeatherField,
 } from "./contracts.js";
+import type { CorridorStats } from "./clearance.js";
+import {
+  checkClearanceCorridor,
+  createCorridorStats,
+  freezeCorridorStats,
+} from "./clearance.js";
 import type { CostVector } from "./cost.js";
 import {
   FLAG_KRYSS,
@@ -44,7 +51,6 @@ import { daylightArrival } from "./daylight.js";
 import type { NodeEnvironment } from "./expand.js";
 import {
   accumulateSoft,
-  checkClearance,
   checkHardNode,
   checkSegment,
   checkTssStep,
@@ -161,6 +167,8 @@ export interface RouteEvaluation {
    * aksepteres — best effort, men det skal telles, ikke skjules (N2).
    */
   readonly uncorrectedDriftSteps: number;
+  /** Kostnaden ved R3-korridorsjekken i denne evalueringen (§5.3.2). */
+  readonly clearanceStats: CorridorStats;
 }
 
 /**
@@ -291,6 +299,7 @@ export function evaluateRoute(input: EvaluateRouteInput): RouteEvaluation {
     prevTack: 0,
   };
 
+  const corridorStats = createCorridorStats();
   const steps: RouteStep[] = [startStep(first, departEpochS)];
   let distanceNm = 0;
   let beatAtNightS = 0;
@@ -311,6 +320,7 @@ export function evaluateRoute(input: EvaluateRouteInput): RouteEvaluation {
       unionFlags,
       uncorrectedDriftSteps,
       waypointsReached,
+      corridorStats,
     });
 
   for (let w = 1; w < waypoints.length; w++) {
@@ -458,23 +468,24 @@ export function evaluateRoute(input: EvaluateRouteInput): RouteEvaluation {
         if (pointVerdict.tillit === "usikkert") flags |= FLAG_USIKKER_TILLIT;
       }
 
+      // R3: kystbufferen langs hele korden, samme funksjon som søket bruker.
+      // Evaluatoren har ingen forelder-klaring å arve, så begge endene måles.
       if (mask !== undefined && opts.minOffingNm > 0) {
-        const clearance = checkClearance(
+        const corridor = checkClearanceCorridor({
           mask,
-          next,
-          env.waves?.hsM,
-          () => ({
-            toStartNm: haversineNm(next, harbourStart),
-            toDestNm: haversineNm(next, harbourDest),
-          }),
-          opts,
-        );
-        flags |= clearance.flags;
-        if (!clearance.check.ok) {
+          from: state.pos,
+          to: next,
+          hsM: env.waves?.hsM,
+          ends: { start: harbourStart, dest: harbourDest },
+          params: opts,
+          stats: corridorStats,
+        });
+        flags |= corridor.flags;
+        if (!corridor.check.ok) {
           return stop({
             ...here,
             kind: "clearance",
-            reason: clearance.check.reason,
+            reason: corridor.check.reason,
           });
         }
       }
@@ -568,6 +579,7 @@ export function evaluateRoute(input: EvaluateRouteInput): RouteEvaluation {
     unionFlags,
     uncorrectedDriftSteps,
     waypointsReached,
+    corridorStats,
   });
 }
 
@@ -605,6 +617,7 @@ interface FinishArgs {
   readonly unionFlags: number;
   readonly uncorrectedDriftSteps: number;
   readonly waypointsReached: number;
+  readonly corridorStats: CorridorStats;
 }
 
 function finish(a: FinishArgs): RouteEvaluation {
@@ -628,6 +641,7 @@ function finish(a: FinishArgs): RouteEvaluation {
     flags: a.unionFlags,
     flagNames: flagNames(a.unionFlags),
     uncorrectedDriftSteps: a.uncorrectedDriftSteps,
+    clearanceStats: freezeCorridorStats(a.corridorStats),
   };
 }
 
@@ -649,6 +663,7 @@ function emptyEvaluation(
     flags: 0,
     flagNames: [],
     uncorrectedDriftSteps: 0,
+    clearanceStats: freezeCorridorStats(createCorridorStats()),
   };
 }
 

@@ -6,7 +6,8 @@
 > slengen, med datert endringslogg nederst.
 
 - Status: gjeldende (ADR-0004 godkjent 2026-08-30)
-- Dato: 2026-08-30, sist endret 2026-08-31 (§5.11 evaluator, §7 E2)
+- Dato: 2026-08-30, sist endret 2026-08-31 (§5.3.2 R3-kystbuffer langs korden;
+  §5.11 evaluator; §7 E2)
 - Fase: 2 (`docs/01-prosjektplan.md`)
 - Pakke: `packages/routing`, med `packages/geo`, `packages/polar` og
   `packages/charts` som avhengigheter
@@ -134,6 +135,13 @@ interface NavigabilityMask {
    * Avstand fra punkt til nærmeste ikke-farbare areal, i nm, avkortet ved
    * maxNm (returnerer maxNm hvis lenger unna). Brukes til kystbuffer
    * (v1: land.near / minOff).
+   *
+   * **Kontraktskrav (R3, §5.3.2): funksjonen må ALDRI overestimere.**
+   * Returverdien skal være en gyldig *nedre* skranke for den sanne avstanden.
+   * Avkorting ved `maxNm` er greit; en tilnærming som kan svare «0,8 nm» der
+   * sannheten er 0,4 nm er det ikke — hele korridorgarantien hviler på dette.
+   * Kravet føres i `docs/specs/farbarhetsmaske.md`; motoren antar det, og
+   * kan ikke selv verifisere det.
    */
   clearanceNm(lat: number, lon: number, maxNm: number): number;
 
@@ -283,6 +291,9 @@ interface Label {
   readonly tack: number;           // Int8Array   — -1 babord, +1 styrbord, 0 ikke bidevind
   readonly parent: number;         // Int32Array
   readonly flags: number;          // Uint16Array — bitmaske, se under
+  /** Klaring til nærmeste fare i etikettens posisjon (nedre skranke), nm.
+   *  Dette er `d(A)` i R3-gaten (§5.3.2); `Infinity` når bufferen er av. */
+  readonly clearanceNm: number;    // Float32Array
   // Diagnostikk-/rapportfelt, ikke del av dominansen:
   readonly twsKn: number;          // Float32Array
   readonly twdDeg: number;         // Float32Array
@@ -297,8 +308,9 @@ interface Label {
 kostnad.
 
 **Minne per etikett:** 8+8 (pos) + 4×4 (kostnad) + 4 (heading) + 1 + 1 + 4
-(parent) + 2 (flags) + 4×4 (diagnostikk) = **~62 B**, avrundet til 64 B med
-justering. Se §7.
+(parent) + 2 (flags) + 4 (klaring, §5.3.2) + 4×4 (diagnostikk) = **~66 B**,
+avrundet til 68 B med justering. Klaringskolonnen er R3s pris i minne:
++4 B per etikett, altså ~1 MB ved standard etikett-tak. Se §7.
 
 ### 4.6 Pareto-dominans — presis definisjon
 
@@ -386,6 +398,10 @@ interface RouteOptions {
   readonly maxContinuousLegS?: number;         // mannskapstak, se §8 spm. 9
   readonly minOffingNm: number;                // kystbuffer, 0.5 (v1)
   readonly offingExemptNearEndsNm: number;     // 3.0 (v1: havneanløp)
+  readonly seaStateOffingNmPerM: number;       // sjøgangstillegg, 0.1 nm per m Hs
+  /** R3 (§5.3.2): rekursjonsbunn og dybdetak i korridor-bisectionen. */
+  readonly clearanceCorridorMinChordNm: number;  // 0.02 (≈ 37 m)
+  readonly clearanceCorridorMaxDepth: number;    // 12
   readonly beatTwaDeg: number;                 // 60
 
   // Rapportering
@@ -470,6 +486,11 @@ interface RouteResult {
     readonly iterations: number;
     readonly labelsCreated: number;
     readonly peakActiveLabels: number;
+    /** R3s kostnad (§5.3.2), delt i søket og den autoritative stien.
+     *  `{ gatePass, gateMiss, midpointChecks, maxDepth, clearanceCalls,
+     *     rejections, exemptChords, uncertified }` */
+    readonly clearance: ClearanceDiagnostics;
+    readonly clearanceRecheck: ClearanceDiagnostics;
     readonly pruned: {
       readonly dominated: number; readonly bound: number;
       readonly deadEnd: number; readonly hardConstraint: number;
@@ -570,7 +591,7 @@ innsetting**, med én bevisst nyanse (se boksen under).
 | 10 | Tub-bound: `tS + Dn·3600/(boundSlack·Vmax) > Tub·(1+tubMarginFrac)` → forkast | billig | — |
 | 11 | Kjegle, **hvis** `coneDeg` er satt (av som standard) | billig | ett `bearing` |
 | 12 | **Hard:** `mask.pointVerdict(np)` → `no-go` forkastes | middels | punktoppslag |
-| 13 | **Hard:** kystbuffer — `mask.clearanceNm(np, minOffing) < minOffing`, unntatt < `offingExemptNearEndsNm` fra start/mål. Svar caches per `cellKey` (v1-mønster) | middels | cachet |
+| 13 | **Hard:** kystbuffer **langs hele korden** `n → np` (§5.3.2, R3): Lipschitz-gate, ved bom rekursiv bisection. Unntak < `offingExemptNearEndsNm` fra start/mål. Klaring caches per `cellKey`, Lipschitz-korrigert | middels | cachet |
 | 14 | **Hard:** `mask.segmentVerdict(n, np).passable === false` → forkast | **dyr** | geometri |
 | 15 | **Hard:** TSS-regelen (§5.4) | middels | — |
 | 16 | **Hard:** dagslys-ankomst hvis `requireDaylightArrival` og `np` er innenfor `reachRadius` av målet. Merk: dette er en *teleportering* — sjekken måler tiden i `np`, ikke etter den direkte sluttetappen. Den reelle ankomsten sjekkes på nytt i §5.8 | billig | — |
@@ -611,6 +632,129 @@ manøverleddet.
 frisk bris; **koblingen er ikke aktivert i v2.0** (faktor 1,0) fordi vi ikke
 har kalibreringsdata for den ennå (F3.3-loggene). Signaturen står der for at
 kalibreringsbølgen skal slippe å endre kallsteder.
+
+#### 5.3.2 Kystbuffer langs hele korden — R3, lagdelt
+
+> **BESLUTTET 2026-08-31 (Magnus): alternativ (b), lagdelt.** Enstemmig
+> anbefaling fra kartolog, værruter, ytelsesingeniør og matematiker;
+> alternativ (a) «dokumentert restrisiko i endepunktene» ble avvist av alle
+> fire. Grunnlag: `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`.
+
+**Problemet.** Kravet `clearanceNm(p) ≥ minOffingNm + hs-tillegg` ble fram til
+2026-08-31 kontrollert **kun i kandidatpunktet**. Et tidssteg er en korde på
+flere nautiske mil, og en korde kan runde et nes med god klaring i *begge*
+ender og 0,1 nm på midten. Et hardt krav som bare kontrolleres i endepunktene
+er ikke kontrollert — ECDIS' route check skanner hele leggen, og det skal vi
+også. Lekkasjen var ikke hypotetisk: den ble målt i golden-fiksturen
+`bohuslan-trange-sund` (se §10).
+
+**Grunnlaget: klaringen er 1-Lipschitz.** `d(p)` = avstand fra `p` til
+nærmeste ikke-farbare areal oppfyller `|d(p) − d(q)| ≤ |pq|` (en
+avstandsfunksjon kan ikke endre seg raskere enn posisjonen). For et vilkårlig
+punkt `p` på korden `A→B` med lengde `L` gir det
+
+```
+d(p) ≥ max( d(A) − |Ap| , d(B) − |pB| ),    |Ap| + |pB| = L
+```
+
+og minimum over korden er lavest der de to skrankene møtes, i
+`(d(A) + d(B) − L)/2`.
+
+**Lag 1 — Lipschitz-gaten (i søket, gratis).**
+
+```
+d(A) + d(B) ≥ 2·kravNm + L      ⇒  intet punkt på korden bryter kravet
+```
+
+Betingelsen er **skarp** (det finnes felt der likhet akkurat holder, og hvor
+som helst mindre er utrygt), og den koster bare aritmetikk: `d(B)` slås opp
+uansett i steg 13, og `d(A)` er forelderens klaring, lagret i arenaen som en
+egen `Float32Array` (§4.5).
+
+Tre forbehold som **skal** stå:
+
+1. **`maxNm`-avkorting er gyldig, men taket må være stort nok.**
+   `clearanceNm` avkorter ved `maxNm`; et avkortet tall er en gyldig *nedre*
+   skranke, så gaten forblir sunn. Men den kan aldri *passere* hvis
+   `maxNm < kravNm + L/2`. Motoren spør derfor alltid med
+   `maxNm ≥ kravNm + L`, og søket bruker ett fast tak per kjøring:
+   `minOffingNm + seaStateOffingNmPerM · boat.maxHsM + Vmax · timeStep`
+   (en øvre skranke for `krav + L` i ethvert steg, siden høyere Hs forkaster
+   noden og `Vmax` er den admissible fartsgrensen fra §5.5).
+2. **Korde vs. storsirkel.** Punktene på korden parametriseres lineært i
+   lat/lon — samme flate modell som `stepLatLon`, og nøyaktig den linjen
+   `segmentVerdict` vurderer. Avviket mot storsirkelen er på meter-nivå for
+   `L ≤ 4 nm`; det **noteres**, ikke kompenseres.
+3. **Garantien hviler på masken.** `clearanceNm` må aldri *overestimere*
+   avstanden til nærmeste fare. Det kravet er maskens, ikke motorens, og føres
+   i `docs/specs/farbarhetsmaske.md`. Overestimerer masken, er gaten ugyldig —
+   da hjelper ingen mengde bisection.
+
+**Lag 2 — rekursiv bisection ved gate-miss.** Gaten er tilstrekkelig, ikke
+nødvendig. Bommer den:
+
+```
+1. Ligger hele korden i havneunntaket (begge ender innenfor
+   offingExemptNearEndsNm av SAMME ende) → godkjent; disken er konveks
+2. d(A) < krav (og A ikke i unntakssonen) → hard avvisning, samme for B
+3. Korde ≤ clearanceCorridorMinChordNm, eller dybde ≥ clearanceCorridorMaxDepth
+   → hard avvisning: korden kan ikke sertifiseres
+4. Mål d(M) i midtpunktet; d(M) < krav → hard avvisning
+5. Anvend punkt 1–5 rekursivt på A→M og M→B
+```
+
+Dette er en **Lipschitz-sertifisert intervallmetode**: deterministisk,
+terminerende, og eksakt i den forstand at en godkjent korde er *bevist* fri
+for brudd. Fast finmasket sampling **uten** Lipschitz-terskel er bevisst
+forkastet — den har alltid restlekkasje mellom prøvepunktene, og gir en
+falsk trygghet som er verre enn ingen sjekk.
+
+Rekursjonsbunnen (punkt 3) avviser i stedet for å godkjenne. Det er
+nødvendig: for et felt der `d ≡ krav` nøyaktig, kan gaten aldri passere for
+`L > 0`, og «godkjenn på bunnen» ville vært en garanti vi ikke har.
+Konservatismen er avgrenset og kvantifisert — vi avviser bare korder som
+streifer kravgrensen innenfor `clearanceCorridorMinChordNm/2`, altså **18 m**
+med standardverdien 0,02 nm. Slike avvisninger telles separat
+(`diagnostics.clearance.uncertified`).
+
+**Lag 3 — full korridorsjekk i den autoritative stien.** Den *samme*
+funksjonen kjøres alltid i:
+
+- **ettersjekken** (§5.10) — per konsolidert etappe, uten cache fra søket;
+- **konsolideringen** (§5.9) — en sammenslåing gjennomføres kun hvis det
+  lengre segmentet også holder bufferen (samme feilklasse som
+  TSS-regresjonen: to korte segmenter som hver holder kravet kan slås sammen
+  til ett som ikke gjør det);
+- **den direkte sluttetappen** (§5.8) — den er en reell seilas, ikke en tegnet
+  linje.
+
+Disse kjører uavhengig av hva søket gjorde. Hundrevis av segmenter, ikke
+hundretusener: kostnaden er millisekunder.
+
+**Én sannhet.** Gate og bisection er én delt funksjon
+(`clearance.ts: checkClearanceCorridor`) som søket, evaluatoren (§5.11),
+konsolideringen, ettersjekken og sluttetappen alle kaller. Punkttesten er
+ikke en egen kodevei — den er den samme funksjonen med `L = 0`, der gaten
+reduseres til `d ≥ krav`.
+
+**Klaringscachen er Lipschitz-korrigert (rettet v1-arv).** v1 cachet klaringen
+per celle og gjenbrukte tallet rått for alle punkter i cellen. Med
+`cellDeg = 0,02` ligger to punkter i samme celle opptil ~1,2 nm fra hverandre,
+og naboens tall kan da *overestimere* klaringen i punktet vi spør om — samme
+lekkasjeklasse som R3 selv. v2 lagrer derfor *hvor* tallet ble målt og bruker
+`d(p) ≥ d(q) − |pq|`. Holder den korrigerte skranken alene til å bære gaten
+(`≥ krav + L/2`), brukes den gratis; ellers måles det eksakt i punktet og
+cachen oppdateres. Nær land måler vi altså alltid; på åpent hav — der de aller
+fleste kandidatene ligger — slipper vi oppslaget.
+
+**Instrumentering (§7).** `diagnostics.clearance` (søket) og
+`diagnostics.clearanceRecheck` (autoritativ sti) teller `gatePass`,
+`gateMiss`, `midpointChecks`, `maxDepth`, `clearanceCalls`, `rejections`,
+`uncertified` og `exemptChords`. Prisen per `clearanceNm`-kall mot **ekte**
+maske er fortsatt umålt (ytelsesingeniørens forbehold); tallene her er det som
+gjør nettbrett-målingen i stand til å lese kostnaden i stedet for å gjette
+den. Er kallet dyrt, rykker det prekomputerte fareavstandsfeltet (distance
+transform) fram fra fase 5.
 
 ### 5.4 TSS-regelen (F1.5, ADR-0004 avvik 4)
 
@@ -831,7 +975,12 @@ isokron-sagtann). To krav utover v1:
    segmentet består `mask.segmentVerdict(...).passable`. Konsolidering skal
    aldri kunne skape en rute som krysser en grunne to korte segmenter gikk
    utenom.
-2. Konsolidering endrer aldri `totals` — tid, kryss, motor og natt beregnes
+2. Det sammenslåtte segmentet må også bestå **TSS-regelen** (§5.4) og
+   **kystbuffer-korridoren** (§5.3.2). Begge er samme feilklasse: to korte
+   segmenter som hver for seg er lovlige kan slås sammen til ett som ikke er
+   det. TSS-varianten er ikke teoretisk — den ble funnet i golden-kjøringen av
+   `tss-ved-skagen`.
+3. Konsolidering endrer aldri `totals` — tid, kryss, motor og natt beregnes
    fra `steps`, ikke fra `legs`.
 
 Konkav hull som alternativ til konsolidering er navngitt og utsatt
@@ -840,8 +989,11 @@ Konkav hull som alternativ til konsolidering er navngitt og utsatt
 ### 5.10 Uavhengig sikkerhetsettersjekk (forsvar i dybden)
 
 Etter rekonstruksjon og konsolidering kjøres **hvert** segment i den ferdige
-ruten på nytt gjennom `mask.segmentVerdict` og `tssVerdict` — av kode som
-ikke deler tilstand med søket, og som ikke stoler på noen cache fra søket.
+ruten på nytt gjennom `mask.segmentVerdict`, `tssVerdict` **og
+kystbuffer-korridoren** (§5.3.2, lag 3) — av kode som ikke deler tilstand med
+søket, og som ikke stoler på noen cache fra søket. Klaringskravet regnes med
+sjøgangen etappen faktisk ble seilt i (største `hsM` av endene), og
+havneunntaket måles mot rutens egne ender.
 
 - Alle segmenter `passable` og `tillit === "trygt"` → `verdict: "trygt"`.
 - Ett eller flere `tillit === "usikkert"` → `verdict: "usikkert"`, segmentene
@@ -873,8 +1025,9 @@ billigere søk taper mot full Pareto.
 
 **Én-sannhet-prinsippet (ufravikelig).** Evaluatoren er en **tynn løkke over de
 samme frie funksjonene søket bruker** — `stepKinematics`, `softContribution`,
-`accumulateSoft`, `checkHardNode`, `checkClearance`, `checkSegment`,
-`checkTssStep` (`expand.ts`), `tackOf`/`tackPenaltyS` (`tack.ts`),
+`accumulateSoft`, `checkHardNode`, `checkSegment`, `checkTssStep`
+(`expand.ts`), `checkClearanceCorridor` (`clearance.ts`),
+`tackOf`/`tackPenaltyS` (`tack.ts`),
 `daylightArrival` (`daylight.ts`). Ingen kopiert kinematikk, ingen kopiert
 kostlogikk, ingen «nesten lik» variant. Avviker de to, er det en bug i én av
 dem, og egenskapstesten under skal fange den. Trenger evaluatoren noe søket
@@ -905,7 +1058,9 @@ sektoretikett bæres fra steg til steg nøyaktig som i søket. Startpunktet har
 etiketten `NO_COURSE`, og **første steg får derfor bautstraff 0** — ellers
 ville evaluatoren straffet en kurs båten ikke kom fra.
 
-**Harde sjekker re-kjøres.** Klaring (med sjøgangstillegg), segment-farbarhet,
+**Harde sjekker re-kjøres.** Klaring (korridoren i §5.3.2, med
+sjøgangstillegg — evaluatoren har ingen forelder-etikett å arve `d(A)` fra og
+måler derfor begge ender selv), segment-farbarhet,
 TSS-regelen og dagslys-ankomst kjøres på nytt i evalueringen, mot evaluatorens
 egen maske og eget værfelt — uten cache fra noe søk. Det er samme forsvar i
 dybden som §5.10, og det er det som gjør evaluatoren brukbar som
@@ -979,8 +1134,8 @@ Fra F3.5 og N6, med tallgrunnlag fra `docs/research/spike-ensemble-perf.md`.
 | Post | Standard | Absolutt tak |
 |---|---|---|
 | `maxTotalLabels` | 250 000 | 400 000 |
-| Bytes per etikett (§4.5) | 64 B | 64 B |
-| Arena | **16 MB** | 25,6 MB |
+| Bytes per etikett (§4.5) | 68 B | 68 B |
+| Arena | **17 MB** | 27,2 MB |
 | Tilstandsindeks (`Map<stateKey, Int32Array-slot>`) | ~6 MB | ~10 MB |
 | A\*-felt (Float64, delt, ikke per medlem) | 1–8 MB totalt | 8 MB |
 | **Per samtidig medlem** | **~22 MB** | ~36 MB |
@@ -1000,6 +1155,13 @@ vet):
 3. Kostnaden ved `mask.segmentVerdict` mot ekte kartpakke — den erstatter v1s
    `land.crosses` og er trolig dyrere. Andelen av total kjøretid skal
    instrumenteres.
+3b. **Prisen per `mask.clearanceNm`-kall mot ekte kartpakke** (R3, §5.3.2).
+   På syntetisk maske koster korridoren 0,09 `clearanceNm`-kall per kandidat
+   (cachen tar resten) og gaten alene bærer 94 % av sjekkene på åpent hav /
+   71 % i skjærgård. Mot ekte maske er kallprisen **umålt**;
+   `diagnostics.clearance` er instrumentert nettopp for å kunne lese den.
+   Blir den dyr, rykker det prekomputerte fareavstandsfeltet (distance
+   transform) fram fra fase 5.
 4. S1s fulle skala (150–210 kjøringer) på nettbrett — arvet åpen fra
    spike-rapporten.
 5. Structured-clone-kostnaden ved å sende hele `RouteResult` ut av workeren
@@ -1023,6 +1185,7 @@ vet):
 | TSS-regel | Alle fem tilfellene i §5.4-tabellen; at «langs, feil retning» avvises uansett hvor høy den myke kostnaden settes |
 | Hard/myk-skillet | Test som setter en absurd høy myk kostnad (1e9) og verifiserer at en no-go-passasje fortsatt ikke blir gyldig |
 | Konsolidering | En konstruert sagtann som ville blitt slått sammen til et segment gjennom en grunne, blir **ikke** slått sammen |
+| Kystbuffer-korridoren (§5.3.2) | Gaten på konstruerte, analytiske klaringsfelt: garantert trygg korde passerer **uten** å måle midtpunktet; grensetilfellet `d(A)+d(B) = 2·krav+L` passerer og ett hakk under bommer; `maxNm` som spørres med er ≥ `krav + L`. Bisection: nes-scenarioet (god klaring i begge ender, 0,1 nm på midten) avvises hardt og navngir stedet, mens endepunkt-testen alene ville sluppet det gjennom (**R3-regresjonen**); et felt der `d ≡ krav` terminerer med avvisning, ikke uendelig rekursjon. Havneunntaket: hele korden inne i sonen godkjennes, en korde som stikker ut av den gjør det ikke. Egenskapstest: hver godkjent korde verifiseres mot tett sampling av det samme feltet |
 | Sikkerhetsettersjekk | En rute konstruert med et segment gjennom no-go gir `recheckPassed: false` og korrekt `failingSegments` |
 | Sol/natt | Kjente soloppgangs-/solnedgangstider for Skjæløy og Skagen på kjente datoer, innenfor ±2 min |
 | Retningskonvensjoner | Vind FRA / strøm MOT / bølge FRA (F2.5) — eksplisitte tester med håndregnede tilfeller |
@@ -1081,6 +1244,11 @@ vet):
   `evaluateRoute(søkets ukonsoliderte stegsekvens, samme felt/maske/båt/
   timeStepS)` samme kostnadsvektor som søket rapporterte, innenfor noen få
   sekunder, og uten hard avvisning. Se §5.11.
+- **Kystbuffer-invariant (R3, §5.3.2).** For hver golden-rute: klaringen
+  samples tett (400 punkter per steg) langs den ukonsoliderte stegsekvensen og
+  sammenlignes direkte med kravet. Testen bruker med vilje **ikke** motorens
+  egen korridorkode — ellers ville den bare gjentatt implementasjonen. Punkter
+  innenfor `offingExemptNearEndsNm` av start/mål hoppes over, som i motoren.
 - **Sikkerhetsinvariant.** For hver returnert rute med
   `safety.verdict !== "usikker-rute"`: hvert segment består en uavhengig
   `segmentVerdict`. Kjøres på alle golden-ruter og på et sett tilfeldig
@@ -1176,6 +1344,73 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- **2026-08-31 (4) — R3 besluttet og implementert: kystbufferen håndheves
+  langs hele korden, lagdelt.** Magnus besluttet alternativ (b) etter
+  enstemmig anbefaling fra alle fire fagagentene
+  (`docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`).
+  - **Ny §5.3.2** med hele mekanismen: Lipschitz-gaten
+    `d(A) + d(B) ≥ 2·krav + L` (skarp), rekursiv bisection ved gate-miss,
+    full korridorsjekk i den autoritative stien, og de tre forbeholdene
+    (maxNm-avkorting og kravet `maxNm ≥ krav + L/2`, korde-vs-storsirkel ved
+    `L ≤ 4 nm`, og at garantien hviler på at `clearanceNm` aldri
+    overestimerer — føres i `docs/specs/farbarhetsmaske.md`, ikke antas her).
+    §5.3 steg 13 og §4.5/§4.7/§4.8 oppdatert tilsvarende.
+  - **Implementasjon:** ny `packages/routing/src/clearance.ts`
+    (`checkClearanceCorridor`, `requiredClearanceNm`, `CorridorStats`). Den
+    gamle punktfunksjonen `checkClearance` finnes ikke lenger som egen
+    kodevei — punkttesten er den samme funksjonen med `L = 0`. Kallsteder:
+    søket (§5.3 steg 13), evaluatoren (§5.11), konsolideringen (§5.9),
+    ettersjekken (§5.10) og sluttetappen (§5.8). Arenaen har fått en
+    `clearanceNm: Float32Array` (forelderens `d(A)`, ~1 MB ved fullt
+    etikett-tak), og `RouteOptions` to nye felt
+    (`clearanceCorridorMinChordNm` 0,02, `clearanceCorridorMaxDepth` 12).
+  - **Funn (a) — reell R3-lekkasje i en golden-rute.** `bohuslan-trange-sund`
+    passerte skjær A med **0,088 nm** klaring 4,4 nm fra start, der kravet var
+    0,15 nm — altså 41 % inne i bufferen, midt på en korde med god klaring i
+    begge ender. Endepunkt-sjekken kunne per konstruksjon ikke se det. Dette
+    er den eneste av de sju fiksturene som endret seg (tabell under).
+  - **Funn (b) — klaringscachen var selv en lekkasje.** v1s per-celle-cache
+    ble arvet rått: klaringen målt i ett punkt ble gjenbrukt for alle punkter
+    i cellen, som ved `cellDeg = 0,02` er opptil ~1,2 nm unna. Den kunne
+    dermed overestimere klaringen i punktet vi faktisk spurte om. Cachen
+    lagrer nå målepunktet og bruker `d(p) ≥ d(q) − |pq|`; er den korrigerte
+    skranken ikke god nok til å bære gaten, måles det eksakt. Ingen
+    golden-rute endret seg av dette alene.
+  - **Nye tester (212 grønt i `@morild/routing`, netto +16):**
+    `clearance.test.ts` (21, hvorav 7 er de gamle punkttestene portert
+    uendret fra `expand.test.ts` da funksjonene ble slått sammen) — gate-tester på
+    analytiske klaringsfelt (garantert trygg korde passerer uten å måle
+    midtpunktet; grensetilfellet `d(A)+d(B) = 2·krav+L` passerer og ett hakk
+    under bommer; taket `maxNm ≥ krav + L`), R3-regresjonen (nes med 0,1 nm på
+    midten avvises hardt, og endepunkt-testen alene ville sluppet den
+    gjennom), terminering på et felt der `d ≡ krav`, havneunntaket i begge
+    retninger, og en egenskapstest over 96 (nes-avstand × kordelengde)-
+    kombinasjoner der hver godkjent korde verifiseres mot 200 tett samplede
+    punkter. To nye golden-invarianter: «kystbufferen holder langs hele ruten»
+    (uavhengig tett sampling, ikke motorens egen kode) og «R3-instrumenteringen
+    er konsistent og ettersjekken avviser aldri». Selve gate-tallene er
+    bevisst ikke frosne i golden-filene — de skal kunne endre seg når vi
+    optimerer, uten å se ut som en adferdsendring.
+  - **Golden-diff (regenerert).** Én fikstur endret. Ingen `exact`-felt endret
+    seg i noen av de sju.
+
+    | Fikstur | Diff | Forklaring |
+    |---|---|---|
+    | bohuslan-trange-sund | `durationS` 15 538 → 15 584 (**+46 s**), `distanceNm` 22,564 → 22,927, `legs` 8 → 7, `alternatives` 2 → 1, spor flyttet inntil **0,86 nm** | **Reell R3-lekkasje.** Den gamle ruten skar 0,088 nm forbi skjær A (krav 0,15 nm) på strekket fra start; korden hadde god klaring i begge ender. Ruten går nå utenom og betaler 46 s for det. At `alternatives` faller fra 2 til 1 følger av samme skjerping — én av de to ikke-dominerte kandidatene i målcellen overlever den ikke; hvilken, er ikke undersøkt nærmere |
+    | de seks andre | ingen endring i totaler, spor eller `exact` | Kontrollmålt: verste klaring langs de gamle sporene var 0,66 nm (`uoppnaelig-mal`), 3,9 nm (`tss-ved-skagen`), 5,3 nm (`skjaeloy-skagen-apent`) og utenfor all fare i de tre uten land — alle godt over kravet, så gaten passerer og ruten er uendret |
+
+  - **Målt kostnad (golden-kjøringene, syntetisk maske).** Gaten alene bærer
+    det meste: 94 % av korridorsjekkene passerer på åpent hav
+    (`skjaeloy-skagen-apent`: 1 327 850 av 1 413 936) og 71 % i skjærgård
+    (`bohuslan-trange-sund`: 23 080 av 32 316). Bisectionen kostet 69 323
+    midtpunkter på 1,4 M kandidater i det åpne tilfellet (maks dybde 9) og
+    8 763 i skjærgården (maks dybde 8). `clearanceNm`-kall totalt: 132 880
+    (0,09 per kandidat) — cachen tar resten. Ettersjekken koster 9–47
+    gate-evalueringer per rute, altså ingenting. Rekursjonsbunnen
+    (`uncertified`) står for 49 av 16 660 avvisninger i det åpne tilfellet,
+    0,3 %. **Forbehold:** dette er syntetisk maske; prisen per
+    `clearanceNm`-kall mot ekte kartpakke er fortsatt umålt og hører til
+    nettbrett-målingen (§7).
 - **2026-08-31 (3) — funn 1 fra code-review runde 2: dagslysomvalget kunne
   velge en rute som ikke kom fram.** Se
   `docs/research/steg2-status-2026-08-31.md`.

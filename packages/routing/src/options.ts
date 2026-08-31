@@ -92,6 +92,18 @@ export interface RouteOptions {
    * flagges `SJOEGANG_DATA_MANGLER` — vi later ikke som marginen er dekket.
    */
   readonly seaStateOffingNmPerM: number;
+  /**
+   * R3 (besluttet 2026-08-31): kystbufferen håndheves langs **hele korden**,
+   * ikke bare i kandidatpunktet. Bommer Lipschitz-gaten, deles korden rekursivt
+   * til den kan sertifiseres eller et brudd er målt. Denne verdien er
+   * rekursjonsbunnen i nm: en korde kortere enn dette deles ikke videre, og
+   * hvis gaten fortsatt bommer, avvises den (sikkerhet foran optimalitet).
+   * Konservatismen er dermed avgrenset til halve denne lengden — 0,01 nm ≈
+   * 18 m med standardverdien.
+   */
+  readonly clearanceCorridorMinChordNm: number;
+  /** Dybdetak i bisectionen. Vern mot patologiske felt, ikke normal stopp. */
+  readonly clearanceCorridorMaxDepth: number;
   /** Kryss defineres som TWA < denne. v1s kryssandel-definisjon: 60°. */
   readonly beatTwaDeg: number;
 
@@ -136,6 +148,8 @@ export const DEFAULT_ROUTE_OPTIONS: RouteOptions = Object.freeze({
   minOffingNm: 0.5,
   offingExemptNearEndsNm: 3.0,
   seaStateOffingNmPerM: 0.1,
+  clearanceCorridorMinChordNm: 0.02,
+  clearanceCorridorMaxDepth: 12,
   beatTwaDeg: 60,
 
   tackParams: DEFAULT_TACK_PARAMS,

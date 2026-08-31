@@ -268,6 +268,15 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-08-31 (2) (R3 + QA-guardrail, se
+  `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`):**
+  kystbufferen (minOffing + sjøgangstillegg) håndheves langs hele korden,
+  lagdelt: eksakt Lipschitz-gate i søket, bisection ved gate-miss, full
+  korridorsjekk i ettersjekk/konsolidering/sluttetappe (F1.2/F3.1).
+  QA-validatoren promoteres til byggetids-guardrail: sonderinger grunnere
+  enn sitt bånd behandles som VALSOU-punktfarer og delpolygonet kan aldri
+  gi `trygt` (F1.1/F1.2). Åpne-kurver-stitching flyttes frem til før
+  første reelle rute utenfor farled.
 - **2026-08-31 (beslutninger etter ekspertpanel-rundene, se
   `docs/research/ekspertpanel-*.md`):** `Grunne`-punktfarer tolkes etter
   VALSOU-modellen (no-go kun når angitt dybde < krav eller dybde mangler,

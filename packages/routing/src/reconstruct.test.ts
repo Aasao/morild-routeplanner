@@ -419,6 +419,7 @@ describe("dagslysomvalg krever at ruten faktisk når målet (funn 1)", () => {
         cellKey: 0,
         stateKey: 0,
         remainingNm: 0,
+        clearanceNm: Number.POSITIVE_INFINITY,
         twsKn: 10,
         twdDeg: 270,
         bspKn: 6,

@@ -4,7 +4,6 @@ import { testBoat } from "../test-fixtures/test-boat.js";
 import type { NodeEnvironment } from "./expand.js";
 import {
   accumulateSoft,
-  checkClearance,
   checkHardNode,
   checkSegment,
   isWindAgainstCurrent,
@@ -15,7 +14,6 @@ import {
   FLAG_KRYSS,
   FLAG_MOTOR,
   FLAG_NATT,
-  FLAG_SJOEGANG_DATA_MANGLER,
   FLAG_VIND_MOT_STROM,
 } from "./cost.js";
 
@@ -236,126 +234,6 @@ describe("isWindAgainstCurrent", () => {
     expect(
       softContribution(kin, e, 1800, 0, 60).flags & FLAG_VIND_MOT_STROM,
     ).toBeTruthy();
-  });
-});
-
-describe("checkClearance — kystbuffer med sjøgang i klaringstallet", () => {
-  const land = { latMin: 58.9, latMax: 59.1, lonMin: 10.2, lonMax: 10.4 };
-  const mask = rectMask({ noGo: [land] });
-  const params = {
-    minOffingNm: 0.5,
-    offingExemptNearEndsNm: 3.0,
-    seaStateOffingNmPerM: 0.1,
-  };
-  const farFromEnds = 50;
-
-  /** Thunk-formen checkClearance tar: avstandene regnes bare ved behov. */
-  const ends = (toStartNm: number, toDestNm: number) => () => ({
-    toStartNm,
-    toDestNm,
-  });
-
-  it("godtar punkter med god klaring", () => {
-    const result = checkClearance(
-      mask,
-      { lat: 59, lon: 9.5 },
-      undefined,
-      ends(farFromEnds, farFromEnds),
-      params,
-    );
-    expect(result.check.ok).toBe(true);
-  });
-
-  it("avviser punkter innenfor den statiske bufferen", () => {
-    const result = checkClearance(
-      mask,
-      { lat: 59, lon: 10.19 },
-      undefined,
-      ends(farFromEnds, farFromEnds),
-      params,
-    );
-    expect(result.check.ok).toBe(false);
-  });
-
-  it("skjerper kravet når sjøgangen er kjent — hard avvisning", () => {
-    // 0,7 nm klaring: nok statisk (0,5), men ikke med 3 m sjø (0,5 + 0,3).
-    const point = {
-      lat: 59,
-      lon: 10.2 - 0.7 / (60 * Math.cos((59 * Math.PI) / 180)),
-    };
-    const uten = checkClearance(
-      mask,
-      point,
-      undefined,
-      ends(farFromEnds, farFromEnds),
-      params,
-    );
-    const med = checkClearance(
-      mask,
-      point,
-      3,
-      ends(farFromEnds, farFromEnds),
-      params,
-    );
-    expect(uten.check.ok).toBe(true);
-    expect(med.check.ok).toBe(false);
-    if (!med.check.ok) expect(med.check.reason).toMatch(/sjøgangstillegg/);
-  });
-
-  it("flagger når sjøgangsdata mangler i stedet for å late som marginen er dekket", () => {
-    const result = checkClearance(
-      mask,
-      { lat: 59, lon: 9.5 },
-      undefined,
-      ends(farFromEnds, farFromEnds),
-      params,
-    );
-    expect(result.flags & FLAG_SJOEGANG_DATA_MANGLER).toBeTruthy();
-    const withData = checkClearance(
-      mask,
-      { lat: 59, lon: 9.5 },
-      1.0,
-      ends(farFromEnds, farFromEnds),
-      params,
-    );
-    expect(withData.flags & FLAG_SJOEGANG_DATA_MANGLER).toBe(0);
-  });
-
-  it("gjør unntak nær start og mål (havneanløp)", () => {
-    const inside = { lat: 59, lon: 10.19 };
-    expect(
-      checkClearance(mask, inside, undefined, ends(1.0, farFromEnds), params)
-        .check.ok,
-    ).toBe(true);
-    expect(
-      checkClearance(mask, inside, undefined, ends(farFromEnds, 2.0), params)
-        .check.ok,
-    ).toBe(true);
-  });
-
-  it("regner ikke avstand til endepunktene når klaringen er god nok", () => {
-    // Ytelsesinvariant: thunken er den dyre delen (to storsirkler), og den
-    // skal bare røres når bufferen faktisk er i veien.
-    let calls = 0;
-    const counting = () => {
-      calls++;
-      return { toStartNm: farFromEnds, toDestNm: farFromEnds };
-    };
-    expect(
-      checkClearance(mask, { lat: 59, lon: 9.5 }, undefined, counting, params)
-        .check.ok,
-    ).toBe(true);
-    expect(calls).toBe(0);
-
-    checkClearance(mask, { lat: 59, lon: 10.19 }, undefined, counting, params);
-    expect(calls).toBe(1);
-  });
-
-  it("gjør ingenting uten maske", () => {
-    expect(
-      checkClearance(undefined, { lat: 59, lon: 10.3 }, 3, ends(50, 50), params)
-        .check.ok,
-    ).toBe(true);
   });
 });
 
