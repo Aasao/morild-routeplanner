@@ -124,8 +124,12 @@ forblir åpen til den forhåndsregistrerte målingen er kjørt
   Review-port: ingen sikkerhetsfunn.
 
 Oppfølging (grad 3 fra review, ingen hastesak):
-1. Spore hvilken Pareto-kandidat som forsvant i bohuslan (alternatives
-   2→1) — brukersynlig, bør forklares før det blir vane.
+1. ~~Spore hvilken Pareto-kandidat som forsvant i bohuslan (alternatives
+   2→1) — brukersynlig, bør forklares før det blir vane.~~ **Lukket
+   2026-08-31:** begge pre-R3-alternativene lekket ved samme skjær som
+   primærruten (0,088 < 0,15 nm, målt brudd — ikke uncertified-
+   konservatisme); regresjonstest lagt til. Se
+   `bohuslan-alternativ-bortfall-2026-08-31.md`.
 2. ChartSource→NavigabilityMask-adapteren (fase 3) må implementere
    maxNm-avkortingen og verifisere klaringskontrakten mot ekte pakke.
 3. Når ekte sonderingsdata (ikke Grunne-proxy) tas i bruk: bekreft med

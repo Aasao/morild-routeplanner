@@ -361,6 +361,55 @@ describe("R3: kystbufferen holder langs hele ruten, ikke bare i punktene", () =>
   }, 180_000);
 
   /**
+   * Samme invariant for **alternativrutene**. Undersøkelsen av alternatives
+   * 2→1 i bohuslan-trange-sund (docs/research/bohuslan-alternativ-bortfall-
+   * 2026-08-31.md) viste at begge pre-R3-alternativene passerte samme skjær
+   * som primærruten med 0,088 nm klaring mot kravet 0,15 — de var aldri
+   * lovlige ruter. R3-invarianten over sjekker bare `result.steps`; uten
+   * denne testen kunne en fremtidig regresjon la et ulovlig alternativ stå
+   * i UI-et selv om primærruten var ren.
+   *
+   * `RouteLeg` bærer ikke bølgehøyde, så kravet her er den statiske
+   * `minOffingNm` — en gyldig nedre skranke for det fulle kravet. Lekkasjer
+   * av den typen som felte de gamle alternativene ligger langt under den.
+   */
+  it("kystbufferen holder også langs alle alternativruter", () => {
+    for (const scenario of goldenScenarios()) {
+      const result = planRoute(scenario.input);
+      const mask = scenario.input.mask;
+      if (mask === undefined) continue;
+      const opts = withDefaults(scenario.input.options ?? {});
+      if (opts.minOffingNm <= 0) continue;
+
+      const exempt = (p: { lat: number; lon: number }): boolean =>
+        haversineNm(p, scenario.input.start) <= opts.offingExemptNearEndsNm ||
+        haversineNm(p, scenario.input.dest) <= opts.offingExemptNearEndsNm;
+
+      for (const [ai, alternative] of result.alternatives.entries()) {
+        for (const [li, leg] of alternative.legs.entries()) {
+          for (let k = 0; k <= SAMPLES_PER_LEG; k++) {
+            const t = k / SAMPLES_PER_LEG;
+            const p = {
+              lat: leg.fromLat + (leg.toLat - leg.fromLat) * t,
+              lon: leg.fromLon + (leg.toLon - leg.fromLon) * t,
+            };
+            if (exempt(p)) continue;
+            const d = mask.clearanceNm(p.lat, p.lon, opts.minOffingNm + 1);
+            expect(
+              d,
+              `${scenario.name} alternativ ${ai} etappe ${li} ` +
+                `(t=${t.toFixed(2)}, ${p.lat.toFixed(4)},${p.lon.toFixed(4)}): ` +
+                `klaring ${d.toFixed(3)} nm under kravet ${opts.minOffingNm.toFixed(3)} nm`,
+            ).toBeGreaterThanOrEqual(
+              opts.minOffingNm - CLEARANCE_SAMPLING_SLACK_NM,
+            );
+          }
+        }
+      }
+    }
+  }, 180_000);
+
+  /**
    * Instrumenteringen henger sammen (§7 måling 3b). Selve *tallene* — hvor
    * ofte gaten holder, hvor dypt bisectionen går, hvor mange
    * `clearanceNm`-kall det koster — leses ut av `diagnostics.clearance` på et
