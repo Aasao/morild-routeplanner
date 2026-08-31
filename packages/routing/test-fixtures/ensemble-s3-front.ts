@@ -35,7 +35,19 @@
  * utvetydig sjøgang (Hs > maxHs), ikke vind. Det gjør avvisningsårsaken
  * entydig når felle-settet skal tolkes.
  *
- * Positiv kontroll: `hardRejectionMemberIds` (fire medlemmer med Hs > maxHs).
+ * ## Navigasjonsfellen (§8.2, lagt til 2026-08-31 FØR kjøring)
+ *
+ * Medlem **m24** er byttet ut med et eget felt (`nav-trap.ts`): der er ikke
+ * feilen det interessante, men **utveien**. Nærmeste nødhavner er
+ * værdiskvalifisert, den rette linjen til den ene anløpbare havnen er stengt av
+ * en TSS-retningsregel, og den reelle utveien er en 9,6 nm bred omvei som
+ * starter med å seile *bort* fra havnen. Fullt Pareto-re-søk finner den på
+ * 4,35 t; et korridorbegrenset re-søk i 4 nm rør gjør det ikke. Uten dette
+ * medlemmet hadde felle-kriteriet i §4 ingen diskrimineringskraft mellom
+ * variantene — hele felle-settet oppstod via delt `checkHardNode`-kode.
+ *
+ * Positiv kontroll: `hardRejectionMemberIds` (fire medlemmer med Hs > maxHs,
+ * pluss navigasjonsfelle-medlemmet).
  * Negativ kontroll: `s3FrontEnsemble({ withTrapMembers: false })` — samme
  * fikstur der nivå 4 er byttet mot nivå 3 (Hs 3,7 m), altså ingen hard
  * forkastelse noe sted.
@@ -45,11 +57,14 @@
  * - Kontrollruten: 14,3 t / 85,2 nm, fronten passerer båten rundt 12 t.
  * - Ankomstspredning over medlemmene (evaluering av kontrollruten): 12,6–15,7 t.
  * - Harde forkastelser: **m04 @ 2,0 t**, **m09 @ 5,0 t**, **m14 @ 9,4 t** —
- *   alle `boatLimits` med «Hs over båtens grense». m29 har samme dødelige
+ *   alle `boatLimits` med «Hs over båtens grense» — pluss **m24 @ 2,2 t**
+ *   (navigasjonsfellen, egen mekanisme, se under). m29 har samme dødelige
  *   postfrontale sjø, men fronten rekker aldri ruten: den er gjennomførbar.
  * - R2 (fullt Pareto-re-søk, 6 t, interim havneliste): felle-settet er
- *   **{m04, m09, m14}**. m04 er marginal og derfor verdifull — re-søket
- *   stopper 1,08 nm fra Skjæløy.
+ *   **{m04, m09, m14}** for frontmedlemmene. m04 er marginal og derfor
+ *   verdifull — re-søket stopper 1,08 nm fra Skjæløy. Navigasjonsfelle-
+ *   medlemmet m24 er **ikke** en felle under fasiten (utveien finnes), men er
+ *   det under variant Bs korridor-re-søk — se under.
  * - Sanity (steg3-planens krav): forward-søk fra rutens midtpunkt gir 6,2–6,5 t
  *   i alle 27 øvrige medlemmer, men `reached: false` (`noExpandableLabels`) i
  *   m04, m09 og m14. **Fella er forkastelse, ikke treg seiling.**
@@ -64,6 +79,7 @@ import {
   SKAGERRAK_LAND,
   SKJAELOY,
 } from "./golden-scenarios.js";
+import { navTrapWeather, SKAGERRAK_LANE } from "./nav-trap.js";
 import { rectMask } from "./synthetic-mask.js";
 import { testBoat } from "./test-boat.js";
 
@@ -110,10 +126,20 @@ const STRENGTH_TABLE: readonly (readonly number[])[] = [
   [0, 2, 3, 5, 4], // Δt = −9
 ];
 
+/**
+ * Medlemmet som bærer **navigasjonsfellen** (måleplanens §8.2). Indeksen er
+ * valgt i raden Δt = −6, der fronten aldri rekker ruten: medlemmet var før
+ * dette et av de fem uinteressante «ingenting skjer»-medlemmene, og
+ * frontgeometrien har derfor ingenting å si når det byttes ut.
+ */
+export const S3_NAV_TRAP_INDEX = 24;
+export const S3_NAV_TRAP_ID = memberId(S3_NAV_TRAP_INDEX);
+
 export interface S3FrontOptions {
   readonly departEpochS?: number;
   /**
-   * `false` ⇒ **negativ kontroll**: styrkenivå 4 byttes mot nivå 3, og ingen
+   * `false` ⇒ **negativ kontroll**: styrkenivå 4 byttes mot nivå 3,
+   * navigasjonsfelle-medlemmet byttes tilbake til sitt frontfelt, og ingen
    * medlemmer kan gi hard forkastelse. Måleplanens §6.3 krever begge.
    */
   readonly withTrapMembers?: boolean;
@@ -194,6 +220,29 @@ export function s3FrontEnsemble(options: S3FrontOptions = {}): EnsembleFixture {
     const level = levelOf(index, withTraps);
     const front = s3FrontOptionsFor(index, options);
     const id = memberId(index);
+
+    // Navigasjonsfelle-medlemmet (§8.2): eget felt, ikke frontfeltet. Det er
+    // det eneste medlemmet der variantene kan være uenige om *utveien*.
+    if (withTraps && index === S3_NAV_TRAP_INDEX) {
+      hardRejectionMemberIds.push(id);
+      members.push({
+        id,
+        index,
+        params: {
+          mekanisme: "navigasjonsfelle",
+          twsKn: 32,
+          twdDeg: 250,
+          hsTerskelLat: 58.931,
+          utveiHavn: "Fredrikstad",
+        },
+        weather: navTrapWeather({
+          validFromS: departEpochS - 3600,
+          validToS: departEpochS + 3 * 24 * 3600,
+        }),
+      });
+      continue;
+    }
+
     if (level === LETHAL_STRENGTH) hardRejectionMemberIds.push(id);
     members.push({
       id,
@@ -220,7 +269,10 @@ export function s3FrontEnsemble(options: S3FrontOptions = {}): EnsembleFixture {
     start: SKJAELOY,
     dest: SKAGEN,
     departEpochS,
-    mask: rectMask({ noGo: SKAGERRAK_LAND }),
+    // Leden er inert for alt S-3 gjorde før — kontrollruten seiler med
+    // trafikkretningen, og felle-settet {m04, m09, m14} er uendret (målt).
+    // Den finnes for navigasjonsfellen, der utveien nordover er ulovlig.
+    mask: rectMask({ noGo: SKAGERRAK_LAND, tss: [SKAGERRAK_LANE] }),
     boat: testBoat(),
     options: S3_OPTIONS,
     // Kontrollfeltet: ingen tidsskyv, moderat postfrontal styrke. Fronten

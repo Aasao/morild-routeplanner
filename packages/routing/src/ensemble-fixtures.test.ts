@@ -97,12 +97,22 @@ describe("S-3 frontpassasje: fiksturen", () => {
    */
   it("sprer den dødelige styrken over både tidlige og sene tidsskyv", () => {
     const fixture = s3FrontEnsemble();
-    const lethal = fixture.members.filter((m) =>
-      fixture.hardRejectionMemberIds.includes(m.id),
+    const lethal = fixture.members.filter(
+      (m) =>
+        fixture.hardRejectionMemberIds.includes(m.id) &&
+        m.params["mekanisme"] !== "navigasjonsfelle",
     );
     expect(lethal.map((m) => m.id)).toEqual(["m04", "m09", "m14", "m29"]);
     const shifts = lethal.map((m) => m.params["timingShiftH"]);
     expect(shifts).toEqual([9, 6, 3, -9]);
+    // Navigasjonsfellen (§8.2) er den femte, og har sin egen mekanisme.
+    expect(fixture.hardRejectionMemberIds).toEqual([
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29",
+    ]);
   });
 
   it("gjengir frontens struktur: dreining, lull og frikoblet gammel sjø", () => {
@@ -179,8 +189,9 @@ describe("S-3 frontpassasje: positiv og negativ kontroll", () => {
       .filter(([, e]) => e.rejection !== null)
       .map(([id]) => id);
     // m29 har samme dødelige sjø, men fronten rekker aldri ruten — den er
-    // fiksturens innebygde kontroll mot falske positive.
-    expect(failing).toEqual(["m04", "m09", "m14"]);
+    // fiksturens innebygde kontroll mot falske positive. m24 er
+    // navigasjonsfellen (§8.2), som har sin egen sjøgangsvegg.
+    expect(failing).toEqual(["m04", "m09", "m14", "m24"]);
     for (const id of failing) {
       const rejection = evaluations.get(id)!.rejection!;
       expect(rejection.kind).toBe("boatLimits");
@@ -189,7 +200,13 @@ describe("S-3 frontpassasje: positiv og negativ kontroll", () => {
     expect(evaluations.get("m29")!.feasible).toBe(true);
   });
 
-  it("POSITIV: de samme medlemmene er feller etter R2", () => {
+  /**
+   * m24 forkastes også hardt, men er **ikke** en felle under fasiten: der er
+   * hele poenget at fullt Pareto-re-søk finner utveien (§8.2). At den ikke
+   * dukker opp i dette settet, er derfor en egenskap testen skal vokte, ikke
+   * en utelatelse.
+   */
+  it("POSITIV: front-medlemmene er feller etter R2, men ikke navigasjonsfellen", () => {
     const traps = fixture.members
       .filter(
         (m) =>

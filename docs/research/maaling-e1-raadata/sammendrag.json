@@ -1,0 +1,3742 @@
+{
+ "beskrivelse": "E1′-matrisen. Se docs/research/maaling-e1-2026-08-31.md og måleplanens §3/§4.",
+ "varianter": [
+  "A",
+  "B",
+  "F"
+ ],
+ "r2Mekanikk": {
+  "A": "skalar",
+  "B": "korridor-skalar",
+  "F": "pareto"
+ },
+ "tubeNm": 4,
+ "fiksturer": [
+  {
+   "fikstur": "S-1",
+   "rangering": {
+    "toppAvgang": {
+     "A": 3,
+     "B": 0,
+     "F": 6
+    },
+    "sammeToppAvgang": {
+     "A": false,
+     "B": false
+    },
+    "kendallTau": null,
+    "p50PerAvgang": {
+     "A": [
+      14.32402777777778,
+      14.305694444444445,
+      14.313472222222222
+     ],
+     "B": [
+      15.81875,
+      15.874861111111112,
+      16.738194444444446
+     ],
+     "F": [
+      14.336527777777778,
+      14.317638888888888,
+      14.313333333333333
+     ]
+    },
+    "merknad": "n=3: τ erstattet av «identisk topp-1 + ingen flipp utenfor båndet» (§8.2)"
+   },
+   "avganger": [
+    {
+     "offsetH": 0,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.325555555555555,
+      "distanceNm": 85.89066763937537,
+      "steg": 16,
+      "ms": 2584.5769
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.32402777777778,
+       "p90H": 15.325527777777777,
+       "beatP50H": 6.297916666666667,
+       "beatP90H": 10.424972222222223,
+       "motorP50H": 8.81111111111111,
+       "motorP90H": 13.261305555555555,
+       "nightP50H": 6,
+       "nightP90H": 6.004444444444444,
+       "spredningH": 1.1959722222222222,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 61197.1132,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0.013263888888889852,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 12.263126630945587,
+        "annenTopologi": 14
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 15.81875,
+       "p90H": 16.829083333333333,
+       "beatP50H": 6.608750000000001,
+       "beatP90H": 12.102111111111112,
+       "motorP50H": 6.106527777777778,
+       "motorP90H": 10.82488888888889,
+       "nightP50H": 5.847361111111111,
+       "nightP90H": 6.233694444444445,
+       "spredningH": 2.4642777777777773,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 31.524600000004284,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 1.3247222222222224,
+        "iqrDiffH": 0.8615277777777783,
+        "medianBeatDiffH": 0.8686111111111109,
+        "medianMotorDiffH": -2.3540277777777776,
+        "medianNightDiffH": -0.1280555555555556,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 4.958571672028742,
+        "maksAvvikNm": 13.240229254104685,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.336527777777778,
+       "p90H": 15.326277777777777,
+       "beatP50H": 6.8005555555555555,
+       "beatP90H": 10.446722222222222,
+       "motorP50H": 8.808333333333334,
+       "motorP90H": 13.284305555555557,
+       "nightP50H": 6,
+       "nightP90H": 6.004444444444444,
+       "spredningH": 1.1459722222222215,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 67515.27599999998
+      }
+     }
+    },
+    {
+     "offsetH": 3,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.33388888888889,
+      "distanceNm": 87.05845380638695,
+      "steg": 16,
+      "ms": 2597.413899999985
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.305694444444445,
+       "p90H": 15.250027777777778,
+       "beatP50H": 6.678888888888888,
+       "beatP90H": 11.317333333333334,
+       "motorP50H": 9.223472222222222,
+       "motorP90H": 12.432638888888889,
+       "nightP50H": 6,
+       "nightP90H": 6.004166666666666,
+       "spredningH": 1.2141111111111105,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 65031.198599999974,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0.005000000000000782,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 8.515006691663443,
+        "annenTopologi": 14
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 15.874861111111112,
+       "p90H": 16.32061111111111,
+       "beatP50H": 8.356944444444444,
+       "beatP90H": 12.224138888888888,
+       "motorP50H": 6.216944444444445,
+       "motorP90H": 10.907361111111111,
+       "nightP50H": 5.663194444444445,
+       "nightP90H": 5.9351666666666665,
+       "spredningH": 2.0443888888888875,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 25.981100000004517,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 1.4333333333333336,
+        "iqrDiffH": 0.8461111111111101,
+        "medianBeatDiffH": 1.4005555555555556,
+        "medianMotorDiffH": -2.365416666666667,
+        "medianNightDiffH": -0.3379166666666671,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 5.523684072845246,
+        "maksAvvikNm": 15.766643645880821,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.317638888888888,
+       "p90H": 15.301277777777779,
+       "beatP50H": 7.3684722222222225,
+       "beatP90H": 11.317333333333334,
+       "motorP50H": 9.33388888888889,
+       "motorP90H": 13.262,
+       "nightP50H": 6,
+       "nightP90H": 6.006666666666667,
+       "spredningH": 1.9733888888888895,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 70334.08450000003
+      }
+     }
+    },
+    {
+     "offsetH": 6,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.235277777777778,
+      "distanceNm": 84.41228805600491,
+      "steg": 16,
+      "ms": 2628.7660000000033
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.313472222222222,
+       "p90H": 14.338611111111112,
+       "beatP50H": 7.815277777777778,
+       "beatP90H": 10.419083333333335,
+       "motorP50H": 8.812916666666666,
+       "motorP90H": 13.22636111111111,
+       "nightP50H": 6.001666666666667,
+       "nightP90H": 6.003333333333333,
+       "spredningH": 1.0267499999999998,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 65540.23440000002,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 6.143298946748746,
+        "annenTopologi": 8
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 16.738194444444446,
+       "p90H": 17.3945,
+       "beatP50H": 5.704305555555555,
+       "beatP90H": 12.90638888888889,
+       "motorP50H": 3.2170833333333335,
+       "motorP90H": 11.663583333333335,
+       "nightP50H": 5.712222222222222,
+       "nightP90H": 6.087805555555556,
+       "spredningH": 3.315166666666668,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 25.927100000029895,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 2.465694444444444,
+        "iqrDiffH": 1.9802083333333322,
+        "medianBeatDiffH": -0.018611111111111245,
+        "medianMotorDiffH": -4.344583333333333,
+        "medianNightDiffH": -0.2886111111111114,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 7.323949443153185,
+        "maksAvvikNm": 11.235931774427327,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.313333333333333,
+       "p90H": 14.338611111111112,
+       "beatP50H": 7.825277777777778,
+       "beatP90H": 10.428750000000003,
+       "motorP50H": 8.820833333333333,
+       "motorP90H": 13.236194444444445,
+       "nightP50H": 6.001666666666667,
+       "nightP90H": 6.003333333333333,
+       "spredningH": 1.0220000000000002,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 68725.78720000002
+      }
+     }
+    }
+   ]
+  },
+  {
+   "fikstur": "S-2",
+   "rangering": {
+    "toppAvgang": {
+     "A": 0,
+     "B": 0,
+     "F": 0
+    },
+    "sammeToppAvgang": {
+     "A": true,
+     "B": true
+    },
+    "kendallTau": null,
+    "p50PerAvgang": {
+     "A": [
+      null,
+      null,
+      null
+     ],
+     "B": [
+      null,
+      null,
+      null
+     ],
+     "F": [
+      11.02138888888889,
+      11.02138888888889,
+      11.02138888888889
+     ]
+    },
+    "merknad": "n=3: τ erstattet av «identisk topp-1 + ingen flipp utenfor båndet» (§8.2)"
+   },
+   "avganger": [
+    {
+     "offsetH": 0,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": false,
+      "timer": 11.517777777777777,
+      "distanceNm": 47.40958125318122,
+      "steg": 24,
+      "ms": 851.9948999999906
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 0,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m01:avvist-fart",
+        "m02:avvist-fart",
+        "m03:avvist-fart",
+        "m04:avvist-fart",
+        "m05:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m09:avvist-fart",
+        "m10:avvist-fart",
+        "m11:avvist-fart",
+        "m12:avvist-fart",
+        "m13:avvist-fart",
+        "m14:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m28:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": null,
+       "p90H": null,
+       "beatP50H": null,
+       "beatP90H": null,
+       "motorP50H": null,
+       "motorP90H": null,
+       "nightP50H": null,
+       "nightP90H": null,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 19095.84049999999,
+       "motFasit": {
+        "parede": 0,
+        "medianDiffH": null,
+        "iqrDiffH": null,
+        "medianBeatDiffH": null,
+        "medianMotorDiffH": null,
+        "medianNightDiffH": null,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -1,
+        "medianAvvikNm": 6.509094111710414,
+        "maksAvvikNm": 16.64361441474484,
+        "annenTopologi": 30
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 0,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:noSpeed",
+        "m01:noSpeed",
+        "m02:noSpeed",
+        "m03:noSpeed",
+        "m04:noSpeed",
+        "m05:noSpeed",
+        "m06:noSpeed",
+        "m07:noSpeed",
+        "m08:noSpeed",
+        "m09:noSpeed",
+        "m10:noSpeed",
+        "m11:noSpeed",
+        "m12:noSpeed",
+        "m13:noSpeed",
+        "m14:noSpeed",
+        "m15:noSpeed",
+        "m16:noSpeed",
+        "m17:noSpeed",
+        "m18:noSpeed",
+        "m19:noSpeed",
+        "m20:noSpeed",
+        "m21:noSpeed",
+        "m22:noSpeed",
+        "m23:noSpeed",
+        "m24:noSpeed",
+        "m25:noSpeed",
+        "m26:noSpeed",
+        "m27:noSpeed",
+        "m28:noSpeed",
+        "m29:noSpeed"
+       ],
+       "p50H": null,
+       "p90H": null,
+       "beatP50H": null,
+       "beatP90H": null,
+       "motorP50H": null,
+       "motorP90H": null,
+       "nightP50H": null,
+       "nightP90H": null,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 17.461300000024494,
+       "motFasit": {
+        "parede": 0,
+        "medianDiffH": null,
+        "iqrDiffH": null,
+        "medianBeatDiffH": null,
+        "medianMotorDiffH": null,
+        "medianNightDiffH": null,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -1,
+        "medianAvvikNm": 10.40688296021806,
+        "maksAvvikNm": 17.694090383355967,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 1,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m01:avvist-fart",
+        "m02:avvist-fart",
+        "m03:avvist-fart",
+        "m04:avvist-fart",
+        "m05:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m09:avvist-fart",
+        "m10:avvist-fart",
+        "m11:avvist-fart",
+        "m12:avvist-fart",
+        "m13:avvist-fart",
+        "m14:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": 11.02138888888889,
+       "p90H": 11.02138888888889,
+       "beatP50H": 10.511944444444444,
+       "beatP90H": 10.511944444444444,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0.5102777777777778,
+       "nightP90H": 0.5102777777777778,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 22282.898799999966
+      }
+     }
+    },
+    {
+     "offsetH": 3,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": false,
+      "timer": 11.525555555555556,
+      "distanceNm": 47.94211196848567,
+      "steg": 24,
+      "ms": 766.974499999953
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 0,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m01:avvist-fart",
+        "m02:avvist-fart",
+        "m03:avvist-fart",
+        "m04:avvist-fart",
+        "m05:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m09:avvist-fart",
+        "m10:avvist-fart",
+        "m11:avvist-fart",
+        "m12:avvist-fart",
+        "m13:avvist-fart",
+        "m14:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m28:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": null,
+       "p90H": null,
+       "beatP50H": null,
+       "beatP90H": null,
+       "motorP50H": null,
+       "motorP90H": null,
+       "nightP50H": null,
+       "nightP90H": null,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 16327.731700000004,
+       "motFasit": {
+        "parede": 0,
+        "medianDiffH": null,
+        "iqrDiffH": null,
+        "medianBeatDiffH": null,
+        "medianMotorDiffH": null,
+        "medianNightDiffH": null,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -1,
+        "medianAvvikNm": 6.259712467173871,
+        "maksAvvikNm": 14.946914055464116,
+        "annenTopologi": 30
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 0,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:noSpeed",
+        "m01:noSpeed",
+        "m02:noSpeed",
+        "m03:noSpeed",
+        "m04:noSpeed",
+        "m05:noSpeed",
+        "m06:noSpeed",
+        "m07:noSpeed",
+        "m08:noSpeed",
+        "m09:noSpeed",
+        "m10:noSpeed",
+        "m11:noSpeed",
+        "m12:noSpeed",
+        "m13:noSpeed",
+        "m14:noSpeed",
+        "m15:noSpeed",
+        "m16:noSpeed",
+        "m17:noSpeed",
+        "m18:noSpeed",
+        "m19:noSpeed",
+        "m20:noSpeed",
+        "m21:noSpeed",
+        "m22:noSpeed",
+        "m23:noSpeed",
+        "m24:noSpeed",
+        "m25:noSpeed",
+        "m26:noSpeed",
+        "m27:noSpeed",
+        "m28:noSpeed",
+        "m29:noSpeed"
+       ],
+       "p50H": null,
+       "p90H": null,
+       "beatP50H": null,
+       "beatP90H": null,
+       "motorP50H": null,
+       "motorP90H": null,
+       "nightP50H": null,
+       "nightP90H": null,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 7.133700000005774,
+       "motFasit": {
+        "parede": 0,
+        "medianDiffH": null,
+        "iqrDiffH": null,
+        "medianBeatDiffH": null,
+        "medianMotorDiffH": null,
+        "medianNightDiffH": null,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -1,
+        "medianAvvikNm": 15.836720997959235,
+        "maksAvvikNm": 19.637297717297063,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 1,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m01:avvist-fart",
+        "m02:avvist-fart",
+        "m03:avvist-fart",
+        "m04:avvist-fart",
+        "m05:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m09:avvist-fart",
+        "m10:avvist-fart",
+        "m11:avvist-fart",
+        "m12:avvist-fart",
+        "m13:avvist-fart",
+        "m14:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": 11.02138888888889,
+       "p90H": 11.02138888888889,
+       "beatP50H": 10.511944444444444,
+       "beatP90H": 10.511944444444444,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 3.5213888888888887,
+       "nightP90H": 3.5213888888888887,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 19108.33720000001
+      }
+     }
+    },
+    {
+     "offsetH": 6,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": false,
+      "timer": 11.526111111111112,
+      "distanceNm": 47.808997022299856,
+      "steg": 24,
+      "ms": 745.9689999999828
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 0,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m01:avvist-fart",
+        "m02:avvist-fart",
+        "m03:avvist-fart",
+        "m04:avvist-fart",
+        "m05:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m09:avvist-fart",
+        "m10:avvist-fart",
+        "m11:avvist-fart",
+        "m12:avvist-fart",
+        "m13:avvist-fart",
+        "m14:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m28:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": null,
+       "p90H": null,
+       "beatP50H": null,
+       "beatP90H": null,
+       "motorP50H": null,
+       "motorP90H": null,
+       "nightP50H": null,
+       "nightP90H": null,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 15090.82289999997,
+       "motFasit": {
+        "parede": 0,
+        "medianDiffH": null,
+        "iqrDiffH": null,
+        "medianBeatDiffH": null,
+        "medianMotorDiffH": null,
+        "medianNightDiffH": null,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -1,
+        "medianAvvikNm": 8.410082501491749,
+        "maksAvvikNm": 17.879766970105337,
+        "annenTopologi": 30
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 0,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:noSpeed",
+        "m01:noSpeed",
+        "m02:noSpeed",
+        "m03:noSpeed",
+        "m04:noSpeed",
+        "m05:noSpeed",
+        "m06:noSpeed",
+        "m07:noSpeed",
+        "m08:noSpeed",
+        "m09:noSpeed",
+        "m10:noSpeed",
+        "m11:noSpeed",
+        "m12:noSpeed",
+        "m13:noSpeed",
+        "m14:noSpeed",
+        "m15:noSpeed",
+        "m16:noSpeed",
+        "m17:noSpeed",
+        "m18:noSpeed",
+        "m19:noSpeed",
+        "m20:noSpeed",
+        "m21:noSpeed",
+        "m22:noSpeed",
+        "m23:noSpeed",
+        "m24:noSpeed",
+        "m25:noSpeed",
+        "m26:noSpeed",
+        "m27:noSpeed",
+        "m28:noSpeed",
+        "m29:noSpeed"
+       ],
+       "p50H": null,
+       "p90H": null,
+       "beatP50H": null,
+       "beatP90H": null,
+       "motorP50H": null,
+       "motorP90H": null,
+       "nightP50H": null,
+       "nightP90H": null,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 9.29759999999078,
+       "motFasit": {
+        "parede": 0,
+        "medianDiffH": null,
+        "iqrDiffH": null,
+        "medianBeatDiffH": null,
+        "medianMotorDiffH": null,
+        "medianNightDiffH": null,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -1,
+        "medianAvvikNm": 12.458010241759144,
+        "maksAvvikNm": 15.536701963158983,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 1,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m01:avvist-fart",
+        "m02:avvist-fart",
+        "m03:avvist-fart",
+        "m04:avvist-fart",
+        "m05:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m09:avvist-fart",
+        "m10:avvist-fart",
+        "m11:avvist-fart",
+        "m12:avvist-fart",
+        "m13:avvist-fart",
+        "m14:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": 11.02138888888889,
+       "p90H": 11.02138888888889,
+       "beatP50H": 10.511944444444444,
+       "beatP90H": 10.511944444444444,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 6.011111111111111,
+       "nightP90H": 6.011111111111111,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 17078.627199999988
+      }
+     }
+    }
+   ]
+  },
+  {
+   "fikstur": "S-3",
+   "rangering": {
+    "toppAvgang": {
+     "A": 8,
+     "B": 8,
+     "F": 8
+    },
+    "sammeToppAvgang": {
+     "A": true,
+     "B": true
+    },
+    "kendallTau": {
+     "A": 1,
+     "B": 0.4
+    },
+    "p50PerAvgang": {
+     "A": [
+      14.455416666666666,
+      14.414444444444445,
+      14.290555555555557,
+      14.234444444444444,
+      13.393055555555556
+     ],
+     "B": [
+      15.36375,
+      15.434722222222224,
+      15.604305555555555,
+      14.002083333333333,
+      13.705555555555556
+     ],
+     "F": [
+      14.455416666666666,
+      14.39375,
+      14.289027777777777,
+      14.254583333333333,
+      13.393055555555556
+     ]
+    },
+    "merknad": "n=5: Kendall-τ rapportert"
+   },
+   "avganger": [
+    {
+     "offsetH": 0,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.299444444444445,
+      "distanceNm": 85.19335930259943,
+      "steg": 16,
+      "ms": 1747.986900000018
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m04",
+       "m09",
+       "m14",
+       "m24"
+      ],
+      "backoff2": [
+       "m04",
+       "m09",
+       "m14"
+      ]
+     },
+     "utveiMargin": {
+      "m24": {
+       "havn": "Fredrikstad",
+       "timer": 4.346111111111111,
+       "hsMarginM": 0.34172773361206055,
+       "twsMarginKn": 3
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.455416666666666,
+       "p90H": 14.488333333333333,
+       "beatP50H": 14,
+       "beatP90H": 14.484444444444446,
+       "motorP50H": 14,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 1.2056944444444433,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 51,
+       "evalueringer": 30,
+       "ms": 40772.46199999994,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 4.27082989127867,
+        "annenTopologi": 5
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:boatLimits",
+        "m09:boatLimits",
+        "m14:boatLimits",
+        "m24:boatLimits"
+       ],
+       "p50H": 15.36375,
+       "p90H": 15.554722222222221,
+       "beatP50H": 11.786666666666667,
+       "beatP90H": 12.637777777777778,
+       "motorP50H": 11.786666666666667,
+       "motorP90H": 11.786666666666667,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 2.420277777777777,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 50,
+       "evalueringer": 60,
+       "ms": 173.82189999998081,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": 0.9083333333333341,
+        "iqrDiffH": 1.0380555555555562,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": -2.062777777777778,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": false,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 4.916200934712549,
+        "maksAvvikNm": 71.2924838680445,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.455416666666666,
+       "p90H": 14.488333333333333,
+       "beatP50H": 14,
+       "beatP90H": 14.484444444444446,
+       "motorP50H": 14,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 1.2118055555555554,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 51,
+       "evalueringer": 30,
+       "ms": 46518.993600000045
+      }
+     }
+    },
+    {
+     "offsetH": 2,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.37,
+      "distanceNm": 86.9536668613177,
+      "steg": 16,
+      "ms": 1981.465499999933
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m04",
+       "m09",
+       "m14",
+       "m24"
+      ],
+      "backoff2": [
+       "m04",
+       "m09",
+       "m14"
+      ]
+     },
+     "utveiMargin": {
+      "m24": {
+       "havn": "Fredrikstad",
+       "timer": 5.324722222222222,
+       "hsMarginM": 0.026786327362060547,
+       "twsMarginKn": 3
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.414444444444445,
+       "p90H": 15.2525,
+       "beatP50H": 9,
+       "beatP90H": 14.483194444444445,
+       "motorP50H": 9,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0.2515277777777778,
+       "spredningH": 1.997638888888888,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 49,
+       "evalueringer": 30,
+       "ms": 39767.76760000002,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 17.640389761619424,
+        "annenTopologi": 10
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:boatLimits",
+        "m09:boatLimits",
+        "m14:boatLimits",
+        "m24:boatLimits"
+       ],
+       "p50H": 15.434722222222224,
+       "p90H": 17.128194444444446,
+       "beatP50H": 9.058194444444444,
+       "beatP90H": 10.383611111111112,
+       "motorP50H": 8.764444444444445,
+       "motorP90H": 9.444166666666668,
+       "nightP50H": 0.3640277777777778,
+       "nightP90H": 2.562361111111111,
+       "spredningH": 3.9112500000000026,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 46,
+       "evalueringer": 60,
+       "ms": 162.96219999995083,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": 0.33999999999999986,
+        "iqrDiffH": 2.2715972222222227,
+        "medianBeatDiffH": 0.13472222222222197,
+        "medianMotorDiffH": -0.25138888888888866,
+        "medianNightDiffH": 0.06638888888888889,
+        "identiskFelleSett": false,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 9.306924321388202,
+        "maksAvvikNm": 83.62060200388176,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.39375,
+       "p90H": 15.271666666666667,
+       "beatP50H": 9,
+       "beatP90H": 14.483194444444445,
+       "motorP50H": 9,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0.27166666666666667,
+       "spredningH": 1.997638888888888,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 49,
+       "evalueringer": 30,
+       "ms": 46329.64289999998
+      }
+     }
+    },
+    {
+     "offsetH": 4,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.252222222222223,
+      "distanceNm": 86.27461057313533,
+      "steg": 16,
+      "ms": 2311.199099999969
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m04",
+       "m09",
+       "m14",
+       "m24"
+      ],
+      "backoff2": [
+       "m04",
+       "m09",
+       "m14"
+      ]
+     },
+     "utveiMargin": {
+      "m24": {
+       "havn": "Fredrikstad",
+       "timer": 5.285,
+       "hsMarginM": 0.05594587326049805,
+       "twsMarginKn": 3
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.290555555555557,
+       "p90H": 14.482222222222223,
+       "beatP50H": 9,
+       "beatP90H": 14.480833333333333,
+       "motorP50H": 9,
+       "motorP90H": 14,
+       "nightP50H": 1.2858333333333332,
+       "nightP90H": 1.482222222222222,
+       "spredningH": 1.2390277777777783,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 48,
+       "evalueringer": 30,
+       "ms": 36890.68320000009,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 8.69440891150525,
+        "annenTopologi": 4
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:boatLimits",
+        "m09:boatLimits",
+        "m14:boatLimits",
+        "m24:boatLimits"
+       ],
+       "p50H": 15.604305555555555,
+       "p90H": 15.932222222222222,
+       "beatP50H": 5,
+       "beatP90H": 11.160833333333333,
+       "motorP50H": 5,
+       "motorP90H": 11.160833333333333,
+       "nightP50H": 2.281944444444444,
+       "nightP90H": 2.7466666666666666,
+       "spredningH": 2.9120833333333334,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 44,
+       "evalueringer": 60,
+       "ms": 145.0106000000378,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": 1.290277777777777,
+        "iqrDiffH": 1.414444444444444,
+        "medianBeatDiffH": -0.39194444444444443,
+        "medianMotorDiffH": -2.8391666666666673,
+        "medianNightDiffH": 1.0019444444444443,
+        "identiskFelleSett": false,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 9.708142547702007,
+        "maksAvvikNm": 83.62060200388176,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.289027777777777,
+       "p90H": 14.482222222222223,
+       "beatP50H": 9,
+       "beatP90H": 14.480833333333333,
+       "motorP50H": 9,
+       "motorP90H": 14,
+       "nightP50H": 1.2856944444444443,
+       "nightP90H": 1.482222222222222,
+       "spredningH": 1.2370833333333344,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 48,
+       "evalueringer": 30,
+       "ms": 41882.368400000036
+      }
+     }
+    },
+    {
+     "offsetH": 6,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 13.292777777777777,
+      "distanceNm": 84.23325902004474,
+      "steg": 15,
+      "ms": 1753.2480000000214
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m04",
+       "m09",
+       "m14",
+       "m24"
+      ],
+      "backoff2": [
+       "m04",
+       "m09"
+      ]
+     },
+     "utveiMargin": {
+      "m24": {
+       "havn": "Fredrikstad",
+       "timer": 4.344444444444444,
+       "hsMarginM": 0.32279062271118164,
+       "twsMarginKn": 3
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.234444444444444,
+       "p90H": 14.455694444444443,
+       "beatP50H": 5,
+       "beatP90H": 14,
+       "motorP50H": 6,
+       "motorP90H": 14,
+       "nightP50H": 3.2330555555555556,
+       "nightP90H": 3.4556944444444446,
+       "spredningH": 1.2072222222222209,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 47,
+       "evalueringer": 30,
+       "ms": 32878.13130000001,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 4.27082989127867,
+        "annenTopologi": 3
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:boatLimits",
+        "m09:boatLimits",
+        "m14:boatLimits",
+        "m24:boatLimits"
+       ],
+       "p50H": 14.002083333333333,
+       "p90H": 14.578611111111112,
+       "beatP50H": 8.20375,
+       "beatP90H": 14.349722222222223,
+       "motorP50H": 7.130277777777778,
+       "motorP90H": 14.349722222222223,
+       "nightP50H": 3.2737499999999997,
+       "nightP90H": 4.062777777777777,
+       "spredningH": 1.8519444444444453,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 42,
+       "evalueringer": 60,
+       "ms": 131.41989999997895,
+       "motFasit": {
+        "parede": 26,
+        "medianDiffH": -0.106527777777778,
+        "iqrDiffH": 0.24027777777777892,
+        "medianBeatDiffH": 0.3497222222222227,
+        "medianMotorDiffH": 0.03027777777777807,
+        "medianNightDiffH": 0.11763888888888885,
+        "identiskFelleSett": false,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 6.481768827073933,
+        "maksAvvikNm": 83.62060200388176,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 26,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels"
+       ],
+       "p50H": 14.254583333333333,
+       "p90H": 14.455694444444443,
+       "beatP50H": 5,
+       "beatP90H": 14,
+       "motorP50H": 6,
+       "motorP90H": 14,
+       "nightP50H": 3.2545833333333336,
+       "nightP90H": 3.4556944444444446,
+       "spredningH": 1.2072222222222209,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24"
+       ],
+       "sok": 47,
+       "evalueringer": 30,
+       "ms": 40936.37309999997
+      }
+     }
+    },
+    {
+     "offsetH": 8,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 13.23638888888889,
+      "distanceNm": 84.74237264666063,
+      "steg": 15,
+      "ms": 1619.8477999999886
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m04",
+       "m09",
+       "m14",
+       "m24",
+       "m29"
+      ],
+      "backoff2": [
+       "m04",
+       "m09",
+       "m14",
+       "m29"
+      ]
+     },
+     "utveiMargin": {
+      "m24": {
+       "havn": "Fredrikstad",
+       "timer": 4.285277777777778,
+       "hsMarginM": 0.005708456039428711,
+       "twsMarginKn": 3
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 25,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels",
+        "m29:avvist-baatgrenser"
+       ],
+       "p50H": 13.393055555555556,
+       "p90H": 14.911166666666668,
+       "beatP50H": 2,
+       "beatP90H": 9,
+       "motorP50H": 2,
+       "motorP90H": 9,
+       "nightP50H": 4.393055555555556,
+       "nightP90H": 5.780833333333335,
+       "spredningH": 1.7659444444444468,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14",
+        "m29"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24",
+        "m29"
+       ],
+       "sok": 51,
+       "evalueringer": 30,
+       "ms": 33134.13520000002,
+       "motFasit": {
+        "parede": 25,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 17.640389761619424,
+        "annenTopologi": 6
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 25,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:boatLimits",
+        "m09:boatLimits",
+        "m14:boatLimits",
+        "m24:boatLimits",
+        "m29:boatLimits"
+       ],
+       "p50H": 13.705555555555556,
+       "p90H": 14.729277777777778,
+       "beatP50H": 3.887777777777778,
+       "beatP90H": 11.86338888888889,
+       "motorP50H": 4.904444444444445,
+       "motorP90H": 11.86338888888889,
+       "nightP50H": 5.1433333333333335,
+       "nightP90H": 5.754166666666666,
+       "spredningH": 2.129944444444444,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14",
+        "m24",
+        "m29"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24",
+        "m29"
+       ],
+       "sok": 50,
+       "evalueringer": 60,
+       "ms": 143.34320000000298,
+       "motFasit": {
+        "parede": 25,
+        "medianDiffH": -0.2769444444444442,
+        "iqrDiffH": 0.5711111111111098,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0.0536111111111115,
+        "identiskFelleSett": false,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 7.468792561624772,
+        "maksAvvikNm": 83.62060200388176,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 25,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m04:noExpandableLabels",
+        "m09:noExpandableLabels",
+        "m14:noExpandableLabels",
+        "m24:noExpandableLabels",
+        "m29:avvist-baatgrenser"
+       ],
+       "p50H": 13.393055555555556,
+       "p90H": 14.934166666666668,
+       "beatP50H": 2,
+       "beatP90H": 9,
+       "motorP50H": 2,
+       "motorP90H": 9,
+       "nightP50H": 4.393055555555556,
+       "nightP90H": 5.779666666666667,
+       "spredningH": 1.7889444444444464,
+       "felleSett": [
+        "m04",
+        "m09",
+        "m14",
+        "m29"
+       ],
+       "hardeFeil": [
+        "m04",
+        "m09",
+        "m14",
+        "m24",
+        "m29"
+       ],
+       "sok": 51,
+       "evalueringer": 30,
+       "ms": 36500.67719999992
+      }
+     }
+    }
+   ]
+  },
+  {
+   "fikstur": "S-4",
+   "rangering": {
+    "toppAvgang": {
+     "A": 0,
+     "B": 6,
+     "F": 0
+    },
+    "sammeToppAvgang": {
+     "A": true,
+     "B": false
+    },
+    "kendallTau": null,
+    "p50PerAvgang": {
+     "A": [
+      4.366388888888889,
+      4.382777777777778,
+      4.386944444444444
+     ],
+     "B": [
+      4.460972222222222,
+      4.431666666666667,
+      4.384444444444444
+     ],
+     "F": [
+      4.366388888888889,
+      4.382777777777778,
+      4.386944444444444
+     ]
+    },
+    "merknad": "n=3: τ erstattet av «identisk topp-1 + ingen flipp utenfor båndet» (§8.2)"
+   },
+   "avganger": [
+    {
+     "offsetH": 0,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 4.323333333333333,
+      "distanceNm": 22.823538104885273,
+      "steg": 10,
+      "ms": 91.8477000000421
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.366388888888889,
+       "p90H": 4.850861111111111,
+       "beatP50H": 0,
+       "beatP90H": 0.3656111111111111,
+       "motorP50H": 0,
+       "motorP90H": 0.5036111111111111,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.5896388888888886,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 2859.019100000034,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 0,
+        "annenTopologi": 0
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.460972222222222,
+       "p90H": 4.7476666666666665,
+       "beatP50H": 0,
+       "beatP90H": 0,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.6926666666666668,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 11.838100000051782,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": -0.17986111111111125,
+        "iqrDiffH": 0.3388194444444441,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0.9463444683898996,
+        "maksAvvikNm": 1.5469481408194525,
+        "annenTopologi": 28
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.366388888888889,
+       "p90H": 4.850861111111111,
+       "beatP50H": 0,
+       "beatP90H": 0.3656111111111111,
+       "motorP50H": 0,
+       "motorP90H": 0.5036111111111111,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.5896388888888886,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 2919.208800000022
+      }
+     }
+    },
+    {
+     "offsetH": 3,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 4.348611111111111,
+      "distanceNm": 22.677013907481573,
+      "steg": 10,
+      "ms": 82.21149999997579
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.382777777777778,
+       "p90H": 4.906805555555556,
+       "beatP50H": 0,
+       "beatP90H": 0.44422222222222224,
+       "motorP50H": 0,
+       "motorP90H": 0.5021111111111111,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.6276388888888889,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 2881.240899999975,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 0,
+        "annenTopologi": 0
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.431666666666667,
+       "p90H": 4.7049722222222226,
+       "beatP50H": 0,
+       "beatP90H": 0,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.6583611111111116,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 11.23629999998957,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": -0.17374999999999963,
+        "iqrDiffH": 0.3052083333333322,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0.8071901118926096,
+        "maksAvvikNm": 1.6228152254449268,
+        "annenTopologi": 26
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.382777777777778,
+       "p90H": 4.906805555555556,
+       "beatP50H": 0,
+       "beatP90H": 0.44422222222222224,
+       "motorP50H": 0,
+       "motorP90H": 0.5021111111111111,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.6276388888888889,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 3055.857699999935
+      }
+     }
+    },
+    {
+     "offsetH": 6,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 4.346666666666667,
+      "distanceNm": 22.26220538498755,
+      "steg": 10,
+      "ms": 74.60090000007767
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.386944444444444,
+       "p90H": 4.887166666666666,
+       "beatP50H": 0,
+       "beatP90H": 0.30258333333333337,
+       "motorP50H": 0,
+       "motorP90H": 0.6035277777777792,
+       "nightP50H": 0,
+       "nightP90H": 0.3826388888888889,
+       "spredningH": 0.6307222222222224,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 2772.2456999999704,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 0,
+        "annenTopologi": 0
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.384444444444444,
+       "p90H": 4.7123333333333335,
+       "beatP50H": 0,
+       "beatP90H": 0,
+       "motorP50H": 0,
+       "motorP90H": 0.13747222222222416,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.7653333333333334,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 9.726900000008754,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": -0.1429166666666668,
+        "iqrDiffH": 0.35208333333333364,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0.8352026613589405,
+        "maksAvvikNm": 10.330349388860904,
+        "annenTopologi": 29
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 4.386944444444444,
+       "p90H": 4.887166666666666,
+       "beatP50H": 0,
+       "beatP90H": 0.30258333333333337,
+       "motorP50H": 0,
+       "motorP90H": 0.6035277777777792,
+       "nightP50H": 0,
+       "nightP90H": 0.3826388888888889,
+       "spredningH": 0.6307222222222224,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 2987.9035999999614
+      }
+     }
+    }
+   ]
+  },
+  {
+   "fikstur": "S-5",
+   "rangering": {
+    "toppAvgang": {
+     "A": 3,
+     "B": 3,
+     "F": 4
+    },
+    "sammeToppAvgang": {
+     "A": false,
+     "B": false
+    },
+    "kendallTau": {
+     "A": 0.6,
+     "B": 0.8
+    },
+    "p50PerAvgang": {
+     "A": [
+      14.40263888888889,
+      14.443472222222223,
+      14.35138888888889,
+      14.288333333333334,
+      14.290555555555557
+     ],
+     "B": [
+      14.858888888888888,
+      14.769305555555556,
+      14.73138888888889,
+      14.42222222222222,
+      14.711805555555557
+     ],
+     "F": [
+      14.40263888888889,
+      14.377777777777776,
+      14.293333333333333,
+      14.289166666666667,
+      13.841527777777777
+     ]
+    },
+    "merknad": "n=5: Kendall-τ rapportert"
+   },
+   "avganger": [
+    {
+     "offsetH": 0,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.299444444444445,
+      "distanceNm": 85.19335930259943,
+      "steg": 16,
+      "ms": 1623.314800000051
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.40263888888889,
+       "p90H": 14.486555555555555,
+       "beatP50H": 10,
+       "beatP90H": 14.483111111111112,
+       "motorP50H": 10.000972222222222,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 1.2268333333333317,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 41391.83349999995,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 4.27082989127867,
+        "annenTopologi": 5
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.858888888888888,
+       "p90H": 15.540944444444444,
+       "beatP50H": 9.893333333333334,
+       "beatP90H": 13.654833333333336,
+       "motorP50H": 10.395416666666666,
+       "motorP90H": 11.786666666666667,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 2.3196111111111097,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 14.208700000075623,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0.5273611111111114,
+        "iqrDiffH": 1.0424305555555562,
+        "medianBeatDiffH": 0.6233333333333333,
+        "medianMotorDiffH": -0.9550000000000001,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 4.916200934712492,
+        "maksAvvikNm": 14.115602115170857,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.40263888888889,
+       "p90H": 14.486555555555555,
+       "beatP50H": 10,
+       "beatP90H": 14.483111111111112,
+       "motorP50H": 10.000972222222222,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 1.2268333333333317,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 49456.26539999992
+      }
+     }
+    },
+    {
+     "offsetH": 1,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.349444444444444,
+      "distanceNm": 86.22955271125862,
+      "steg": 16,
+      "ms": 1918.2689999999711
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.443472222222223,
+       "p90H": 14.486527777777777,
+       "beatP50H": 9,
+       "beatP90H": 14.483111111111112,
+       "motorP50H": 9,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 1.212527777777776,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 45042.857899999944,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 8.69440891150525,
+        "annenTopologi": 7
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.769305555555556,
+       "p90H": 15.620277777777778,
+       "beatP50H": 8.5,
+       "beatP90H": 11.770666666666669,
+       "motorP50H": 9.08,
+       "motorP90H": 11.599444444444444,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 2.2249999999999996,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 14.70519999996759,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0.7270833333333337,
+        "iqrDiffH": 1.0492361111111106,
+        "medianBeatDiffH": -0.7791666666666662,
+        "medianMotorDiffH": -1.394027777777778,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 4.502665699438617,
+        "maksAvvikNm": 15.501925796898787,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.377777777777776,
+       "p90H": 14.486527777777777,
+       "beatP50H": 9,
+       "beatP90H": 14.483111111111112,
+       "motorP50H": 9.000972222222224,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 1.1911388888888883,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 47962.14960000012
+      }
+     }
+    },
+    {
+     "offsetH": 2,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.37,
+      "distanceNm": 86.9536668613177,
+      "steg": 16,
+      "ms": 2325.5139999999665
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.35138888888889,
+       "p90H": 15.225833333333332,
+       "beatP50H": 7.5,
+       "beatP90H": 14.482861111111111,
+       "motorP50H": 7.5,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0.22408333333333344,
+       "spredningH": 1.9610833333333328,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 40797.47799999989,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 17.640389761619424,
+        "annenTopologi": 11
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.73138888888889,
+       "p90H": 17.133055555555554,
+       "beatP50H": 7.718472222222222,
+       "beatP90H": 11.948527777777782,
+       "motorP50H": 7.38375,
+       "motorP90H": 9.446083333333332,
+       "nightP50H": 0.1798611111111111,
+       "nightP90H": 2.5644444444444443,
+       "spredningH": 3.8314444444444415,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 14.4621000001207,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0.33999999999999986,
+        "iqrDiffH": 2.391458333333333,
+        "medianBeatDiffH": 0.1384722222222221,
+        "medianMotorDiffH": -0.23555555555555507,
+        "medianNightDiffH": 0.025138888888888877,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 9.249235640525487,
+        "maksAvvikNm": 19.795039323892293,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.293333333333333,
+       "p90H": 15.260333333333334,
+       "beatP50H": 7.5,
+       "beatP90H": 14.482861111111111,
+       "motorP50H": 7.5,
+       "motorP90H": 14,
+       "nightP50H": 0,
+       "nightP90H": 0.26033333333333336,
+       "spredningH": 1.9808611111111105,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 48929.27279999992
+      }
+     }
+    },
+    {
+     "offsetH": 3,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.25611111111111,
+      "distanceNm": 85.77945868147576,
+      "steg": 16,
+      "ms": 2330.0420999999624
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.288333333333334,
+       "p90H": 14.4825,
+       "beatP50H": 7.5,
+       "beatP90H": 14.48025,
+       "motorP50H": 8,
+       "motorP90H": 14,
+       "nightP50H": 0.2816666666666667,
+       "nightP90H": 0.4825,
+       "spredningH": 1.220527777777777,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 46347.61289999983,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 2.994620260741717,
+        "annenTopologi": 4
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.42222222222222,
+       "p90H": 15.907722222222223,
+       "beatP50H": 5.886666666666667,
+       "beatP90H": 11.970250000000005,
+       "motorP50H": 6.543472222222222,
+       "motorP90H": 11.592777777777778,
+       "nightP50H": 0.7719444444444443,
+       "nightP90H": 1.6286944444444444,
+       "spredningH": 2.7840555555555557,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 17.967600000090897,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0.5954166666666669,
+        "iqrDiffH": 1.4363888888888887,
+        "medianBeatDiffH": -0.2951388888888889,
+        "medianMotorDiffH": -1.3676388888888886,
+        "medianNightDiffH": 0.47874999999999995,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 5.072105219882217,
+        "maksAvvikNm": 15.641487422682522,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.289166666666667,
+       "p90H": 14.4825,
+       "beatP50H": 7.5,
+       "beatP90H": 14.48025,
+       "motorP50H": 8,
+       "motorP90H": 14,
+       "nightP50H": 0.28583333333333333,
+       "nightP90H": 0.4825,
+       "spredningH": 1.222777777777777,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 51252.06390000018
+      }
+     }
+    },
+    {
+     "offsetH": 4,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 14.252222222222223,
+      "distanceNm": 86.27461057313533,
+      "steg": 16,
+      "ms": 2460.400600000052
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.290555555555557,
+       "p90H": 14.4825,
+       "beatP50H": 6,
+       "beatP90H": 14.48,
+       "motorP50H": 6.5,
+       "motorP90H": 14,
+       "nightP50H": 1.2858333333333332,
+       "nightP90H": 1.4825,
+       "spredningH": 1.2209722222222208,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 40397.53050000011,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 8.69440891150525,
+        "annenTopologi": 5
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 14.711805555555557,
+       "p90H": 15.924666666666667,
+       "beatP50H": 4,
+       "beatP90H": 11.352916666666669,
+       "motorP50H": 4.5024999999999995,
+       "motorP90H": 11.160833333333333,
+       "nightP50H": 1.8009722222222222,
+       "nightP90H": 2.7466666666666666,
+       "spredningH": 2.8688611111111104,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 16.828099999809638,
+       "motFasit": {
+        "parede": 30,
+        "medianDiffH": 0.9066666666666672,
+        "iqrDiffH": 1.415972222222222,
+        "medianBeatDiffH": -0.39194444444444443,
+        "medianMotorDiffH": -2.420555555555556,
+        "medianNightDiffH": 1.0019444444444443,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 7.364496713676079,
+        "maksAvvikNm": 13.18469996867412,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 30,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [],
+       "p50H": 13.841527777777777,
+       "p90H": 14.4825,
+       "beatP50H": 6,
+       "beatP90H": 14.48,
+       "motorP50H": 6.500972222222222,
+       "motorP90H": 14,
+       "nightP50H": 0.8391666666666666,
+       "nightP90H": 1.4825,
+       "spredningH": 1.2174722222222218,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 47271.67570000002
+      }
+     }
+    }
+   ]
+  },
+  {
+   "fikstur": "S-7",
+   "rangering": {
+    "toppAvgang": {
+     "A": 3,
+     "B": 6,
+     "F": 3
+    },
+    "sammeToppAvgang": {
+     "A": true,
+     "B": false
+    },
+    "kendallTau": null,
+    "p50PerAvgang": {
+     "A": [
+      14.375694444444445,
+      13.295555555555556,
+      13.555555555555555
+     ],
+     "B": [
+      15.007361111111111,
+      null,
+      13.571388888888889
+     ],
+     "F": [
+      14.375694444444445,
+      13.295555555555556,
+      13.555555555555555
+     ]
+    },
+    "merknad": "n=3: τ erstattet av «identisk topp-1 + ingen flipp utenfor båndet» (§8.2)"
+   },
+   "avganger": [
+    {
+     "offsetH": 0,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 21.52,
+      "distanceNm": 89.04392356491796,
+      "steg": 23,
+      "ms": 1548.219700000016
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 8,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m02:avvist-fart",
+        "m04:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m11:avvist-fart",
+        "m13:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": 14.375694444444445,
+       "p90H": 17.538416666666667,
+       "beatP50H": 0.19611111111111112,
+       "beatP90H": 5.336999999999998,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 1.799999999999999,
+       "spredningH": 3.226805555555554,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 33568.27000000002,
+       "motFasit": {
+        "parede": 7,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 13.90340946390278,
+        "annenTopologi": 13
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 10,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:noSpeed",
+        "m01:noSpeed",
+        "m03:noSpeed",
+        "m04:noSpeed",
+        "m06:noSpeed",
+        "m15:noSpeed",
+        "m16:noSpeed",
+        "m17:noSpeed",
+        "m18:noSpeed",
+        "m19:noSpeed",
+        "m20:noSpeed",
+        "m21:noSpeed",
+        "m22:noSpeed",
+        "m23:noSpeed",
+        "m24:noSpeed",
+        "m25:noSpeed",
+        "m26:noSpeed",
+        "m27:noSpeed",
+        "m28:noSpeed",
+        "m29:noSpeed"
+       ],
+       "p50H": 15.007361111111111,
+       "p90H": 15.096666666666666,
+       "beatP50H": 2.3718055555555555,
+       "beatP90H": 2.427,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.16433333333333344,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 23.779099999926984,
+       "motFasit": {
+        "parede": 5,
+        "medianDiffH": 0.6469444444444434,
+        "iqrDiffH": 0.14388888888889007,
+        "medianBeatDiffH": 2.296388888888889,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 2,
+        "medianAvvikNm": 13.596008064751697,
+        "maksAvvikNm": 20.235565874506207,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 8,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:avvist-fart",
+        "m02:avvist-fart",
+        "m04:avvist-fart",
+        "m06:avvist-fart",
+        "m07:avvist-fart",
+        "m08:avvist-fart",
+        "m11:avvist-fart",
+        "m13:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m28:avvist-fart"
+       ],
+       "p50H": 14.375694444444445,
+       "p90H": 17.535916666666665,
+       "beatP50H": 0.19611111111111112,
+       "beatP90H": 5.332583333333331,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 1.8005833333333323,
+       "spredningH": 3.224305555555553,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 43158.5456999999
+      }
+     }
+    },
+    {
+     "offsetH": 3,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 20.401944444444446,
+      "distanceNm": 95.5185015383269,
+      "steg": 22,
+      "ms": 1484.4405999998562
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 13,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m03:avvist-fart",
+        "m07:avvist-fart",
+        "m10:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": 13.295555555555556,
+       "p90H": 13.5565,
+       "beatP50H": 0.2663888888888889,
+       "beatP90H": 0.5565,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.2956666666666674,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 35356.43259999994,
+       "motFasit": {
+        "parede": 12,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 13.903409463642408,
+        "annenTopologi": 13
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 0,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m00:noSpeed",
+        "m01:noSpeed",
+        "m02:noSpeed",
+        "m03:noSpeed",
+        "m04:noSpeed",
+        "m05:noSpeed",
+        "m06:noSpeed",
+        "m07:noSpeed",
+        "m08:noSpeed",
+        "m09:noSpeed",
+        "m10:noSpeed",
+        "m11:noSpeed",
+        "m12:noSpeed",
+        "m13:noSpeed",
+        "m14:noSpeed",
+        "m15:noSpeed",
+        "m16:noSpeed",
+        "m17:noSpeed",
+        "m18:noSpeed",
+        "m19:noSpeed",
+        "m20:noSpeed",
+        "m21:noSpeed",
+        "m22:noSpeed",
+        "m23:noSpeed",
+        "m24:noSpeed",
+        "m25:noSpeed",
+        "m26:noSpeed",
+        "m27:noSpeed",
+        "m28:noSpeed",
+        "m29:noSpeed"
+       ],
+       "p50H": null,
+       "p90H": null,
+       "beatP50H": null,
+       "beatP90H": null,
+       "motorP50H": null,
+       "motorP90H": null,
+       "nightP50H": null,
+       "nightP90H": null,
+       "spredningH": 0,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 13.570699999807402,
+       "motFasit": {
+        "parede": 0,
+        "medianDiffH": null,
+        "iqrDiffH": null,
+        "medianBeatDiffH": null,
+        "medianMotorDiffH": null,
+        "medianNightDiffH": null,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -13,
+        "medianAvvikNm": 7.791709890650521,
+        "maksAvvikNm": 18.896249107852043,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 13,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m03:avvist-fart",
+        "m07:avvist-fart",
+        "m10:avvist-fart",
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m28:avvist-fart"
+       ],
+       "p50H": 13.295555555555556,
+       "p90H": 13.5565,
+       "beatP50H": 0.2663888888888889,
+       "beatP90H": 0.5565,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 0.2956666666666674,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 42543.90969999996
+      }
+     }
+    },
+    {
+     "offsetH": 6,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 18.45277777777778,
+      "distanceNm": 89.12822820969417,
+      "steg": 20,
+      "ms": 1230.9661000000779
+     },
+     "backoffSensitivitet": {
+      "backoff0": [],
+      "backoff2": []
+     },
+     "utveiMargin": {},
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 16,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m29:avvist-fart"
+       ],
+       "p50H": 13.555555555555555,
+       "p90H": 13.580972222222222,
+       "beatP50H": 0.5555555555555556,
+       "beatP90H": 0.5809722222222222,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 2.5555555555555554,
+       "nightP90H": 2.580972222222222,
+       "spredningH": 0.3370833333333323,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 31900.379699999932,
+       "motFasit": {
+        "parede": 15,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 13.903409463631961,
+        "annenTopologi": 13
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 15,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m15:noSpeed",
+        "m16:noSpeed",
+        "m17:noSpeed",
+        "m18:noSpeed",
+        "m19:noSpeed",
+        "m20:noSpeed",
+        "m21:noSpeed",
+        "m22:noSpeed",
+        "m23:noSpeed",
+        "m24:noSpeed",
+        "m25:noSpeed",
+        "m26:noSpeed",
+        "m27:noSpeed",
+        "m28:noSpeed",
+        "m29:noSpeed"
+       ],
+       "p50H": 13.571388888888889,
+       "p90H": 13.738166666666668,
+       "beatP50H": 0.44583333333333336,
+       "beatP90H": 0.4627777777777778,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 2.4277777777777776,
+       "nightP90H": 2.4758333333333336,
+       "spredningH": 0.32727777777777867,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 0,
+       "evalueringer": 60,
+       "ms": 19.098800000036135,
+       "motFasit": {
+        "parede": 15,
+        "medianDiffH": 0.018055555555555713,
+        "iqrDiffH": 0.6574999999999989,
+        "medianBeatDiffH": -0.10861111111111105,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": -0.12666666666666693,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": -1,
+        "medianAvvikNm": 5.750698181991241,
+        "maksAvvikNm": 22.103703083409194,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 16,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m15:avvist-fart",
+        "m16:avvist-fart",
+        "m17:avvist-fart",
+        "m18:avvist-fart",
+        "m19:avvist-fart",
+        "m20:avvist-fart",
+        "m21:avvist-fart",
+        "m22:avvist-fart",
+        "m23:avvist-fart",
+        "m24:avvist-fart",
+        "m25:avvist-fart",
+        "m26:avvist-fart",
+        "m27:avvist-fart",
+        "m28:avvist-fart"
+       ],
+       "p50H": 13.555555555555555,
+       "p90H": 13.580972222222222,
+       "beatP50H": 0.5555555555555556,
+       "beatP90H": 0.5809722222222222,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 2.5555555555555554,
+       "nightP90H": 2.580972222222222,
+       "spredningH": 0.3370833333333323,
+       "felleSett": [],
+       "hardeFeil": [],
+       "sok": 30,
+       "evalueringer": 30,
+       "ms": 41145.377000000095
+      }
+     }
+    }
+   ]
+  },
+  {
+   "fikstur": "S-8",
+   "rangering": {
+    "toppAvgang": {
+     "A": 0,
+     "B": 0,
+     "F": 0
+    },
+    "sammeToppAvgang": {
+     "A": true,
+     "B": true
+    },
+    "kendallTau": null,
+    "p50PerAvgang": {
+     "A": [
+      14.199305555555554,
+      14.199305555555554,
+      14.199305555555554
+     ],
+     "B": [
+      14.155972222222221,
+      14.155972222222221,
+      14.155972222222221
+     ],
+     "F": [
+      14.199305555555554,
+      14.199305555555554,
+      14.199305555555554
+     ]
+    },
+    "merknad": "n=3: τ erstattet av «identisk topp-1 + ingen flipp utenfor båndet» (§8.2)"
+   },
+   "avganger": [
+    {
+     "offsetH": 0,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 13.196666666666667,
+      "distanceNm": 86.16847700062377,
+      "steg": 15,
+      "ms": 1066.902499999851
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m26",
+       "m27"
+      ],
+      "backoff2": []
+     },
+     "utveiMargin": {
+      "m26": {
+       "havn": "Fjällbacka",
+       "timer": 4.336388888888889,
+       "hsMarginM": 0.27332520484924316,
+       "twsMarginKn": 11
+      },
+      "m27": {
+       "havn": "Fjällbacka",
+       "timer": 4.2875,
+       "hsMarginM": 0.22652530670166016,
+       "twsMarginKn": 11
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:noExpandableLabels",
+        "m27:noExpandableLabels"
+       ],
+       "p50H": 14.199305555555554,
+       "p90H": 15.410888888888888,
+       "beatP50H": 0,
+       "beatP90H": 5.7330000000000005,
+       "motorP50H": 0,
+       "motorP90H": 5.300000000000001,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 2.2275833333333317,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 38,
+       "evalueringer": 30,
+       "ms": 34987.68210000009,
+       "motFasit": {
+        "parede": 28,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 10.353708292918368,
+        "annenTopologi": 1
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:boatLimits",
+        "m27:boatLimits"
+       ],
+       "p50H": 14.155972222222221,
+       "p90H": 18.30991666666667,
+       "beatP50H": 0,
+       "beatP90H": 13.439972222222222,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0,
+       "nightP90H": 1.7457222222222222,
+       "spredningH": 5.518861111111114,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 16,
+       "evalueringer": 60,
+       "ms": 897.5427999999374,
+       "motFasit": {
+        "parede": 28,
+        "medianDiffH": 0.17986111111111036,
+        "iqrDiffH": 1.2620138888888897,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 6.685952576055928,
+        "maksAvvikNm": 28.727023894714367,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:noExpandableLabels",
+        "m27:noExpandableLabels"
+       ],
+       "p50H": 14.199305555555554,
+       "p90H": 15.410888888888888,
+       "beatP50H": 0,
+       "beatP90H": 6.414194444444444,
+       "motorP50H": 0,
+       "motorP90H": 6.0008333333333335,
+       "nightP50H": 0,
+       "nightP90H": 0,
+       "spredningH": 2.2275833333333317,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 38,
+       "evalueringer": 30,
+       "ms": 37085.9253
+      }
+     }
+    },
+    {
+     "offsetH": 3,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 13.196666666666667,
+      "distanceNm": 86.16847700062377,
+      "steg": 15,
+      "ms": 882.8146999999881
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m26",
+       "m27"
+      ],
+      "backoff2": []
+     },
+     "utveiMargin": {
+      "m26": {
+       "havn": "Fjällbacka",
+       "timer": 4.336388888888889,
+       "hsMarginM": 0.27332520484924316,
+       "twsMarginKn": 11
+      },
+      "m27": {
+       "havn": "Fjällbacka",
+       "timer": 4.2875,
+       "hsMarginM": 0.22652530670166016,
+       "twsMarginKn": 11
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:noExpandableLabels",
+        "m27:noExpandableLabels"
+       ],
+       "p50H": 14.199305555555554,
+       "p90H": 15.410888888888888,
+       "beatP50H": 0,
+       "beatP90H": 5.7330000000000005,
+       "motorP50H": 0,
+       "motorP90H": 5.300000000000001,
+       "nightP50H": 0.19930555555555557,
+       "nightP90H": 1.408111111111111,
+       "spredningH": 2.2275833333333317,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 38,
+       "evalueringer": 30,
+       "ms": 30780.465599999996,
+       "motFasit": {
+        "parede": 28,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 10.353708292918368,
+        "annenTopologi": 1
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:boatLimits",
+        "m27:boatLimits"
+       ],
+       "p50H": 14.155972222222221,
+       "p90H": 18.30991666666667,
+       "beatP50H": 0,
+       "beatP90H": 13.439972222222222,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 0.2426388888888889,
+       "nightP90H": 4.29925,
+       "spredningH": 5.518861111111114,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 16,
+       "evalueringer": 60,
+       "ms": 883.592399999965,
+       "motFasit": {
+        "parede": 28,
+        "medianDiffH": 0.17986111111111036,
+        "iqrDiffH": 1.2620138888888897,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0.04569444444444459,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 6.685952576055928,
+        "maksAvvikNm": 28.727023894714367,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:noExpandableLabels",
+        "m27:noExpandableLabels"
+       ],
+       "p50H": 14.199305555555554,
+       "p90H": 15.410888888888888,
+       "beatP50H": 0,
+       "beatP90H": 6.414194444444444,
+       "motorP50H": 0,
+       "motorP90H": 6.0008333333333335,
+       "nightP50H": 0.19930555555555557,
+       "nightP90H": 1.408111111111111,
+       "spredningH": 2.2275833333333317,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 38,
+       "evalueringer": 30,
+       "ms": 37263.69900000002
+      }
+     }
+    },
+    {
+     "offsetH": 6,
+     "kontroll": {
+      "reached": true,
+      "naaddeMaal": true,
+      "timer": 13.196666666666667,
+      "distanceNm": 86.16847700062377,
+      "steg": 15,
+      "ms": 922.0372000001371
+     },
+     "backoffSensitivitet": {
+      "backoff0": [
+       "m26",
+       "m27"
+      ],
+      "backoff2": []
+     },
+     "utveiMargin": {
+      "m26": {
+       "havn": "Fjällbacka",
+       "timer": 4.336388888888889,
+       "hsMarginM": 0.27332520484924316,
+       "twsMarginKn": 11
+      },
+      "m27": {
+       "havn": "Fjällbacka",
+       "timer": 4.2875,
+       "hsMarginM": 0.22652530670166016,
+       "twsMarginKn": 11
+      }
+     },
+     "varianter": {
+      "A": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:noExpandableLabels",
+        "m27:noExpandableLabels"
+       ],
+       "p50H": 14.199305555555554,
+       "p90H": 15.410888888888888,
+       "beatP50H": 0,
+       "beatP90H": 5.7330000000000005,
+       "motorP50H": 0,
+       "motorP90H": 5.300000000000001,
+       "nightP50H": 3.1993055555555556,
+       "nightP90H": 4.408111111111111,
+       "spredningH": 2.2275833333333317,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 38,
+       "evalueringer": 30,
+       "ms": 36242.05440000002,
+       "motFasit": {
+        "parede": 28,
+        "medianDiffH": 0,
+        "iqrDiffH": 0,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 0,
+        "maksAvvikNm": 10.353708292918368,
+        "annenTopologi": 1
+       }
+      },
+      "B": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:boatLimits",
+        "m27:boatLimits"
+       ],
+       "p50H": 14.155972222222221,
+       "p90H": 18.30991666666667,
+       "beatP50H": 0,
+       "beatP90H": 13.439972222222222,
+       "motorP50H": 0,
+       "motorP90H": 0,
+       "nightP50H": 3.43625,
+       "nightP90H": 6.018555555555555,
+       "spredningH": 5.518861111111114,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 16,
+       "evalueringer": 60,
+       "ms": 923.9580999999307,
+       "motFasit": {
+        "parede": 28,
+        "medianDiffH": 0.17986111111111036,
+        "iqrDiffH": 1.2620138888888897,
+        "medianBeatDiffH": 0,
+        "medianMotorDiffH": 0,
+        "medianNightDiffH": 0.31361111111111106,
+        "identiskFelleSett": true,
+        "gjennomfoerbarhetsdiff": 0,
+        "medianAvvikNm": 6.685952576055928,
+        "maksAvvikNm": 28.727023894714367,
+        "annenTopologi": 30
+       }
+      },
+      "F": {
+       "gjennomfoerbare": 28,
+       "medlemmer": 30,
+       "algoritmiskeAborter": [],
+       "avbruddstyper": [
+        "m26:noExpandableLabels",
+        "m27:noExpandableLabels"
+       ],
+       "p50H": 14.199305555555554,
+       "p90H": 15.410888888888888,
+       "beatP50H": 0,
+       "beatP90H": 6.414194444444444,
+       "motorP50H": 0,
+       "motorP90H": 6.0008333333333335,
+       "nightP50H": 3.1993055555555556,
+       "nightP90H": 4.408111111111111,
+       "spredningH": 2.2275833333333317,
+       "felleSett": [],
+       "hardeFeil": [
+        "m26",
+        "m27"
+       ],
+       "sok": 38,
+       "evalueringer": 30,
+       "ms": 41529.513499999885
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

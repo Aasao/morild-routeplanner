@@ -119,8 +119,23 @@ export function harbourApproachable(
   return { approachable: true, reason: "anløpbar" };
 }
 
-/** Mekanikken re-søket kjøres med. Fasiten bruker `pareto`. */
-export type R2SearchMode = "pareto" | "korridor-skalar";
+/**
+ * Mekanikken re-søket kjøres med — én per målevariant. Fasiten bruker
+ * `pareto`.
+ *
+ *  - `pareto` (variant F): fullt Pareto-re-søk på hele masken.
+ *  - `skalar` (variant A): ett etikettslot per tilstand, men hele masken.
+ *  - `korridor-skalar` (variant B): skalart re-søk begrenset til et rør rundt
+ *    rømningslinjen.
+ *
+ * `skalar` ble lagt til 2026-08-31, FØR kjøring, av en grunn som er verdt å
+ * skrive ned: uten den måtte variant A låne enten fasitens eller variant Bs
+ * re-søksmekanikk, og felle-settet til A ville da vært identisk med den den
+ * lånte fra — per konstruksjon, ikke som måleresultat. §4s viktigste kriterium
+ * ville vært tomt for A. Dette er en operasjonalisering av variant A, ikke en
+ * endring av fasiten (`pareto` er urørt) eller av noe kriterium.
+ */
+export type R2SearchMode = "pareto" | "skalar" | "korridor-skalar";
 
 export interface R2Config {
   readonly harbours: readonly BailoutHarbour[];
@@ -246,7 +261,9 @@ export function r2FromFailure(
   const cfg = input.r2;
   const limitS = cfg.limitS ?? R2_LIMIT_S;
   const backoff = cfg.backoffSteps ?? 1;
-  const isCorridorMode = (cfg.mode ?? "pareto") === "korridor-skalar";
+  const mode: R2SearchMode = cfg.mode ?? "pareto";
+  const isCorridorMode = mode === "korridor-skalar";
+  const isScalarSearch = mode !== "pareto";
   const opts = withDefaults(input.options ?? {});
 
   // Startpunktet: `backoff` tidssteg tilbake fra der feilen ble oppdaget.
@@ -334,7 +351,7 @@ export function r2FromFailure(
         // Settes **eksplisitt** begge veier: kalleren kan ha slått på
         // skalarmodus for sitt eget medlemssøk (variant A), og fasitens
         // re-søk skal aldri arve det.
-        scalarSearchMode: isCorridorMode,
+        scalarSearchMode: isScalarSearch,
       },
     });
 
