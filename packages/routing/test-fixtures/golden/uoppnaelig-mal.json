@@ -1,0 +1,75 @@
+{
+  "note": "Syntetisk, frosset fikstur (fase 2). Byttes til ekte MEPS-uttrekk i fase 3 — se docs/specs/rutemotor.md §9 spm. 11.",
+  "purpose": "Målet er murt inne av land. Fanger ærlig avbrudd: reached=false med riktig abortReason, og at beste delrute likevel returneres.",
+  "exact": {
+    "reached": false,
+    "abortReason": "labelCap",
+    "safetyVerdict": "trygt",
+    "recheckPassed": true,
+    "failingSegmentCount": 0,
+    "maskCoverage": "full",
+    "weatherCoverage": "full",
+    "fieldUsed": false,
+    "daylightArrival": true
+  },
+  "totals": {
+    "durationS": 36028,
+    "distanceNm": 53.6398,
+    "beatS": 14412,
+    "motorS": 25228,
+    "nightS": 0,
+    "beatAtNightS": 0,
+    "fuelL": 28.0311
+  },
+  "counts": {
+    "legs": 5,
+    "steps": 11,
+    "alternatives": 0
+  },
+  "track": [
+    {
+      "lat": 58.6,
+      "lon": 10.6
+    },
+    {
+      "lat": 58.527808,
+      "lon": 10.57147
+    },
+    {
+      "lat": 58.456893,
+      "lon": 10.544817
+    },
+    {
+      "lat": 58.387264,
+      "lon": 10.519948
+    },
+    {
+      "lat": 58.297306,
+      "lon": 10.446596
+    },
+    {
+      "lat": 58.207824,
+      "lon": 10.374726
+    },
+    {
+      "lat": 58.160951,
+      "lon": 10.215077
+    },
+    {
+      "lat": 58.134217,
+      "lon": 10.039672
+    },
+    {
+      "lat": 58.107687,
+      "lon": 9.864686
+    },
+    {
+      "lat": 58.080808,
+      "lon": 9.690063
+    },
+    {
+      "lat": 57.991429,
+      "lon": 9.620733
+    }
+  ]
+}

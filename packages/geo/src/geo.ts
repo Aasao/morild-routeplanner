@@ -80,6 +80,36 @@ export function angDiff(a: number, b: number): number {
   return Math.abs(((a - b + 540) % 360) - 180);
 }
 
+/**
+ * Tverravvik (cross-track) fra storsirkelen a→b til punktet p, i nautiske
+ * mil. Positivt = p ligger til styrbord for kursen a→b, negativt = babord.
+ *
+ * Brukes av golden-harnessen (korridorsammenligning, spec §8.2) og av
+ * egenskapstesten «rett linje på åpent hav ≈ storsirkel». Ny i v2 — v1
+ * hadde ingen XTE-funksjon.
+ */
+export function crossTrackNm(a: LatLon, b: LatLon, p: LatLon): number {
+  const d13 = haversineNm(a, p) / EARTH_RADIUS_NM;
+  if (d13 === 0) return 0;
+  const brg13 = degToRad(bearing(a, p));
+  const brg12 = degToRad(bearing(a, b));
+  return Math.asin(Math.sin(d13) * Math.sin(brg13 - brg12)) * EARTH_RADIUS_NM;
+}
+
+/**
+ * Langs-sporet-avstand fra a mot b for punktet p, i nautiske mil.
+ * Negativ verdi = p ligger bak a; verdi > |ab| = p ligger forbi b.
+ */
+export function alongTrackNm(a: LatLon, b: LatLon, p: LatLon): number {
+  const d13 = haversineNm(a, p) / EARTH_RADIUS_NM;
+  if (d13 === 0) return 0;
+  const xt = crossTrackNm(a, b, p) / EARTH_RADIUS_NM;
+  const cosRatio = Math.cos(d13) / Math.cos(xt);
+  const sign =
+    Math.abs(angDiff(bearing(a, p), bearing(a, b))) > 90 ? -1 : 1;
+  return sign * Math.acos(Math.max(-1, Math.min(1, cosRatio))) * EARTH_RADIUS_NM;
+}
+
 /** Normaliser vinkel til [0, 360). v1 (morild_bridge.js): `norm360(a)`. */
 export function norm360(a: number): number {
   return ((a % 360) + 360) % 360;

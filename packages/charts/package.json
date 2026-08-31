@@ -10,5 +10,12 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "scripts": {
+    "test": "tsc -b ../geo ../protocol . && vitest run --root ../.. packages/charts"
+  },
+  "dependencies": {
+    "@morild/geo": "workspace:*",
+    "@morild/protocol": "workspace:*"
   }
 }

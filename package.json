@@ -10,7 +10,8 @@
   "scripts": {
     "check": "tsc -b && eslint .",
     "test": "vitest run",
-    "test:arch": "vitest run tools/arch-tests"
+    "test:arch": "vitest run tools/arch-tests",
+    "test:golden": "pnpm --filter @morild/routing test:golden"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

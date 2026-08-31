@@ -1,0 +1,131 @@
+{
+  "note": "Syntetisk, frosset fikstur (fase 2). Byttes til ekte MEPS-uttrekk i fase 3 — se docs/specs/rutemotor.md §9 spm. 11.",
+  "purpose": "Målet ligger rett mot vinden. Fanger bautstraffen og halseside-logikken — den skal krysse, ikke motorseile rett fram.",
+  "exact": {
+    "reached": true,
+    "abortReason": null,
+    "safetyVerdict": "trygt",
+    "recheckPassed": true,
+    "failingSegmentCount": 0,
+    "maskCoverage": "full",
+    "weatherCoverage": "partial",
+    "fieldUsed": true,
+    "daylightArrival": true
+  },
+  "totals": {
+    "durationS": 41464,
+    "distanceNm": 49.0615,
+    "beatS": 34200,
+    "motorS": 0,
+    "nightS": 0,
+    "beatAtNightS": 0,
+    "fuelL": 0
+  },
+  "counts": {
+    "legs": 8,
+    "steps": 25,
+    "alternatives": 1
+  },
+  "track": [
+    {
+      "lat": 58,
+      "lon": 10.6
+    },
+    {
+      "lat": 58.026062,
+      "lon": 10.635732
+    },
+    {
+      "lat": 58.052124,
+      "lon": 10.671491
+    },
+    {
+      "lat": 58.078186,
+      "lon": 10.707275
+    },
+    {
+      "lat": 58.104248,
+      "lon": 10.743086
+    },
+    {
+      "lat": 58.130311,
+      "lon": 10.778922
+    },
+    {
+      "lat": 58.156373,
+      "lon": 10.814785
+    },
+    {
+      "lat": 58.182435,
+      "lon": 10.850674
+    },
+    {
+      "lat": 58.208497,
+      "lon": 10.88659
+    },
+    {
+      "lat": 58.234559,
+      "lon": 10.922532
+    },
+    {
+      "lat": 58.260621,
+      "lon": 10.9585
+    },
+    {
+      "lat": 58.281166,
+      "lon": 10.890855
+    },
+    {
+      "lat": 58.301711,
+      "lon": 10.823171
+    },
+    {
+      "lat": 58.326236,
+      "lon": 10.771334
+    },
+    {
+      "lat": 58.352299,
+      "lon": 10.735272
+    },
+    {
+      "lat": 58.377888,
+      "lon": 10.69136
+    },
+    {
+      "lat": 58.40395,
+      "lon": 10.655246
+    },
+    {
+      "lat": 58.430012,
+      "lon": 10.619105
+    },
+    {
+      "lat": 58.454537,
+      "lon": 10.567078
+    },
+    {
+      "lat": 58.480126,
+      "lon": 10.523038
+    },
+    {
+      "lat": 58.506188,
+      "lon": 10.486819
+    },
+    {
+      "lat": 58.53225,
+      "lon": 10.450573
+    },
+    {
+      "lat": 58.552795,
+      "lon": 10.518741
+    },
+    {
+      "lat": 58.57334,
+      "lon": 10.586949
+    },
+    {
+      "lat": 58.6,
+      "lon": 10.6
+    }
+  ]
+}

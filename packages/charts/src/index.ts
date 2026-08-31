@@ -1,14 +1,11 @@
 /**
  * packages/charts — farbarhetsmaske og kartdata-abstraksjon.
  *
- * Skal etter hvert eie: ChartSource-abstraksjonen (med datum-felt per
- * kilde — Kartverket vs. EMODnet/DDM/OSM), farbarhetsoppslag mot
- * sikkerhetskontur + tørrfall + skjær/grunner, seilingshøyde (bruer/
- * luftspenn), TSS/skipsled-geometri og verne-/forbudssoner.
- *
- * Se docs/00-kravspek.md F1 og docs/01-prosjektplan.md fase 1
- * (spec kommer: docs/specs/farbarhetsmaske.md).
- *
- * Placeholder i fase 0 — ingen ekte logikk enda.
+ * `ChartSource` (spec `docs/specs/farbarhetsmaske.md` §3.6): rene oppslag
+ * mot en allerede innlest, ferdig bygget kartpakke. All polygonalgebra
+ * (union/differanse/buffer) skjer i byggetid i `tools/chart-pack` — denne
+ * pakken gjør kun punkt-/segmenttester (F1.0).
  */
-export const CHARTS_PACKAGE_PLACEHOLDER = "charts" as const;
+export * from "./pack-format.js";
+export * from "./point-in-polygon.js";
+export * from "./chart-source.js";

@@ -1,0 +1,99 @@
+{
+  "note": "Syntetisk, frosset fikstur (fase 2). Byttes til ekte MEPS-uttrekk i fase 3 — se docs/specs/rutemotor.md §9 spm. 11.",
+  "purpose": "v1s referansestrekk over Skagerrak, slør, uten land i veien. Fanger grunnleggende fart, bautstraff og totaler.",
+  "exact": {
+    "reached": true,
+    "abortReason": null,
+    "safetyVerdict": "trygt",
+    "recheckPassed": true,
+    "failingSegmentCount": 0,
+    "maskCoverage": "full",
+    "weatherCoverage": "full",
+    "fieldUsed": true,
+    "daylightArrival": true
+  },
+  "totals": {
+    "durationS": 55002,
+    "distanceNm": 86.0456,
+    "beatS": 8202,
+    "motorS": 29802,
+    "nightS": 0,
+    "beatAtNightS": 0,
+    "fuelL": 33.1133
+  },
+  "counts": {
+    "legs": 6,
+    "steps": 17,
+    "alternatives": 3
+  },
+  "track": [
+    {
+      "lat": 59.1032,
+      "lon": 10.9327
+    },
+    {
+      "lat": 59.009163,
+      "lon": 10.944577
+    },
+    {
+      "lat": 58.916515,
+      "lon": 10.957519
+    },
+    {
+      "lat": 58.825484,
+      "lon": 10.971674
+    },
+    {
+      "lat": 58.73625,
+      "lon": 10.987126
+    },
+    {
+      "lat": 58.648946,
+      "lon": 11.003894
+    },
+    {
+      "lat": 58.576113,
+      "lon": 10.99042
+    },
+    {
+      "lat": 58.477996,
+      "lon": 10.932312
+    },
+    {
+      "lat": 58.377705,
+      "lon": 10.895987
+    },
+    {
+      "lat": 58.277804,
+      "lon": 10.861471
+    },
+    {
+      "lat": 58.178268,
+      "lon": 10.82848
+    },
+    {
+      "lat": 58.077405,
+      "lon": 10.816684
+    },
+    {
+      "lat": 57.976681,
+      "lon": 10.805649
+    },
+    {
+      "lat": 57.907013,
+      "lon": 10.815066
+    },
+    {
+      "lat": 57.819429,
+      "lon": 10.728453
+    },
+    {
+      "lat": 57.738466,
+      "lon": 10.624931
+    },
+    {
+      "lat": 57.7211,
+      "lon": 10.5836
+    }
+  ]
+}

@@ -2,8 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "types": []
+    "rootDir": ".",
+    // "node" trengs kun av testfilene (golden-harnessen leser fikstur-JSON).
+    // Selve motoren importerer aldri node:-moduler — håndhevet av
+    // tools/arch-tests og av src/determinism-source.test.ts.
+    "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src", "test-fixtures"],
+  "references": [{ "path": "../geo" }, { "path": "../protocol" }]
 }

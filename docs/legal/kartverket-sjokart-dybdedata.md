@@ -51,11 +51,31 @@ fullnedlasting (kystlinje endres sakte — se spec §4 om kadensevalg).
 grunn for visning eller rutebeslutning (kartvisning + evt. metadatapanel
 for tillitsnivå). Følger F1.8s attribusjonskrav.
 
+## Fase 1-bygging (2026-08-30/31): datakvalitetslaget er bekreftet vektor+CATZOC
+
+Under bygging av `tools/chart-pack` mot et ekte uttrekk for Hvaler-området
+(bbox 59,05–59,30° N, 10,60–11,00° Ø) ble WFS-laget `app:Datakvalitet`
+faktisk hentet og parset: det er et ordinært GML-polygonlag, IKKE bare
+WMS-raster, med et attributt `catzoc` (S-57 CATZOC-aktig kvalitetsklasse).
+Observerte verdier i testområdet: `A1`, `A2`, `B`, `C` (112 soner totalt).
+Dette besvarer `docs/specs/farbarhetsmaske.md` §8 punkt 2 til fordel for den
+fullt spesifiserte varianten av §3.4 steg 4 (ingen fallback til
+"kun farled" nødvendig). Se `tools/chart-pack/testdata/raw/METADATA.md` for
+spørringsdetaljer og `packages/charts/src/pack-format.ts` (`CatzocClass`)
+for hvordan dette brukes i oppslaget.
+
+Samtidig ble en praktisk WFS-kvirk oppdaget: `bbox`-filteret på denne
+tjenesten svarer stille (200 OK, men feil/tomt resultat, ingen feilmelding)
+med mindre CRS skrives nøyaktig `urn:ogc:def:crs:EPSG::4326` og koordinatene
+oppgis i lat,lon-rekkefølge — se METADATA.md for full oppskrift til neste
+agent som skal hente mer data herfra.
+
 ## Gjenstår / uverifisert
 
 - Eksakt lisenstekst for **dette spesifikke datasettet** (kartkatalogsiden
   er JS-rendret og ga ikke ut lisensfeltet ved automatisert henting under
   research-arbeidet) — bør bekreftes manuelt av Magnus eller ved en direkte
   API-kall mot Geonorge-registerets metadata-endepunkt før produksjonsbruk.
-- Om datakvalitets-laget finnes som vektor (ikke bare WMS-raster) — se
-  `docs/specs/farbarhetsmaske.md` §8, punkt 2.
+- Datum og eksakt tolkning av `førsteDatafangstdato` vs. `oppdateringsdato`
+  vs. `datauttaksdato` for pakkens `vintage`-felt — denne bølgen brukte
+  uttaksdatoen som en konservativ forenkling (se `tools/chart-pack/README.md`).

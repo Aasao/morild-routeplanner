@@ -3,12 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
+  },
+  "scripts": {
+    "test": "tsc -b ../geo ../protocol && vitest run",
+    "test:golden": "tsc -b ../geo ../protocol && vitest run golden",
+    "test:perf": "tsc -b ../geo ../protocol && vitest run --config vitest.perf.config.ts"
+  },
+  "dependencies": {
+    "@morild/geo": "workspace:*",
+    "@morild/protocol": "workspace:*"
   }
 }

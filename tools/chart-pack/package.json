@@ -1,0 +1,19 @@
+{
+  "name": "@morild/chart-pack",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/build.js",
+  "scripts": {
+    "build": "tsc -b . && node dist/build.js",
+    "spike": "tsc -b . && node dist/spike/turf-vs-geos.js"
+  },
+  "dependencies": {
+    "@morild/charts": "workspace:*",
+    "@morild/protocol": "workspace:*",
+    "@turf/turf": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16"
+  }
+}

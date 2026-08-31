@@ -1,0 +1,103 @@
+{
+  "note": "Syntetisk, frosset fikstur (fase 2). Byttes til ekte MEPS-uttrekk i fase 3 — se docs/specs/rutemotor.md §9 spm. 11.",
+  "purpose": "Vinteravgang i mørket. Fanger natt-akkumulering, kryss-i-mørket i totals, og at dagslyskravet flytter ankomsten.",
+  "exact": {
+    "reached": true,
+    "abortReason": null,
+    "safetyVerdict": "trygt",
+    "recheckPassed": true,
+    "failingSegmentCount": 0,
+    "maskCoverage": "full",
+    "weatherCoverage": "partial",
+    "fieldUsed": true,
+    "daylightArrival": false
+  },
+  "totals": {
+    "durationS": 29905,
+    "distanceNm": 44.4021,
+    "beatS": 0,
+    "motorS": 0,
+    "nightS": 29905,
+    "beatAtNightS": 0,
+    "fuelL": 0
+  },
+  "counts": {
+    "legs": 10,
+    "steps": 18,
+    "alternatives": 3
+  },
+  "track": [
+    {
+      "lat": 58.6,
+      "lon": 10.6
+    },
+    {
+      "lat": 58.556023,
+      "lon": 10.6
+    },
+    {
+      "lat": 58.511049,
+      "lon": 10.615202
+    },
+    {
+      "lat": 58.466074,
+      "lon": 10.630384
+    },
+    {
+      "lat": 58.421571,
+      "lon": 10.661355
+    },
+    {
+      "lat": 58.377067,
+      "lon": 10.692287
+    },
+    {
+      "lat": 58.332563,
+      "lon": 10.72318
+    },
+    {
+      "lat": 58.287589,
+      "lon": 10.738285
+    },
+    {
+      "lat": 58.243612,
+      "lon": 10.738285
+    },
+    {
+      "lat": 58.199635,
+      "lon": 10.738285
+    },
+    {
+      "lat": 58.155658,
+      "lon": 10.738285
+    },
+    {
+      "lat": 58.114015,
+      "lon": 10.724368
+    },
+    {
+      "lat": 58.072372,
+      "lon": 10.710468
+    },
+    {
+      "lat": 58.034226,
+      "lon": 10.684214
+    },
+    {
+      "lat": 57.992583,
+      "lon": 10.670345
+    },
+    {
+      "lat": 57.95094,
+      "lon": 10.656491
+    },
+    {
+      "lat": 57.906963,
+      "lon": 10.656491
+    },
+    {
+      "lat": 57.9,
+      "lon": 10.6
+    }
+  ]
+}

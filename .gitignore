@@ -5,3 +5,9 @@ dist-tsc/
 *.tsbuildinfo
 .DS_Store
 coverage/
+
+# tools/chart-pack: byggeoutput reproduseres fra testdata/raw via
+# `pnpm --filter @morild/chart-pack build` — kun kildeuttrekket (raw/) og
+# den frosne kopien i packages/charts/testdata/ sjekkes inn, se
+# tools/chart-pack/README.md.
+tools/chart-pack/testdata/pack/

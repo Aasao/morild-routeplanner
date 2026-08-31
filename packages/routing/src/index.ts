@@ -1,18 +1,28 @@
 /**
- * packages/routing — isokron rutemotor (v1s celle-pruning/bautstraff
- * portert til testet TypeScript), kjørt alltid på klienten
- * (ADR-0002: "klienten beregner, skyen forbereder").
+ * packages/routing — isokron rutemotor med Pareto-etiketter (ADR-0004),
+ * kjørt alltid på klienten (ADR-0002: «klienten beregner, skyen forbereder»).
  *
- * Ren og deterministisk kjerne: samme input → samme rute. All I/O
- * (fetch, cache, fil) lever utenfor motoren — dette er forutsetningen
- * for ensemble-kjøring og regresjonstester, og håndheves strukturelt:
- * denne pakken importerer aldri fetch/fs/node:-moduler, og kun
- * @morild/geo og @morild/protocol fra resten av monorepoet
- * (håndhevet av tools/arch-tests → `pnpm test:arch`).
+ * Ren og deterministisk kjerne: samme input → samme rute. All I/O lever
+ * utenfor motoren — det er forutsetningen for ensemble-kjøring og for
+ * golden-route-regresjon, og det håndheves strukturelt: denne pakken
+ * importerer aldri fetch/fs/node:-moduler, bruker aldri klokka eller
+ * `Math.random`, og venter aldri (`await`). Se `tools/arch-tests`
+ * (`pnpm test:arch`) og `src/determinism-source.test.ts`.
  *
- * Se docs/00-kravspek.md F3 og docs/01-prosjektplan.md fase 2
- * (spec kommer: docs/specs/rutemotor.md).
- *
- * Placeholder i fase 0 — ingen ekte logikk enda.
+ * Spec: docs/specs/rutemotor.md. Beslutning: ADR-0004.
  */
-export const ROUTING_PACKAGE_PLACEHOLDER = "routing" as const;
+export * from "./contracts.js";
+export * from "./cost.js";
+export * from "./domain.js";
+export * from "./arena.js";
+export * from "./label-store.js";
+export * from "./heap.js";
+export * from "./distance-field.js";
+export * from "./tack.js";
+export * from "./tss.js";
+export * from "./daylight.js";
+export * from "./expand.js";
+export * from "./options.js";
+export * from "./result.js";
+export * from "./reconstruct.js";
+export * from "./search.js";

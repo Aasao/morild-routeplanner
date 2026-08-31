@@ -1,0 +1,75 @@
+{
+  "note": "Syntetisk, frosset fikstur (fase 2). Byttes til ekte MEPS-uttrekk i fase 3 — se docs/specs/rutemotor.md §9 spm. 11.",
+  "purpose": "Etappe gjennom TSS-en ved Skagen. Fanger retningsregelen: kryssing på tvers er tillatt, langs i feil retning er hard avvisning.",
+  "exact": {
+    "reached": true,
+    "abortReason": null,
+    "safetyVerdict": "trygt",
+    "recheckPassed": true,
+    "failingSegmentCount": 0,
+    "maskCoverage": "full",
+    "weatherCoverage": "full",
+    "fieldUsed": true,
+    "daylightArrival": true
+  },
+  "totals": {
+    "durationS": 18024,
+    "distanceNm": 28.7531,
+    "beatS": 10800,
+    "motorS": 12611,
+    "nightS": 0,
+    "beatAtNightS": 0,
+    "fuelL": 14.0122
+  },
+  "counts": {
+    "legs": 4,
+    "steps": 11,
+    "alternatives": 3
+  },
+  "track": [
+    {
+      "lat": 58.05,
+      "lon": 11
+    },
+    {
+      "lat": 58.030104,
+      "lon": 10.913922
+    },
+    {
+      "lat": 58.010626,
+      "lon": 10.827984
+    },
+    {
+      "lat": 57.985084,
+      "lon": 10.748145
+    },
+    {
+      "lat": 57.966403,
+      "lon": 10.662457
+    },
+    {
+      "lat": 57.941639,
+      "lon": 10.582835
+    },
+    {
+      "lat": 57.911243,
+      "lon": 10.510891
+    },
+    {
+      "lat": 57.864395,
+      "lon": 10.482344
+    },
+    {
+      "lat": 57.823869,
+      "lon": 10.515899
+    },
+    {
+      "lat": 57.785913,
+      "lon": 10.559963
+    },
+    {
+      "lat": 57.747412,
+      "lon": 10.604248
+    }
+  ]
+}

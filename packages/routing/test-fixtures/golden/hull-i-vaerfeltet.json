@@ -1,0 +1,79 @@
+{
+  "note": "Syntetisk, frosset fikstur (fase 2). Byttes til ekte MEPS-uttrekk i fase 3 — se docs/specs/rutemotor.md §9 spm. 11.",
+  "purpose": "Værfeltet slutter midtveis i tid og rom. Fanger degraderingen: coverage.weather = partial og ærlig stopp der dataene tar slutt.",
+  "exact": {
+    "reached": false,
+    "abortReason": "noExpandableLabels",
+    "safetyVerdict": "trygt",
+    "recheckPassed": true,
+    "failingSegmentCount": 0,
+    "maskCoverage": "full",
+    "weatherCoverage": "partial",
+    "fieldUsed": true,
+    "daylightArrival": true
+  },
+  "totals": {
+    "durationS": 19813,
+    "distanceNm": 29.0299,
+    "beatS": 5413,
+    "motorS": 3600,
+    "nightS": 0,
+    "beatAtNightS": 0,
+    "fuelL": 4
+  },
+  "counts": {
+    "legs": 10,
+    "steps": 12,
+    "alternatives": 0
+  },
+  "track": [
+    {
+      "lat": 58.6,
+      "lon": 10.6
+    },
+    {
+      "lat": 58.558262,
+      "lon": 10.612987
+    },
+    {
+      "lat": 58.519752,
+      "lon": 10.639881
+    },
+    {
+      "lat": 58.477725,
+      "lon": 10.653737
+    },
+    {
+      "lat": 58.438905,
+      "lon": 10.681642
+    },
+    {
+      "lat": 58.396491,
+      "lon": 10.696431
+    },
+    {
+      "lat": 58.353865,
+      "lon": 10.711707
+    },
+    {
+      "lat": 58.31442,
+      "lon": 10.741265
+    },
+    {
+      "lat": 58.271314,
+      "lon": 10.757507
+    },
+    {
+      "lat": 58.244415,
+      "lon": 10.726748
+    },
+    {
+      "lat": 58.202069,
+      "lon": 10.65715
+    },
+    {
+      "lat": 58.153754,
+      "lon": 10.60383
+    }
+  ]
+}
