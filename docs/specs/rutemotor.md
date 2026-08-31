@@ -494,7 +494,17 @@ interface RouteResult {
     readonly pruned: {
       readonly dominated: number; readonly bound: number;
       readonly deadEnd: number; readonly hardConstraint: number;
+      /** Splitt av `hardConstraint` etter hvilken sjekk som avviste
+       *  kandidaten (nettbrett-målingen 2026-08-31): boatLimits, point,
+       *  clearance, segment, tss, daylight. Summerer til `hardConstraint`. */
+      readonly hardConstraintBoatLimits: number;
+      readonly hardConstraintPoint: number;
+      readonly hardConstraintClearance: number;
+      readonly hardConstraintSegment: number;
+      readonly hardConstraintTss: number;
+      readonly hardConstraintDaylight: number;
       readonly capEvicted: number; readonly noWeather: number;
+      readonly cone: number; readonly outsideDomain: number;
     };
   };
 }

@@ -268,6 +268,14 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-08-31 (3) (steg 3-beslutninger, se
+  `docs/research/steg3-plan-2026-08-31.md`):** tidsbokset målepakke
+  (~1 uke), fase 3 starter 2026-09-07 uansett måleutfall;
+  korridorpakke og τ-felt betinget/gated; CATZOC-semantikkforberedelse
+  i klaringskontrakten (effektivt krav = basiskrav + f(CATZOC, dybde),
+  f=0 til kalibrering, F1.2); måleplan E1′ revidert per
+  djevelens-advokat-review (R2 operasjonalisert m/Pareto-re-søk-fasit,
+  to nye fiksturer S-7/S-8, to-parameter-front m/kontroller).
 - **2026-08-31 (2) (R3 + QA-guardrail, se
   `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`):**
   kystbufferen (minOffing + sjøgangstillegg) håndheves langs hele korden,

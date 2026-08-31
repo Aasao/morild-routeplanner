@@ -8,4 +8,5 @@
  */
 export * from "./pack-format.js";
 export * from "./point-in-polygon.js";
+export * from "./catzoc.js";
 export * from "./chart-source.js";

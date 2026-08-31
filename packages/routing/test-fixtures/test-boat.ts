@@ -24,6 +24,24 @@ export interface TestBoatOptions {
    * måle ren diskretiseringsfeil, uten seilfysikk blandet inn.
    */
   readonly flatPolar?: boolean;
+  /**
+   * Deratingen regnes fra **bølgebratthet** (F3.2, `Hs/Tp²`) i stedet for fra
+   * Hs alene. Av som standard: alle eksisterende fiksturer og golden-ruter
+   * bruker v1-heuristikken, og den skal ikke endres av at S-8 finnes.
+   *
+   * Kreves av S-8 (vind mot strøm): der er hele fellemekanismen at den samme
+   * bølgehøyden er ufarlig på 7 s og alvorlig på 5 s. Hs alene lyver — se
+   * `docs/research/review-seiler.md` punkt 3.
+   */
+  readonly steepnessDerating?: boolean;
+}
+
+/**
+ * Bølgebratthet S = 2πHs/(g·Tp²) — dimensjonsløs. Typiske verdier: ~0,03 i
+ * vanlig vindsjø, ~0,06 i kort sjø, ~0,10 der bølgene begynner å bryte.
+ */
+export function waveSteepness(hsM: number, tpS: number): number {
+  return (2 * Math.PI * hsM) / (9.81 * tpS * tpS);
 }
 
 /** Vinkelfaktor: 0 i avviklingssonen, maks på romskjøts, litt lavere på lens. */
@@ -43,8 +61,18 @@ export function testBoat(options: TestBoatOptions = {}): BoatModel {
       const shape = options.flatPolar === true ? 1 : angleFactor(twaDeg);
       return hullKn * shape * cruising;
     },
-    waveFactor(hsM, _tpS, relDirDeg) {
+    waveFactor(hsM, tpS, relDirDeg) {
       if (ignoreWaves || hsM <= 0) return 1;
+      if (options.steepnessDerating === true && tpS !== undefined && tpS > 0) {
+        // Bratthetsderating (F3.2). Tapet starter først over S ≈ 0,025 —
+        // en lang dønning bremser ikke — og er retningsavhengig: motsjø
+        // verst, medsjø nesten gratis. Faktoren skaleres også med Hs, slik
+        // at bratt småkrapp sjø på 0,3 m ikke deraterer noe særlig.
+        const excess = Math.max(0, waveSteepness(hsM, tpS) - 0.025);
+        const dir = relDirDeg < 60 ? 1 : relDirDeg <= 120 ? 0.6 : 0.25;
+        const size = Math.min(1, hsM / 1.5);
+        return Math.max(0.35, 1 - 9 * excess * dir * size);
+      }
       // v1s heuristikk: motsjø / tverrsjø / medsjø, gulv 45 %.
       const k = relDirDeg < 60 ? 0.09 : relDirDeg <= 120 ? 0.045 : 0.02;
       return Math.max(0.45, 1 - k * hsM);

@@ -221,7 +221,19 @@ export interface RouteDiagnostics {
     readonly dominated: number;
     readonly bound: number;
     readonly deadEnd: number;
+    /** Sum av de seks `hardConstraint*`-tellerne under. Beholdt for kompatibilitet. */
     readonly hardConstraint: number;
+    /**
+     * Splitt av `hardConstraint` etter hvilken hard sjekk som avviste
+     * kandidaten (nettbrett-målingen, steg3-plan §4 pkt. 2). Rekkefølgen
+     * følger sjekkrekkefølgen i `expandLabel`/`tryHeading`.
+     */
+    readonly hardConstraintBoatLimits: number;
+    readonly hardConstraintPoint: number;
+    readonly hardConstraintClearance: number;
+    readonly hardConstraintSegment: number;
+    readonly hardConstraintTss: number;
+    readonly hardConstraintDaylight: number;
     readonly capEvicted: number;
     readonly noWeather: number;
     readonly cone: number;

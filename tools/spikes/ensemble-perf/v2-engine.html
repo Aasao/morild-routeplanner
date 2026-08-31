@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>RoutePlanner v2 — Spike: v2-motor instrumentert (nettbrett-målingen)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#0a1420; --panel:#0f2031; --panel2:#13293d; --line:#22405a;
+    --txt:#e6edf3; --muted:#90a4b8; --accent:#2dd4bf; --warn:#fbbf24; --bad:#f87171; --good:#34d399;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px}
+  body{padding:20px 24px 60px;max-width:1200px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 4px}
+  h1 .sub{color:var(--accent)}
+  .tag{color:var(--muted);font-size:12px;margin-bottom:18px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0 0 10px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-family:var(--mono);font-size:12.5px}
+  .grid2 div b{color:var(--muted);font-weight:500}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+  input,select{background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--mono);font-size:12.5px}
+  button{cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:10px 16px;
+        background:var(--accent);color:#04222b;font-size:13.5px;font-weight:700}
+  button:disabled{opacity:.5;cursor:default}
+  button.ghost{background:transparent;color:var(--txt);font-weight:600;padding:7px 12px;font-size:12px}
+  button.warn{background:var(--warn)}
+  #status{font-size:12.5px;color:var(--accent);min-height:18px;margin-top:10px;font-family:var(--mono);white-space:pre-wrap}
+  #log{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:pre-wrap;max-height:220px;
+       overflow-y:auto;margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:6px}
+  th,td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted);text-transform:uppercase;font-size:10.5px;letter-spacing:.4px}
+  tr.hl td{color:var(--accent)}
+  tr.bad td{color:var(--bad)}
+  textarea{width:100%;height:260px;background:var(--bg);color:var(--txt);border:1px solid var(--line);
+        border-radius:7px;padding:10px;font-family:var(--mono);font-size:11px;resize:vertical}
+  .note{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .badge{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:5px;
+         padding:1px 7px;font-size:10.5px;color:var(--muted);margin-left:6px}
+  a.dl{color:var(--accent);font-size:12.5px}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>RoutePlanner v2 <span class="sub">Spike — v2-motor instrumentert (nettbrett-målingen)</span></h1>
+  <div class="tag">Kjører DEN EKTE v2-motoren (<code>packages/routing</code>) via <code>serve.mjs</code>, ikke en
+    kopi. Golden-scenarioer fra <code>packages/routing/test-fixtures/golden-scenarios.ts</code>. Se README.md i
+    denne mappen for kjøreinstruks (batteri, flymodus, protokoll).</div>
+
+  <div class="card">
+    <h2>Enhetsinfo</h2>
+    <div class="grid2" id="deviceInfo"></div>
+  </div>
+
+  <div class="card">
+    <h2>Oppsett</h2>
+    <div class="row">
+      <label>Scenario
+        <select id="scenario">
+          <option value="skjaeloy-skagen-apent">skjaeloy-skagen-apent (åpent slør)</option>
+          <option value="bohuslan-trange-sund">bohuslan-trange-sund (skjærgård)</option>
+        </select>
+      </label>
+      <label>Antall medlemmer<input id="memberCount" type="number" value="30" min="1" max="200"></label>
+      <label>Snapshot hver N. iterasjon<input id="snapshotEvery" type="number" value="5" min="1" max="200"></label>
+      <label>Pool-størrelse (0 = auto)<input id="poolSize" type="number" value="0" min="0" max="32"></label>
+    </div>
+    <div class="row">
+      <button id="runSingleBtn">Kjør kontrollmedlem (full diagnostikk)</button>
+      <button id="runSeqBtn">Kjør ensemble sekvensielt</button>
+      <button id="runPoolBtn">Kjør ensemble over worker-pool</button>
+      <button id="cloneProbeBtn" class="ghost">Structured-clone-probe</button>
+    </div>
+    <div class="row">
+      <button id="protocolBtn" class="warn">Kjør fullt måleprotokoll (3 kald + 10 varm ×2, drift-rapport)</button>
+    </div>
+    <div id="status">Klar.</div>
+    <div id="log"></div>
+  </div>
+
+  <div class="card">
+    <h2>Faseklokker (siste kjøring, snitt over medlemmer der aktuelt)</h2>
+    <table id="phaseTable">
+      <thead><tr><th>Fase</th><th>ms</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note">
+      «Konstruksjon» = feltbygg + Tub-bound-forhåndssimulering + oppsett (alt inne i <code>createSearch</code>s
+      konstruktør). «Søkeløkke» = <code>advance()</code>-løkken til <code>done</code>. «Rekonstruksjon+ettersjekk»
+      = <code>finish()</code> (kjører <code>buildResult</code>: konsolidering, sluttetappe, uavhengig ettersjekk).
+      Motoren eksponerer ikke et fjerde skille for «feltbygg alene» — det ville krevd å bryte kapslingen; se
+      rapporten for hvorfor det er en bevisst avgrensning.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Splittet hard-pruning (diagnostics.pruned.*)</h2>
+    <table id="prunedTable">
+      <thead><tr><th>Årsak</th><th>Antall</th><th>Andel av hardConstraint</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note">
+      Splitten (boatLimits/point/clearance/segment/tss/daylight) ble lagt til i
+      <code>packages/routing/src/search.ts</code> for denne målingen — se rapporten. Summen av de seks skal
+      alltid være lik <code>hardConstraint</code> (håndhevet av en regresjonstest).
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tellende maske-dekorator (i spiken, ikke i packages/routing)</h2>
+    <table id="maskTable">
+      <thead><tr><th>Metode</th><th>Kall</th><th>Akkumulert ms</th><th>µs/kall</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="note">Dette er den SYNTETISKE golden-masken (rektangler), ikke ekte kartdata — kall-tellingen her
+      × µs/kall fra ekte-maske-mikrobenchmarken (<a href="mikrobench.html">mikrobench.html</a>) gir det avgrensede
+      kostnadsestimatet for skjærgård (steg3-plan §4 pkt. 5/7).</div>
+  </div>
+
+  <div class="card">
+    <h2>Antikjede-histogram (siste dump)</h2>
+    <div id="antichainInfo" class="note"></div>
+    <table id="antichainTable">
+      <thead><tr><th>Gruppe</th><th>tack</th><th>Histogram (etiketter/tilstand-eller-celle → antall grupper)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Gate-statistikk (R3-korridor) + heap-estimat</h2>
+    <div class="grid2" id="gateInfo"></div>
+  </div>
+
+  <div class="card">
+    <h2>Minne</h2>
+    <div class="grid2" id="memInfo"></div>
+    <div class="note">performance.memory er Chrome-only og måler kun hovedtrådens JS-heap. Arena-anslaget
+      (etiketter × 76 byte/etikett) er den mer treffsikre skranken for selve søket.</div>
+  </div>
+
+  <div class="card">
+    <h2>Ensemble-/protokollresultater</h2>
+    <table id="resultsTable">
+      <thead>
+        <tr><th>Kjøring</th><th>Medlemmer</th><th>Total (ms)</th><th>Median/medlem (ms)</th><th>Min</th><th>Maks</th></tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Structured-clone / postMessage-kostnad (§7 pkt. 5)</h2>
+    <div class="grid2" id="cloneInfo"></div>
+    <div class="note">«Isolert clone» = ren <code>structuredClone(result)</code> på hovedtråden, median av mange
+      repetisjoner. «Verdikjede worker→hovedtråd» = faktisk tid fra Workerens <code>postMessage</code> til
+      hovedtrådens <code>onmessage</code>, ved absolutt epoke-klokke (performance.timeOrigin) — inkluderer
+      cloning OG hendelseskø-planlegging, og er derfor det mer realistiske produksjonstallet.</div>
+  </div>
+
+  <div class="card">
+    <h2>Protokoll-drift (rygg-mot-rygg)</h2>
+    <div id="driftInfo" class="note">Ingen protokollkjøring ennå.</div>
+  </div>
+
+  <div class="card">
+    <h2>Alt som JSON</h2>
+    <div class="row">
+      <button id="downloadBtn" class="ghost">Last ned JSON</button>
+      <span id="downloadNote" class="note"></span>
+    </div>
+    <textarea id="jsonOut" readonly spellcheck="false"></textarea>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const SCENARIOS = ['skjaeloy-skagen-apent', 'bohuslan-trange-sund'];
+const state = {
+  lastSingle: null,
+  lastEnsembleRuns: [],
+  lastCloneProbe: null,
+  lastProtocol: null,
+};
+
+function fmt(n, d = 1) { return (n == null || Number.isNaN(n)) ? '—' : Number(n).toFixed(d); }
+function pct(n, d = 1) { return (n == null || Number.isNaN(n)) ? '—' : (Number(n) * 100).toFixed(d) + ' %'; }
+
+function median(arr) {
+  if (!arr.length) return NaN;
+  const s = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+function statsOf(arr) {
+  if (!arr.length) return { min: NaN, max: NaN, median: NaN, avg: NaN };
+  let min = Infinity, max = -Infinity, sum = 0;
+  for (const v of arr) { if (v < min) min = v; if (v > max) max = v; sum += v; }
+  return { min, max, median: median(arr), avg: sum / arr.length };
+}
+
+function logLine(s) {
+  const el = document.getElementById('log');
+  el.textContent += s + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(s) { document.getElementById('status').textContent = s; }
+
+let jobCounter = 0;
+function makeWorker() { return new Worker('/v2-worker.mjs', { type: 'module' }); }
+
+/** Poster én jobb til en gitt worker og venter på svaret. Måler også
+ * worker→hovedtråd-forsinkelsen via absolutt epoke-klokke (§7 pkt. 5). */
+function runJob(worker, msg) {
+  const jobId = ++jobCounter;
+  return new Promise((resolve, reject) => {
+    function handler(ev) {
+      const m = ev.data;
+      if (m.jobId !== jobId) return;
+      worker.removeEventListener('message', handler);
+      const receivedAtEpochMs = performance.timeOrigin + performance.now();
+      if (m.type === 'done') {
+        resolve({
+          result: m.result,
+          transferLatencyMs: m.sentAtEpochMs != null ? receivedAtEpochMs - m.sentAtEpochMs : null,
+        });
+      } else {
+        reject(new Error(m.message || 'ukjent feil i worker'));
+      }
+    }
+    worker.addEventListener('message', handler);
+    worker.postMessage({ ...msg, jobId });
+  });
+}
+
+function poolSizeFor() {
+  const manual = Number(document.getElementById('poolSize').value) || 0;
+  if (manual > 0) return manual;
+  return Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 4) - 1));
+}
+
+async function runSequential(scenario, memberCount, snapshotEvery, includeFullResultFor = -1) {
+  const worker = makeWorker();
+  const perMemberMs = [];
+  const runs = [];
+  const t0 = performance.now();
+  for (let i = 0; i < memberCount; i++) {
+    const ts = performance.now();
+    const { result, transferLatencyMs } = await runJob(worker, {
+      type: 'run-member',
+      scenario, memberIndex: i, snapshotEveryIterations: snapshotEvery,
+      includeFullResult: i === includeFullResultFor,
+    });
+    perMemberMs.push(performance.now() - ts);
+    runs.push({ result, transferLatencyMs });
+  }
+  const totalMs = performance.now() - t0;
+  worker.terminate();
+  return { totalMs, perMemberMs, runs };
+}
+
+async function runPool(scenario, memberCount, poolSize, snapshotEvery) {
+  const workers = Array.from({ length: poolSize }, makeWorker);
+  const perMemberMs = new Array(memberCount);
+  const runs = new Array(memberCount);
+  let next = 0;
+  const t0 = performance.now();
+  async function loop(w) {
+    for (;;) {
+      const i = next++;
+      if (i >= memberCount) return;
+      const ts = performance.now();
+      const { result, transferLatencyMs } = await runJob(w, {
+        type: 'run-member', scenario, memberIndex: i, snapshotEveryIterations: snapshotEvery,
+      });
+      perMemberMs[i] = performance.now() - ts;
+      runs[i] = { result, transferLatencyMs };
+    }
+  }
+  await Promise.all(workers.map(loop));
+  const totalMs = performance.now() - t0;
+  workers.forEach((w) => w.terminate());
+  return { totalMs, perMemberMs, runs };
+}
+
+// ---------------------------------------------------------------- rendering
+
+function renderPhaseTable(timing) {
+  const tbody = document.querySelector('#phaseTable tbody');
+  tbody.innerHTML = '';
+  const rows = [
+    ['Konstruksjon (feltbygg+Tub-bound+oppsett)', timing.constructorS * 1000],
+    ['Søkeløkke (advance til done)', timing.searchLoopS * 1000],
+    ['Rekonstruksjon+ettersjekk (finish)', timing.reconstructRecheckS * 1000],
+    ['Totalt', timing.totalS * 1000],
+  ];
+  for (const [name, ms] of rows) {
+    const tr = document.createElement('tr');
+    if (name === 'Totalt') tr.className = 'hl';
+    tr.innerHTML = `<td>${name}</td><td>${fmt(ms, 2)}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function renderPrunedTable(pruned) {
+  const tbody = document.querySelector('#prunedTable tbody');
+  tbody.innerHTML = '';
+  const total = pruned.hardConstraint || 1;
+  const rows = [
+    ['Båtens ytelsesgrenser (TWS/Hs)', pruned.hardConstraintBoatLimits],
+    ['Punkt (pointVerdict)', pruned.hardConstraintPoint],
+    ['Klaring (R3-korridor)', pruned.hardConstraintClearance],
+    ['Segment (segmentVerdict)', pruned.hardConstraintSegment],
+    ['TSS', pruned.hardConstraintTss],
+    ['Dagslys-ankomst', pruned.hardConstraintDaylight],
+  ];
+  for (const [name, n] of rows) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${name}</td><td>${n}</td><td>${pct(n / total)}</td>`;
+    tbody.appendChild(tr);
+  }
+  const tr = document.createElement('tr');
+  tr.className = 'hl';
+  tr.innerHTML = `<td>Sum = hardConstraint</td><td>${pruned.hardConstraint}</td><td>100 %</td>`;
+  tbody.appendChild(tr);
+  const other = [
+    ['dominated', pruned.dominated], ['bound', pruned.bound], ['deadEnd', pruned.deadEnd],
+    ['capEvicted', pruned.capEvicted], ['noWeather', pruned.noWeather], ['cone', pruned.cone],
+    ['outsideDomain', pruned.outsideDomain],
+  ];
+  for (const [name, n] of other) {
+    const tr2 = document.createElement('tr');
+    tr2.innerHTML = `<td>(til info) ${name}</td><td>${n}</td><td>—</td>`;
+    tbody.appendChild(tr2);
+  }
+}
+
+function renderMaskTable(maskStats) {
+  const tbody = document.querySelector('#maskTable tbody');
+  tbody.innerHTML = '';
+  for (const method of ['pointVerdict', 'segmentVerdict', 'clearanceNm', 'tssVerdict']) {
+    const calls = maskStats.calls[method];
+    const ms = maskStats.timeMs[method];
+    const usPerCall = calls > 0 ? (ms * 1000) / calls : 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${method}</td><td>${calls}</td><td>${fmt(ms, 2)}</td><td>${fmt(usPerCall, 3)}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function renderAntichain(antichain) {
+  document.getElementById('antichainInfo').textContent =
+    `${antichain.snapshots.length} periodiske øyeblikksbilder underveis + sluttdump. ` +
+    `Sluttdump vist under.`;
+  const tbody = document.querySelector('#antichainTable tbody');
+  tbody.innerHTML = '';
+  const groups = [
+    ['per tilstand', 'tack=0', antichain.final.perState.tackZero],
+    ['per tilstand', 'tack≠0', antichain.final.perState.tackNonzero],
+    ['per celle', 'tack=0', antichain.final.perCell.tackZero],
+    ['per celle', 'tack≠0', antichain.final.perCell.tackNonzero],
+  ];
+  for (const [scope, tack, g] of groups) {
+    const hist = Object.entries(g.countHistogram).sort((a, b) => Number(a[0].replace('+','')) - Number(b[0].replace('+','')))
+      .map(([k, v]) => `${k}→${v}`).join(', ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${scope} (${g.totalGroups} grupper, ${g.totalLabels} etiketter)</td><td>${tack}</td><td>${hist || '—'}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function renderGateInfo(diagnostics, heapEstimate) {
+  const c = diagnostics.clearance;
+  const cr = diagnostics.clearanceRecheck;
+  document.getElementById('gateInfo').innerHTML = `
+    <div><b>Søk: gatePass</b></div><div>${c.gatePass}</div>
+    <div><b>Søk: gateMiss</b></div><div>${c.gateMiss}</div>
+    <div><b>Søk: midpointChecks</b></div><div>${c.midpointChecks}</div>
+    <div><b>Søk: clearanceCalls</b></div><div>${c.clearanceCalls}</div>
+    <div><b>Søk: rejections</b></div><div>${c.rejections}</div>
+    <div><b>Søk: maxDepth</b></div><div>${c.maxDepth}</div>
+    <div><b>Ettersjekk: gatePass/Miss</b></div><div>${cr.gatePass} / ${cr.gateMiss}</div>
+    <div><b>Ettersjekk: clearanceCalls</b></div><div>${cr.clearanceCalls}</div>
+    <div><b>Etiketter opprettet</b></div><div>${heapEstimate.labelsCreated}</div>
+    <div><b>Heap, analytisk (76 B/etikett)</b></div><div>${(heapEstimate.analyticBytes / 1048576).toFixed(2)} MB</div>
+    <div><b>Heap, faktisk (arenaBytes)</b></div><div>${(heapEstimate.actualArenaBytes / 1048576).toFixed(2)} MB</div>
+    <div><b>Bytes/etikett, faktisk</b></div><div>${fmt(heapEstimate.bytesPerLabelActual, 2)}</div>
+  `;
+}
+
+function renderMemInfo(memory) {
+  const fmtMB = (m) => m ? (m.usedJSHeapSize / 1048576).toFixed(1) + ' MB' : 'ikke tilgjengelig';
+  document.getElementById('memInfo').innerHTML = `
+    <div><b>Før (hovedtråd)</b></div><div>${fmtMB(performanceMemorySnapshot())}</div>
+    <div><b>Worker: før medlem</b></div><div>${fmtMB(memory.before)}</div>
+    <div><b>Worker: etter medlem</b></div><div>${fmtMB(memory.after)}</div>
+  `;
+}
+function performanceMemorySnapshot() { return performance.memory ?? null; }
+
+function pushResultRow(name, memberCount, totalMs, perMemberMs) {
+  const s = statsOf(perMemberMs);
+  const tbody = document.getElementById('resultsBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${name}</td><td>${memberCount}</td><td>${fmt(totalMs)}</td>` +
+    `<td>${fmt(s.median)}</td><td>${fmt(s.min)}</td><td>${fmt(s.max)}</td>`;
+  tbody.appendChild(tr);
+}
+
+function updateSingleRunDisplay(result) {
+  renderPhaseTable(result.timing);
+  renderPrunedTable(result.diagnostics.pruned);
+  renderMaskTable(result.maskStats);
+  renderAntichain(result.antichain);
+  renderGateInfo(result.diagnostics, result.heapEstimate);
+  renderMemInfo(result.memory);
+}
+
+function dumpJson() {
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    device: deviceInfo(),
+    lastSingle: state.lastSingle,
+    lastEnsembleRuns: state.lastEnsembleRuns,
+    lastCloneProbe: state.lastCloneProbe,
+    lastProtocol: state.lastProtocol,
+  };
+  const json = JSON.stringify(payload, null, 2);
+  document.getElementById('jsonOut').value = json;
+  return json;
+}
+
+function deviceInfo() {
+  return {
+    userAgent: navigator.userAgent,
+    hardwareConcurrency: navigator.hardwareConcurrency || null,
+    performanceMemoryAvailable: !!performance.memory,
+    devicePixelRatio: window.devicePixelRatio || null,
+  };
+}
+
+function initDeviceInfo() {
+  const d = deviceInfo();
+  document.getElementById('deviceInfo').innerHTML = `
+    <div><b>userAgent</b></div><div>${d.userAgent}</div>
+    <div><b>hardwareConcurrency</b></div><div>${d.hardwareConcurrency ?? 'ukjent'}</div>
+    <div><b>performance.memory</b></div><div>${d.performanceMemoryAvailable ? 'tilgjengelig' : 'ikke tilgjengelig'}</div>
+  `;
+}
+
+// ---------------------------------------------------------------- knapper
+
+document.getElementById('runSingleBtn').addEventListener('click', async () => {
+  const scenario = document.getElementById('scenario').value;
+  const snapshotEvery = Number(document.getElementById('snapshotEvery').value) || 5;
+  setStatus('Kjører kontrollmedlem …');
+  const worker = makeWorker();
+  try {
+    const { result } = await runJob(worker, {
+      type: 'run-member', scenario, memberIndex: 0, snapshotEveryIterations: snapshotEvery,
+    });
+    state.lastSingle = result;
+    updateSingleRunDisplay(result);
+    setStatus(`Ferdig. reached=${result.reached}, totalS=${fmt(result.timing.totalS * 1000)} ms`);
+    dumpJson();
+  } catch (e) {
+    setStatus('Feil: ' + e.message);
+    console.error(e);
+  } finally {
+    worker.terminate();
+  }
+});
+
+document.getElementById('runSeqBtn').addEventListener('click', async () => {
+  const scenario = document.getElementById('scenario').value;
+  const memberCount = Number(document.getElementById('memberCount').value) || 30;
+  const snapshotEvery = Number(document.getElementById('snapshotEvery').value) || 5;
+  setStatus(`Sekvensiell ensemble (${memberCount} medlemmer) …`);
+  const { totalMs, perMemberMs, runs } = await runSequential(scenario, memberCount, snapshotEvery);
+  pushResultRow(`Sekvensiell (${scenario})`, memberCount, totalMs, perMemberMs);
+  state.lastEnsembleRuns.push({ mode: 'sequential', scenario, memberCount, totalMs, perMemberMs, diagnostics: runs.map(r => r.result.diagnostics) });
+  updateSingleRunDisplay(runs[0].result);
+  setStatus(`Ferdig. total ${fmt(totalMs)} ms`);
+  dumpJson();
+});
+
+document.getElementById('runPoolBtn').addEventListener('click', async () => {
+  const scenario = document.getElementById('scenario').value;
+  const memberCount = Number(document.getElementById('memberCount').value) || 30;
+  const snapshotEvery = Number(document.getElementById('snapshotEvery').value) || 5;
+  const poolSize = poolSizeFor();
+  setStatus(`Pool ×${poolSize} (${memberCount} medlemmer) …`);
+  const { totalMs, perMemberMs, runs } = await runPool(scenario, memberCount, poolSize, snapshotEvery);
+  pushResultRow(`Pool ×${poolSize} (${scenario})`, memberCount, totalMs, perMemberMs);
+  state.lastEnsembleRuns.push({ mode: 'pool', scenario, memberCount, poolSize, totalMs, perMemberMs, diagnostics: runs.map(r => r.result.diagnostics) });
+  updateSingleRunDisplay(runs[0].result);
+  setStatus(`Ferdig. total (vegg-klokke) ${fmt(totalMs)} ms`);
+  dumpJson();
+});
+
+document.getElementById('cloneProbeBtn').addEventListener('click', async () => {
+  const scenario = document.getElementById('scenario').value;
+  setStatus('Structured-clone-probe: henter fullt RouteResult …');
+  const worker = makeWorker();
+  try {
+    const { result, transferLatencyMs } = await runJob(worker, {
+      type: 'run-member', scenario, memberIndex: 0, snapshotEveryIterations: 1000000, includeFullResult: true,
+    });
+    const full = result.fullResult;
+    const REPEATS = 300;
+    const samples = [];
+    for (let i = 0; i < REPEATS; i++) {
+      const t0 = performance.now();
+      structuredClone(full);
+      samples.push((performance.now() - t0) * 1000); // µs
+    }
+    const s = statsOf(samples);
+    const approxBytes = new TextEncoder().encode(JSON.stringify(full)).length;
+    const probe = {
+      scenario,
+      approxBytes,
+      isolatedCloneUs: s,
+      workerToMainTransferMs: transferLatencyMs,
+      steps: full.steps.length,
+      legs: full.legs.length,
+      isochrones: full.isochrones.length,
+    };
+    state.lastCloneProbe = probe;
+    document.getElementById('cloneInfo').innerHTML = `
+      <div><b>Payload (JSON-bytes, approx)</b></div><div>${(approxBytes / 1024).toFixed(1)} kB</div>
+      <div><b>steps / legs / isochrones</b></div><div>${full.steps.length} / ${full.legs.length} / ${full.isochrones.length}</div>
+      <div><b>Isolert structuredClone — median</b></div><div>${fmt(s.median, 1)} µs</div>
+      <div><b>Isolert structuredClone — min/maks</b></div><div>${fmt(s.min, 1)} / ${fmt(s.max, 1)} µs</div>
+      <div><b>Verdikjede worker→hovedtråd (én kald måling)</b></div><div>${fmt(transferLatencyMs, 3)} ms</div>
+    `;
+    setStatus('Structured-clone-probe ferdig.');
+    dumpJson();
+  } catch (e) {
+    setStatus('Feil: ' + e.message);
+    console.error(e);
+  } finally {
+    worker.terminate();
+  }
+});
+
+// ---------------------------------------------------------- måleprotokoll
+
+/**
+ * Værruting-utviklerens protokoll (steg3-plan §4 pkt. 8): 3 kalde + 10 varme
+ * kjøringer (forkast første varme), median+min/maks; hele sekvensen 2×
+ * rygg-mot-rygg med drift-rapport (>20 % = throttling-flagg).
+ *
+ * «Kald» tilnærmes her ved en FERSK Worker per kjøring (ingen JIT-oppvarming
+ * fra tidligere kjøringer i samme kontekst) — ikke en full sideomlasting
+ * (det ville krevd at Magnus trykker manuelt for hver av de 26 kjøringene).
+ * Avviket fra en «ekte» kald start (ny prosess) er dokumentert i README.md.
+ */
+async function runOneTimed(scenario, snapshotEvery) {
+  const worker = makeWorker();
+  const t0 = performance.now();
+  const { result } = await runJob(worker, {
+    type: 'run-member', scenario, memberIndex: 0, snapshotEveryIterations: snapshotEvery,
+  });
+  const ms = performance.now() - t0;
+  worker.terminate();
+  return { ms, diagnostics: result.diagnostics };
+}
+
+async function runProtocolSequenceOnce(scenario, snapshotEvery, onProgress) {
+  const cold = [];
+  for (let i = 0; i < 3; i++) {
+    const r = await runOneTimed(scenario, snapshotEvery);
+    cold.push(r.ms);
+    onProgress(`kald ${i + 1}/3: ${fmt(r.ms)} ms`);
+  }
+  const warmAll = [];
+  for (let i = 0; i < 10; i++) {
+    const r = await runOneTimed(scenario, snapshotEvery);
+    warmAll.push(r.ms);
+    onProgress(`varm ${i + 1}/10: ${fmt(r.ms)} ms`);
+  }
+  const warm = warmAll.slice(1); // forkast første varme
+  return { cold: statsOf(cold), warm: statsOf(warm), coldRaw: cold, warmRaw: warmAll };
+}
+
+document.getElementById('protocolBtn').addEventListener('click', async () => {
+  const scenario = document.getElementById('scenario').value;
+  const snapshotEvery = Number(document.getElementById('snapshotEvery').value) || 5;
+  document.getElementById('log').textContent = '';
+  setStatus('Protokoll: sekvens 1/2 …');
+  const seq1 = await runProtocolSequenceOnce(scenario, snapshotEvery, (s) => { logLine('[seq1] ' + s); setStatus('Protokoll: sekvens 1/2 — ' + s); });
+  setStatus('Protokoll: sekvens 2/2 …');
+  const seq2 = await runProtocolSequenceOnce(scenario, snapshotEvery, (s) => { logLine('[seq2] ' + s); setStatus('Protokoll: sekvens 2/2 — ' + s); });
+
+  const driftWarmMedian = (seq2.warm.median - seq1.warm.median) / seq1.warm.median;
+  const driftColdMedian = (seq2.cold.median - seq1.cold.median) / seq1.cold.median;
+  const throttled = Math.abs(driftWarmMedian) > 0.2 || Math.abs(driftColdMedian) > 0.2;
+
+  state.lastProtocol = { scenario, seq1, seq2, driftWarmMedian, driftColdMedian, throttled };
+  document.getElementById('driftInfo').innerHTML = `
+    Sekvens 1 — kald median ${fmt(seq1.cold.median)} ms (min ${fmt(seq1.cold.min)}, maks ${fmt(seq1.cold.max)}),
+    varm median ${fmt(seq1.warm.median)} ms (min ${fmt(seq1.warm.min)}, maks ${fmt(seq1.warm.max)}).<br>
+    Sekvens 2 — kald median ${fmt(seq2.cold.median)} ms, varm median ${fmt(seq2.warm.median)} ms.<br>
+    Drift (varm): ${pct(driftWarmMedian)}. Drift (kald): ${pct(driftColdMedian)}.<br>
+    <b style="color:${throttled ? 'var(--bad)' : 'var(--good)'}">
+      ${throttled ? 'THROTTLING-FLAGG (>20 % drift)' : 'Ingen throttling-flagg (≤20 % drift)'}
+    </b>
+  `;
+  setStatus('Protokoll ferdig.');
+  dumpJson();
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const json = dumpJson();
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  a.href = url;
+  a.download = `ensemble-perf-v2-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  document.getElementById('downloadNote').textContent = `Lastet ned som ${a.download}`;
+});
+
+initDeviceInfo();
+</script>
+</body>
+</html>

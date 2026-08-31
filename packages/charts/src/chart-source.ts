@@ -7,6 +7,7 @@
  */
 import type { LatLon } from "@morild/geo";
 import { bearing, haversineNm } from "@morild/geo";
+import { effectiveDepthRequirement, type CatzocSone } from "./catzoc.js";
 import {
   distanceToSegmentNm,
   nearestPolygonPoint,
@@ -18,6 +19,7 @@ import {
 } from "./point-in-polygon.js";
 import type {
   BufferedHazardPoint,
+  CatzocClass,
   ChartPackage,
   ChartTilePayload,
   DepthBand,
@@ -137,6 +139,37 @@ function hasGoodDataQuality(tile: ChartTilePayload, point: LatLon): boolean {
 }
 
 /**
+ * CATZOC-semantikkforberedelse (B4, `catzoc.ts`): rangordning fra best til
+ * dårligst tillit, brukt kun til å velge "verste" sone et punkt/en korde
+ * berører — relevant den dagen `effectiveDepthRequirement`s f faktisk
+ * varierer med CATZOC (i dag f=0, så valget her endrer ikke atferd).
+ */
+const CATZOC_ORDER: readonly CatzocClass[] = ["A1", "A2", "B", "C", "D", "U"];
+
+function worstCatzoc(a: CatzocSone, b: CatzocClass): CatzocSone {
+  if (a === undefined) return b;
+  return CATZOC_ORDER.indexOf(b) > CATZOC_ORDER.indexOf(a) ? b : a;
+}
+
+/** CATZOC-sonen (om noen) som dekker et enkeltpunkt — for `evaluatePoint`/`nermesteFareAvstandNm`. */
+function catzocAtPoint(tile: ChartTilePayload, point: LatLon): CatzocSone {
+  let worst: CatzocSone;
+  for (const zone of tile.dataQuality) {
+    if (pointInPolygon(point, zone.polygon)) worst = worstCatzoc(worst, zone.catzoc);
+  }
+  return worst;
+}
+
+/** Verste CATZOC-sone en korde krysser (helt eller delvis) — for `evaluateChordAgainstTile`. */
+function worstCatzocAlongChord(tile: ChartTilePayload, fra: LatLon, til: LatLon): CatzocSone {
+  let worst: CatzocSone;
+  for (const zone of tile.dataQuality) {
+    if (segmentIntersectsPolygon(fra, til, zone.polygon)) worst = worstCatzoc(worst, zone.catzoc);
+  }
+  return worst;
+}
+
+/**
  * Sondering-guardrail (byggetids-QA-validator promotert til guardrail,
  * beslutning 2026-08-31 — se
  * `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md` og
@@ -199,6 +232,14 @@ function evaluatePoint(
   const aarsaker: HazardReason[] = [];
   let nivaa: TrustLevel = "trygt";
 
+  // CATZOC-semantikkforberedelse (B4, catzoc.ts): effektivt dybdekrav for
+  // ALLE klaringssammenligninger under er basiskrav + f(CATZOC), f=0 i dag
+  // (se catzoc.ts) — identisk med kravTilDybdeM inntil kalibrering.
+  const effectiveKravTilDybdeM = effectiveDepthRequirement(
+    kravTilDybdeM,
+    catzocAtPoint(tile, point),
+  );
+
   // Steg 2: tørrfall og skjær/grunne-buffer — presise farer, alltid no-go.
   for (const zone of tile.dryFall) {
     if (pointInPolygon(point, zone.polygon)) {
@@ -241,7 +282,7 @@ function evaluatePoint(
       });
       break;
     }
-    if (hz.dybdeM < kravTilDybdeM) {
+    if (hz.dybdeM < effectiveKravTilDybdeM) {
       nivaa = worstTrust(nivaa, "no-go");
       aarsaker.push({
         kind: "skjaer-buffer",
@@ -250,7 +291,7 @@ function evaluatePoint(
       });
       break;
     }
-    // hz.dybdeM >= kravTilDybdeM: grunnen er dyp nok for dette kravet —
+    // hz.dybdeM >= effektivt krav: grunnen er dyp nok for dette kravet —
     // ingen blokkering fra denne punktfaren. Vurderingen fortsetter til
     // steg 3/4 (dybdebånd/tillitsløft) som normalt.
   }
@@ -262,7 +303,7 @@ function evaluatePoint(
   // forutsetter et bånd å sammenligne mot). Det faller i stedet til steg 4s
   // føre-var-sjekk (farled/datakvalitet), som allerede aldri gir `trygt`
   // uten dokumentert grunnlag.
-  const c = safetyContourFor(tile.bands, kravTilDybdeM);
+  const c = safetyContourFor(tile.bands, effectiveKravTilDybdeM);
   const band = c !== undefined ? findBand(point, tile.bands) : undefined;
   if (band && band.upperBoundM <= (c as number)) {
     nivaa = worstTrust(nivaa, "no-go");
@@ -385,6 +426,12 @@ function evaluateChordAgainstTile(
   const aarsaker: HazardReason[] = [];
   let nivaa: TrustLevel = "trygt";
 
+  // CATZOC-semantikkforberedelse (B4, catzoc.ts) — se `evaluatePoint`.
+  const effectiveKravTilDybdeM = effectiveDepthRequirement(
+    kravTilDybdeM,
+    worstCatzocAlongChord(tile, fra, til),
+  );
+
   // Steg 2: tørrfall.
   for (const zone of tile.dryFall) {
     if (segmentIntersectsPolygon(fra, til, zone.polygon)) {
@@ -425,7 +472,7 @@ function evaluateChordAgainstTile(
       });
       break;
     }
-    if (hz.dybdeM < kravTilDybdeM) {
+    if (hz.dybdeM < effectiveKravTilDybdeM) {
       nivaa = worstTrust(nivaa, "no-go");
       aarsaker.push({
         kind: "skjaer-buffer",
@@ -434,12 +481,12 @@ function evaluateChordAgainstTile(
       });
       break;
     }
-    // hz.dybdeM >= kravTilDybdeM: ingen blokkering fra denne punktfaren.
+    // hz.dybdeM >= effektivt krav: ingen blokkering fra denne punktfaren.
   }
 
   // Steg 3: dybdebånd mot sikkerhetskontur — segmentet blokkerer hvis det
   // krysser et bånd grunnere enn konturen HVOR SOM HELST langs korden.
-  const c = safetyContourFor(tile.bands, kravTilDybdeM);
+  const c = safetyContourFor(tile.bands, effectiveKravTilDybdeM);
   let inShallowBand = false;
   if (c !== undefined) {
     for (const band of tile.bands) {
@@ -693,7 +740,12 @@ export function createChartSource(pkg: ChartPackage): ChartSource {
         consider(nearestPolygonPoint(punkt, hz.polygon));
       }
     }
-    const c = safetyContourFor(tile.bands, kravTilDybdeM);
+    // CATZOC-semantikkforberedelse (B4, catzoc.ts) — se `evaluatePoint`.
+    const effectiveKravTilDybdeM = effectiveDepthRequirement(
+      kravTilDybdeM,
+      catzocAtPoint(tile, punkt),
+    );
+    const c = safetyContourFor(tile.bands, effectiveKravTilDybdeM);
     if (c !== undefined) {
       for (const band of tile.bands) {
         if (band.upperBoundM <= c) {

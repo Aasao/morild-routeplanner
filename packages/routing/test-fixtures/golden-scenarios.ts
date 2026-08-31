@@ -33,7 +33,7 @@ export const GOLDEN_DEPART_WINTER_S = 1794844800;
  * Skagerrak-siden av Skjæløy → Skagen: den svenske vestkysten i øst og
  * Jyllands nordspiss i vest, slik at det finnes en åpen korridor imellom.
  */
-const SKAGERRAK_LAND: readonly Rect[] = [
+export const SKAGERRAK_LAND: readonly Rect[] = [
   {
     latMin: 57.4,
     latMax: 59.4,

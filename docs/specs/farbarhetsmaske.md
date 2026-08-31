@@ -285,6 +285,87 @@ bånd-delpolygoner flagget (se `tools/chart-pack/README.md` "QA-validator" og
 `packages/charts/src/guardrail-golden.test.ts` for et faktisk berørt
 fasit-punkt).
 
+### 3.4.1 CATZOC-avhengig effektivt dybdekrav (frosset kontrakt, B4)
+
+**Beslutning 2026-08-31 (Magnus, B4 i steg 3-planen):** CATZOC-tillegget
+forberedes semantisk NÅ, men kalibreres IKKE i denne bølgen. Bakgrunnen er
+kartologens ekspertpanel-vurdering (`docs/research/ekspertpanel-2026-08-31.md`
+§4): «CATZOC kvantitativt, ikke binært» — dagens maske bruker CATZOC kun som
+en binær datakvalitets-gate (§3.4 steg 4: A1/A2/B kan gi tillitsløft, C/D/U
+kan aldri gi `trygt`), men behandler ellers alle A1/A2/B-soner likt. En reell
+sikkerhetskontur burde derfor strengt tatt kreve *mer* klaring i en B-sone
+enn i en A1-sone, fordi CATZOC-klassen også sier noe om dybdemålingens egen
+usikkerhet — ikke bare om hvorvidt et tillitsløft er tillatt.
+
+**Kontrakten som fryses nå:** det effektive dybdekravet ved oppslag er
+
+```
+effektivtKravTilDybdeM = basiskrav + f(CATZOC-sone)
+```
+
+implementert som `effectiveDepthRequirement(basiskrav, catzocSone)` i
+`packages/charts/src/catzoc.ts`, der `catzocSone: CatzocClass | undefined`
+er CATZOC-klassen (eller «ingen klassifisert sone») som dekker punktet/korden
+det slås opp mot. **`f` er FORELØPIG 0 for ALLE kategorier** — ingen
+kalibrering mot ekte sonderingsdata er gjort. Alle tre oppslagsveier i
+`chart-source.ts` som sammenligner et klaringskrav mot kartlagt dybde går via
+denne funksjonen, ikke mot `kravTilDybdeM` rått:
+
+- `evaluatePoint` — dybdebånd-sikkerhetskontur (`safetyContourFor`) og
+  VALSOU-klaringssjekken for `Grunne`-punktfarer (§3.4 steg 2/3).
+- `evaluateChordAgainstTile` — samme to sammenligninger, langs korden, med
+  CATZOC-sonen valgt som den DÅRLIGSTE (lavest tillit) sonen korden krysser
+  (`worstCatzocAlongChord`) — føre-var-retningen, konsistent med resten av
+  spec-ens føre-var-prinsipp (F1.3), selv om den er uten praktisk betydning
+  så lenge `f = 0`.
+- `nermesteFareAvstandNm`s klaring-avledning (samme `safetyContourFor`-kall).
+
+**Hvorfor fryse kontrakten nå i stedet for å vente på kalibrering (E7-logikken,
+§4.1):** å legge til CATZOC-sone-oppslag ved alle tre kallesteder er en billig,
+mekanisk endring i dag fordi den ikke flytter noen grense (`f = 0` ⇒ identisk
+adferd, pinnet av regresjonstesten under). Å ettermontere den samme
+oppslagsveien SENERE, når kalibrerte tall faktisk skal inn, ville krevd å
+spore opp og endre de samme tre kallestedene på nytt — med reell risiko for å
+glemme ett av dem (nøyaktig den typen semantikk-spredning §4.1s forenklings-
+forbud allerede advarer mot). Ved å fryse grensesnittet nå blir en fremtidig
+kalibrering en ren PARAMETERENDRING i `catzocSurcharge` (inni `catzoc.ts`),
+ikke en semantikkendring som må godkjennes og spores gjennom kallestedene på
+nytt.
+
+**Kartologens foreslåtte fremtidige kalibreringstabell** (ekspertpanel
+2026-08-31 §4, IHO S-57-aktig dybdenøyaktighetsform a + b·d, der d er
+dybden) — **ikke implementert, kun dokumentert som grunnlag for en senere
+ADR/spec-revisjon**:
+
+| CATZOC | Foreslått f(dybde) |
+|---|---|
+| A1 | 0,5 m + 1 % av dybden |
+| A2/B | 1,0 m + 2 % av dybden |
+| C/D/U | aldri `trygt` — UENDRET binær gate (§3.4 steg 4), ikke et f-tillegg |
+
+**Eksplisitt utenfor denne forberedelsens omfang** (til en senere bølge,
+kartologens påminnelse i steg3-plan §Nytt fra runden):
+
+- Selve kalibreringen av `f` (tallene i tabellen over er et forslag, ikke
+  verifisert mot ekte sonderingsdata).
+- **CATZOC i skjærbuffer-vurderingen.** Kartologen påpeker at CATZOC B har
+  ±50 m posisjonsusikkerhet — mer enn dagens faste 20 m skjær-/grunne-buffer
+  (§4 steg 4, §8 pkt. 3). At buffer-radius bør være CATZOC-avhengig er en
+  SEPARAT forberedelse (en annen kontrakt: `bufferRadiusM` i
+  `BufferedHazardPoint`, ikke `effectiveDepthRequirement`) og tas i en senere
+  bølge — notert her for å ikke miste den observasjonen på veien.
+
+**Testkrav (regresjonsvakt for f=0-kontrakten):**
+`packages/charts/src/catzoc.test.ts` pinner at
+`effectiveDepthRequirement(basiskrav, catzocSone)` returnerer `basiskrav`
+uendret for alle seks CATZOC-klasser og for `undefined` (ingen klassifisert
+sone) — dagens adferd er derfor identisk med og uten hooken. De **eksisterende
+testene i `golden-oslofjord-hvaler.test.ts` og `guardrail-golden.test.ts` er
+den egentlige regresjonen**: siden `f = 0`, skal ALLE eksisterende
+forventninger (inkl. CATZOC-A1/-C-punktene) fortsatt bestå uendret etter at
+`evaluatePoint`/`evaluateChordAgainstTile`/`nermesteFareAvstandNm` er
+omskrevet til å kalle `effectiveDepthRequirement`.
+
 ### 3.5 De øvrige lagene
 
 - **Luftspenn (F1.4):** punkt-/linjeobjekter (bruer, kraftspenn,
@@ -909,9 +990,46 @@ flagges segmentet i stedet (§5-mønsteret for degradering).
    `Hovedled og biled`) som kan gi farled-bias i Bohuslän, eller må det
    leses ut av OpenSeaMap-tagging (lavere kvalitet, jf. research §3)?
    **BESLUTTET 2026-08-30 (Magnus):** undersøkes i fase 1-implementasjonen.
+10. **CATZOC-kalibrering (f i §3.4.1):** kontrakten
+    (`effectiveDepthRequirement`) er frosset og implementert 2026-08-31 (B4)
+    med `f = 0` for alle kategorier. Selve kalibreringen (kartologens
+    foreslåtte a + b·d-tabell) og den separate CATZOC-avhengige
+    skjærbuffer-radiusen er **fortsatt åpne** — tas i en senere bølge når
+    reelt kalibreringsgrunnlag (sondering vs. faktisk grunnstøtingshistorikk
+    e.l.) finnes. **BESLUTTET 2026-08-31 (Magnus, B4):** forbered kontrakten
+    nå, kalibrer senere.
 
 ## 9. Endringslogg
 
+- **2026-08-31 (kartdata-agent, B4 CATZOC-semantikkforberedelse — se
+  `docs/research/steg3-plan-2026-08-31.md` og
+  `docs/research/ekspertpanel-2026-08-31.md` §4, Magnus' beslutning samme
+  dag):**
+  - **Nytt §3.4.1** fryser kontrakten for et fremtidig CATZOC-avhengig
+    dybdekrav: effektivt dybdekrav ved oppslag =
+    `basiskrav + f(CATZOC-sone)`, med `f = 0` for ALLE kategorier inntil
+    kalibrering. Kartologens foreslåtte fremtidige kalibreringstabell
+    (A1: 0,5 m + 1 % d; A2/B: 1,0 m + 2 % d; C/D/U: uendret binær gate) er
+    dokumentert som grunnlag, ikke implementert. CATZOC B/Cs rolle i
+    skjærbuffer-radiusen (±50 m posisjonsusikkerhet for CATZOC B, mer enn
+    dagens faste 20 m-buffer) er eksplisitt notert som en SEPARAT,
+    fortsatt-åpen forberedelse (§8 pkt. 10) — ikke dekket av denne
+    funksjonen.
+  - **Implementert** som `effectiveDepthRequirement(basiskrav, catzocSone)` i
+    nytt `packages/charts/src/catzoc.ts`. Alle tre oppslagsveier som
+    sammenligner et klaringskrav mot kartlagt dybde
+    (`evaluatePoint`/`evaluateChordAgainstTile`s dybdebånd-sikkerhetskontur
+    og VALSOU-klaringssjekk, samt `nermesteFareAvstandNm`s
+    klaring-avledning) i `packages/charts/src/chart-source.ts` går nå via
+    denne funksjonen i stedet for å bruke `kravTilDybdeM` rått. Den binære
+    CATZOC-gaten (C/D/U kan aldri gi `trygt`) er UENDRET.
+  - **Regresjon:** ny `packages/charts/src/catzoc.test.ts` pinner at
+    `f = 0` for alle seks CATZOC-klasser og for `undefined` (ingen
+    klassifisert sone). Alle eksisterende tester i
+    `golden-oslofjord-hvaler.test.ts`, `guardrail-golden.test.ts` og
+    `index.test.ts` består uendret (377 tester grønt totalt i
+    `pnpm test` etter endringen) — den egentlige regresjonsvakten for at
+    hooken ikke endrer dagens adferd.
 - **2026-08-31 (kartdata-agent, QA-guardrail-promotering + konservativitets-
   revisjon — se `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`
   «QA-funnet», Magnus' beslutning samme dag):**

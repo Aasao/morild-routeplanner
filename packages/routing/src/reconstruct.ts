@@ -95,6 +95,12 @@ export interface ResultContext {
     readonly bound: number;
     readonly deadEnd: number;
     readonly hardConstraint: number;
+    readonly hardConstraintBoatLimits: number;
+    readonly hardConstraintPoint: number;
+    readonly hardConstraintClearance: number;
+    readonly hardConstraintSegment: number;
+    readonly hardConstraintTss: number;
+    readonly hardConstraintDaylight: number;
     readonly capEvicted: number;
     readonly noWeather: number;
     readonly cone: number;

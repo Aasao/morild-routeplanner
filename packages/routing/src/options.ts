@@ -121,6 +121,27 @@ export interface RouteOptions {
    * beskjære. Kun for egenskapstester på små problemer, aldri i produksjon.
    */
   readonly exactMode: boolean;
+
+  /**
+   * **Målevariant A (E1′): skalart søk.** Av som standard — produksjonssøket
+   * er og forblir Pareto (ADR-0004).
+   *
+   * Slår sammen etikettmengden i hver tilstand til én: `maxLabelsPerState = 1`.
+   * Da er dominansen i praksis skalar, fordi `LabelStore` bryter uavgjort på
+   * `costScore` med de **faste, nøytrale** søkevektene (`NEUTRAL_SEARCH_WEIGHTS`)
+   * — de samme vektene Pareto-varianten bruker til utkasting, så forskjellen
+   * mellom A og fasiten er *bare* antallet etiketter per tilstand, ikke
+   * vektsettet.
+   *
+   * Alt annet er identisk: samme harde/myke semantikk, samme sektortilstand,
+   * samme celletak, samme rekkefølge. Det er hele poenget — varianten skal
+   * isolere ÉN forskjell (`docs/research/maaleplan-e1-2026-08-31.md` §1.4).
+   *
+   * Kan ikke kombineres med `exactMode` (som slår av alle tak): det ville
+   * vært en konfigurasjon som stille gjorde ingenting, og `withDefaults`
+   * avviser den.
+   */
+  readonly scalarSearchMode: boolean;
 }
 
 export const DEFAULT_ROUTE_OPTIONS: RouteOptions = Object.freeze({
@@ -157,6 +178,7 @@ export const DEFAULT_ROUTE_OPTIONS: RouteOptions = Object.freeze({
 
   isochroneSnapshotHours: 6,
   exactMode: false,
+  scalarSearchMode: false,
 });
 
 /** Absolutt tak fra ADR-0004 — over dette avviser vi konfigurasjonen. */
@@ -165,7 +187,29 @@ export const ABSOLUTE_MAX_LABELS = 400_000;
 export function withDefaults(
   overrides: Partial<RouteOptions> = {},
 ): RouteOptions {
-  const merged = { ...DEFAULT_ROUTE_OPTIONS, ...overrides };
+  const base = { ...DEFAULT_ROUTE_OPTIONS, ...overrides };
+  if (base.scalarSearchMode && base.exactMode) {
+    throw new Error(
+      "scalarSearchMode og exactMode kan ikke kombineres: exactMode slår av " +
+        "etikett-takene, og skalarmodus er nettopp et tak på én etikett per " +
+        "tilstand",
+    );
+  }
+  if (
+    base.scalarSearchMode &&
+    overrides.maxLabelsPerState !== undefined &&
+    overrides.maxLabelsPerState !== 1
+  ) {
+    throw new Error(
+      "scalarSearchMode innebærer maxLabelsPerState=1; en eksplisitt annen " +
+        "verdi er en motstridende bestilling og overstyres ikke stille",
+    );
+  }
+  // Skalarmodus er én linje: ett etikettslot per tilstand. Vektene er de
+  // samme faste, nøytrale — søket har aldri brukerens vekter.
+  const merged: RouteOptions = base.scalarSearchMode
+    ? { ...base, maxLabelsPerState: 1 }
+    : base;
   if (merged.maxTotalLabels > ABSOLUTE_MAX_LABELS) {
     throw new Error(
       `maxTotalLabels ${merged.maxTotalLabels} overstiger det absolutte taket ${ABSOLUTE_MAX_LABELS}`,

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>RoutePlanner v2 — Spike: mikrobench ekte maske (Oslofjord/Hvaler)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#0a1420; --panel2:#13293d; --line:#22405a; --txt:#e6edf3; --muted:#90a4b8;
+    --accent:#2dd4bf; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px}
+  body{padding:20px 24px 60px;max-width:1000px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 4px}
+  h1 .sub{color:var(--accent)}
+  .tag{color:var(--muted);font-size:12px;margin-bottom:18px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0 0 10px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-family:var(--mono);font-size:12.5px}
+  button{cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:11px 18px;
+        background:var(--accent);color:#04222b;font-size:14px;font-weight:700}
+  button:disabled{opacity:.5;cursor:default}
+  #status{font-size:12.5px;color:var(--accent);min-height:18px;margin-top:10px;font-family:var(--mono);white-space:pre-wrap}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:6px}
+  th,td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted);text-transform:uppercase;font-size:10.5px;letter-spacing:.4px}
+  .note{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+  textarea{width:100%;height:180px;background:var(--bg);color:var(--txt);border:1px solid var(--line);
+        border-radius:7px;padding:10px;font-family:var(--mono);font-size:11px;resize:vertical}
+</style>
+</head>
+<body>
+<h1>RoutePlanner v2 <span class="sub">Spike — mikrobench ekte maske</span></h1>
+<div class="tag">Laster den EKTE, frosne Oslofjord/Hvaler-kartpakken
+  (<code>packages/charts/testdata/oslofjord-hvaler.json.gz</code>) og mikrobenchmarker
+  <code>ChartSource</code>-metodene direkte (µs/kall). Steg3-plan §4 pkt. 5/7: dette tallet ×
+  kall-tellingen fra <a href="v2-engine.html" style="color:var(--accent)">v2-engine.html</a>s maske-dekorator gir
+  et avgrenset kostnadsestimat for skjærgård.</div>
+
+<div class="card">
+  <h2>Pakke</h2>
+  <div class="grid2" id="pkgInfo">Laster …</div>
+</div>
+
+<div class="card">
+  <button id="runBtn" disabled>Kjør mikrobenchmark</button>
+  <label style="display:block;margin-top:10px;font-size:12px;color:var(--muted)">
+    Batcher × kall/batch (justér ned på svakere enheter)
+    <input id="batches" type="number" value="500" style="margin-left:8px;width:80px">
+    ×
+    <input id="batchSize" type="number" value="20" style="width:60px">
+  </label>
+  <div id="status">Laster fixture …</div>
+</div>
+
+<div class="card">
+  <h2>Resultat (µs/kall)</h2>
+  <table id="resultTable">
+    <thead><tr><th>Metode</th><th>Kall totalt</th><th>Median</th><th>Min</th><th>Maks</th><th>P90</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>JSON</h2>
+  <textarea id="jsonOut" readonly spellcheck="false"></textarea>
+</div>
+
+<script type="module">
+import { createChartSource } from '/engine/charts/chart-source.js';
+
+const DATO = '2026-08-30';
+const KRAV_DYBDE_M = 2.6; // B1: dypgang 2,10 m + statisk margin 0,5 m (docs/00-kravspek.md)
+const KRAV_LUFTSPENN_M = 0;
+// Testområdet fixturen dekker (golden-oslofjord-hvaler.test.ts).
+const BBOX = { latMin: 59.05, latMax: 59.30, lonMin: 10.60, lonMax: 11.00 };
+
+function median(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+function percentile(arr, p) {
+  const s = [...arr].sort((a, b) => a - b);
+  const idx = Math.min(s.length - 1, Math.floor(p * s.length));
+  return s[idx];
+}
+function fmt(n, d = 3) { return n == null || Number.isNaN(n) ? '—' : Number(n).toFixed(d); }
+
+/** N×N gitter over bboxen — representative punkter, ikke ett fast punkt (unngår at
+ * JIT/branch-prediction spesialiserer seg på én kartflis). */
+function buildGridPoints(n) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      pts.push({
+        lat: BBOX.latMin + ((BBOX.latMax - BBOX.latMin) * (i + 0.5)) / n,
+        lon: BBOX.lonMin + ((BBOX.lonMax - BBOX.lonMin) * (j + 0.5)) / n,
+      });
+    }
+  }
+  return pts;
+}
+/** Korte korder mellom nabopunkter i gitteret — representative for et rutesteg (~0,3–0,8 nm). */
+function buildChords(points, n) {
+  const chords = [];
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n - 1; j++) {
+      const a = points[i * n + j];
+      const b = points[i * n + j + 1];
+      chords.push([a, b]);
+    }
+  }
+  return chords;
+}
+
+async function loadPackage() {
+  const res = await fetch('/testdata/oslofjord-hvaler.json.gz');
+  if (!res.ok) throw new Error(`fixture ikke funnet: ${res.status}`);
+  // Serveren setter Content-Encoding: gzip — fetch() dekomprimerer transparent.
+  return res.json();
+}
+
+function benchmark(fn, batches, batchSize) {
+  // Oppvarming (JIT), forkastes.
+  for (let i = 0; i < Math.min(50, batches); i++) fn();
+  const perCallUs = [];
+  for (let b = 0; b < batches; b++) {
+    const t0 = performance.now();
+    for (let i = 0; i < batchSize; i++) fn();
+    const dt = performance.now() - t0;
+    perCallUs.push((dt * 1000) / batchSize);
+  }
+  return {
+    totalCalls: batches * batchSize,
+    median: median(perCallUs),
+    min: Math.min(...perCallUs),
+    max: Math.max(...perCallUs),
+    p90: percentile(perCallUs, 0.9),
+  };
+}
+
+async function main() {
+  const status = document.getElementById('status');
+  const pkg = await loadPackage();
+  document.getElementById('pkgInfo').innerHTML = `
+    <div><b>Fliser</b></div><div>${pkg.tiles.length}</div>
+    <div><b>sourceStatus</b></div><div>${pkg.header.sourceStatus.status}</div>
+    <div><b>Bbox brukt her</b></div><div>${BBOX.latMin}–${BBOX.latMax}°N, ${BBOX.lonMin}–${BBOX.lonMax}°Ø</div>
+  `;
+  const source = createChartSource(pkg);
+  status.textContent = 'Fixture lastet. Klar til å kjøre.';
+  document.getElementById('runBtn').disabled = false;
+
+  document.getElementById('runBtn').addEventListener('click', () => {
+    const batches = Number(document.getElementById('batches').value) || 500;
+    const batchSize = Number(document.getElementById('batchSize').value) || 20;
+    status.textContent = 'Kjører …';
+    // Gir UI en sjanse til å tegne "Kjører …" før hovedtråden låses av benchmarken.
+    setTimeout(() => {
+      const n = 12; // 144 punkter
+      const points = buildGridPoints(n);
+      const chords = buildChords(points, n);
+      let pi = 0, ci = 0;
+
+      const farbarResult = benchmark(() => {
+        const p = points[pi = (pi + 1) % points.length];
+        return source.farbar(p, KRAV_DYBDE_M, KRAV_LUFTSPENN_M, DATO);
+      }, batches, batchSize);
+
+      const segmentResult = benchmark(() => {
+        const [a, b] = chords[ci = (ci + 1) % chords.length];
+        return source.segmentTest(a, b, KRAV_DYBDE_M, KRAV_LUFTSPENN_M, DATO);
+      }, batches, batchSize);
+
+      const nearestResult = benchmark(() => {
+        const p = points[pi = (pi + 1) % points.length];
+        return source.nermesteFareAvstandNm(p, KRAV_DYBDE_M);
+      }, batches, batchSize);
+
+      const rows = [
+        ['farbar (punkt)', farbarResult],
+        ['segmentTest (korde)', segmentResult],
+        ['nermesteFareAvstandNm (klaring)', nearestResult],
+      ];
+      const tbody = document.querySelector('#resultTable tbody');
+      tbody.innerHTML = '';
+      for (const [name, r] of rows) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${name}</td><td>${r.totalCalls}</td>` +
+          `<td>${fmt(r.median)}</td><td>${fmt(r.min)}</td><td>${fmt(r.max)}</td><td>${fmt(r.p90)}</td>`;
+        tbody.appendChild(tr);
+      }
+      document.getElementById('jsonOut').value = JSON.stringify({
+        generatedAt: new Date().toISOString(),
+        device: { userAgent: navigator.userAgent, hardwareConcurrency: navigator.hardwareConcurrency || null },
+        bbox: BBOX,
+        gridPoints: points.length,
+        chords: chords.length,
+        batches, batchSize,
+        results: { farbar: farbarResult, segmentTest: segmentResult, nermesteFareAvstandNm: nearestResult },
+      }, null, 2);
+      status.textContent = 'Ferdig.';
+    }, 30);
+  });
+}
+
+main().catch((err) => {
+  document.getElementById('status').textContent = 'Feil: ' + (err.message || err);
+  console.error(err);
+});
+</script>
+</body>
+</html>

@@ -28,3 +28,7 @@ export * from "./options.js";
 export * from "./result.js";
 export * from "./reconstruct.js";
 export * from "./search.js";
+// E1′-målevariantene. Egne innganger, av som standard — se `variants.ts`.
+export * from "./corridor.js";
+export * from "./bailout.js";
+export * from "./variants.js";

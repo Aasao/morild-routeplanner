@@ -385,6 +385,21 @@ export class LabelStore {
     for (const list of this.byState.values()) out.push(...list);
     return out;
   }
+
+  /**
+   * Read-only iterasjon over antikjedene, gruppert per tilstand — kun for
+   * instrumentering (nettbrett-målingen, steg3-plan §4 pkt. 4: histogram
+   * over etiketter per tilstand/celle ved isokron-snapshotpunkter).
+   * Muterer ingenting, og kopierer ikke listene selv — `labels` er den
+   * samme, delte listen som brukes internt og må ikke skrives til.
+   */
+  forEachActiveState(
+    fn: (stateKey: number, labels: readonly number[]) => void,
+  ): void {
+    for (const [stateKey, list] of this.byState) {
+      if (list.length > 0) fn(stateKey, list);
+    }
+  }
 }
 
 /** Bekvemmelighet for tester: dominans mellom to rå vektorer. */

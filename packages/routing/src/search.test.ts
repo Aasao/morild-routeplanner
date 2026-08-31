@@ -7,8 +7,28 @@ import {
   syntheticField,
 } from "../test-fixtures/synthetic-weather.js";
 import { testBoat } from "../test-fixtures/test-boat.js";
-import { createSearch, planRoute, type RouteInput } from "./search.js";
+import {
+  createSearch,
+  createSearchForTesting,
+  planRoute,
+  type RouteInput,
+} from "./search.js";
 import type { RouteOptions } from "./options.js";
+import type { RouteDiagnostics } from "./result.js";
+
+/** Summen av de seks `hardConstraint*`-delbøttene, uavhengig av navn. */
+function sumHardConstraintBuckets(
+  pruned: RouteDiagnostics["pruned"],
+): number {
+  return (
+    pruned.hardConstraintBoatLimits +
+    pruned.hardConstraintPoint +
+    pruned.hardConstraintClearance +
+    pruned.hardConstraintSegment +
+    pruned.hardConstraintTss +
+    pruned.hardConstraintDaylight
+  );
+}
 
 /** 2026-06-15 06:00 UTC — lyst hele etappen på disse breddegradene. */
 const DEPART_S = Date.UTC(2026, 5, 15, 6, 0, 0) / 1000;
@@ -250,6 +270,23 @@ describe("harde constraints i søket", () => {
     );
     expect(stormy.reached).toBe(false);
     expect(stormy.diagnostics.pruned.hardConstraint).toBeGreaterThan(0);
+    // For hard vind avvises på båtens ytelsesgrense (§4.1 sjekk 1), ikke på
+    // farbarhet — den splittede telleren skal si nettopp det.
+    expect(stormy.diagnostics.pruned.hardConstraintBoatLimits).toBeGreaterThan(
+      0,
+    );
+    expect(sumHardConstraintBuckets(stormy.diagnostics.pruned)).toBe(
+      stormy.diagnostics.pruned.hardConstraint,
+    );
+  });
+
+  it("splitten av hardConstraint summerer alltid til totalen (no-go-scenariet)", () => {
+    const island = { latMin: 58.25, latMax: 58.4, lonMin: 10.5, lonMax: 10.75 };
+    const result = planRoute(input({ mask: rectMask({ noGo: [island] }) }));
+    expect(sumHardConstraintBuckets(result.diagnostics.pruned)).toBe(
+      result.diagnostics.pruned.hardConstraint,
+    );
+    expect(result.diagnostics.pruned.hardConstraintPoint).toBeGreaterThan(0);
   });
 
   it("håndhever dagslys-ankomst som hardt krav", () => {
@@ -331,5 +368,32 @@ describe("diagnostikk", () => {
     // Testen som låser standardverdien: setter noen den på igjen, må
     // ADR-0004 oppdateres først.
     expect(planRoute(input()).diagnostics.pruned.cone).toBe(0);
+  });
+});
+
+describe("labelStoreSnapshot — instrumentering (nettbrett-målingen)", () => {
+  it("gir ett innslag per aktiv etikett, gruppert på tilstand", () => {
+    const search = createSearchForTesting(input());
+    search.finish();
+    const snapshot = search.labelStoreSnapshot();
+    expect(snapshot.length).toBeGreaterThan(0);
+    for (const entry of snapshot) {
+      expect(Number.isInteger(entry.stateKey)).toBe(true);
+      expect(Number.isInteger(entry.cellKey)).toBe(true);
+      expect([-1, 0, 1]).toContain(entry.tack);
+    }
+    // Grupperingen skal stemme med antall aktive etiketter i label-storen.
+    const byState = new Map<number, number>();
+    for (const entry of snapshot) {
+      byState.set(entry.stateKey, (byState.get(entry.stateKey) ?? 0) + 1);
+    }
+    expect(byState.size).toBeGreaterThan(0);
+  });
+
+  it("er tom før søket har lagt inn noen etiketter utover start", () => {
+    // Umiddelbart etter konstruksjon finnes kun startetiketten — snapshotet
+    // skal derfor ha nøyaktig ett innslag, ikke null (den telles med).
+    const search = createSearchForTesting(input());
+    expect(search.labelStoreSnapshot().length).toBe(1);
   });
 });

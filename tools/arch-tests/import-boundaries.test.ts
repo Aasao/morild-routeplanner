@@ -24,6 +24,17 @@ describe("arkitekturgrense: packages/routing importerer aldri I/O eller andre pa
   });
 });
 
+describe("arkitekturgrense: test-fixtures følger samme grense som src", () => {
+  // Fiksturene mater golden-/E1'-målinger og må være like rene som
+  // motoren: deterministiske, uten I/O (review-funn 2026-08-31, lav).
+  it("finner ingen brudd i packages/routing/test-fixtures", () => {
+    const violations = checkPackageBoundary(
+      join(REPO_ROOT, "packages/routing/test-fixtures"),
+    );
+    expect(violations).toEqual([]);
+  });
+});
+
 describe("sjekken beviselig fanger faktiske brudd", () => {
   it("flagger node:fs og en pakke utenfor grensen i fixture-pakken", () => {
     const violations = checkPackageBoundary(

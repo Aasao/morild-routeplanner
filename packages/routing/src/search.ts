@@ -87,11 +87,33 @@ interface PrunedCounters {
   dominated: number;
   bound: number;
   deadEnd: number;
+  /** Sum av `hardConstraint*`-tellerne under (§4 pkt. 2, nettbrett-målingen). */
   hardConstraint: number;
+  hardConstraintBoatLimits: number;
+  hardConstraintPoint: number;
+  hardConstraintClearance: number;
+  hardConstraintSegment: number;
+  hardConstraintTss: number;
+  hardConstraintDaylight: number;
   capEvicted: number;
   noWeather: number;
   cone: number;
   outsideDomain: number;
+}
+
+/** Øker både totalen og den navngitte delkategorien i ett kall. */
+function bumpHardConstraint(
+  pruned: PrunedCounters,
+  key:
+    | "hardConstraintBoatLimits"
+    | "hardConstraintPoint"
+    | "hardConstraintClearance"
+    | "hardConstraintSegment"
+    | "hardConstraintTss"
+    | "hardConstraintDaylight",
+): void {
+  pruned.hardConstraint++;
+  pruned[key]++;
 }
 
 class RouteSearch implements Search {
@@ -143,6 +165,12 @@ class RouteSearch implements Search {
     bound: 0,
     deadEnd: 0,
     hardConstraint: 0,
+    hardConstraintBoatLimits: 0,
+    hardConstraintPoint: 0,
+    hardConstraintClearance: 0,
+    hardConstraintSegment: 0,
+    hardConstraintTss: 0,
+    hardConstraintDaylight: 0,
     capEvicted: 0,
     noWeather: 0,
     cone: 0,
@@ -572,7 +600,7 @@ class RouteSearch implements Search {
 
     // Harde ytelsesgrenser gjelder noden som helhet, før kursløkken.
     if (!checkHardNode(env, this.input.boat).ok) {
-      this.pruned.hardConstraint++;
+      bumpHardConstraint(this.pruned, "hardConstraintBoatLimits");
       return;
     }
 
@@ -707,7 +735,7 @@ class RouteSearch implements Search {
     if (mask !== undefined) {
       const verdict = mask.pointVerdict(next.lat, next.lon);
       if (!verdict.passable || verdict.tillit === "no-go") {
-        this.pruned.hardConstraint++;
+        bumpHardConstraint(this.pruned, "hardConstraintPoint");
         return;
       }
       if (verdict.tillit === "usikkert") flags |= FLAG_USIKKER_TILLIT;
@@ -747,7 +775,7 @@ class RouteSearch implements Search {
       });
       flags |= corridor.flags;
       if (!corridor.check.ok) {
-        this.pruned.hardConstraint++;
+        bumpHardConstraint(this.pruned, "hardConstraintClearance");
         return;
       }
       clearanceNm = corridor.toClearanceNm;
@@ -757,7 +785,7 @@ class RouteSearch implements Search {
     if (mask !== undefined) {
       const verdict = mask.segmentVerdict(pos.lat, pos.lon, next.lat, next.lon);
       if (!verdict.passable) {
-        this.pruned.hardConstraint++;
+        bumpHardConstraint(this.pruned, "hardConstraintSegment");
         return;
       }
       if (verdict.tillit === "usikkert") flags |= FLAG_USIKKER_TILLIT;
@@ -766,7 +794,7 @@ class RouteSearch implements Search {
     // 15: TSS-retningsregelen.
     const tss = checkTssStep(mask, pos, next, opts.tssParams);
     if (!tss.check.ok) {
-      this.pruned.hardConstraint++;
+      bumpHardConstraint(this.pruned, "hardConstraintTss");
       return;
     }
     flags |= tss.flags;
@@ -781,7 +809,7 @@ class RouteSearch implements Search {
           this.input.departEpochS + cost.tS,
         );
         if (!arrival.isDaylight) {
-          this.pruned.hardConstraint++;
+          bumpHardConstraint(this.pruned, "hardConstraintDaylight");
           return;
         }
       }
@@ -885,6 +913,31 @@ class RouteSearch implements Search {
   /** Byte-bilde av arenaen — brukes av determinisme-egenskapstesten. */
   arenaBytes(): Uint8Array {
     return this.arena.bytes();
+  }
+
+  /**
+   * Øyeblikksbilde av label-storens antikjeder — kun for instrumentering
+   * (nettbrett-målingen, steg3-plan §4 pkt. 4). Ikke del av produksjons-
+   * API-et (`Search`); hentes via `createSearchForTesting`, som allerede er
+   * markert «kun for tester». Rent lesende: ingen klokke, ingen I/O.
+   */
+  labelStoreSnapshot(): readonly {
+    readonly stateKey: number;
+    readonly cellKey: number;
+    readonly tack: number;
+  }[] {
+    const arena = this.arena;
+    const out: { stateKey: number; cellKey: number; tack: number }[] = [];
+    this.store.forEachActiveState((stateKey, labels) => {
+      for (const index of labels) {
+        out.push({
+          stateKey,
+          cellKey: arena.cellKey[index]!,
+          tack: arena.tack[index]!,
+        });
+      }
+    });
+    return out;
   }
 
   /**
