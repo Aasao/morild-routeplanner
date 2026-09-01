@@ -1,114 +1,161 @@
 # ADR-0005: Ensemble-mekanisme — fullt Pareto-søk per medlem på kontrolloppløsning
 
 - Status: **foreslått** — venter på Magnus (berører robusthetssemantikk,
-  F4.2-tallenes gyldighet)
-- Dato: 2026-09-01
+  F4.2-tallenes gyldighet, og krever datert F3.5-revisjon i kravspeken)
+- Dato: 2026-09-01 (rev. samme dag etter fem-agenters votering, alle
+  ENDRE→godkjenn — se `docs/research/maaling-e1-2026-08-31.md` og
+  samtaleloggens votering)
 - Besluttet av: agent-forslag som venter
 
 ## Kontekst
 
 ADR-0004 valgte isokron/A*-hybrid med Pareto-etiketter for
 kontrollkjøringen, men lot mekanismen for de 30 ensemble-medlemmene stå
-åpen (E1′ i `docs/research/ekspertpanel-runde2-2026-08-31.md` §6).
-Kandidatene var (A) eget skalart søk per medlem (bransjenorm,
-værruting-agentens linje), (B) korridor-begrenset evaluering + R2-re-søk
-fra feilpunkter (matematiker-agentens linje), mot (F) fullt Pareto-søk
-per medlem som fasit. Premisset for hele debatten var at F var for dyr
-(F3.5-budsjettet: < 60 s ensemble på nettbrett).
+åpen (E1′, `docs/research/ekspertpanel-runde2-2026-08-31.md` §6).
+Kandidatene var (A) eget skalart søk per medlem, (B) korridor-evaluering
++ R2-re-søk, mot (F) fullt Pareto-søk per medlem som fasit. Premisset
+for debatten var at F var for dyr (F3.5: < 60 s ensemble på nettbrett).
 
-Spørsmålet ble avgjort empirisk med forhåndsregistrert måling
-(`docs/research/maaleplan-e1-2026-08-31.md`, kriterier låst før kjøring;
-resultater i `docs/research/maaling-e1-2026-08-31.md`, rådata i
-`maaling-e1-raadata*/`, commit 24322e2 + b610dff). Sentrale målte fakta:
+Avgjort empirisk med forhåndsregistrert måling
+(`docs/research/maaleplan-e1-2026-08-31.md`; resultater
+`maaling-e1-2026-08-31.md`; rådata `maaling-e1-raadata*/`; commit
+24322e2 + b610dff). Sentrale målte fakta:
 
-1. **Kostnadspremisset var falskt.** Skalart søk (A) sparer bare
-   5–21 % mot fullt Pareto per medlem (deterministiske tellere;
-   korrigert måling 0,77–0,92). Forklaringen er den målte tynne
-   Pareto-fronten (~1,2–1,5 etiketter/tilstand): etikett-taket kutter
-   nesten ingenting. Kostnaden bor i sektornøkkel-tilstandsrommet og
-   kursoppløsningen, ikke i Pareto-dominansen.
-2. **B er diskvalifisert for F4.2-bruk.** Navigasjonsfelle-medlemmet m24
-   (utvei = 25,4 nm bauteomvei 9,56 nm utenfor Bs 4 nm-rør) bommes av B
-   på alle 5 avganger — feil felle-sett er diskvalifiserende per
-   forhåndsregistrert regel. Overbestemt av S-7-kollaps (0/30 mot 13/30)
-   og P90-avvik 10–19 % overalt. Feilen er geometrisk (fast rør), ikke
-   parametrisk: ethvert fast rør feiler for en tilstrekkelig bred omvei.
-3. **A består felle-kriteriet overalt** (også m24 — skalart
-   fullmaske-re-søk finner utveien), og under produktets egen rangering
-   (P90, F4.4/F4.5) forsvinner begge rangeringsbruddene. Det gjenstående
-   P50-verdibruddet på S-5 (+3,24 %, bimodal fordeling) er reelt og var
-   forhåndsregistrert — og illustrerer nettopp skalar-svakheten
-   ADR-0004 forutsa (per-medlem-regret i myke dimensjoner).
+1. **Kostnadspremisset var falskt.** Skalart søk sparer 2–11 %
+   etiketter (deterministiske tellere; veggklokke 5–21 %, ikke
+   reproduserbar og degradert til deskriptiv). Forklaring: målt tynn
+   Pareto-front (~1,2–1,5 etiketter/tilstand) — etikett-taket kutter
+   nesten ingenting; kostnaden bor i sektornøkkel-tilstandsrommet og
+   kursoppløsningen.
+2. **B er diskvalifisert for F4.2-bruk.** Navigasjonsfelle m24 (utvei =
+   25,4 nm bauteomvei 9,56 nm utenfor Bs 4 nm-rør) bommes på alle 5
+   avganger — feil felle-sett er diskvalifiserende per forhåndsregistrert
+   regel. Overbestemt av S-7-kollaps (0/30 mot 13/30) og P90-avvik
+   10–19 %. Feilen er geometrisk (ethvert fast rør feiler for en
+   tilstrekkelig bred omvei) — ikke oppløsning: F12/A12 finner
+   m24-utveien med 30 kurser.
+3. **A består felle-kriteriet overalt** (skalart fullmaske-re-søk finner
+   m24-utveien). Under produktets egen rangering (P90, F4.4/F4.5)
+   består A også begge rangeringskriteriene. Gjenstående brudd er
+   S-5s P50-verdi (+3,24 %) — med kjent bimodal-artefakt: paret
+   median-differanse er 0,0000, avviket bæres av 2/30 medlemmer som
+   krysser et gap fasitens median ligger i. Tallets størrelse er delvis
+   metrisk artefakt (samme forstørrelse rammer F12); mekanismen
+   (per-medlem-regret i myke dimensjoner) er reell men liten.
 4. **Grovere medlemsoppløsning (12°) er IKKE trygg for
    gjennomførbarhetstall:** F12/A12 består felle-settet, men bryter
    ±1-medlem-kriteriet på S-7 med fortegnsflip (+4/+2/−4) og P90-avvik
-   opp til +56 %. F3.5s antagelse «redusert kursoppløsning per medlem»
-   er dermed målt usikker for F4.2 — og gevinsten er uansett liten
-   (7–10 % mot 10°-fasit).
+   opp til +56 %. At gjennomførbarhetsandelen er funksjon av en
+   ytelsesparameter bryter N3s ånd. Gevinst uansett liten (7–10 % mot
+   10°-fasit).
+5. **S-5 diskriminerer ikke rangering under P90** (0,028 %-spredning,
+   fasitens toppavganger bit-like) — matrisen mangler i dag en fikstur
+   som tester rangering under produktstatistikken. Bygges i 4a.
 
 ## Beslutning
 
 Ensemble-medlemmene beregnes med **samme fulle Pareto-søk og samme
 oppløsning som kontrollkjøringen** (mekanisme F). Robusthetstall
-(gjennomførbarhetsandel, felle-sett/R2, P50/P90-spredning) hentes kun
-fra slike fulle medlemssøk. Korridor-evaluatoren beholdes utelukkende
-som S1b-diff-verktøy («holder gårsdagens plan?») og merkes slik i API og
-UI; den mater aldri F4.2-statistikk. R2-fasitsemantikken fra måleplanens
-§8.1 (re-søk fra siste lovlige tilstand, backoff låst til 1) blir
-produksjonssemantikk for felle-deteksjon.
+(gjennomførbarhetsandel, felle-sett/R2, P50/P90-spredning) konstrueres
+utelukkende fra slike fulle medlemssøk. Korridor-evaluatoren beholdes
+kun som S1b-diff-verktøy («holder gårsdagens plan?»), merket slik i API
+og UI; dens konservative falske positiver er AKSEPTABLE i den rollen
+(alarm utløser bare nytt fullt søk) og skal ikke «forbedres» bort.
+R2-semantikken fra måleplanens §8.1 (re-søk fra siste lovlige tilstand;
+backoff definert i fysisk tid min(Δt, 1800 s)) blir produksjonssemantikk
+for felle-deteksjon.
+
+**Denne beslutningen krever en datert kravspek-revisjon av F3.5:**
+setningen «medlemmer kjøres med redusert kursoppløsning (10–12°)»
+strykes (målt utrygg, punkt 4); < 60 s-budsjettet består som bindende
+mål, men den sannsynlige oppfyllelsen er **progressiv semantikk** (se
+Konsekvenser). ADR-en overstyrer ikke kravspeken i stillhet —
+revisjonen gjøres ved godkjenning.
 
 ## Alternativer vurdert
 
-- **(A) Skalart søk per medlem:** vraket fordi besparelsen er målt
-  marginal (5–21 %) mens per-medlem-regret i myke dimensjoner er reell
-  (S-5 P50 +3,24 %); å kjøpe en målbar skjevhet for < 21 % rabatt er
-  dårlig handel. Beholdes som implementert, dokumentert målevariant.
+- **(A) Skalart søk per medlem:** vraket. Bærende grunn: besparelsen er
+  marginal (2–11 % etiketter) — ved så liten rabatt er en andre
+  motor-modus med noen som helst målt regret og egen vedlikeholdsflate
+  dårlig handel; F vinner på enkelhet og arvede korrekthetsgarantier
+  selv om S-5-bruddet diskonteres helt (bimodal-forbeholdet, punkt 3).
+  Beholdes bak opsjon som målevariant.
 - **(B) Korridor-evaluering + R2-re-søk:** vraket for robusthetsbruk —
-  diskvalifisert på felle-sett (m24), gjennomførbarhetskollaps (S-7) og
-  P90-bias; geometrisk grunnfeil, ikke tunbar. Beholdes for S1b-diff.
-- **(F12) Fullt Pareto på grovere medlemsoppløsning:** vraket som
-  standard — bryter gjennomførbarhetskriteriet med fortegnsflip;
-  gevinsten liten. Kan revurderes i 4a KUN hvis en fikstur-bredere
-  måling viser at S-7-bruddet var artefakt.
-- **Regime-klynging (2–4 medoid-søk + evaluering):** ikke målt i denne
-  runden; står som fase 4b-forskningsspor med outlier-vakt
-  (`ekspertpanel-runde2` §5), uendret av denne ADR-en.
+  geometrisk grunnfeil, ikke tunbar (punkt 2). Beholdes for S1b-diff.
+- **(F12) Fullt Pareto på 12° for medlemmer:** vraket som standard
+  (punkt 4). Revurderes kun via vise-versa-porten under.
+- **v1-stil per-celle-skalar (sektorkollaps):** vraket a priori, ikke
+  målt — ADR-0004 avvik 1+3 innførte sektortilstanden av
+  korrekthetsgrunner (bautstraff-regnskap); å gjeninnføre flat
+  bautstraff per medlem er nøyaktig biasen E1′ skulle verne F4.2 mot.
+  Står her for fullstendighet, ikke som glemt ende.
+- **Regime-klynging (2–4 medoid-søk):** ikke målt; fase 4b-spor med
+  outlier-vakt, uendret av denne ADR-en.
+
+Merk: **betinget sektornøkling** (E3-sporet) er ikke et alternativ til F
+— den akselererer F selv — og står derfor blant ytelsesspakene under.
 
 ## Konsekvenser
 
 - **Robusthetstallene arver søkets fulle korrekthetsgarantier** — hele
-  klassen «evaluator-artefakt»-risiko (frossen-spor-bias, rør-blindhet)
-  forsvinner fra F4.2. Én motor, én sannhet, også i ensemblet.
-- **Ytelsesbudsjettet må løses et annet sted enn i medlemsmekanismen.**
-  Målt: ~67–99 s per avgang for 30 fulle medlemssøk på S-1 (PC).
-  F3.5-budsjettet (< 60 s nettbrett) nås dermed ikke ved å velge
-  billigere per-medlem-mekanisme — spakene som gjenstår er færre/smartere
-  kjøringer (progressiv beregning per F3.5, profilsøk over
-  avgangsvinduet, τ-felt-screening, delt A*-felt/klaring på tvers av
-  medlemmer der semantikken tillater det) og konstantfaktor-arbeid
-  (alloc-fri hot-loop, måldominans-pruning). Dette blir fase
-  4a-designets hovedoppgave, informert av nettbrett-målingen.
-- **Vi gir avkall på** bransjenormens enkelhet (skalar per medlem) og på
-  12°-snarveien for medlemmer. Ombestemmer vi oss, er kostnaden liten:
-  variantene A/A12/F12 forblir implementert bak opsjoner og kan
-  remåles med utvidet fiksturssett.
-- Falsifiseringsterskler for 4a-validering (pragmatiker-agentens krav):
-  (i) på ekte MEPS-data skal fulle medlemssøk reprodusere syntetisk-
-  målingens egenskaper — null algoritmiske aborter og stabile felle-sett
-  under backoff 1↔2; brudd ⇒ remåling med ekte-data-fiksturer;
-  (ii) S-6-måling (degradert data) i 4a — divergens der gjenåpner
-  beslutningen (måleplanens §8.2-plaster);
-  (iii) vise-versa-vakt: hvis 4a-ytelsesarbeidet ikke når F3.5-budsjettet
-  med spakene over, revurderes F12 med utvidet S-7-måling FØR
-  ambisjonen senkes.
+  klassen evaluator-/oppløsningsartefakter forsvinner fra F4.2. Én
+  motor, én sannhet, også i ensemblet. P50-terskler i
+  produksjonsrapportering suppleres alltid med paret per-medlem-
+  differanse (bimodal-lærdommen).
+- **Ytelsesgapet er et ordensmagnitude-problem og ADR-ens største åpne
+  regning — sagt i klartekst:** 67–99 s per avgang på PC × 2–4×
+  nettbrett × 5–8 avganger ≈ **11–53 minutter rått** mot budsjettets
+  60 s. Fase 4a må finne ~10–40×. Spakene under er **uvaliderte,
+  uprioriterte kandidater** (prioritering skjer i 4a-specen med
+  nettbrett-tallet foran seg); grove anslag: profilsøk over
+  avgangsvinduet ~3–4×, alloc-fri hot-loop 1,5–2×, delt cache
+  1,2–1,5×, måldominans-pruning og betinget sektornøkling umålt,
+  arena-/buffergjenbruk i worker-poolen (N6-relevant) — samlet
+  plausibelt ~5–12×. **Det sannsynlige utfallet er derfor en semantisk
+  F3.5-revisjon, ikke en teoretisk:** kontrolltabell på sekunder; full
+  ensemble-analyse for valgt/topp-avgang < 60 s; øvrige avganger
+  strømmet i bakgrunnen over minutter. Dette er en reell mulig utgang
+  Magnus godkjenner med åpne øyne.
+- **Presiseringer til spakene:** (a) delte read-only-cacher for
+  vær-UAVHENGIGE oppslag (klaring, segment, TSS-geometri, natt-tabell)
+  er tillatt på tvers av medlemmer i produksjon — bit-identiske svar
+  uavhengig av innsettingsrekkefølge; per-medlem-isolasjon kreves kun i
+  målerigger (målingens cache-forbud var variantisolasjon, ikke
+  semantikk). (b) τ-felt-screening kan kun styre BEREGNINGSREKKEFØLGE
+  og hva som ennå ikke er beregnet (progressivitet) — den erstatter
+  aldri et F4.2-tall; alt som rapporteres kommer fra fulle søk.
+  (c) **Sekvensiell tidlig-stopp** (stopp medlemsberegning ved
+  forhåndsregistrert konfidensregel) endrer F4.2-semantikk og er et
+  eksplisitt 4a-spørsmål til Magnus — aldri en stille optimalisering.
+- **Vi gir avkall på** bransjenormens enkelhet og 12°-snarveien.
+  Ombestemmelse er billig: A/A12/F12 ligger bak opsjoner og kan remåles.
+- **Falsifiseringsporter (daterte, ikke dekorative):**
+  1. **4a-start-port:** nettbrett-målingen (byggstatus pkt. 8, fortsatt
+     umålt) kjøres FØR 4a-designet prioriterer spaker.
+  2. **Vise-versa-port:** «F3.5 ikke nådd» defineres som > 60 s per
+     avgang på nettbrett MÅLT ETTER konstantfaktor- og delingstiltakene
+     — da utløses F12-remåling (med utvidet S-7-fiksturssett)
+     automatisk, FØR progressiv-semantikk-revisjonen vedtas som endelig.
+  3. **Ekte-data-port:** på ekte MEPS-data skal fulle medlemssøk vise
+     null algoritmiske aborter og felle-sett der backoff-uenige
+     (1↔2) avganger merkes inkonklusive og ekskluderes med
+     rapportering; andel inkonklusive > 20 % ⇒ remåling med
+     ekte-data-fiksturer. S-6-målingen (degradert data) kjøres i 4a;
+     divergens der gjenåpner beslutningen.
+  4. **Ny 4a-målingsoppgave:** P90-separert rangeringsfikstur bygges
+     (punkt 5 i konteksten — dagens matrise tester ikke rangering under
+     produktstatistikken).
 
 ## Bekreftelse
 
-- `packages/routing`: ensemble-orkestreringen (fase 4a) kaller samme
-  `planRoute`/søkekjerne for medlemmer som for kontroll — ingen egen
-  medlemsmotor; `scalarSearchMode`/korridor brukes kun bak eksplisitte
-  måle-/S1b-opsjoner. Arkitekturtest-kandidat: F4.2-statistikk kan kun
-  konstrueres fra fulle søkeresultater.
-- E1′-forkravstestene (`e1-forkrav.test.ts`) og regresjonstesten på m24
+- **Arkitekturtest (KRAV, ikke kandidat):** F4.2-statistikk kan kun
+  konstrueres fra fulle søkeresultater — `packages/routing`s
+  ensemble-orkestrering kaller samme `planRoute`/søkekjerne for
+  medlemmer som for kontroll; `scalarSearchMode`/korridor er kun
+  tilgjengelig bak eksplisitte måle-/S1b-innganger. Testen skrives i
+  tools/arch-tests i 4as første bølge.
+- E1′-forkravstestene (`e1-forkrav.test.ts`) og m24-regresjonstesten
   står som permanente vakter.
-- Måleplanens §8.1-semantikk gjenfinnes i `bailout.ts` (backoff 1).
+- Måleplanens §8.1-semantikk gjenfinnes i `bailout.ts` (backoff i
+  fysisk tid etter revisjonen over).
+- Kravspekens F3.5 bærer datert revisjon som refererer denne ADR-en.
