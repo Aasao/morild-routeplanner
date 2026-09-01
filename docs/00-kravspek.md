@@ -151,13 +151,19 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
   mykt krav** («ankomst soloppgang+1 til solnedgang−1»); mørketimer som
   skravur i avgangstabellen; kryss-timer i mørket vises separat.
   Konfigurerbart **maks sammenhengende etappetid**-tak (mannskap).
-- **F3.5** Ytelse (omdefinert etter arkitekt-review): S1 er 150–210
-  kjøringer, ikke 30. **Progressiv beregning er UX-kontrakten**:
-  kontrollmedlem for alle avganger først (tabell på sekunder), deretter
-  ensemble strømmet per avgang. Medlemmer kjøres med redusert
-  kursoppløsning (10–12°; kontroll 6°) og delt A*-felt/Tub-bound.
-  Minnemodell: **per-medlem transferable ArrayBuffers** (unngår COOP/COEP-
-  fellen); dekoding kvantisert→Float32 i worker on demand.
+- **F3.5** Ytelse (revidert 2026-09-01 per ADR-0005; opprinnelig
+  omdefinert etter arkitekt-review): S1 er 150–210 kjøringer, ikke 30.
+  **Progressiv beregning er UX-kontrakten**: kontrollmedlem for alle
+  avganger først (tabell på sekunder), deretter ensemble strømmet per
+  avgang — full ensemble-analyse for valgt/topp-avgang < 60 s; øvrige
+  avganger kan strømme over lengre tid. **Medlemmer kjøres med samme
+  fulle Pareto-søk og samme kursoppløsning som kontrollen** (E1′-målt:
+  redusert medlemsoppløsning gir utrygge gjennomførbarhetstall med
+  fortegnsflip, og skalar/etikett-tak sparer bare 2–11 % — se
+  ADR-0005 med falsifiseringsporter). Delt A*-felt/Tub-bound og delte
+  read-only-cacher for væruavhengige oppslag. Minnemodell: **per-medlem
+  transferable ArrayBuffers** (unngår COOP/COEP-fellen); dekoding
+  kvantisert→Float32 i worker on demand.
 
 ### F4 Robusthet (kjerne 3: appens signatur)
 
@@ -276,6 +282,13 @@ Endringer etter godkjenning skjer som daterte revisjoner.
   f=0 til kalibrering, F1.2); måleplan E1′ revidert per
   djevelens-advokat-review (R2 operasjonalisert m/Pareto-re-søk-fasit,
   to nye fiksturer S-7/S-8, to-parameter-front m/kontroller).
+- **2026-09-01 (ADR-0005 vedtatt):** ensemble-mekanisme = fullt
+  Pareto-søk per medlem på kontrolloppløsning; F3.5 revidert (setningen
+  om redusert medlemsoppløsning 10–12° strøket — målt utrygg for
+  F4.2-tall; progressiv semantikk presisert: full analyse for
+  valgt/topp-avgang < 60 s, øvrige strømmet). Korridor-evaluator kun
+  S1b-diff. Se `docs/decisions/ADR-0005-ensemble-mekanisme.md` og
+  `docs/research/maaling-e1-2026-08-31.md`.
 - **2026-08-31 (2) (R3 + QA-guardrail, se
   `docs/research/beslutningsgrunnlag-r3-e1-2026-08-31.md`):**
   kystbufferen (minOffing + sjøgangstillegg) håndheves langs hele korden,

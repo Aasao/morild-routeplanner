@@ -1,11 +1,10 @@
 # ADR-0005: Ensemble-mekanisme — fullt Pareto-søk per medlem på kontrolloppløsning
 
-- Status: **foreslått** — venter på Magnus (berører robusthetssemantikk,
-  F4.2-tallenes gyldighet, og krever datert F3.5-revisjon i kravspeken)
-- Dato: 2026-09-01 (rev. samme dag etter fem-agenters votering, alle
-  ENDRE→godkjenn — se `docs/research/maaling-e1-2026-08-31.md` og
-  samtaleloggens votering)
-- Besluttet av: agent-forslag som venter
+- Status: **vedtatt 2026-09-01 av Magnus** (etter fem-agenters votering,
+  alle ENDRE→godkjenn; F3.5-revisjonen gjennomført i kravspeken samme
+  dag)
+- Dato: 2026-09-01
+- Besluttet av: Magnus
 
 ## Kontekst
 
