@@ -65,14 +65,39 @@ const MATRIX = [
   { id: "S-8", bygg: s8WindAgainstCurrentEnsemble, avganger: [0, 3 * H, 6 * H] },
 ];
 
-const VARIANTS = ["A", "B", "F"];
 /**
  * Variantmekanikken og utfallsklassifiseringen bor i
  * `packages/routing/test-fixtures/e1-outcome.ts`, ikke her: §8.2 krever at
- * abort-typene telles likt i alle tre varianter, og det kravet kan bare
- * bevises hvis tellingen har én implementasjon. Forkravstesten
+ * abort-typene telles likt i alle varianter, og det kravet kan bare bevises
+ * hvis tellingen har én implementasjon. Forkravstesten
  * (`src/e1-forkrav.test.ts`) beviser det på nøyaktig denne koden.
+ *
+ * ## Varianttabellen
+ *
+ * `base` er mekanikken (A/B/F i e1-outcome). `soek` er opsjoner som legges på
+ * **medlemssøket**, `r2` opsjoner som legges på **re-søket** i R2. Den delte
+ * feildeteksjonen (`evaluateRoute` inne i `trapVerdict`) ser aldri noen av
+ * dem — §6.1 krever at fasiten kun skilles fra variantene av re-søket.
+ *
+ * F12/A12 er lagt til 2026-09-01 (måleplanens §8, datert tillegg): F3.5s
+ * planlagte **medlemsoppløsning** er 10–12°, og kjøringen 2026-08-31 målte
+ * bare fiksturens egen oppløsning. Kontrollruten (planen som valideres) og
+ * fasiten F beholder fiksturens egne opsjoner.
  */
+const VARIANT_SPEC = Object.freeze({
+  A: { base: "A", soek: {}, r2: {} },
+  B: { base: "B", soek: {}, r2: {} },
+  F: { base: "F", soek: {}, r2: {} },
+  F12: { base: "F", soek: { headingStepDeg: 12 }, r2: { headingStepDeg: 12 } },
+  A12: { base: "A", soek: { headingStepDeg: 12 }, r2: { headingStepDeg: 12 } },
+});
+
+/** Fasiten alle varianter måles mot. Uendret siden 2026-08-31. */
+const FASIT = "F";
+
+/** Standardmatrisen er den forhåndsregistrerte; `--varianter` overstyrer. */
+let VARIANTS = ["A", "B", "F"];
+
 const TUBE_NM = E1_TUBE_NM;
 
 // ------------------------------------------------------------- småverktøy
@@ -225,8 +250,14 @@ function kjoerAvgang(spec, offsetS) {
   const medlemsSpor = {};
 
   for (const variant of VARIANTS) {
+    const spesifikasjon = VARIANT_SPEC[variant];
+    if (spesifikasjon === undefined) throw new Error(`ukjent variant ${variant}`);
     // Egen fikstur-instans per variant — ingen delte lukkinger.
     const fx = spec.bygg();
+    const soekOpts = { ...fx.options, ...spesifikasjon.soek };
+    const r2Opts =
+      Object.keys(spesifikasjon.r2).length === 0 ? undefined : spesifikasjon.r2;
+
     const t0 = performance.now();
     let sok = 0;
     let evalueringer = 0;
@@ -235,6 +266,9 @@ function kjoerAvgang(spec, offsetS) {
     const feller = [];
     const hardeFeil = [];
     const r2Sok = {};
+    // Fasitens deskriptive tilleggskolonner regnes ETTER at klokken er
+    // stoppet (se under). Her samles bare det de trenger.
+    const deskriptivKoe = [];
 
     for (const m of fx.members) {
       const felles = {
@@ -243,6 +277,8 @@ function kjoerAvgang(spec, offsetS) {
         weather: m.weather,
         mask: fx.mask,
         boat: fx.boat,
+        // Feildeteksjonen i `trapVerdict` er delt og skal se fiksturens
+        // opsjoner; variantens egne går inn via `soekOpts`/`r2Opts`.
         options: fx.options,
         harbours: INTERIM_BAILOUT_HARBOURS,
         tubeNm: TUBE_NM,
@@ -250,7 +286,13 @@ function kjoerAvgang(spec, offsetS) {
 
       const ut = memberOutcome(
         assertIsolated(
-          { ...felles, variant, start: fx.start, dest: fx.dest },
+          {
+            ...felles,
+            options: soekOpts,
+            variant: spesifikasjon.base,
+            start: fx.start,
+            dest: fx.dest,
+          },
           `medlemsutfall ${variant}`,
         ),
       );
@@ -260,30 +302,39 @@ function kjoerAvgang(spec, offsetS) {
       spor[m.id] = ut.track;
 
       // Felle-dommen: felles feildeteksjon, variantens egen re-søksmekanikk.
-      const dom = trapVerdict(felles, R2_MODE[variant], 1);
+      const dom = trapVerdict(felles, R2_MODE[spesifikasjon.base], 1, r2Opts);
       evalueringer++;
       sok += dom.sok;
       r2Sok[m.id] = dom.sok;
       if (dom.hardFeil) hardeFeil.push(m.id);
       if (dom.felle) feller.push(m.id);
 
-      if (variant === "F") {
-        // Deskriptive tilleggskolonner regnes kun på fasiten.
-        if (dom.hardFeil) {
-          const margin = utveiMargin(felles, dom.verdict);
-          if (margin !== null) resultat.utveiMargin[m.id] = margin;
-        }
-        for (const backoff of [0, 2]) {
-          const alt = trapVerdict(felles, "pareto", backoff);
-          const key = `backoff${backoff}`;
-          resultat.backoffSensitivitet[key] ??= [];
-          if (alt.felle) resultat.backoffSensitivitet[key].push(m.id);
-        }
-      }
+      if (variant === FASIT) deskriptivKoe.push({ id: m.id, felles, dom });
     }
 
     const ms = performance.now() - t0;
     medlemsSpor[variant] = spor;
+
+    /**
+     * **Utenfor tidsmålingen (målehygiene, review-funn 2026-09-01).**
+     *
+     * Backoff-0/2-kolonnen og utvei-marginen er *deskriptive tillegg* til
+     * rapporten — de er ikke arbeid noen variant må gjøre. I kjøringen
+     * 2026-08-31 lå de inne i fasitens `ms`, som gjorde F kunstig dyr og
+     * A/F-forholdet kunstig lavt. De kjøres nå etter at klokken er stoppet.
+     */
+    for (const { id, felles, dom } of deskriptivKoe) {
+      if (dom.hardFeil) {
+        const margin = utveiMargin(felles, dom.verdict);
+        if (margin !== null) resultat.utveiMargin[id] = margin;
+      }
+      for (const backoff of [0, 2]) {
+        const alt = trapVerdict(felles, "pareto", backoff);
+        const key = `backoff${backoff}`;
+        resultat.backoffSensitivitet[key] ??= [];
+        if (alt.felle) resultat.backoffSensitivitet[key].push(id);
+      }
+    }
 
     const framme = Object.values(utfall).filter((u) => u.gjennomfoerbar);
     const t = framme.map((u) => u.timerH);
@@ -316,8 +367,9 @@ function kjoerAvgang(spec, offsetS) {
   }
 
   // --- parede per-medlem-differanser og topologi, mot fasiten F
-  const fasit = resultat.varianter.F;
-  for (const variant of ["A", "B"]) {
+  const fasit = resultat.varianter[FASIT];
+  for (const variant of VARIANTS) {
+    if (variant === FASIT) continue;
     const v = resultat.varianter[variant];
     const diff = [];
     const beatDiff = [];
@@ -334,7 +386,10 @@ function kjoerAvgang(spec, offsetS) {
         motorDiff.push(a.motorH - f.motorH);
         nightDiff.push(a.nightH - f.nightH);
       }
-      const d = corridorDeviationNm(medlemsSpor[variant][id], medlemsSpor.F[id]);
+      const d = corridorDeviationNm(
+        medlemsSpor[variant][id],
+        medlemsSpor[FASIT][id],
+      );
       avvikNm.push(d);
       if (d > 0.5) annenTopologi++;
     }
@@ -359,6 +414,84 @@ function kjoerAvgang(spec, offsetS) {
   return resultat;
 }
 
+/**
+ * Avgangsrangeringen per variant på ett kvantil-felt.
+ *
+ * `p50H` er den **forhåndsregistrerte** rangeringen (låst i
+ * `ensemble-s5-departure.ts` før kjøring). `p90H` kom til 2026-09-01 som
+ * *deskriptivt tillegg*: produktets egen rangering per specens F4.4/F4.5 er
+ * «P90 som plantid», og et rangeringskriterium som ikke er produktets eget,
+ * bør stå ved siden av — ikke i stedet for. Ingen forhåndsregistrert kriterium
+ * er endret.
+ *
+ * Avganger uten gjennomførbare medlemmer rangeres sist. Uavgjort topp
+ * rapporteres eksplisitt (`toppUavgjortH`) i stedet for å skjules av
+ * sorteringens vilkårlige valg.
+ */
+function rangeringFor(perAvgang, nokkel) {
+  const rang = {};
+  for (const variant of VARIANTS) {
+    const verdier = perAvgang.map((r) =>
+      r.varianter[variant][nokkel] === null
+        ? Number.POSITIVE_INFINITY
+        : r.varianter[variant][nokkel],
+    );
+    const sortert = [...verdier.keys()].sort((i, j) => verdier[i] - verdier[j]);
+    const plass = new Array(verdier.length);
+    sortert.forEach((idx, plassering) => (plass[idx] = plassering));
+    const best = verdier[sortert[0]];
+    rang[variant] = {
+      verdier,
+      rangering: plass,
+      toppAvgangH: perAvgang[sortert[0]].offsetH,
+      toppUavgjortH: perAvgang
+        .map((r, i) => (verdier[i] === best ? r.offsetH : null))
+        .filter((x) => x !== null),
+      alleUgjennomfoerbare: verdier.every((v) => !Number.isFinite(v)),
+    };
+  }
+  const fasitTopp = new Set(rang[FASIT].toppUavgjortH);
+  return {
+    kvantil: nokkel,
+    toppAvgang: Object.fromEntries(VARIANTS.map((v) => [v, rang[v].toppAvgangH])),
+    toppUavgjortH: Object.fromEntries(
+      VARIANTS.map((v) => [v, rang[v].toppUavgjortH]),
+    ),
+    // Med uavgjort topp i fasiten teller det som «samme topp» dersom
+    // variantens topp er blant fasitens uavgjorte — alt annet ville dømt en
+    // variant for et valg fasiten selv ikke tar.
+    sammeToppAvgang: Object.fromEntries(
+      VARIANTS.filter((v) => v !== FASIT).map((v) => [
+        v,
+        fasitTopp.has(rang[v].toppAvgangH),
+      ]),
+    ),
+    kendallTau:
+      perAvgang.length >= 5
+        ? Object.fromEntries(
+            VARIANTS.filter((v) => v !== FASIT).map((v) => [
+              v,
+              kendallTau(rang[v].rangering, rang[FASIT].rangering),
+            ]),
+          )
+        : null,
+    // Navnet `p50PerAvgang` beholdes på P50-rangeringen for bakoverkompatible
+    // lesere (`rapporter.mjs`, kjøringen 2026-08-31).
+    ...(nokkel === "p50H"
+      ? {
+          p50PerAvgang: Object.fromEntries(
+            VARIANTS.map((v) => [v, rang[v].verdier]),
+          ),
+        }
+      : {}),
+    verdiPerAvgang: Object.fromEntries(VARIANTS.map((v) => [v, rang[v].verdier])),
+    merknad:
+      perAvgang.length >= 5
+        ? "n=5: Kendall-τ rapportert"
+        : "n=3: τ erstattet av «identisk topp-1 + ingen flipp utenfor båndet» (§8.2)",
+  };
+}
+
 // ------------------------------------------------------------------- kjøring
 
 function main() {
@@ -368,6 +501,17 @@ function main() {
     utIndex >= 0
       ? resolve(args[utIndex + 1])
       : join(REPO, "docs/research/maaling-e1-raadata");
+  const varIndex = args.indexOf("--varianter");
+  if (varIndex >= 0) {
+    const valgt = args[varIndex + 1].split(",").map((v) => v.trim());
+    for (const v of valgt) {
+      if (VARIANT_SPEC[v] === undefined) throw new Error(`ukjent variant: ${v}`);
+    }
+    if (!valgt.includes(FASIT)) {
+      throw new Error(`fasiten ${FASIT} må være med — alt måles mot den`);
+    }
+    VARIANTS = valgt;
+  }
   const filter = args.filter((a) => /^S-\d$/.test(a));
   mkdirSync(utMappe, { recursive: true });
 
@@ -379,64 +523,27 @@ function main() {
       const t0 = performance.now();
       const r = kjoerAvgang(spec, offsetS);
       perAvgang.push(r);
-      const f = r.varianter.F;
+      const f = r.varianter[FASIT];
       console.log(
         `${spec.id} +${(offsetS / 3600).toString().padStart(2)}t  ` +
-          `F: ${f.gjennomfoerbare}/${f.medlemmer} P50=${f.p50H?.toFixed(3) ?? "-"} feller=[${f.felleSett}]  ` +
-          `A: ${r.varianter.A.gjennomfoerbare}/30 feller=[${r.varianter.A.felleSett}]  ` +
-          `B: ${r.varianter.B.gjennomfoerbare}/30 feller=[${r.varianter.B.felleSett}]  ` +
+          `${FASIT}: ${f.gjennomfoerbare}/${f.medlemmer} P50=${f.p50H?.toFixed(3) ?? "-"} feller=[${f.felleSett}]  ` +
+          VARIANTS.filter((v) => v !== FASIT)
+            .map(
+              (v) =>
+                `${v}: ${r.varianter[v].gjennomfoerbare}/${r.varianter[v].medlemmer} feller=[${r.varianter[v].felleSett}]  `,
+            )
+            .join("") +
           `(${((performance.now() - t0) / 1000).toFixed(1)} s)`,
       );
     }
 
-    // Avgangsrangering per variant: laveste P50-ankomst vinner (låst før
-    // kjøring, se `ensemble-s5-departure.ts`). Avganger uten gjennomførbare
-    // medlemmer rangeres sist.
-    const rang = {};
-    for (const variant of VARIANTS) {
-      const verdier = perAvgang.map((r) =>
-        r.varianter[variant].p50H === null
-          ? Number.POSITIVE_INFINITY
-          : r.varianter[variant].p50H,
-      );
-      const sortert = [...verdier.keys()].sort((i, j) => verdier[i] - verdier[j]);
-      const plass = new Array(verdier.length);
-      sortert.forEach((idx, plassering) => (plass[idx] = plassering));
-      rang[variant] = {
-        p50PerAvgang: verdier,
-        rangering: plass,
-        toppAvgangH: perAvgang[sortert[0]].offsetH,
-        alleUgjennomfoerbare: verdier.every((v) => !Number.isFinite(v)),
-      };
-    }
-    const rangering = {
-      toppAvgang: Object.fromEntries(
-        VARIANTS.map((v) => [v, rang[v].toppAvgangH]),
-      ),
-      sammeToppAvgang: {
-        A: rang.A.toppAvgangH === rang.F.toppAvgangH,
-        B: rang.B.toppAvgangH === rang.F.toppAvgangH,
-      },
-      kendallTau:
-        perAvgang.length >= 5
-          ? {
-              A: kendallTau(rang.A.rangering, rang.F.rangering),
-              B: kendallTau(rang.B.rangering, rang.F.rangering),
-            }
-          : null,
-      p50PerAvgang: Object.fromEntries(
-        VARIANTS.map((v) => [v, rang[v].p50PerAvgang]),
-      ),
-      merknad:
-        perAvgang.length >= 5
-          ? "n=5: Kendall-τ rapportert"
-          : "n=3: τ erstattet av «identisk topp-1 + ingen flipp utenfor båndet» (§8.2)",
-    };
-
-    alle.push({ fikstur: spec.id, avganger: perAvgang, rangering });
+    const rangering = rangeringFor(perAvgang, "p50H");
+    const rangeringP90 = rangeringFor(perAvgang, "p90H");
+    const ut = { fikstur: spec.id, avganger: perAvgang, rangering, rangeringP90 };
+    alle.push(ut);
     writeFileSync(
       join(utMappe, `${spec.id.toLowerCase()}.json`),
-      JSON.stringify({ fikstur: spec.id, avganger: perAvgang, rangering }, null, 1),
+      JSON.stringify(ut, null, 1),
     );
   }
 
@@ -447,11 +554,16 @@ function main() {
         beskrivelse:
           "E1′-matrisen. Se docs/research/maaling-e1-2026-08-31.md og måleplanens §3/§4.",
         varianter: VARIANTS,
+        fasit: FASIT,
+        variantSpesifikasjon: Object.fromEntries(
+          VARIANTS.map((v) => [v, VARIANT_SPEC[v]]),
+        ),
         r2Mekanikk: R2_MODE,
         tubeNm: TUBE_NM,
         fiksturer: alle.map((f) => ({
           fikstur: f.fikstur,
           rangering: f.rangering,
+          rangeringP90: f.rangeringP90,
           avganger: f.avganger.map((a) => ({
             offsetH: a.offsetH,
             kontroll: a.kontroll,

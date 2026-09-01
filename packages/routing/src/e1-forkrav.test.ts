@@ -227,6 +227,44 @@ describe("§8.2 forkrav 1 — navigasjonsfellen i S-3", () => {
     const forsteSteg = flukt.steps[1]!;
     expect(forsteSteg.lon).toBeGreaterThan(fra.lon);
   }, 120_000);
+
+  /**
+   * **Regresjonsvakt for tilleggsmålingens hovedfunn** (rapportens §6.2,
+   * datert 2026-09-01): med 12° kursoppløsning i re-søket — F3.5s planlagte
+   * medlemsoppløsning — finner fasitens mekanikk fortsatt utveien, og m24 er
+   * fortsatt **ikke** en felle.
+   *
+   * Den er verdt en test fordi den er et *sikkerhetsresultat*: hele
+   * felle-kriteriets diskrimineringskraft hviler på dette ene medlemmet, og
+   * hvis en senere endring gjør utveien uoppnåelig ved 12°, endrer den
+   * samtidig konklusjonen målingen ble brukt til. Da skal denne bli rød.
+   *
+   * Testen fastholder også at `searchOptions` **kun** treffer re-søket:
+   * feilpunktet er identisk med fasitens, fordi feildeteksjonen er delt
+   * (måleplanens §6.1).
+   */
+  it("VARIANT F12: 12° kursoppløsning i re-søket finner fortsatt utveien", () => {
+    const fasit = trapVerdict(felles, "pareto");
+    const grov = trapVerdict(felles, "pareto", 1, { headingStepDeg: 12 });
+    expect(grov.hardFeil).toBe(true);
+    expect(grov.felle, "m24 skal ikke bli en felle av grovere kursnett").toBe(
+      false,
+    );
+    expect(grov.verdict!.reachedHarbour).toBe("Fredrikstad");
+    const naadd = grov.verdict!.attempts.find((a) => a.outcome === "naadd")!;
+    expect(naadd.durationS! / 3600).toBeLessThan(6);
+    // Delt feildeteksjon: `searchOptions` rører ikke evalueringen.
+    expect(grov.failure!.tS).toBe(fasit.failure!.tS);
+    expect(grov.verdict!.fromTS).toBe(fasit.verdict!.fromTS);
+  }, 180_000);
+
+  it("uten `searchOptions` er dommen bit-identisk med kjøringen 2026-08-31", () => {
+    const utenOverstyring = trapVerdict(felles, "pareto", 1);
+    const eksplisittUdefinert = trapVerdict(felles, "pareto", 1, undefined);
+    expect(JSON.stringify(eksplisittUdefinert)).toBe(
+      JSON.stringify(utenOverstyring),
+    );
+  }, 180_000);
 });
 
 // ================================================================ 2. S-5-vippet

@@ -188,6 +188,17 @@ export function trapVerdict(
   input: Omit<MemberInputE1, "variant" | "start" | "dest">,
   mode: R2SearchMode,
   backoffSteps = 1,
+  /**
+   * Opsjoner som **kun** gjelder re-søket (lagt til 2026-09-01 for de billige
+   * variantene F12/A12, som kjører grovere kursoppløsning).
+   *
+   * Den er bevisst skilt fra `input.options`: `evaluateRoute` under er den
+   * **delte** feildeteksjonen (måleplanens §6.1 — fasiten skal ikke kunne
+   * skilles fra variantene av noe annet enn re-søksmekanikken), og den skal
+   * derfor aldri se variantens egne søkeopsjoner. Uten override er kallet
+   * bit-identisk med kjøringen 2026-08-31.
+   */
+  searchOptions?: Partial<RouteOptions> | undefined,
 ): TrapVerdict {
   const evaluation = evaluateRoute({
     waypoints: input.route,
@@ -219,6 +230,7 @@ export function trapVerdict(
         mode,
         tubeNm: input.tubeNm ?? E1_TUBE_NM,
         backoffSteps,
+        ...(searchOptions === undefined ? {} : { searchOptions }),
       },
     },
     evaluation.rejection!,

@@ -1,0 +1,420 @@
+{
+ "beskrivelse": "Deterministisk kostnadsmåling av E1′-variantenes MEDLEMSSØK (måleplanens §8.4 punkt 3). `etiketter`/`iterasjoner`/`klaringskall` er bit-deterministiske; `ms` er minimum over gjentak og indikativ.",
+ "gjentak": 2,
+ "avgang": "fiksturens egen (+0 t)",
+ "fiksturer": [
+  {
+   "fikstur": "S-1",
+   "varianter": {
+    "F": {
+     "ms": 102483.5799,
+     "etiketter": 4131753,
+     "iterasjoner": 426,
+     "klaringskall": 4035570,
+     "toppEtiketter": 28314,
+     "framme": 30,
+     "headingStepDeg": 6
+    },
+    "A": {
+     "ms": 88481.38560000004,
+     "etiketter": 4063235,
+     "iterasjoner": 426,
+     "klaringskall": 2840450,
+     "toppEtiketter": 27009,
+     "framme": 30,
+     "headingStepDeg": 6,
+     "motFasit": {
+      "etiketter": 0.9834167240878146,
+      "iterasjoner": 1,
+      "klaringskall": 0.7038534829032825,
+      "ms": 0.8633713389631508
+     }
+    },
+    "F12": {
+     "ms": 54378.17420000001,
+     "etiketter": 2974557,
+     "iterasjoner": 429,
+     "klaringskall": 2131779,
+     "toppEtiketter": 27857,
+     "framme": 30,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.7199261427292484,
+      "iterasjoner": 1.0070422535211268,
+      "klaringskall": 0.5282473107888105,
+      "ms": 0.5306037733367666
+     }
+    },
+    "A12": {
+     "ms": 50764.60400000005,
+     "etiketter": 2908038,
+     "iterasjoner": 429,
+     "klaringskall": 1597087,
+     "toppEtiketter": 26563,
+     "framme": 30,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.7038266808301464,
+      "iterasjoner": 1.0070422535211268,
+      "klaringskall": 0.39575252070959,
+      "ms": 0.495343781409026
+     }
+    }
+   }
+  },
+  {
+   "fikstur": "S-2",
+   "varianter": {
+    "F": {
+     "ms": 30223.971600000048,
+     "etiketter": 1780774,
+     "iterasjoner": 649,
+     "klaringskall": 64747,
+     "toppEtiketter": 12319,
+     "framme": 1,
+     "headingStepDeg": 6
+    },
+    "A": {
+     "ms": 26242.962100000004,
+     "etiketter": 1632738,
+     "iterasjoner": 659,
+     "klaringskall": 62713,
+     "toppEtiketter": 12069,
+     "framme": 0,
+     "headingStepDeg": 6,
+     "motFasit": {
+      "etiketter": 0.9168698554673417,
+      "iterasjoner": 1.0154083204930662,
+      "klaringskall": 0.9685854170849615,
+      "ms": 0.8682830452368464
+     }
+    },
+    "F12": {
+     "ms": 13803.203899999964,
+     "etiketter": 1100548,
+     "iterasjoner": 650,
+     "klaringskall": 64030,
+     "toppEtiketter": 12186,
+     "framme": 0,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.6180166601713637,
+      "iterasjoner": 1.0015408320493067,
+      "klaringskall": 0.9889261278514835,
+      "ms": 0.4566972230744136
+     }
+    },
+    "A12": {
+     "ms": 12447.30039999995,
+     "etiketter": 1056517,
+     "iterasjoner": 657,
+     "klaringskall": 62592,
+     "toppEtiketter": 11863,
+     "framme": 0,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.5932908948580786,
+      "iterasjoner": 1.012326656394453,
+      "klaringskall": 0.9667166046303304,
+      "ms": 0.4118353658061249
+     }
+    }
+   }
+  },
+  {
+   "fikstur": "S-3",
+   "varianter": {
+    "F": {
+     "ms": 63731.94689999998,
+     "etiketter": 2771515,
+     "iterasjoner": 389,
+     "klaringskall": 3036273,
+     "toppEtiketter": 27593,
+     "framme": 26,
+     "headingStepDeg": 10
+    },
+    "A": {
+     "ms": 59695.09580000001,
+     "etiketter": 2683980,
+     "iterasjoner": 389,
+     "klaringskall": 2074364,
+     "toppEtiketter": 26321,
+     "framme": 26,
+     "headingStepDeg": 10,
+     "motFasit": {
+      "etiketter": 0.9684161911445545,
+      "iterasjoner": 1,
+      "klaringskall": 0.6831941660054942,
+      "ms": 0.9366589081872223
+     }
+    },
+    "F12": {
+     "ms": 56165.84169999999,
+     "etiketter": 2588140,
+     "iterasjoner": 389,
+     "klaringskall": 2460134,
+     "toppEtiketter": 27508,
+     "framme": 26,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.933835826253872,
+      "iterasjoner": 1,
+      "klaringskall": 0.8102479585992433,
+      "ms": 0.8812823777081257
+     }
+    },
+    "A12": {
+     "ms": 52000.50509999995,
+     "etiketter": 2542959,
+     "iterasjoner": 389,
+     "klaringskall": 1796419,
+     "toppEtiketter": 26426,
+     "framme": 26,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.9175339119579002,
+      "iterasjoner": 1,
+      "klaringskall": 0.5916526610090727,
+      "ms": 0.8159252561606583
+     }
+    }
+   }
+  },
+  {
+   "fikstur": "S-4",
+   "varianter": {
+    "F": {
+     "ms": 3910.939900000114,
+     "etiketter": 286561,
+     "iterasjoner": 248,
+     "klaringskall": 504658,
+     "toppEtiketter": 4604,
+     "framme": 30,
+     "headingStepDeg": 10
+    },
+    "A": {
+     "ms": 3760.999300000025,
+     "etiketter": 278591,
+     "iterasjoner": 248,
+     "klaringskall": 477341,
+     "toppEtiketter": 4528,
+     "framme": 30,
+     "headingStepDeg": 10,
+     "motFasit": {
+      "etiketter": 0.9721874225732043,
+      "iterasjoner": 1,
+      "klaringskall": 0.945870272541008,
+      "ms": 0.9616612364715488
+     }
+    },
+    "F12": {
+     "ms": 3287.30299999984,
+     "etiketter": 258801,
+     "iterasjoner": 251,
+     "klaringskall": 419839,
+     "toppEtiketter": 4567,
+     "framme": 30,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.9031270828898559,
+      "iterasjoner": 1.0120967741935485,
+      "klaringskall": 0.8319277609787222,
+      "ms": 0.840540403088205
+     }
+    },
+    "A12": {
+     "ms": 3221.0093999998644,
+     "etiketter": 252467,
+     "iterasjoner": 251,
+     "klaringskall": 403030,
+     "toppEtiketter": 4513,
+     "framme": 30,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.8810235866011076,
+      "iterasjoner": 1.0120967741935485,
+      "klaringskall": 0.7986200555623809,
+      "ms": 0.8235895928750453
+     }
+    }
+   }
+  },
+  {
+   "fikstur": "S-5",
+   "varianter": {
+    "F": {
+     "ms": 77802.22029999993,
+     "etiketter": 3088600,
+     "iterasjoner": 413,
+     "klaringskall": 3367629,
+     "toppEtiketter": 27593,
+     "framme": 30,
+     "headingStepDeg": 10
+    },
+    "A": {
+     "ms": 66525.57290000003,
+     "etiketter": 2987989,
+     "iterasjoner": 413,
+     "klaringskall": 2267082,
+     "toppEtiketter": 26321,
+     "framme": 30,
+     "headingStepDeg": 10,
+     "motFasit": {
+      "etiketter": 0.9674250469468367,
+      "iterasjoner": 1,
+      "klaringskall": 0.6731982650107835,
+      "ms": 0.85506008239202
+     }
+    },
+    "F12": {
+     "ms": 62763.88780000014,
+     "etiketter": 2886239,
+     "iterasjoner": 413,
+     "klaringskall": 2702273,
+     "toppEtiketter": 27508,
+     "framme": 30,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.9344813183966846,
+      "iterasjoner": 1,
+      "klaringskall": 0.8024259798214114,
+      "ms": 0.8067107539860299
+     }
+    },
+    "A12": {
+     "ms": 70932.38619999983,
+     "etiketter": 2842227,
+     "iterasjoner": 414,
+     "klaringskall": 1967649,
+     "toppEtiketter": 26426,
+     "framme": 30,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.920231496470893,
+      "iterasjoner": 1.0024213075060533,
+      "klaringskall": 0.5842831855884363,
+      "ms": 0.9117013104059178
+     }
+    }
+   }
+  },
+  {
+   "fikstur": "S-7",
+   "varianter": {
+    "F": {
+     "ms": 79042.83219999983,
+     "etiketter": 2520640,
+     "iterasjoner": 571,
+     "klaringskall": 5678366,
+     "toppEtiketter": 26857,
+     "framme": 8,
+     "headingStepDeg": 10
+    },
+    "A": {
+     "ms": 45178.97239999985,
+     "etiketter": 2250546,
+     "iterasjoner": 572,
+     "klaringskall": 3358094,
+     "toppEtiketter": 25053,
+     "framme": 8,
+     "headingStepDeg": 10,
+     "motFasit": {
+      "etiketter": 0.8928470547162626,
+      "iterasjoner": 1.001751313485114,
+      "klaringskall": 0.591383859370812,
+      "ms": 0.5715758297436102
+     }
+    },
+    "F12": {
+     "ms": 41159.16009999998,
+     "etiketter": 2283782,
+     "iterasjoner": 573,
+     "klaringskall": 4526317,
+     "toppEtiketter": 27007,
+     "framme": 12,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.9060325948965342,
+      "iterasjoner": 1.0035026269702276,
+      "klaringskall": 0.797116106992751,
+      "ms": 0.5207197029055858
+     }
+    },
+    "A12": {
+     "ms": 35852.9737999998,
+     "etiketter": 2047592,
+     "iterasjoner": 574,
+     "klaringskall": 2796248,
+     "toppEtiketter": 25333,
+     "framme": 14,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.8123302018534976,
+      "iterasjoner": 1.0052539404553416,
+      "klaringskall": 0.49243884596378606,
+      "ms": 0.4535891845231715
+     }
+    }
+   }
+  },
+  {
+   "fikstur": "S-8",
+   "varianter": {
+    "F": {
+     "ms": 45183.80630000029,
+     "etiketter": 2225868,
+     "iterasjoner": 414,
+     "klaringskall": 3093837,
+     "toppEtiketter": 27976,
+     "framme": 28,
+     "headingStepDeg": 10
+    },
+    "A": {
+     "ms": 40586.01799999969,
+     "etiketter": 2118096,
+     "iterasjoner": 414,
+     "klaringskall": 2342054,
+     "toppEtiketter": 26683,
+     "framme": 28,
+     "headingStepDeg": 10,
+     "motFasit": {
+      "etiketter": 0.951582034514176,
+      "iterasjoner": 1,
+      "klaringskall": 0.7570062676217266,
+      "ms": 0.8982425635088523
+     }
+    },
+    "F12": {
+     "ms": 38443.052699999884,
+     "etiketter": 2010133,
+     "iterasjoner": 413,
+     "klaringskall": 2534242,
+     "toppEtiketter": 27881,
+     "framme": 28,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.9030782598069607,
+      "iterasjoner": 0.9975845410628019,
+      "klaringskall": 0.8191258944798967,
+      "ms": 0.8508148349600118
+     }
+    },
+    "A12": {
+     "ms": 34536.11250000028,
+     "etiketter": 1909933,
+     "iterasjoner": 413,
+     "klaringskall": 1981711,
+     "toppEtiketter": 26645,
+     "framme": 28,
+     "headingStepDeg": 12,
+     "motFasit": {
+      "etiketter": 0.858062113296925,
+      "iterasjoner": 0.9975845410628019,
+      "klaringskall": 0.6405350378833791,
+      "ms": 0.7643471262844905
+     }
+    }
+   }
+  }
+ ]
+}

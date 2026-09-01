@@ -1,3 +1,5 @@
+# E1′-tabeller fra C:\Utvikling\routeplanner-v2\docs\research\maaling-e1-raadata
+varianter: A, B, F (fasit: F)
 
 ### S-1
 | avgang | var | gj.f | P50 | P90 | ΔP50 % | ΔP90 % | beat P50 | motor P50 | natt P50 | felle-sett | alg.abort | median Δ (t) | IQR | maks avvik nm | ulik topologi | søk | eval | ms |
@@ -11,8 +13,10 @@
 | +6 t | A | 30/30 | 14.313 | 14.339 | 0.00 | 0.00 | 7.82 | 8.81 | 6.00 | ∅ | 0 | 0.0000 | 0.0000 | 6.14 | 8/30 | 30 | 30 | 65540 |
 | +6 t | B | 30/30 | 16.738 | 17.395 | 16.94 | 21.31 | 5.70 | 3.22 | 5.71 | ∅ | 0 | 2.4657 | 1.9802 | 11.24 | 30/30 | 0 | 60 | 26 |
 | +6 t | F | 30/30 | 14.313 | 14.339 | – | – | 7.83 | 8.82 | 6.00 | ∅ | 0 | – | – | – | – | 30 | 30 | 68726 |
-rangering: topp-avgang A=+3t B=+0t F=+6t | samme topp: A=false B=false | τ: n=3, ikke beregnet
-P50 per avgang: A=[14.324, 14.306, 14.313]  B=[15.819, 15.875, 16.738]  F=[14.337, 14.318, 14.313]
+rangering P50 (forhåndsregistrert dom): topp-avgang A=+3t B=+0t F=+6t | samme topp: A=false B=false | τ: n=3, ikke beregnet
+  p50H per avgang: A=[14.324, 14.306, 14.313]  B=[15.819, 15.875, 16.738]  F=[14.337, 14.318, 14.313]
+rangering P90 (deskriptivt tillegg 2026-09-01): topp-avgang A=+6t B=+3t F=+6t | samme topp: A=true B=false | τ: n=3, ikke beregnet
+  p90H per avgang: A=[15.326, 15.250, 14.339]  B=[16.829, 16.321, 17.395]  F=[15.326, 15.301, 14.339]
   +0 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +3 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +6 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
@@ -29,8 +33,16 @@ P50 per avgang: A=[14.324, 14.306, 14.313]  B=[15.819, 15.875, 16.738]  F=[14.33
 | +6 t | A | 0/30 | – | – | – | – | – | – | – | ∅ | 0 | – | – | 17.88 | 30/30 | 30 | 30 | 15091 |
 | +6 t | B | 0/30 | – | – | – | – | – | – | – | ∅ | 0 | – | – | 15.54 | 30/30 | 0 | 60 | 9 |
 | +6 t | F | 1/30 | 11.021 | 11.021 | – | – | 10.51 | 0.00 | 6.01 | ∅ | 0 | – | – | – | – | 30 | 30 | 17079 |
-rangering: topp-avgang A=+0t B=+0t F=+0t | samme topp: A=true B=true | τ: n=3, ikke beregnet
-P50 per avgang: A=[–, –, –]  B=[–, –, –]  F=[11.021, 11.021, 11.021]
+rangering P50 (forhåndsregistrert dom): topp-avgang A=+0t B=+0t F=+0t | samme topp: A=true B=true | τ: n=3, ikke beregnet
+  ⚠ A har UAVGJORT topp mellom +0t/+3t/+6t (identisk p50H)
+  ⚠ B har UAVGJORT topp mellom +0t/+3t/+6t (identisk p50H)
+  ⚠ F har UAVGJORT topp mellom +0t/+3t/+6t (identisk p50H)
+  p50H per avgang: A=[Infinity, Infinity, Infinity]  B=[Infinity, Infinity, Infinity]  F=[11.021, 11.021, 11.021]
+rangering P90 (deskriptivt tillegg 2026-09-01): topp-avgang A=+0t B=+0t F=+0t | samme topp: A=true B=true | τ: n=3, ikke beregnet
+  ⚠ A har UAVGJORT topp mellom +0t/+3t/+6t (identisk p90H)
+  ⚠ B har UAVGJORT topp mellom +0t/+3t/+6t (identisk p90H)
+  ⚠ F har UAVGJORT topp mellom +0t/+3t/+6t (identisk p90H)
+  p90H per avgang: A=[Infinity, Infinity, Infinity]  B=[Infinity, Infinity, Infinity]  F=[11.021, 11.021, 11.021]
   +0 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +3 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +6 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
@@ -53,8 +65,10 @@ P50 per avgang: A=[–, –, –]  B=[–, –, –]  F=[11.021, 11.021, 11.021]
 | +8 t | A | 25/30 | 13.393 | 14.911 | 0.00 | -0.15 | 2.00 | 2.00 | 4.39 | m04,m09,m14,m29 | 0 | 0.0000 | 0.0000 | 17.64 | 6/30 | 51 | 30 | 33134 |
 | +8 t | B | 25/30 | 13.706 | 14.729 | 2.33 | -1.37 | 3.89 | 4.90 | 5.14 | m04,m09,m14,m24,m29 | 0 | -0.2769 | 0.5711 | 83.62 | 30/30 | 50 | 60 | 143 |
 | +8 t | F | 25/30 | 13.393 | 14.934 | – | – | 2.00 | 2.00 | 4.39 | m04,m09,m14,m29 | 0 | – | – | – | – | 51 | 30 | 36501 |
-rangering: topp-avgang A=+8t B=+8t F=+8t | samme topp: A=true B=true | τ: A=1.000 B=0.400
-P50 per avgang: A=[14.455, 14.414, 14.291, 14.234, 13.393]  B=[15.364, 15.435, 15.604, 14.002, 13.706]  F=[14.455, 14.394, 14.289, 14.255, 13.393]
+rangering P50 (forhåndsregistrert dom): topp-avgang A=+8t B=+8t F=+8t | samme topp: A=true B=true | τ: A=1.000 B=0.400
+  p50H per avgang: A=[14.455, 14.414, 14.291, 14.234, 13.393]  B=[15.364, 15.435, 15.604, 14.002, 13.706]  F=[14.455, 14.394, 14.289, 14.255, 13.393]
+rangering P90 (deskriptivt tillegg 2026-09-01): topp-avgang A=+6t B=+6t F=+6t | samme topp: A=true B=true | τ: A=1.000 B=0.400
+  p90H per avgang: A=[14.488, 15.252, 14.482, 14.456, 14.911]  B=[15.555, 17.128, 15.932, 14.579, 14.729]  F=[14.488, 15.272, 14.482, 14.456, 14.934]
   +0 t backoff 0/1/2 (fasit): [m04,m09,m14,m24] / [m04,m09,m14] / [m04,m09,m14]  1≡2 KONKLUSIV  (0 avviker — forventet degenerasjon, §7.2)
   +0 t utvei-margin m24: Fredrikstad, 4.35 t, Hs-margin 0.34 m, TWS-margin 3.0 kn
   +2 t backoff 0/1/2 (fasit): [m04,m09,m14,m24] / [m04,m09,m14] / [m04,m09,m14]  1≡2 KONKLUSIV  (0 avviker — forventet degenerasjon, §7.2)
@@ -78,8 +92,10 @@ P50 per avgang: A=[14.455, 14.414, 14.291, 14.234, 13.393]  B=[15.364, 15.435, 1
 | +6 t | A | 30/30 | 4.387 | 4.887 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | ∅ | 0 | 0.0000 | 0.0000 | 0.00 | 0/30 | 30 | 30 | 2772 |
 | +6 t | B | 30/30 | 4.384 | 4.712 | -0.06 | -3.58 | 0.00 | 0.00 | 0.00 | ∅ | 0 | -0.1429 | 0.3521 | 10.33 | 29/30 | 0 | 60 | 10 |
 | +6 t | F | 30/30 | 4.387 | 4.887 | – | – | 0.00 | 0.00 | 0.00 | ∅ | 0 | – | – | – | – | 30 | 30 | 2988 |
-rangering: topp-avgang A=+0t B=+6t F=+0t | samme topp: A=true B=false | τ: n=3, ikke beregnet
-P50 per avgang: A=[4.366, 4.383, 4.387]  B=[4.461, 4.432, 4.384]  F=[4.366, 4.383, 4.387]
+rangering P50 (forhåndsregistrert dom): topp-avgang A=+0t B=+6t F=+0t | samme topp: A=true B=false | τ: n=3, ikke beregnet
+  p50H per avgang: A=[4.366, 4.383, 4.387]  B=[4.461, 4.432, 4.384]  F=[4.366, 4.383, 4.387]
+rangering P90 (deskriptivt tillegg 2026-09-01): topp-avgang A=+0t B=+3t F=+0t | samme topp: A=true B=false | τ: n=3, ikke beregnet
+  p90H per avgang: A=[4.851, 4.907, 4.887]  B=[4.748, 4.705, 4.712]  F=[4.851, 4.907, 4.887]
   +0 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +3 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +6 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
@@ -102,8 +118,12 @@ P50 per avgang: A=[4.366, 4.383, 4.387]  B=[4.461, 4.432, 4.384]  F=[4.366, 4.38
 | +4 t | A | 30/30 | 14.291 | 14.482 | 3.24 | 0.00 | 6.00 | 6.50 | 1.29 | ∅ | 0 | 0.0000 | 0.0000 | 8.69 | 5/30 | 30 | 30 | 40398 |
 | +4 t | B | 30/30 | 14.712 | 15.925 | 6.29 | 9.96 | 4.00 | 4.50 | 1.80 | ∅ | 0 | 0.9067 | 1.4160 | 13.18 | 30/30 | 0 | 60 | 17 |
 | +4 t | F | 30/30 | 13.842 | 14.482 | – | – | 6.00 | 6.50 | 0.84 | ∅ | 0 | – | – | – | – | 30 | 30 | 47272 |
-rangering: topp-avgang A=+3t B=+3t F=+4t | samme topp: A=false B=false | τ: A=0.600 B=0.800
-P50 per avgang: A=[14.403, 14.443, 14.351, 14.288, 14.291]  B=[14.859, 14.769, 14.731, 14.422, 14.712]  F=[14.403, 14.378, 14.293, 14.289, 13.842]
+rangering P50 (forhåndsregistrert dom): topp-avgang A=+3t B=+3t F=+4t | samme topp: A=false B=false | τ: A=0.600 B=0.800
+  p50H per avgang: A=[14.403, 14.443, 14.351, 14.288, 14.291]  B=[14.859, 14.769, 14.731, 14.422, 14.712]  F=[14.403, 14.378, 14.293, 14.289, 13.842]
+rangering P90 (deskriptivt tillegg 2026-09-01): topp-avgang A=+3t B=+0t F=+3t | samme topp: A=true B=false | τ: A=1.000 B=0.000
+  ⚠ A har UAVGJORT topp mellom +3t/+4t (identisk p90H)
+  ⚠ F har UAVGJORT topp mellom +3t/+4t (identisk p90H)
+  p90H per avgang: A=[14.487, 14.487, 15.226, 14.482, 14.482]  B=[15.541, 15.620, 17.133, 15.908, 15.925]  F=[14.487, 14.487, 15.260, 14.482, 14.482]
   +0 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +1 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +2 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
@@ -122,8 +142,10 @@ P50 per avgang: A=[14.403, 14.443, 14.351, 14.288, 14.291]  B=[14.859, 14.769, 1
 | +6 t | A | 16/30 | 13.556 | 13.581 | 0.00 | 0.00 | 0.56 | 0.00 | 2.56 | ∅ | 0 | 0.0000 | 0.0000 | 13.90 | 13/30 | 30 | 30 | 31900 |
 | +6 t | B | 15/30 | 13.571 | 13.738 | 0.12 | 1.16 | 0.45 | 0.00 | 2.43 | ∅ | 0 | 0.0181 | 0.6575 | 22.10 | 30/30 | 0 | 60 | 19 |
 | +6 t | F | 16/30 | 13.556 | 13.581 | – | – | 0.56 | 0.00 | 2.56 | ∅ | 0 | – | – | – | – | 30 | 30 | 41145 |
-rangering: topp-avgang A=+3t B=+6t F=+3t | samme topp: A=true B=false | τ: n=3, ikke beregnet
-P50 per avgang: A=[14.376, 13.296, 13.556]  B=[15.007, –, 13.571]  F=[14.376, 13.296, 13.556]
+rangering P50 (forhåndsregistrert dom): topp-avgang A=+3t B=+6t F=+3t | samme topp: A=true B=false | τ: n=3, ikke beregnet
+  p50H per avgang: A=[14.376, 13.296, 13.556]  B=[15.007, Infinity, 13.571]  F=[14.376, 13.296, 13.556]
+rangering P90 (deskriptivt tillegg 2026-09-01): topp-avgang A=+3t B=+6t F=+3t | samme topp: A=true B=false | τ: n=3, ikke beregnet
+  p90H per avgang: A=[17.538, 13.556, 13.581]  B=[15.097, Infinity, 13.738]  F=[17.536, 13.556, 13.581]
   +0 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +3 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
   +6 t backoff 0/1/2 (fasit): [∅] / [∅] / [∅]  1≡2 KONKLUSIV
@@ -140,8 +162,16 @@ P50 per avgang: A=[14.376, 13.296, 13.556]  B=[15.007, –, 13.571]  F=[14.376, 
 | +6 t | A | 28/30 | 14.199 | 15.411 | 0.00 | 0.00 | 0.00 | 0.00 | 3.20 | ∅ | 0 | 0.0000 | 0.0000 | 10.35 | 1/30 | 38 | 30 | 36242 |
 | +6 t | B | 28/30 | 14.156 | 18.310 | -0.31 | 18.81 | 0.00 | 0.00 | 3.44 | ∅ | 0 | 0.1799 | 1.2620 | 28.73 | 30/30 | 16 | 60 | 924 |
 | +6 t | F | 28/30 | 14.199 | 15.411 | – | – | 0.00 | 0.00 | 3.20 | ∅ | 0 | – | – | – | – | 38 | 30 | 41530 |
-rangering: topp-avgang A=+0t B=+0t F=+0t | samme topp: A=true B=true | τ: n=3, ikke beregnet
-P50 per avgang: A=[14.199, 14.199, 14.199]  B=[14.156, 14.156, 14.156]  F=[14.199, 14.199, 14.199]
+rangering P50 (forhåndsregistrert dom): topp-avgang A=+0t B=+0t F=+0t | samme topp: A=true B=true | τ: n=3, ikke beregnet
+  ⚠ A har UAVGJORT topp mellom +0t/+3t/+6t (identisk p50H)
+  ⚠ B har UAVGJORT topp mellom +0t/+3t/+6t (identisk p50H)
+  ⚠ F har UAVGJORT topp mellom +0t/+3t/+6t (identisk p50H)
+  p50H per avgang: A=[14.199, 14.199, 14.199]  B=[14.156, 14.156, 14.156]  F=[14.199, 14.199, 14.199]
+rangering P90 (deskriptivt tillegg 2026-09-01): topp-avgang A=+0t B=+0t F=+0t | samme topp: A=true B=true | τ: n=3, ikke beregnet
+  ⚠ A har UAVGJORT topp mellom +0t/+3t/+6t (identisk p90H)
+  ⚠ B har UAVGJORT topp mellom +0t/+3t/+6t (identisk p90H)
+  ⚠ F har UAVGJORT topp mellom +0t/+3t/+6t (identisk p90H)
+  p90H per avgang: A=[15.411, 15.411, 15.411]  B=[18.310, 18.310, 18.310]  F=[15.411, 15.411, 15.411]
   +0 t backoff 0/1/2 (fasit): [m26,m27] / [∅] / [∅]  1≡2 KONKLUSIV  (0 avviker — forventet degenerasjon, §7.2)
   +0 t utvei-margin m26: Fjällbacka, 4.34 t, Hs-margin 0.27 m, TWS-margin 11.0 kn
   +0 t utvei-margin m27: Fjällbacka, 4.29 t, Hs-margin 0.23 m, TWS-margin 11.0 kn
@@ -153,25 +183,26 @@ P50 per avgang: A=[14.199, 14.199, 14.199]  B=[14.156, 14.156, 14.156]  F=[14.19
   +6 t utvei-margin m27: Fjällbacka, 4.29 t, Hs-margin 0.23 m, TWS-margin 11.0 kn
 
 ### Kostnad (sum ms over alle avganger per fikstur)
-| fikstur | A | B | F | B/F | A/F |
+| fikstur | A | B | F | A/F | B/F |
 |---|---|---|---|---|---|
-| S-1 | 191769 | 83 | 206575 | 0.000 | 0.928 |
-| S-2 | 50514 | 34 | 58470 | 0.001 | 0.864 |
-| S-3 | 183443 | 757 | 212168 | 0.004 | 0.865 |
-| S-4 | 8513 | 33 | 8963 | 0.004 | 0.950 |
-| S-5 | 213977 | 78 | 244871 | 0.000 | 0.874 |
-| S-7 | 100825 | 56 | 126848 | 0.000 | 0.795 |
-| S-8 | 102010 | 2705 | 115879 | 0.023 | 0.880 |
+| S-1 | 191769 | 83 | 206575 | 0.928 | 0.000 |
+| S-2 | 50514 | 34 | 58470 | 0.864 | 0.001 |
+| S-3 | 183443 | 757 | 212168 | 0.865 | 0.004 |
+| S-4 | 8513 | 33 | 8963 | 0.950 | 0.004 |
+| S-5 | 213977 | 78 | 244871 | 0.874 | 0.000 |
+| S-7 | 100825 | 56 | 126848 | 0.795 | 0.000 |
+| S-8 | 102010 | 2705 | 115879 | 0.880 | 0.023 |
+| **sum** | 851051 | 3746 | 973774 | 0.874 | 0.004 |
 
 
-## Kriterietabell (§4 med §8-erstatninger)
+## Kriterietabell: §4 med §8-erstatninger — rangering på P50 (FORHÅNDSREGISTRERT DOM)
 
 | fikstur | variant | felle-sett | topp-avgang | τ / flipp | P50 | P90 | gj.f ±1 | alg.abort=0 |
 |---|---|---|---|---|---|---|---|---|
 | S-1 | A | ✓ | ~ flipp i bånd | ✓ (n=3) | ✓ 0.09 % / 1.1 % av spredning | ✓ 0.33 % / 2.6 % av spredning | ✓ | ✓ |
 | S-1 | B | ✓ | ~ flipp i bånd | ✓ (n=3) | ✗ 16.94 % / 237.3 % av spredning | ✗ 21.31 % / 299.0 % av spredning | ✓ | ✓ |
-| S-2 | A | ✓ | ✓ | ✓ (n=3) | ✓ ikke målbart | ✓ ikke målbart | ✓ | ✓ |
-| S-2 | B | ✓ | ✓ | ✓ (n=3) | ✓ ikke målbart | ✓ ikke målbart | ✓ | ✓ |
+| S-2 | A | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ ikke målbart | ✓ ikke målbart | ✓ | ✓ |
+| S-2 | B | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ ikke målbart | ✓ ikke målbart | ✓ | ✓ |
 | S-3 | A | ✓ | ✓ | ✓ τ=1.00 | ✓ 0.14 % / 1.0 % av spredning | ✓ 0.15 % / 1.3 % av spredning | ✓ | ✓ |
 | S-3 | B | ✗ | ✓ | ✗ τ=0.40 | ✗ 9.20 % / 106.3 % av spredning | ✗ 12.16 % / 92.9 % av spredning | ✓ | ✓ |
 | S-4 | A | ✓ | ✓ | ✓ (n=3) | ✓ 0.00 % / 0.0 % av spredning | ✓ 0.00 % / 0.0 % av spredning | ✓ | ✓ |
@@ -180,8 +211,8 @@ P50 per avgang: A=[14.199, 14.199, 14.199]  B=[14.156, 14.156, 14.156]  F=[14.19
 | S-5 | B | ✓ | ✗ utenfor bånd | ✗ τ=0.80 flipp>bånd | ✗ 6.29 % / 71.5 % av spredning | ✗ 12.27 % / 94.5 % av spredning | ✓ | ✓ |
 | S-7 | A | ✓ | ✓ | ✓ (n=3) | ✓ 0.00 % / 0.0 % av spredning | ✓ 0.01 % / 0.1 % av spredning | ✓ | ✓ |
 | S-7 | B | ✓ | ~ flipp i bånd | ✓ (n=3) | ✗ 4.39 % / 19.6 % av spredning | ✗ 13.91 % / 75.7 % av spredning | ✗ | ✓ |
-| S-8 | A | ✓ | ✓ | ✓ (n=3) | ✓ 0.00 % / 0.0 % av spredning | ✓ 0.00 % / 0.0 % av spredning | ✓ | ✓ |
-| S-8 | B | ✓ | ✓ | ✓ (n=3) | ✓ 0.31 % / 1.9 % av spredning | ✗ 18.81 % / 130.1 % av spredning | ✓ | ✓ |
+| S-8 | A | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ 0.00 % / 0.0 % av spredning | ✓ 0.00 % / 0.0 % av spredning | ✓ | ✓ |
+| S-8 | B | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ 0.31 % / 1.9 % av spredning | ✗ 18.81 % / 130.1 % av spredning | ✓ | ✓ |
 
 Brudd:
   - S-1/B: P50
@@ -193,6 +224,45 @@ Brudd:
   - S-4/B: P50
   - S-4/B: P90
   - S-5/A: rangering
+  - S-5/A: P50
+  - S-5/B: rangering
+  - S-5/B: P50
+  - S-5/B: P90
+  - S-7/B: P50
+  - S-7/B: P90
+  - S-7/B: gjennomførbarhet
+  - S-8/B: P90
+
+
+## Kriterietabell: Samme tabell, rangering på P90 (DESKRIPTIVT TILLEGG 2026-09-01)
+
+| fikstur | variant | felle-sett | topp-avgang | τ / flipp | P50 | P90 | gj.f ±1 | alg.abort=0 |
+|---|---|---|---|---|---|---|---|---|
+| S-1 | A | ✓ | ✓ | ✓ (n=3) | ✓ 0.09 % / 1.1 % av spredning | ✓ 0.33 % / 2.6 % av spredning | ✓ | ✓ |
+| S-1 | B | ✓ | ✗ utenfor bånd | ✗ (n=3) flipp>bånd | ✗ 16.94 % / 237.3 % av spredning | ✗ 21.31 % / 299.0 % av spredning | ✓ | ✓ |
+| S-2 | A | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ ikke målbart | ✓ ikke målbart | ✓ | ✓ |
+| S-2 | B | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ ikke målbart | ✓ ikke målbart | ✓ | ✓ |
+| S-3 | A | ✓ | ✓ | ✓ τ=1.00 | ✓ 0.14 % / 1.0 % av spredning | ✓ 0.15 % / 1.3 % av spredning | ✓ | ✓ |
+| S-3 | B | ✗ | ✓ | ✗ τ=0.40 flipp>bånd | ✗ 9.20 % / 106.3 % av spredning | ✗ 12.16 % / 92.9 % av spredning | ✓ | ✓ |
+| S-4 | A | ✓ | ✓ | ✓ (n=3) | ✓ 0.00 % / 0.0 % av spredning | ✓ 0.00 % / 0.0 % av spredning | ✓ | ✓ |
+| S-4 | B | ✓ | ~ flipp i bånd | ✓ (n=3) | ✗ 2.17 % / 16.0 % av spredning | ✗ 4.11 % / 32.2 % av spredning | ✓ | ✓ |
+| S-5 | A | ✓ | ✓ (fasit uavgjort) | ✓ τ=1.00 | ✗ 3.24 % / 36.9 % av spredning | ✓ 0.23 % / 1.7 % av spredning | ✓ | ✓ |
+| S-5 | B | ✓ | ~ flipp i bånd | ✗ τ=0.00 | ✗ 6.29 % / 71.5 % av spredning | ✗ 12.27 % / 94.5 % av spredning | ✓ | ✓ |
+| S-7 | A | ✓ | ✓ | ✓ (n=3) | ✓ 0.00 % / 0.0 % av spredning | ✓ 0.01 % / 0.1 % av spredning | ✓ | ✓ |
+| S-7 | B | ✓ | ~ flipp i bånd | ✓ (n=3) | ✗ 4.39 % / 19.6 % av spredning | ✗ 13.91 % / 75.7 % av spredning | ✗ | ✓ |
+| S-8 | A | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ 0.00 % / 0.0 % av spredning | ✓ 0.00 % / 0.0 % av spredning | ✓ | ✓ |
+| S-8 | B | ✓ | ✓ (fasit uavgjort) | ✓ (n=3) | ✓ 0.31 % / 1.9 % av spredning | ✗ 18.81 % / 130.1 % av spredning | ✓ | ✓ |
+
+Brudd:
+  - S-1/B: rangering
+  - S-1/B: P50
+  - S-1/B: P90
+  - S-3/B: felle-sett
+  - S-3/B: rangering
+  - S-3/B: P50
+  - S-3/B: P90
+  - S-4/B: P50
+  - S-4/B: P90
   - S-5/A: P50
   - S-5/B: rangering
   - S-5/B: P50

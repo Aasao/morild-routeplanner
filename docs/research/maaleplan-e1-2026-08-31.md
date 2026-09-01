@@ -171,6 +171,70 @@ tillatt (da kjøres målingen på nytt under revidert plan).
 3. **M3 vedtatt:** commit av hele bygget FØR kjøring; målingen kjører
    fra låst ref som refereres i rapporten.
 
+### 8.4 Datert tillegg 2026-09-01 — etter djevelens-advokat-review av
+### selve målingen (commit `24322e2`), FØR ADR-0005
+
+Reviewen ga to pålegg. **Ingen kriterium i §4 er endret, og ingen
+forhåndsregistrert kolonne er rørt.** Begge tilleggene er additive og
+datert her fordi §5 krever det.
+
+1. **P90-rangering som deskriptiv tilleggskolonne.** Rangeringskriteriet
+   i §4 ble forhåndsregistrert på **P50**-ankomst (låst i
+   `ensemble-s5-departure.ts`), og den kolonnen står som målt. Men
+   *produktets egen* rangering er **P90 som plantid**
+   (rutemotor-specens F4.4/F4.5): det er P90 brukeren planlegger etter,
+   ikke P50. Et rangeringskriterium som ikke er produktets eget, bør stå
+   ved siden av produktets — ikke i stedet for det. Topp-avgang, flipp
+   og Kendall-τ rapporteres derfor **også** under P90-ankomst, for alle
+   fiksturer og varianter. Ingen omkjøring: tallene finnes allerede i
+   rådataene fra 2026-08-31. Uavgjort topp rapporteres eksplisitt (den
+   forekommer: fasitens S-5 `+3 t` og `+4 t` er identiske på P90).
+   **P50-kolonnen er dommen; P90-kolonnen er deskriptiv.**
+
+2. **To billige varianter, ny kjøring 2026-09-01.** Kjøringen
+   2026-08-31 sammenlignet «fullt Pareto per medlem» mot «skalart søk
+   per medlem» og «korridor», og målte at skalarsøket bare sparer
+   5–21 %. Reviewen påpekte at det er en **falsk dikotomi**: F3.5s
+   planlagte innsparing på medlemssiden er *grovere kursoppløsning*
+   (10–12° medlem mot 6° kontroll), og den dimensjonen var aldri målt.
+   To varianter legges til, målt mot **samme fasit F** på samme matrise
+   (samme fiksturer, avganger, medlemmer og kriterier):
+
+   | variant | mekanikk | kursoppløsning |
+   |---|---|---|
+   | **F12** | fullt Pareto per medlem (som fasiten) | medlemssøk og R2-re-søk på **12°** |
+   | **A12** | skalart søk per medlem (som variant A) | medlemssøk og R2-re-søk på **12°** |
+
+   Kontrollruten (planen som valideres) og fasiten F beholder fiksturens
+   egne opsjoner. Alle kriteriene i §4 måles: felle-settets identitet
+   inkludert m24, P50- og P90-rangering, gjennomførbarhet, parede
+   per-medlem-differanser og kostnad relativt fasiten.
+
+   **Operasjonalisering, skrevet ned før kjøring:** re-søket i R2 kjører
+   på variantens egen oppløsning (12°), ikke fasitens. Grunnen er den
+   samme som for `mode: "skalar"` i §8.2: i produksjon gjøres *alt*
+   medlemsarbeid på medlemsoppløsning, og lot vi re-søket beholde 6/10°,
+   ville felle-settet vært arvet fra fasiten per konstruksjon og §4s
+   viktigste kriterium vært tomt for F12/A12. Den **delte
+   feildeteksjonen** (`evaluateRoute` på kandidatruten) beholder
+   fiksturens opsjoner — §6.1 krever at variantene bare kan skilles fra
+   fasiten av re-søket.
+
+   **Forbehold om utgangspunktet:** fiksturene har ikke felles
+   kursoppløsning i utgangspunktet. S-1 og S-2 kjører 6°, S-3/S-4/S-5/
+   S-7/S-8 kjører 10°. «12°» er derfor en *grovere* oppløsning i alle
+   fiksturer, men innsparingspotensialet er ulikt (60 → 30 kurser mot
+   36 → 30). Kostnadskolonnen skal leses per fikstur, ikke aggregert.
+
+3. **Målehygiene: deskriptive ekstrakjøringer ut av tidsmålingen.**
+   Reviewen fant at backoff-0/2-kolonnen (§8.1) og utvei-marginen ble
+   kjørt **inne i** fasitens tidsmåling i 2026-08-31-kjøringen. Det er
+   arbeid ingen variant må gjøre i produksjon, og det gjorde F kunstig
+   dyr — altså A/F kunstig *lavt*, i variantenes favør. De flyttes ut av
+   det tidsmålte området. Kostnaden rapporteres **både** som original
+   (2026-08-31) og korrigert (2026-09-01), for F6 og A6 så vel som for
+   de nye variantene.
+
 ## 7. Operasjonaliseringsnotater 2026-08-31 (skrevet FØR kjøring, ved
 ## bygging av fiksturene og variantene — ingen kriterier endret)
 

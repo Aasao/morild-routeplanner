@@ -1,4 +1,8 @@
-# Rådata — E1′-målingen
+# Rådata — E1′-målingen (hovedkjøringen 2026-08-31/09-01, varianter A/B/F)
+
+> **Se også** `../maaling-e1-raadata-2026-09-01/` — det daterte tillegget med
+> variantene F12/A12 (grovere kursoppløsning) og den deterministiske
+> kostnadsmålingen. F og A der er bit-identiske med F og A her.
 
 Skrevet av `tools/e1-maaling/maaling.mjs`. Rapporten som tolker dem er
 `../maaling-e1-2026-08-31.md`; planen som låste kriteriene er
