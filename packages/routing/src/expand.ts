@@ -93,17 +93,56 @@ export function environmentAt(
 }
 
 /**
+ * **Vaktbåndet for den harde TWS-grensen** (`docs/specs/vaerpakker.md` §9.5).
+ *
+ * Vind lagres i værpakken som u/v-komponenter og har derfor ingen triviell
+ * «rund alltid opp»-retning slik Hs har (§9.3): kvantiseringen kan gjøre
+ * dekodet TWS **lavere** enn den sanne. Sammenlignet nakent mot
+ * `boat.maxTwsKn` ville en sann over-grense-vind kunne sluppet gjennom den
+ * harde avvisningen fordi et halvt kvantiseringstrinn tilfeldigvis pekte
+ * nedover. Grensen flyttes derfor ned med feltets dokumenterte maksimale
+ * dekodefeil:
+ *
+ *     dekodetTws > boat.maxTwsKn − field.maxDecodeErrorKn
+ *
+ * Retningen er konservativ (heller en forkastelse for mye enn en for lite),
+ * og for felt uten kvantisering (`maxDecodeErrorKn === 0`) er testen
+ * bit-identisk med den nakne sammenligningen — golden-rutene er derfor
+ * uendret.
+ *
+ * **Én sannhet:** dette er det eneste stedet i motoren `maxTwsKn`
+ * sammenlignes hardt. `checkHardNode` under er eneste kaller, og søket,
+ * evaluatoren og rekonstruksjonens sluttetappe går alle gjennom den.
+ */
+export function twsExceedsHardLimit(
+  env: NodeEnvironment,
+  boat: BoatModel,
+  field: WeatherField,
+): boolean {
+  return env.wind.speedKn > boat.maxTwsKn - field.maxDecodeErrorKn;
+}
+
+/**
  * **Hard:** ytelsesgrensene i båtmodellen (F3.2). Brudd forkaster noden —
  * det er slik «ruten går rundt uvær» oppstår, uten at det er en kostnad noen
  * kan vekte seg forbi.
+ *
+ * `field` er med utelukkende for vaktbåndet over — miljøet (`env`) skal alltid
+ * være hentet fra det *samme* feltet, ellers sammenlignes én pakkes vind med
+ * en annen pakkes dekodefeil.
  */
 export function checkHardNode(
   env: NodeEnvironment,
   boat: BoatModel,
+  field: WeatherField,
 ): HardCheck {
-  if (env.wind.speedKn > boat.maxTwsKn) {
+  if (twsExceedsHardLimit(env, boat, field)) {
+    const band =
+      field.maxDecodeErrorKn > 0
+        ? ` (vaktbånd ${field.maxDecodeErrorKn.toFixed(2)} kn for dekodefeil)`
+        : "";
     return reject(
-      `TWS ${env.wind.speedKn.toFixed(1)} kn over båtens grense ${boat.maxTwsKn} kn`,
+      `TWS ${env.wind.speedKn.toFixed(1)} kn over båtens grense ${boat.maxTwsKn} kn${band}`,
     );
   }
   if (env.waves !== undefined && env.waves.hsM > boat.maxHsM) {

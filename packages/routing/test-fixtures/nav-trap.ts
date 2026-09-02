@@ -153,6 +153,7 @@ export function navTrapWeather(o: NavTrapWeatherOptions): WeatherField {
     current: () => undefined,
     maxTwsKn: NAV_TRAP_WIND.speedKn,
     maxCurrentKn: 0,
+    maxDecodeErrorKn: 0,
     validFromS: o.validFromS,
     validToS: o.validToS,
     header: SYNTHETIC_HEADER,

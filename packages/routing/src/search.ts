@@ -384,7 +384,7 @@ class RouteSearch implements Search {
     const field = this.field;
     if (field === undefined) return;
 
-    const { start, dest, boat, departEpochS, mask } = this.input;
+    const { start, dest, boat, departEpochS, mask, weather } = this.input;
     let pos: LatLon = { lat: start.lat, lon: start.lon };
     let tS = 0;
     let headingDeg: number | null = null;
@@ -393,7 +393,7 @@ class RouteSearch implements Search {
       const epochS = departEpochS + tS;
       const env = this.environmentAt(pos, epochS);
       if (env === undefined) return;
-      if (!checkHardNode(env, boat).ok) return;
+      if (!checkHardNode(env, boat, weather).ok) return;
       const dHere = field.atOrNear(pos.lat, pos.lon);
       if (dHere === undefined) return;
 
@@ -599,7 +599,7 @@ class RouteSearch implements Search {
     }
 
     // Harde ytelsesgrenser gjelder noden som helhet, før kursløkken.
-    if (!checkHardNode(env, this.input.boat).ok) {
+    if (!checkHardNode(env, this.input.boat, this.input.weather).ok) {
       bumpHardConstraint(this.pruned, "hardConstraintBoatLimits");
       return;
     }

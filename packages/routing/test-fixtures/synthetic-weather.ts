@@ -68,6 +68,8 @@ export function constantWeather(o: ConstantWeatherOptions): WeatherField {
       epochS >= validFromS && epochS <= validToS ? current : undefined,
     maxTwsKn: o.speedKn,
     maxCurrentKn: Math.hypot(o.currentU ?? 0, o.currentV ?? 0),
+    // Analytisk felt, ingen kvantisering ⇒ ingen dekodefeil (vaerpakker §9.5).
+    maxDecodeErrorKn: 0,
     validFromS,
     validToS,
     header: SYNTHETIC_HEADER,
@@ -159,6 +161,7 @@ export function syntheticField(o: FieldWeatherOptions): WeatherField {
     maxTwsKn:
       o.baseSpeedKn + o.speedVariationKn * 1.3,
     maxCurrentKn: 0.5,
+    maxDecodeErrorKn: 0,
     validFromS: o.validFromS,
     validToS: o.validToS,
     header: SYNTHETIC_HEADER,
@@ -173,6 +176,7 @@ export function emptyWeather(validFromS = 0, validToS = YEAR_S): WeatherField {
     current: () => undefined,
     maxTwsKn: 0,
     maxCurrentKn: 0,
+    maxDecodeErrorKn: 0,
     validFromS,
     validToS,
     header: SYNTHETIC_HEADER,

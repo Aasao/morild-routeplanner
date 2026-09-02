@@ -107,6 +107,7 @@ export function windAgainstCurrentWeather(
     current: (lat, _lon, epochS) => (inTime(epochS) ? current(lat) : undefined),
     maxTwsKn: o.windSpeedKn,
     maxCurrentKn: o.currentKn,
+    maxDecodeErrorKn: 0,
     validFromS: o.validFromS,
     validToS: o.validToS,
     header: SYNTHETIC_HEADER,

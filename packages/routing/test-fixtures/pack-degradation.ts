@@ -33,6 +33,11 @@
  *    feltverdiene. At den dekodede vinden *kan* overstige den arvede skranken
  *    er i stedet noe målingen **teller** (`PackProbe.twsOverDeclared`) — og et
  *    krav til spec-en, ikke en fri parameter her.
+ *    `maxDecodeErrorKn` arves derimot **ikke**: den er pakkens egen
+ *    kvantiseringsskranke (`packTwsDecodeErrorKn`) og bærer TWS-vaktbåndet i
+ *    `expand.ts::twsExceedsHardLimit` (`docs/specs/vaerpakker.md` §9.5). Et
+ *    kvantisert felt som arvet basefeltets `0` ville nettopp skjult den
+ *    nedrundede vinden vaktbåndet finnes for.
  * 4. **Tidsnettet ankres i feltets egen `validFromS`, ikke i epoken.**
  *    Fiksturene er gyldige fra én time før avgang; et epoke-ankret 3-timersnett
  *    ville flyttet første skive til *etter* avgang og gjort hele målingen til
@@ -424,6 +429,43 @@ export interface Pack {
 }
 
 /**
+ * **Pakkens vaktbånd på TWS** (`docs/specs/vaerpakker.md` §9.5): en øvre
+ * skranke for hvor mye kvantiseringen alene kan flytte den dekodede vindfarten
+ * — og dermed hvor langt ned den harde grensen må flyttes for at en sann
+ * over-grense-vind ikke skal kunne slippe gjennom.
+ *
+ * Utledningen, i den rekkefølgen den holder:
+ *
+ * 1. **Per kanal.** Trinnet er `(hi − lo)/(2^bits − 1)`. Med flis-skala er
+ *    `hi − lo` flisens eget spenn, som aldri er større enn det globale
+ *    området — vi regner derfor alltid med det globale, som er en gyldig
+ *    (og billig, flisuavhengig) øvre skranke. `nearest` gir feil ≤ trinn/2,
+ *    `opp` gir ensidig feil ≤ trinn.
+ * 2. **Fra kanal til fart.** For u/v-lagring er farten `hypot(u,v)`, og
+ *    `|‖x+d‖ − ‖x‖| ≤ ‖d‖` (omvendt trekantulikhet), altså ≤ `hypot(e,e)
+ *    = √2·e`. For fart+retning-lagring er farten sin egen kanal og
+ *    retningskvantiseringen endrer den ikke: skranken er `e`.
+ * 3. **Gjennom interpolasjonen.** Bilineær/lineær interpolasjon er en
+ *    konveks kombinasjon av nodene, og en konveks kombinasjon av vektorer
+ *    med norm ≤ e har selv norm ≤ e. Skranken overlever altså oppslaget.
+ *
+ * Merk hva den **ikke** dekker: grid- og tidsoppløsningens feil. Den er
+ * kvantiseringens skranke, akkurat slik §9.5 definerer `maxDecodeErrorKn` —
+ * forsvaret mot oppløsningsfeilen er §9.2 (1 t) og §9.1 (2,5 km).
+ */
+export function packTwsDecodeErrorKn(spec: PackSpec, twsCapKn: number): number {
+  const q = spec.windQuant;
+  if (q.bits === null) return 0; // Float32-referansen kvantiserer ikke.
+  const levels = 2 ** q.bits - 1;
+  const oneSided = q.rounding === "opp" ? 1 : 0.5;
+  if (spec.windStorage === "uv") {
+    const step = (2 * twsCapKn) / levels;
+    return Math.SQRT2 * oneSided * step;
+  }
+  return (oneSided * twsCapKn) / levels;
+}
+
+/**
  * Pakker `base` som en værpakke etter `spec` og leverer den tilbake som et
  * `WeatherField` motoren ikke kan skille fra et vanlig felt.
  */
@@ -621,6 +663,9 @@ export function packField(
     // Arves urørt — se filens toppkommentar, punkt 3.
     maxTwsKn: base.maxTwsKn,
     maxCurrentKn: base.maxCurrentKn,
+    // …men dekodefeilen er pakkens egen, og skal IKKE arves: den er hele
+    // forskjellen på et kvantisert og et ukvantisert felt (§9.5).
+    maxDecodeErrorKn: packTwsDecodeErrorKn(spec, twsCap),
     validFromS: t0,
     validToS,
     header: base.header,

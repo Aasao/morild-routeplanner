@@ -190,9 +190,16 @@ interface WeatherField {
   current(lat: number, lon: number, epochS: number):
     { readonly u: number; readonly v: number } | undefined;
 
-  /** Konservative maksverdier over hele feltet — brukes til Vmax/Tub (§5.5). */
+  /** Konservative maksverdier over hele feltet — brukes til Vmax/Tub (§5.5).
+   *  Regnes på de DEKODEDE verdiene (vaerpakker.md §9.5): kvantisering kan
+   *  løfte en verdi opptil et halvt trinn over kildens maksimum. */
   readonly maxTwsKn: number;
   readonly maxCurrentKn: number;
+
+  /** Maksimal dekodefeil på vindfart (knop) — kvantiseringens skranke, ikke
+   *  grid-/tidsfeilens. 0 for ukvantiserte felt. Bærer TWS-vaktbåndet i §5.3
+   *  (vaerpakker.md §9.5). */
+  readonly maxDecodeErrorKn: number;
 
   /** Gyldig tidsvindu (epoke-sekunder). Utenfor dette returnerer alt undefined. */
   readonly validFromS: number;
@@ -579,11 +586,42 @@ innsetting**, med én bevisst nyanse (se boksen under).
 
 - `w = weather.wind(n.lat, n.lon, departEpochS + n.tS)`.
   `undefined` → `pruned.noWeather++`, hopp over etiketten (v1-adferd).
-- **Hard:** `w.speedKn > boat.maxTwsKn` → forkast etiketten (F3.2 — «ruten går
-  rundt uvær»).
+- **Hard:** `w.speedKn > boat.maxTwsKn − weather.maxDecodeErrorKn` → forkast
+  etiketten (F3.2 — «ruten går rundt uvær»). **Vaktbåndet er ikke pynt**, se
+  boksen under.
 - `wv = weather.waves(...)`. **Hard:** `wv.hsM > boat.maxHsM` → forkast.
 - `cur = weather.current(...)` (valgfritt; `undefined` → 0).
 - `isNight = sunAltitudeDeg(n.lat, n.lon, epoch) < -0.833`.
+
+> **TWS-vaktbåndet (`docs/specs/vaerpakker.md` §9.5) — hvorfor grensen flyttes
+> ned.** Hs har en konservativ retning bakt inn i pakkeformatet: den avrundes
+> alltid **opp**, så en kvantisert Hs kan aldri skjule en overskridelse
+> (vaerpakker §9.3). Vind har ikke det. Den lagres som u/v-komponenter, og en
+> kvantiseringsfeil kan like gjerne gjøre dekodet TWS **lavere** som høyere enn
+> den sanne — målt til et halvt kvantiseringstrinn, ±0,09 kn i den grove
+> `W-UV8G`-konfigurasjonen. Sammenlignet nakent mot `boat.maxTwsKn` ville en
+> sann over-grense-vind da kunne sluppet gjennom den harde avvisningen fordi
+> avrundingen tilfeldigvis pekte nedover. Grensen som håndheves er derfor
+> `boat.maxTwsKn − weather.maxDecodeErrorKn`. Retningen er konservativ (heller
+> en forkastelse for mye enn en for lite, samme filosofi som `clearanceNm`s
+> aldri-overestimer-krav i §4.1), og for ukvantiserte felt er
+> `maxDecodeErrorKn = 0`, altså bit-identisk med den nakne testen.
+>
+> **Én sannhet:** dette er det eneste stedet i motoren `maxTwsKn` sammenlignes
+> hardt. Regelen bor i `expand.ts::twsExceedsHardLimit`, kalles kun fra
+> `checkHardNode`, og `checkHardNode` er den samme funksjonen søket (§5.3 og
+> Tub-forhåndsruten i §5.5), evaluatoren (§5.11) og sluttetappen (§5.8) bruker.
+> `maxCurrentKn` har ingen hard sammenligning i v2.0 (den brukes kun i
+> Vmax-skranken, §5.5); får den en, skal den inn i samme funksjon og få samme
+> vaktbånd.
+>
+> **Bounden svekkes ikke.** Vmax (§5.5) regnes fra `weather.maxTwsKn`, ikke fra
+> den vaktbåndsjusterte grensen. Vaktbåndet forkaster *flere* noder, aldri
+> raskere noder, så restestimatet forblir admissibelt. Motstykket er et krav
+> til produsenten: `maxTwsKn`/`maxCurrentKn` skal regnes på de **dekodede**
+> verdiene (vaerpakker §9.5) — kvantisering kan løfte en dekodet verdi over
+> kildens maksimum, og en skranke tatt fra kilden ville da ikke lenger vært en
+> skranke.
 
 **Per kurs `h` i `0, headingStep, 2·headingStep, …`:**
 
@@ -799,7 +837,10 @@ Regel 10 sier «så nær rett vinkel som praktisk mulig», ikke en tallgrense.
   felt ⇒ forkast.
 - **Bruk 2 — admissibel restestimat:** `tRest ≥ Dn · 3600 / Vmax`, der
   `Vmax = max(maks polarfart ved feltets maks-TWS, motorfart) + maks strøm +
-  0,3`. `boundSlack = 1,09` (v1) deler ytterligere ned estimatet og gjør
+  0,3`. Feltets maks-TWS/maks-strøm er de **dekodede** maksverdiene
+  (`vaerpakker.md` §9.5) — ikke kildens, som kvantiseringen kan overstige med
+  et halvt trinn. TWS-vaktbåndet (§5.3) rører ikke dette tallet: det forkaster
+  flere noder, aldri raskere. `boundSlack = 1,09` (v1) deler ytterligere ned estimatet og gjør
   bound-en **konservativ**: den beskjærer mindre enn den strengt kunne, og kan
   derfor ikke kutte en optimal rute på grunn av et for optimistisk estimat.
 - **Tub** (øvre tidsgrense) settes fra en grådig forhåndsrute mot feltets
@@ -1354,6 +1395,31 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- **2026-09-02 — TWS-vaktbånd mot dekodefeil (sikkerhet).**
+  `docs/specs/vaerpakker.md` §9.5 (vedtatt 2026-09-02) krever at den harde
+  TWS-avvisningen regner `decodedTws > maxTwsKn − maxDecodeErrorKn`.
+  Konsistensreviewen av værpakke-bølgen fant at kravet bare fantes i spec-en:
+  koden sammenlignet nakent. Nå:
+  - **§4.2** — `WeatherField` har fått `maxDecodeErrorKn` (kvantiseringens
+    skranke på vindfart, `0` for ukvantiserte felt), og maksverdienes
+    dekodede-verdier-plikt er skrevet på kontrakten.
+  - **§5.3** — den harde vindtesten er
+    `w.speedKn > boat.maxTwsKn − weather.maxDecodeErrorKn`, med en boks som
+    forklarer hvorfor Hs' opp-avrunding ikke har noe motstykke for vind (u/v
+    har ingen monoton konservativ retning), og hvorfor bounden i §5.5 ikke
+    svekkes.
+  - **Implementasjon:** `packages/routing/src/expand.ts` har fått den delte
+    funksjonen `twsExceedsHardLimit(env, boat, field)`; `checkHardNode` er
+    eneste kaller og har fått `field` som tredje argument. Kallsteder oppdatert:
+    `search.ts` (ekspansjonen og Tub-forhåndsruten), `evaluate.ts`,
+    `reconstruct.ts` (sluttetappen). `corridor.ts`/`bailout.ts` sammenligner
+    ikke TWS hardt; `maxCurrentKn` har ingen hard sammenligning i v2.0.
+  - **Tester:** vaktbånd-enhetstester i `expand.test.ts` og en
+    kvantisert-felt-test i `pack-degradation.test.ts` (8-bit u/v med global
+    skala — `W-UV8G`-konfigurasjonen målingen fant +0,09 kn på) som viser at
+    naken sammenligning mister harde forkastelser der vaktbåndet ikke mister
+    én. **Alle sju golden-ruter er bit-identiske** (syntetiske felt har
+    `maxDecodeErrorKn = 0`); 465 tester grønne.
 - **2026-08-31 (4) — R3 besluttet og implementert: kystbufferen håndheves
   langs hele korden, lagdelt.** Magnus besluttet alternativ (b) etter
   enstemmig anbefaling fra alle fire fagagentene

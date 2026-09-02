@@ -3,8 +3,12 @@
 - Status: **vedtatt 2026-09-01 av Magnus** (etter fem-agenters votering,
   alle ENDRE→godkjenn; F3.5-revisjonen gjennomført i kravspeken samme
   dag)
-- Dato: 2026-09-01
+- Dato: 2026-09-01, tillegg 2026-09-02
 - Besluttet av: Magnus
+- **Tillegg 2026-09-02 (under Magnus' V3-mandat, `docs/specs/vaerpakker.md`
+  §9.5/§9.8):** telleregelen for medlemmer med partial weather-coverage
+  (inkonklusiv-kategorien) er lagt til under Konsekvenser, med tilhørende
+  horisont-port. Selve søkemekanismen — ADR-ens beslutning — er uendret.
 
 ## Kontekst
 
@@ -126,6 +130,23 @@ Merk: **betinget sektornøkling** (E3-sporet) er ikke et alternativ til F
   (c) **Sekvensiell tidlig-stopp** (stopp medlemsberegning ved
   forhåndsregistrert konfidensregel) endrer F4.2-semantikk og er et
   eksplisitt 4a-spørsmål til Magnus — aldri en stille optimalisering.
+- **Medlemmer som stopper fordi været tok slutt er INKONKLUSIVE, ikke
+  ugjennomførbare (lagt til 2026-09-02).** Værpakkenes medlemshorisont er
+  48 t (`docs/specs/vaerpakker.md` §9.1 pkt. 4), mens kontrollen har full
+  horisont. Et medlem kan derfor stoppe fordi **feltet tok slutt**, ikke
+  fordi seilasen var umulig — rutemotoren melder da
+  `coverage.weather = "partial"`. Regelen for F4.2: **et medlem med partial
+  weather-coverage telles som INKONKLUSIVT (egen kategori), aldri som
+  gjennomførbart og aldri som ugjennomførbart; andel inkonklusive
+  rapporteres; > 20 % inkonklusive på en avgang ⇒ horisonten er for kort for
+  den seilasen (flagg i UI). Retning er konservativ.** Teller man dem som
+  gjennomførbare, blir lange seilaser systematisk for optimistiske; teller man
+  dem som ugjennomførbare, blir de like systematisk straffet — begge skjuler
+  det som faktisk skjedde, og bryter N2. Kategorien er den samme som
+  falsifiseringsport 3 allerede bruker for backoff-uenige avganger; det er
+  bevisst én mental modell, ikke to. **Endelig eier er
+  `docs/specs/robusthet.md` (fase 4)**, som eier F4.2-aggregeringen; denne
+  ADR-en og vaerpakker.md §9.8 fastsetter kontrakten robusthet-spec-en arver.
 - **Vi gir avkall på** bransjenormens enkelhet og 12°-snarveien.
   Ombestemmelse er billig: A/A12/F12 ligger bak opsjoner og kan remåles.
 - **Falsifiseringsporter (daterte, ikke dekorative):**
@@ -141,7 +162,15 @@ Merk: **betinget sektornøkling** (E3-sporet) er ikke et alternativ til F
      rapportering; andel inkonklusive > 20 % ⇒ remåling med
      ekte-data-fiksturer. S-6-målingen (degradert data) kjøres i 4a;
      divergens der gjenåpner beslutningen.
-  4. **Ny 4a-målingsoppgave:** P90-separert rangeringsfikstur bygges
+  4. **Horisont-port (lagt til 2026-09-02):** overstiger andelen
+     inkonklusive medlemmer (partial weather-coverage, se
+     konsekvenspunktet over) **20 % på en avgang** i produksjon eller på
+     ekte MEPS-data, er 48 t-medlemshorisonten for kort for den seilasen —
+     avgangen flagges i UI, og gjentar mønsteret seg på tvers av seilaser,
+     gjenåpnes horisontvalget i `vaerpakker.md` §9.1 pkt. 4 (ikke denne
+     ADR-ens søkemekanisme). Andelen skal rapporteres alltid, ikke bare når
+     den brytes.
+  5. **Ny 4a-målingsoppgave:** P90-separert rangeringsfikstur bygges
      (punkt 5 i konteksten — dagens matrise tester ikke rangering under
      produktstatistikken).
 

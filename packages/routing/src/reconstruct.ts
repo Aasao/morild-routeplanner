@@ -714,7 +714,7 @@ function appendDirectFinalStep(
       remainingNm,
     );
   }
-  const nodeCheck = checkHardNode(env, boat);
+  const nodeCheck = checkHardNode(env, boat, weather);
   if (!nodeCheck.ok) {
     return rejectedFinalLeg(
       out,

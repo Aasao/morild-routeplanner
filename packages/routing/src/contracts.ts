@@ -108,9 +108,38 @@ export interface WeatherField {
   waves(lat: number, lon: number, epochS: number): WaveSample | undefined;
   current(lat: number, lon: number, epochS: number): CurrentSample | undefined;
 
-  /** Konservative maksverdier over hele feltet — grunnlag for Vmax/Tub. */
+  /**
+   * Konservative maksverdier over hele feltet — grunnlag for Vmax/Tub.
+   *
+   * **Regnes på de DEKODEDE verdiene** (`docs/specs/vaerpakker.md` §9.5):
+   * kvantisering kan løfte en dekodet verdi over kildens nominelle maksimum
+   * med inntil et halvt trinn (målt +0,09 kn), og en skranke tatt fra kilden
+   * ville da ikke lenger vært en øvre skranke for det motoren faktisk møter.
+   * Produsentens plikt, ikke noe motoren kan verifisere — men den er skrevet
+   * her fordi det er her den brytes hvis noen tar den fra kilden.
+   */
   readonly maxTwsKn: number;
   readonly maxCurrentKn: number;
+
+  /**
+   * Feltets (flisens/pakkens) **maksimale dekodefeil på vindfart**, i knop:
+   * en øvre skranke for `|dekodet TWS − sann TWS|` som skyldes kvantisering
+   * alene (ikke grid-/tidsoppløsning). `0` for felt uten kvantisering —
+   * syntetiske fikstur-felt og Float32-felt oppgir 0, og adferden er da
+   * bit-identisk med den nakne sammenligningen.
+   *
+   * **Hvorfor den finnes** (`docs/specs/vaerpakker.md` §9.5): vind lagres som
+   * u/v-komponenter og har derfor ingen «rund alltid opp»-retning slik Hs har
+   * (§9.3). En kvantisert TWS kan bli *lavere* enn den sanne, og en sann
+   * over-grense-vind kunne dermed sluppet gjennom den harde avvisningen. Den
+   * harde grensen sammenlignes derfor mot et **vaktbånd**,
+   * `maxTwsKn − maxDecodeErrorKn` (`twsExceedsHardLimit` i `expand.ts`) — den
+   * konservative retningen: heller en forkastelse for mye enn en for lite.
+   *
+   * For vanlig («nearest») avrunding er verdien `skala/2` per kanal, oppgitt
+   * som skranke på selve farten (u/v gir faktoren √2, se `pack-degradation.ts`).
+   */
+  readonly maxDecodeErrorKn: number;
 
   readonly validFromS: number;
   readonly validToS: number;

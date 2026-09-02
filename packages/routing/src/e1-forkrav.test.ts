@@ -325,6 +325,7 @@ function withoutWaves(base: WeatherField): WeatherField {
     current: (lat, lon, t) => base.current(lat, lon, t),
     maxTwsKn: base.maxTwsKn,
     maxCurrentKn: base.maxCurrentKn,
+    maxDecodeErrorKn: base.maxDecodeErrorKn,
     validFromS: base.validFromS,
     validToS: base.validToS,
     header: base.header,

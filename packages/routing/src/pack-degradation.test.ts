@@ -9,6 +9,8 @@
  * at pakken aldri later som om den dekker mer enn skivene sine.
  */
 import { describe, expect, it } from "vitest";
+import { environmentAt, twsExceedsHardLimit } from "./expand.js";
+import { testBoat } from "../test-fixtures/test-boat.js";
 import {
   domainAround,
   FLOAT32,
@@ -267,6 +269,128 @@ describe("pakkedegradering: konservativ Hs sletter aldri en hard forkastelse", (
       "8-bit global med vanlig avrunding er ikke trygg — den er bare mindre utrygg",
     ).toBeGreaterThan(0);
     expect(fin.tapt).toBeLessThan(grov.tapt);
+  });
+});
+
+/**
+ * **TWS-vaktbåndet** (`docs/specs/vaerpakker.md` §9.5, målingens §10 krav 6).
+ *
+ * Hs har en konservativ retning (avrund opp, §9.3). Vind har ikke det: den
+ * lagres som u/v-komponenter, og en kvantiseringsfeil kan like gjerne gjøre
+ * dekodet TWS **lavere** som høyere enn sant. Målingen fant nøyaktig dette på
+ * `W-UV8G` (8-bit u/v med én global skala): dekodet vind lå opptil
+ * **+0,09 kn** over feltets deklarerte maksimum — et halvt kvantiseringstrinn
+ * — og like mye under i den andre retningen. Er det den *lave* siden som
+ * treffer et punkt der den sanne vinden så vidt er over `boat.maxTwsKn`,
+ * forsvinner en hard forkastelse uten spor.
+ *
+ * Vernet er `twsExceedsHardLimit`: grensen flyttes ned med feltets
+ * dokumenterte `maxDecodeErrorKn`. Testen har **tenner** i begge ender — den
+ * krever at den nakne sammenligningen faktisk mister forkastelser på dette
+ * feltet, og at vaktbåndet ikke mister én eneste.
+ *
+ * **Sammenligningsgrunnlaget er referansepakken, ikke det analytiske feltet.**
+ * Det er samme metodikk som resten av målingen (fikstur-filens punkt 1):
+ * `maxDecodeErrorKn` er en skranke på *kvantiseringen*, ikke på grid- og
+ * tidsoppløsningens feil — de har sine egne forsvar (§9.1, §9.2). Måler man
+ * mot det analytiske feltet, måler man alle tre og tester noe annet enn
+ * vaktbåndet.
+ */
+describe("pakkedegradering: TWS-vaktbånd mot nedrundet vind (§9.5)", () => {
+  /** Ett eneste akseskille fra `REF_PACK`: vindkvantiseringen. */
+  const GLOBAL8 = withPack("W-UV8G", "8-bit u/v, én global skala", {
+    windQuant: quant(8, "nearest", "global"),
+  });
+
+  function par() {
+    const base = field();
+    return {
+      base,
+      referanse: packField(base, REF_PACK, DOMAIN).field,
+      kvantisert: packField(base, GLOBAL8, DOMAIN).field,
+    };
+  }
+
+  it("det kvantiserte feltet oppgir et vaktbånd, referansen oppgir null", () => {
+    const { referanse, kvantisert } = par();
+    expect(referanse.maxDecodeErrorKn).toBe(0);
+    // Halve trinnet på u/v-kanalen, i fartsrommet: √2 · (2·17,2/255)/2.
+    expect(kvantisert.maxDecodeErrorKn).toBeGreaterThan(0.05);
+    expect(kvantisert.maxDecodeErrorKn).toBeLessThan(0.15);
+  });
+
+  it("den målte dekodefeilen (~0,09 kn-klassen) ligger innenfor vaktbåndet", () => {
+    const { referanse, kvantisert } = par();
+    const p = probePack(referanse, kvantisert, DOMAIN, T0, PROBE_HOURS, 11);
+    // Feilen er reell — ellers måler testen ingenting …
+    expect(p.maxTwsErrKn).toBeGreaterThan(0.02);
+    // … og vaktbåndet er en ærlig skranke over den.
+    expect(p.maxTwsErrKn).toBeLessThanOrEqual(kvantisert.maxDecodeErrorKn);
+    // Samme halve trinn peker også oppover, forbi feltets deklarerte maks
+    // (målingens §10 krav 6 — grunnen til at deklarerte skranker skal regnes
+    // på de DEKODEDE verdiene). Merk hva denne linjen ER: en skranke-sjekk,
+    // ikke et bevis. På dette prøvegitteret er overskridelsen 0 kn (feltets
+    // maksvind treffes ikke av lattice-punktene), så assertionen er svak her
+    // — den fanger en fremtidig regresjon der overskridelsen vokser forbi
+    // vaktbåndet, og ikke noe mer.
+    expect(p.maxTwsOverKn).toBeLessThanOrEqual(kvantisert.maxDecodeErrorKn);
+  });
+
+  it("naken sammenligning mister harde forkastelser — vaktbåndet mister ingen", () => {
+    const { referanse, kvantisert } = par();
+    // Grensen legges midt i feltets vindspenn, slik at terskelen faktisk
+    // krysses mange steder. Alt annet ved båten er uten betydning her.
+    const boat = testBoat({ maxTwsKn: 13 });
+
+    let over = 0;
+    let taptNakent = 0;
+    let taptMedVaktband = 0;
+    for (const h of [0, 4, 9]) {
+      const t = T0 + h * 3600;
+      for (let a = 0; a <= 60; a++) {
+        const lat = 58.0 + (59.0 - 58.0) * (a / 60);
+        for (let b = 0; b <= 60; b++) {
+          const lon = 10.3 + (11.1 - 10.3) * (b / 60);
+          const pos = { lat, lon };
+          const sant = environmentAt(referanse, pos, t);
+          const dekodet = environmentAt(kvantisert, pos, t);
+          if (sant === undefined || dekodet === undefined) continue;
+          if (sant.wind.speedKn <= boat.maxTwsKn) continue;
+          over++;
+          if (dekodet.wind.speedKn <= boat.maxTwsKn) taptNakent++;
+          if (!twsExceedsHardLimit(dekodet, boat, kvantisert)) taptMedVaktband++;
+        }
+      }
+    }
+
+    // Målt ved skrivetidspunktet: 905 punkter over grensen, 12 av dem tapt av
+    // den nakne sammenligningen, 0 tapt med vaktbånd (vaktbånd 0,095 kn,
+    // største målte dekodefeil 0,074 kn).
+    expect(over, "grensen må faktisk krysses i feltet").toBeGreaterThan(100);
+    expect(
+      taptNakent,
+      "uten vaktbånd skal kvantiseringen sluke minst én forkastelse",
+    ).toBeGreaterThan(0);
+    expect(
+      taptMedVaktband,
+      `vaktbåndet mistet ${taptMedVaktband} av ${over} forkastelser`,
+    ).toBe(0);
+  });
+
+  it("vaktbåndet er inert for ukvantiserte felt (golden-garantien)", () => {
+    const { referanse } = par();
+    const boat = testBoat({ maxTwsKn: 13 });
+    let sjekket = 0;
+    for (let a = 0; a <= 40; a++) {
+      const pos = { lat: 58.0 + a / 40, lon: 10.7 };
+      const env = environmentAt(referanse, pos, T0 + 3 * 3600);
+      if (env === undefined) continue;
+      expect(twsExceedsHardLimit(env, boat, referanse)).toBe(
+        env.wind.speedKn > boat.maxTwsKn,
+      );
+      sjekket++;
+    }
+    expect(sjekket).toBeGreaterThan(30);
   });
 });
 

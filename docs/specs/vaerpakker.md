@@ -1,23 +1,33 @@
 # Spec: værpakker (`tools/weather-pack`, `packages/weather`, pakke-peker-API)
 
-> **Utkast — venter på Magnus og på kvantiseringsmålingen.**
-> Kvantiserings- og oppløsningsfeltene (§9) er bevisst ikke fylt inn: de
-> avgjøres av `docs/research/kvantiseringsmaaling-2026-09-01.md`, som kjøres
-> parallelt med dette utkastet (jf. «Kvantisering FØR formatlåsing»,
-> `docs/research/steg3-plan-2026-08-31.md`). Alt annet i denne spec-en er
-> uavhengig av det tallet og kan implementeres/reviewes nå.
+> **Gjeldende.** §9 (kvantisering/oppløsning) var åpent i utkast v0.1 i
+> påvente av `docs/research/kvantiseringsmaaling-2026-09-01.md`. Målingen
+> foreligger (inkl. tillegget 2026-09-02, §9.1 der), og Magnus har besluttet
+> §9 **todelt** 2026-09-02: logikk/énsidighetsregler og søkefri empiri er
+> **låst nå**; noen konkrete terskler (Hs-trinn, «1 t holder»-tilstrekkelighet,
+> 5 km-grensen for fallback-/etter-48t-felt) er **midlertidige** og
+> remåles mot ekte MEPS/NorKyst-data i fase 3. Se §9 for hvilket punkt som er
+> hvilket. Samtidig besluttet Magnus §18s samlepakke med åpne spørsmål (WAM800,
+> lagged-ensemble-dybde, flisstørrelse, R2-arkivpolitikk, MetAlerts-geometri,
+> sikt, EOF) — se §18, nå omdøpt til beslutningslogg for de spørsmålene.
 
-- Status: **utkast**
-- Dato: 2026-09-01
+- Status: **gjeldende (V1–V3 besluttet 2026-09-02; terskler i §9 midlertidige
+  til ekte-data-måling)**
+- Dato: 2026-09-01, revidert 2026-09-02
 - Fase: 3 (`docs/01-prosjektplan.md`)
 - Pakker: `tools/weather-pack` (batch), `packages/weather` (feltmodell/
   dekoding), `packages/protocol` (delt `PackageHeader`), pakke-peker-endepunkt
   i `apps/worker`
-- Grunnlag: `docs/00-kravspek.md` F2.1–F2.7, F3.5, N2, N3, N4, N6;
+- Grunnlag: `docs/00-kravspek.md` F2.1–F2.7, F3.5, N2, N3, N4, N6 (F2.2 revidert
+  2026-09-02 — se kravspekens endringslogg samme dato);
+  `docs/research/kvantiseringsmaaling-2026-09-01.md` (inkl. §9.1
+  helhetskontroll og §10-anbefalinger — grunnlaget for §9 under);
   `docs/research/spike-thredds.md`; `docs/research/vaerdata-ensemble.md`;
   `docs/decisions/ADR-0003-batch-i-github-actions.md`;
   `docs/decisions/ADR-0005-ensemble-mekanisme.md`;
-  `docs/research/steg3-plan-2026-08-31.md`. Stil og struktur følger
+  `docs/research/steg3-plan-2026-08-31.md`;
+  `docs/specs/farbarhetsmaske.md` §3 (kystlinjevektordata brukt til
+  kystsone-definisjonen, §9.4 under). Stil og struktur følger
   `docs/specs/rutemotor.md`.
 
 ---
@@ -27,8 +37,9 @@
 Værpakke-pipelinen henter MEPS-ensemble, NorKyst-strøm, bølgedata og
 tidevann fra MET/Kartverket, kvantiserer dem til et budsjettert,
 versjonert format, og publiserer dem innholdsadressert til R2. Klienten
-laster ferdige pakker og dekoder dem til `Float32`-felt rutemotoren
-(`docs/specs/rutemotor.md` §4.2) kan lese synkront og deterministisk.
+laster ferdige pakker og dekoder dem (per oppslag som standard, §9.7) til
+tallverdier rutemotoren (`docs/specs/rutemotor.md` §4.2) kan lese synkront
+og deterministisk.
 Denne spec-en dekker **alt mellom THREDDS/MET og `WeatherField`** — den
 definerer ikke hvordan feltet *brukes* (det gjør rutemotor-spec-en) og ikke
 hvordan robusthetslaget aggregerer over medlemmer (det gjør
@@ -37,13 +48,13 @@ hvordan robusthetslaget aggregerer over medlemmer (det gjør
 | Krav | Hva denne spec-en dekker |
 |---|---|
 | **F2.1** | Kildestack: MEPS kontroll + 30 medlemmer, NorKyst v3, MET Oceanforecast/WAM800 (bølge m/periode), Kartverket tideapi + vannstand, MetAlerts, sikt (§4) |
-| **F2.2** | Fliser/subsetting-geometri, ≤ 30 MB-budsjett m/regnskap per felt, romlig nedtynning (NorKyst), lagged-ensemble-politikk (§7, §8, §11) |
+| **F2.2** | Fliser/subsetting-geometri, ≤ 30 MB-budsjett m/regnskap per felt, kvantisering/oppløsning (låst todelt), kystsone-definisjon, romlig nedtynning (NorKyst), lagged-ensemble-politikk (§7, §8, §9, §11) |
 | **F2.3** | Pakkeformat versjonert (semver), major-avvisning, forrige generasjon beholdt i R2 (§5) |
 | **F2.4** | Metadata (modell/init/oppløsning/alder) + kildestatus + healthcheck (§6, §12, §13) |
 | **F2.5** | Interpolasjon og retningskonvensjoner enhetstestet; frossen ekte MEPS-testpakke (§3, §17) |
 | **F2.6** | MetAlerts-felt i pakke-/punkt-API-kontrakten (§4.5) |
 | **F2.7** | Sikt-felt i etappesammendraget (kilde uavklart, §4.6, §18) |
-| **F3.5** | Klientens dekodingskontrakt: kvantisert→Float32 i worker, transferable ArrayBuffers (§15) |
+| **F3.5** | Klientens dekodingskontrakt: kvantisert `Uint8Array` som resident representasjon, per-oppslag dekvantisering, transferable ArrayBuffers (§9.7, §15) |
 | **N2** | Ærlig degradering: kildestatus/degraderingsflagg per felt, aldri stille substitusjon (§12) |
 | **N3** | API-vilkår (User-Agent, rate limit, backoff) dokumentert og håndhevet (§16) |
 | **N4** | Gratis kilder + GitHub Actions gratisnivå (ADR-0003), ingen nye betalte tjenester (§16) |
@@ -67,7 +78,8 @@ hvordan robusthetslaget aggregerer over medlemmer (det gjør
   pipelinen finnes (kravspek §3 F3.3).
 - **Presentasjon** (vær-langs-ruten-bånd, F4.4) → fase 5/robusthet-spec.
   Denne spec-en leverer tall og metadata; ikke UI.
-- **Eksakt kvantisering/oppløsning** (§9) → åpent med vilje, se boksen øverst.
+- **Eksakt kvantisering/oppløsning** (§9) → **besluttet 2026-09-02** (todelt:
+  låst nå / midlertidig til ekte-data-måling), se boksen øverst og §9.
 
 ---
 
@@ -148,10 +160,10 @@ egenskapstester):
 |---|---|---|---|---|---|
 | Vind | MEPS `meps_lagged_6_h_latest_2_5km_{run}.nc` | 2,5 km | 61 t (66 t kontroll) | 30 medlemmer (kontroll = medlem 0, deterministisk) | OPeNDAP index-range (`spike-thredds.md` — NCSS er nede, ikke en fallback lenger) |
 | Strøm | `fou-hi/norkystv3_800m_m00_be` | 800 m | ~5 døgn rullerende | ingen (kun «reference member 00» — verifisert i spiken) | OPeNDAP index-range |
-| Bølger | MET Oceanforecast 2.0 (punkt) / WAM800 Skagerrak `fou-hi/mywavewam800s_curr` (domene `c4`, ~295 MB/fil helt domene) | 800 m kystnært | ~5,5 døgn (WAM800), 9 dgn (Oceanforecast punkt) | ingen | Oceanforecast: JSON punkt-API. WAM800 grid: OPeNDAP — **subsetting uverifisert, se §18 pkt. 1** |
+| Bølger | MET Oceanforecast 2.0 (punkt) / WAM800 Skagerrak `fou-hi/mywavewam800s_curr` (domene `c4`, ~295 MB/fil helt domene) | 800 m kystnært | ~5,5 døgn (WAM800), 9 dgn (Oceanforecast punkt) | ingen | Oceanforecast: JSON punkt-API, **gyldig førsteleveranse** (besluttet §18 pkt. 1). WAM800 grid: OPeNDAP — subsetting fortsatt uverifisert, spike kjøres etter fase 3-start (§7 pkt. 5) |
 | Vannstand/tidevann | Kartverket tideapi | ~30 navngitte havner | prognosehorisont per API | ingen | XML punkt-API |
-| MetAlerts | api.met.no MetAlerts | polygon-varsler | aktivt vindu | n/a | JSON punkt-/områdeoppslag (uverifisert i denne fasen, §18 pkt. 5) |
-| Sikt | uavklart — se §4.6 | — | — | — | **kilde ikke identifisert ennå (§18 pkt. 6)** |
+| MetAlerts | api.met.no MetAlerts | polygon-varsler | aktivt vindu | n/a | JSON punkt-/områdeoppslag (uverifisert i denne fasen; geometriregel besluttet, §4.5/§18 pkt. 5) |
+| Sikt | uavklart — se §4.6 | — | — | — | **kilde bevisst utsatt, blokkerer ikke fase 3-exit (§18 pkt. 6)** |
 
 **Ensemble-produktets faktiske form** (rettelse arvet fra `spike-thredds.md`,
 gjelder også denne spec-en): MEPS-ensemblet er **ikke** 30 separate filer.
@@ -177,18 +189,34 @@ uten å bryte per-medlem-isolasjon).
 
 ### 4.1 MEPS — vind
 
-Kontroll ved 2,5 km (native), ensemble ved en oppløsning som fastsettes av
-kvantiseringsmålingen (§9) — **ikke** låst til 5 km slik et tidligere
-kravspek-utkast antok; F3.5 (revidert per ADR-0005) sier eksplisitt at
-kursOPPLØSNING i søket er lik for kontroll og medlemmer, men sier ingenting
-om FELT-oppløsningen, som er et eget spørsmål denne spec-en eier.
+**Besluttet 2026-09-02 (§9):** kontroll OG alle 30 medlemmer leveres på
+2,5 km (native) — **ikke** 5 km for medlemmene, slik et tidligere
+kravspek-utkast antok. Kvantiseringsmålingens helhetskontroll
+(`K-ANB-UTASKJAERS`, §9.1) viste at 5 km flipper avgangsrangeringens
+toppavgang (+4 t → +2 t, ΔP50 3,35–3,50 %) — og at effekten kommer fra
+oppløsningen selv, ikke fra kvantiseringen (`R-2X`, Float32 på 5 km, gir
+samme flipp, 3,50 %). 5 km er derfor **ikke** en tillatt lettelse for
+medlemmene generelt; den er kun tillatt for (a) fallback-felt (kilden ikke
+tilgjengelig i normal oppløsning) og (b) kontrollens horisont utover 48 t
+(§9.1 pkt. «medlemshorisont»), og da med 10-bit kvantisering, ikke 8-bit
+(P90-halen rives opp av 8-bit×5 km sammen, målt 5,36 %, mens Float32 på
+5 km alene bare gir 0,02 % — en interaksjon, ikke en sum). F3.5 (revidert
+per ADR-0005) sier at kurs-oppløsningen i søket er lik for kontroll og
+medlemmer; §9 her låser i tillegg at FELT-oppløsningen også er lik (2,5 km)
+innenfor 48 t-horisonten.
 
 ### 4.2 NorKyst — strøm
 
 Overflatestrøm (`u_eastward`, `v_northward`, øverste dybdelag). Romlig
-nedtynning fra 800 m er **påkrevd** (spike-funn: 103 041 punkter for
-Skjæløy–Skagen-bboxen ved full oppløsning — se §8); graden av nedtynning og
-om den er uniform eller kystnær-variabel er åpent, §9.
+nedtynning fra 800 m er **påkrevd** utenfor kystsonen (spike-funn:
+103 041 punkter for Skjæløy–Skagen-bboxen ved full oppløsning — se §8).
+**Besluttet 2026-09-02 (§9, §9.4):** 800 m urørt i **kystsonen** (definert
+operasjonelt i §9.4), 1,6 km tillatt **utaskjærs**. Grunnlaget er
+strukturbredde, ikke en fast kilometergrense i seg selv: kyststrømmens
+fronter/virvler er 1–5 km brede, og målingens ¼-regel (nodeavstand ≤ ¼ av
+smaleste struktur som skal representeres) er dokumentert begrunnelse, ikke
+en direkte måling på ekte NorKyst-data (§9.1 forbehold 2, §11 forbehold 4 i
+måledokumentet) — derfor kreves byggetids-verifisering per flis (§9.4).
 
 ### 4.3 Bølger
 
@@ -218,19 +246,32 @@ gridded rutepakken (§5) — den har sin egen `PackageHeader`-instans med
 Punkt-/områdeoppslag mot api.met.no, samme proxy-mønster som tidevann.
 **Ikke spiket i denne fasen** — antas å fungere som beskrevet i
 `vaerdata-ensemble.md` (samme UA-/rate-limit-regime som Locationforecast,
-§16), men eksakt polygon-mot-rute-geometri (hvilke varsler «langs ruten»
-betyr presist) er en åpen implementasjonsdetalj, ikke en åpen
-arkitekturbeslutning — se §18 pkt. 5.
+§16). **Geometri besluttet 2026-09-02 (§18 pkt. 5):** et varsel vises når
+varselpolygonet **skjærer rutesporet bufret 5 nm**, eller **inneholder
+start- eller målpunktet** (selv om selve sporet ikke krysser det — et
+varsel som dekker havna man legger ut fra skal vises uansett hvor ruten
+går). Aktivt kulingsnivå (eller sterkere) i et vist varsel **farger
+anbefalingen** i avgangstabellen (F2.6); svakere varsler vises, men farger
+ikke. Eksakt fargekoding (hvilke MetAlerts-nivåer → hvilke UI-farger) er en
+presentasjonsdetalj, ikke denne spec-ens ansvar — den eier at
+polygon-mot-rute-testen (5 nm / inneholder-endepunkt) er kontrakten
+`apps/worker`s proxy og `packages/weather` implementerer likt.
 
 ### 4.6 Sikt (F2.7)
 
-**Kilde ikke identifisert.** MET Locationforecast/MEPS har ikke et direkte
+**Kilde fortsatt ikke identifisert — bevisst utsatt, besluttet 2026-09-02
+(§18 pkt. 6).** MET Locationforecast/MEPS har ikke et direkte
 `visibility`-felt i den formen v1 eller denne research-runden har bekreftet
 (kun avledede skyfraksjons-/tåkeproxyer, uverifisert). F2.7 sier sikt
-«påvirker ikke rutingen i v2.0» — feltet trengs kun til
-etappesammendraget, så konsekvensen av at kilden er uavklart er lav
-hastverk, men den skal ikke besluttes stilltiende når pipelinen bygges.
-Se §18 pkt. 6.
+«påvirker ikke rutingen i v2.0» — feltet trengs kun til etappesammendraget.
+**Beslutning:** dette utsettelsen blokkerer **ikke** fase 3-exit. En liten
+oppfølgingsspike på MEPS' `fog_area_fraction` (eller tilsvarende
+skyfraksjons-/tåkeproxy) kjøres senere, som egen liten bølge — ikke som
+forutsetning for at `tools/weather-pack` går i produksjon for vind/strøm/
+bølge/tidevann/MetAlerts. Sikt-kolonnen i etappesammendraget vises som
+«ikke tilgjengelig» inntil spiken er kjørt og en kilde er valgt — det er en
+`N2`-riktig degradering (manglende felt vist, ikke skjult), ikke en
+stille utsettelse.
 
 ---
 
@@ -267,8 +308,20 @@ R2-nøkkelen, nettopp for at identisk innhold fra to kjøringer ikke skal
 dupliseres i lagring.
 
 **Forrige generasjon beholdes** (F2.3): batch-jobben sletter aldri gamle
-R2-objekter selv om `pointer/vaer-skandinavia.json` peker et annet sted nå.
-Opprydding (arkivpolitikk) er en åpen driftsbeslutning, §18 pkt. 7.
+R2-objekter selv om `pointer/vaer-skandinavia.json` peker et annet sted nå,
+**innenfor arkivvinduet under**.
+
+**Arkivpolitikk besluttet 2026-09-02 (§18 pkt. 4): 7 døgns rullerende
+R2-arkiv for værpakker.** Værpakker eldre enn 7 døgn slettes av en egen
+oppryddingsjobb (samme batch-runde eller en separat cron — implementasjonsdetalj).
+Dette er bevisst forskjellig fra kartpakkenes arkivpolitikk
+(`docs/specs/farbarhetsmaske.md` §7, som beholder lenger fordi kystlinjedata
+endrer seg sakte og gamle bygg har verdi som fallback) — værprognoser blir
+operasjonelt ubrukelige i løpet av dager, og F3.3s polar-kalibrering (SOG mot
+historisk strøm/vind) bruker **METs eget hindcast-arkiv**, ikke vårt eget
+7-døgns R2-vindu — vi arkiverer for drift/feilsøking, ikke som datakilde for
+kalibrering. 7 døgn er valgt som «nok til å feilsøke en dårlig kjøring i
+ettertid», ikke tallfestet mot noe kalibreringsbehov.
 
 ---
 
@@ -281,8 +334,13 @@ Hvert felt i pakken bærer, via sin `PackageHeader`:
 - `init` — modellens init-tidspunkt, **ikke** `producedAt` (batch-jobbens
   kjøretid). Et felt kan være timer gammelt selv om pakken ble bygget for
   ti minutter siden (lagged-ensemble, §11).
-- `resolution` — for vind/strøm: streng som `"2.5km"` (kontroll),
-  `"<TBD>km"` (ensemble, §9), `"800m→<TBD>km"` (NorKyst, nedtynnet).
+- `resolution` — for vind: `"2.5km"` for **både** kontroll og medlemmer
+  innenfor 48 t-horisonten (§9), `"5km"` kun for kontrollens hale utover
+  48 t eller for fallback-felt (da med `bitsPerSample: 10` i
+  `QuantizationParams`, §9.3). For strøm: `"0.8km"` i kystsonen (§9.4),
+  `"1.6km"` utaskjærs — feltet viser den faktiske leverte oppløsningen,
+  aldri en nominell/native oppløsning som ikke faktisk ble sendt (samme
+  prinsipp som §12s NorKyst-nedtynningsrad).
 - `sourceStatus` — `{status: "ok"}` eller
   `{status: "degraded", reason: "06Z manglet — dette er 00Z"}` (F2.4s
   eget eksempel, brukt ordrett som mønster).
@@ -304,22 +362,38 @@ kvantiseringstallet: klienten/Workeren komponerer en «rutepakke» ved å
 plukke ut hvilke ferdigbygde fliser en gitt rute berører, den ber aldri
 batch-jobben om et skreddersydd uttrekk.
 
-**Flisrutenett — foreslått, IKKE samme som kartflisene.**
-`docs/specs/farbarhetsmaske.md` bruker 0,5°×0,25° (valgt for
+**Flisrutenett — besluttet 2026-09-02 (§18 pkt. 3), IKKE samme som
+kartflisene.** `docs/specs/farbarhetsmaske.md` bruker 0,5°×0,25° (valgt for
 kystlinje-detaljnivå). Værfliser trenger motsatt avveining: MEPS/NorKyst
 har lav nok informasjonstetthet per grad at et finmasket rutenett bare gir
 mange små filer med dyr per-flis metadata-overhead (F2.2 nevner eksplisitt
 «8-bit kvantisering m/per-flis skala/offset» — hver flis betaler en fast
 kostnad for skala/offset-parametre per felt per tidssteg).
 
-**Forslag (åpent for Magnus, ikke bare kvantiseringsmålingen):** værfliser
-på **2°×2°** eller lik spikens bbox-skala (Skjæløy–Skagen-bboxen var
+**Vedtatt verdi: 2°×2°**, likt spikens bbox-skala (Skjæløy–Skagen-bboxen var
 2,3°×2,5° og ga et håndterbart indeksvindu på 106×106 MEPS-punkter). Et
 2°-rutenett over Skandinavia (lat 53–72, lon 2–32) gir en håndterbar,
 overskuelig flisliste (~10×15 = 150 fliser i det ytre gridet, langt færre
 med faktisk hav-dekning), og de fleste enkeltruter (Skjæløy–Skagen-klassen)
-krysser 1–3 fliser. Dette er en **foreslått** verdi, ikke besluttet — se
-§18 pkt. 3.
+krysser 1–3 fliser.
+
+**Subfliser for skala/offset: ≤ 32×32 noder** (§9 krav 8, målt: 32×32 ≈
+80×80 km gir Hs-trinn 1,17–1,24 cm i hovedmålingen, §9.1). Hver 2°-flis
+deles i et fast antall 32×32-subfliser (siste rad/kolonne kan være mindre
+der 2° ikke deler jevnt); hver subflis bærer sin egen skala/offset per felt
+per tidssteg. Subflisgrensa er **samme grid** som §9.4 bruker til å
+klassifisere kystsone/utaskjærs — én geometri, to bruksområder (kvantisering
+og sonevalg), ikke to separate rutenett å holde synkronisert.
+
+**Origo delt med kartflisene (§9 krav, låst nå).** Værflisenes 2°-rutenett
+forankres i samme heltallsorigo (hele gradlinjer, `lat mod 2 = 0`,
+`lon mod 2 = 0`) som kartflisenes 0,5°×0,25°-rutenett bruker for sin egen
+origo — ikke fordi rutenettene er like store (det er de bevisst ikke, se
+over), men fordi en klient som har bestemt seg for hvilke kartfliser en rute
+berører, kan regne ut de omsluttende værflisene med samme heltallsaritmetikk
+uten en egen oppslagstabell, og fordi begge pakketypers pekere kan
+forhåndshentes (prefetches) fra samme rutebbox i én runde uten to
+runde-avrundinger som kan komme i utakt ved flisgrenser.
 
 **Subsetting-geometri (uavhengig av flisstørrelse, gjelder alltid):**
 
@@ -340,12 +414,16 @@ krysser 1–3 fliser. Dette er en **foreslått** verdi, ikke besluttet — se
    som primærvei; skulle NCSS komme tilbake, er det en mulig fremtidig
    optimalisering, ikke noe pipelinen skal avhenge av fra dag én.
 5. **WAM800-subsetting er fortsatt uverifisert** (spikens åpne punkt).
-   Første oppgave før bølgefeltet kobles inn i den faktiske pipelinen er en
-   liten oppfølgingsspike som måler bbox-subset-kostnad mot de ~295 MB/fil
-   store WAM800-filene — se §18 pkt. 1. Inntil den er kjørt, bygges
-   pipelinen med bølger fra Oceanforecast punkt-API (som allerede finnes
-   og fungerer) og WAM800-gridded-varianten er et eksplisitt
-   `sourceStatus: degraded`/fallback-tilfelle, ikke en forutsetning.
+   **Besluttet 2026-09-02 (§18 pkt. 1): spiken kjøres ETTER fase 3-start, ikke
+   som blokkerende forutsetning.** Første ende-til-ende-leveranse i fase 3
+   bruker Oceanforecast punkt-API for bølger langs korridoren — dette er en
+   **gyldig førsteleveranse**, ikke en midlertidig krykke som må fjernes før
+   noe kan vises: punktbølger med periode dekker `packages/polar`s
+   derating-behov (§4.3) på de navngitte punktene ruten faktisk passerer.
+   WAM800-gridded-bølge (subsetting mot de ~295 MB/fil store filene) er en
+   rask oppfølgingsspike når pipelinen for øvrig kjører, og
+   forblir et eksplisitt `sourceStatus: degraded`/fallback-tilfelle inntil
+   den spiken er kjørt og verifisert.
 
 ---
 
@@ -355,19 +433,47 @@ En «rutepakke» er de fliser + felt en gitt rute faktisk trenger — typisk
 1–3 værfliser (§7) for kontroll + 30 medlemmer + strøm + bølger + metadata,
 for hele 61-timershorisonten.
 
-**Foreløpig regnskap (ekstrapolert fra `spike-thredds.md`, IKKE målt mot en
-ekte kvantisert pakke — tallene under er overslag, og cellene merket
-`<TBD>` avhenger av §9):**
+**Regnskap oppdatert 2026-09-02 med §9s låste oppløsning/kvantisering** (2,5
+km vind kontroll+medlemmer, 8-bit, 48 t medlemshorisont, 800 m strøm i
+kystsonen). **Fortsatt IKKE målt mot en ekte bygget pakke** — det skjer
+først når `tools/weather-pack` finnes (§17 pkt. 7). Tallene under er
+ekstrapolert fra spikens punkttetthet, ikke lenger fra en `<TBD>`-oppløsning:
 
 | Post | Formel | Overslag | Status |
 |---|---|---|---|
-| Vind, kontroll | 2 var × ~11 236 pkt (2,5 km, én flis-bbox) × ~37 tidssteg (tynnet) × `<TBD>` bit/sample | ~0,8 MB ved 8-bit | placeholder, §9 |
-| Vind, 30 medlemmer | 2 var × 30 medl × `<TBD>` pkt (ensemble-oppløsning) × ~37 tidssteg × `<TBD>` bit/sample | ~6 MB ved 8-bit/5 km | placeholder, §9 |
-| Strøm (NorKyst, nedtynnet) | 2 var × `<TBD>` pkt (nedtynnet oppløsning) × `<TBD>` tidssteg × `<TBD>` bit/sample | 2–4 MB (grov skisse) | placeholder, §9 |
-| Bølger | Hs + Tp (+ retning) × `<TBD>` pkt/tidssteg | samme størrelsesorden som strøm | placeholder, §9 + §7 pkt. 5 |
+| Vind, kontroll | 2 var × ~11 236 pkt (2,5 km, én flis-bbox) × full horisont (~66 t) × 8 bit, **1 t gjennom hele horisonten** (§9.2) | ~1 MB | oppdatert, §9 låst |
+| Vind, 30 medlemmer | 2 var × 30 medl × ~11 236 pkt (2,5 km, samme flis) × 49 tidssteg (0–48 t, 1 t) × 8 bit ≈ **32 MB rått** | **~20–28 MB etter delta+gzip** (faktor 1,5–2,5×, F2.2) | **oppdatert, §9 låst — dette er posten som spiser mesteparten av budsjettet** |
+| Strøm (NorKyst, 800 m kystsone / 1,6 km utaskjærs) | 2 var × pkt (avhenger av hvor mye av flisen som er kystsone, §9.4) × tidssteg × 8 bit | 2–4 MB (grov skisse, sonevariert nett ikke målt som helhet, §9.1 forbehold 1) | placeholder — sonegrense uprøvd i praksis |
+| Bølger | Hs + Tp (+ retning) × pkt/tidssteg, 8-bit, opp-avrundet Hs | samme størrelsesorden som strøm | placeholder, §7 pkt. 5 (Oceanforecast punkt inntil videre — se der) |
 | Tidevann/MetAlerts | punkt-JSON, ikke gridded | < 0,1 MB | lav usikkerhet |
-| Metadata (per-felt `PackageHeader`, per-flis skala/offset) | fast overhead × antall fliser × antall felt | < 0,2 MB for 1–3 fliser | lav usikkerhet |
-| **Sum, overslag** | | **~10–20 MB** | **under budsjettet med margin, forutsatt at nedtynningen i §9 faktisk gjennomføres — spikens egen konklusjon, ikke verifisert mot en ekte bygget pakke** |
+| Metadata (per-felt `PackageHeader`, per-subflis skala/offset, 32×32-noder) | fast overhead × antall subfliser × antall felt | < 0,3 MB for 1–3 fliser | lav usikkerhet |
+| **Sum, overslag** | | **~25–37 MB** | **ikke lenger klart under budsjettet — se budsjettregelen under** |
+
+**Presisering av tidsoppløsningen i tabellen (rettet 2026-09-02, §19).**
+Kontrollradens «1 t» gjelder **hele kontrollens horisont**, ikke et vindu
+inne i den. §9.2 er ubetinget for harde felt: **Hs og TWS leveres på 1 t så
+langt feltet rekker** — også i kontrollens hale utover 48 t, der §9.1 pkt. 3
+lemper på *romlig* oppløsning (5 km) og *bit-bredde* (10-bit), men ikke på
+tidsaksen. Formuleringen «1 t innenfor hard-felt-vinduet» stod her tidligere
+og var tvetydig: den kunne leses som at det finnes et vindu utenfor hvilket
+harde felt kan tynnes. Det gjør det ikke. Vil noen likevel grovne et hardt
+felt en gang i framtiden, gjelder énsidighetsregelen i §9.2 (maksimum av
+naboskivene, aldri gjennomsnitt) **pluss** flagget om skjeve
+gjennomførbarhetstall — «vinduet» er ikke en lisens til å tynne.
+
+**Dette er en vesentlig oppjustering fra utkastets `~10–20 MB`.** Årsaken er
+at 5 km-lettelsen for medlemmer (som utkastet implisitt regnet med i
+placeholder-tallet `~6 MB ved 8-bit/5 km`) er avvist av §9/F2.2 — medlemmene
+går på 2,5 km, fire ganger så mange punkter, og vind-medlemsposten alene
+(~20–28 MB) er nå i samme størrelsesorden som hele det tidligere
+budsjettoverslaget. **Budsjettregel (F2.2, uendret prinsipp, tallsatt
+konsekvens):** lander en ekte, målt rutepakke (delta+gzip inkludert) over
+30 MB, legges en budsjettrevisjon til **~40 MB** fram for Magnus med det
+målte tallet — rangeringskvalitet (2,5 km-oppløsningen §9 nettopp låste)
+ofres ikke for et rundt 30 MB-tall. Gitt regnestykket over er dette ikke
+lenger en fjern mulighet; det er sannsynlig nok til at
+budsjett-reverifiseringstesten (§17 pkt. 7) bør kjøres tidlig i
+implementasjonen, ikke som en avsluttende sjekk.
 
 **Regnskapet skal reverifiseres mot en faktisk bygget, kvantisert pakke**
 så snart `tools/weather-pack` finnes — dette overslaget er ikke en
@@ -385,40 +491,98 @@ informerer, ikke en beslutning denne spec-en låser nå.
 
 ---
 
-## 9. Kvantisering og oppløsning — ÅPENT (venter på måling)
+## 9. Kvantisering og oppløsning — LÅST (todelt), besluttet 2026-09-02
 
-> **Ingenting i denne seksjonen er besluttet.** Tallene under er eksplisitt
-> `<TBD>` inntil `docs/research/kvantiseringsmaaling-2026-09-01.md`
-> foreligger og Magnus har tatt stilling til den. Denne spec-en skal
-> **ikke** oppdateres med gjettede tall i mellomtiden — placeholder-en
-> under er kontrakten resten av dokumentet refererer til.
+**Grunnlag:** `docs/research/kvantiseringsmaaling-2026-09-01.md` (inkl.
+§9.1-tillegget 2026-09-02) og kravspekens F2.2-revisjon samme dato. Denne
+seksjonen er **todelt, med eksplisitt merking per punkt**:
 
-### 9.1 Hva målingen avgjør
+- **LÅST NÅ** — logikk, énsidighetsregler og konklusjoner som ikke avhenger
+  av å måle mot ekte MEPS/NorKyst-data (de er enten rene designvalg, eller
+  fastslått av søkefri empiri som ikke er fikstursensitiv i sin konklusjon,
+  bare i sin eksakte centimeter/prosent).
+- **MIDLERTIDIG** — konkrete terskler som er målt på **syntetiske**
+  fikstur-felt (`docs/research/kvantiseringsmaaling-2026-09-01.md` §11
+  forbehold 3) og skal **remåles på ekte MEPS/NorKyst-data i fase 3** før de
+  regnes som endelige. Se §9.8 for datert liste.
 
-1. **Bit-bredde per felt.** F2.2 antar 8-bit m/per-flis skala/offset som
-   utgangspunkt, men om det holder presisjon (spesielt for Hs og for
-   svak-vind-regimet der TWA-følsomheten er høyest) er ikke verifisert.
-2. **Romlig oppløsning, ensemble-vind.** Et tidligere kravspek-utkast antok
-   5 km; det er en anbefaling fra spiken, ikke en måling av ruteeffekt.
-3. **Romlig oppløsning/nedtynningsgrad, NorKyst-strøm.** Spiken foreslår
-   «ned mot ~2–3 km effektiv oppløsning» som **grov skisse, ikke en
-   beslutning» (dens egen ordlyd) — og om nedtynningen bør være uniform
-   over flisen eller variere med avstand til kyst/rute (jf. F2.2s formulering
-   «full oppløsning beholdes kun nær ruten/kysten», som ikke er presisert
-   noe sted) er en åpen designakse i seg selv, ikke bare et tall.
-4. **Tidsoppløsning.** F2.2s utgangspunkt (1 t 0–24 t, 3 t etterpå) er en
-   forutsetning, ikke en målt avveining mot ruteeffekt.
-5. **Delta-koding** (F2.2 nevner den som mulig budsjett-tiltak) — brukes
-   den, og for hvilke felt.
+Ingen av de midlertidige punktene er «uavklart» i betydningen «vent med å
+implementere» — implementer med tallene som står, men bygg
+remålingssjekken (§17 pkt. 7 og under) inn i pipelinen fra dag én, ikke som
+en etterpåklokskap.
 
-**Metoden** (fra steg3-plan): golden-ruter kjørt på degraderte felt
-(varierende bit-bredde, 2,5 vs. 5 km, 1 vs. 3 t, NorKyst-nedtynning
-trinnvis) sammenlignes på **rutediff og avgangsrangering** (N5s
-toleransebegrep), ikke felt-RMSE — en kvantiseringsfeil som ikke endrer
-noen rutebeslutning er irrelevant selv om den er stor i rå tallverdi, og en
-liten feltfeil som flipper en avgangsrangering er ikke det.
+### 9.1 LÅST — vind: lagringsform, bit-bredde, romlig oppløsning, horisont
 
-### 9.2 Hs — hardt krav, uavhengig av målingens tall
+1. **u/v-komponenter, 8-bit, skala/offset per subflis** (§7, 32×32 noder,
+   byte-alignet). 10-bit ble vurdert og **avvist**: målingens
+   helhetskontroll (`K-ANB-KYST`, §9.1 i måledokumentet) består identisk med
+   referansen ved 8 bit, og margin-argumentet for 10 bit «var uansett svakt,
+   siden skade ikke er monoton i grovhet» (samme dokument, §9.1). 10-bit er
+   bit-pakkingsoverhead (ingen byte-alignering) uten en målt gevinst som
+   oppveier det. `PackageHeader.formatVersion` (§5) reserverer veien til
+   16-bit per lag som en **fremtidig, uavhengig beslutning** hvis et
+   spesifikt felt en gang måtte trenge det — dette låser 8-bit *nå*, ikke
+   *for alltid*.
+2. **Romlig oppløsning: kontroll OG alle 30 medlemmer på 2,5 km**, innenfor
+   48 t-horisonten (§9.1 pkt. 3 under). Dette reverserer et tidligere
+   kravspek-utkast som antok 5 km for medlemmene. Målt begrunnelse: `K-ANB-
+   UTASKJAERS` (5 km) består alle sikkerhetskriterier (ingen tapte harde
+   forkastelser, ingen felle-flips) men **flipper avgangsrangeringens
+   toppavgang** (+4 t → +2 t, ΔP50 3,35 %, over ±2 %-båndet) i det sterke
+   rangeringsinstrumentet (fullt Pareto-søk per medlem, P2b). Attribusjonen
+   er målt, ikke antatt: `R-2X` (samme 5 km, **Float32, ingen kvantisering i
+   det hele tatt**) gir samme flipp og nesten samme ΔP50 (3,50 %) — feilen
+   kommer fra **oppløsningen selv**, ikke fra 8-bit-kvantiseringen.
+3. **5 km er derfor reservert til to smale unntak, ikke en generell
+   utaskjærs-lettelse:** (a) fallback-felt der kilden ikke er levert i
+   normal oppløsning, og (b) kontrollens hale utover 48 t (§9.1 pkt. 3 i
+   dette dokumentet — kontroll har full horisont, medlemmer stopper ved
+   48 t). I begge unntakene skal kvantiseringen være **10-bit, ikke 8-bit**:
+   P90-halen rives opp av kombinasjonen 8-bit×5 km (målt ΔP90 5,36 %) mens
+   verken 5 km alene (Float32, ΔP90 0,02 %) eller 8-bit alene (2,5 km,
+   ΔP90 0,00 %) gjør det — en **interaksjon**, ikke en sum av to trygge
+   valg. Dette er den ene plassen i formatet der bit-bredden IKKE er «8-bit
+   er nok»: den finere kvantiseringen kompenserer for oppløsningstapet
+   akkurat der halen bor.
+4. **Medlemshorisont 48 t, kontroll full horisont** (~61–66 t). Målt
+   rangeringsnøytralt for avgangsvinduet (S-5-instrumentet bruker uansett
+   bare de første timene av hvert medlems rute til å skille avganger,
+   kravspekens F2.2-formulering «primærkutt, rangeringsnøytralt»).
+
+### 9.2 LÅST — tidsoppløsning og énsidighetsregelen for harde felt
+
+**Felt som inngår i harde avvisninger (Hs, TWS) leveres alltid på 1 t
+innenfor horisonten.** Felt uten hard-semantikk kan i prinsippet tynnes til
+3 t, men ingenting i v2.0-pipelinen gjør det ennå (§9.8 — «1 t
+holder»-tilstrekkeligheten for hvilke felt som faktisk kan tynnes er selv
+midlertidig).
+
+**Målt mekanisme, ikke gjettet:** `T-3H` (3 t) mister en reell felle — S-3s
+medlem `m29` har 0,6 m Hs-margin mot `boat.maxHsM`, og verste temporale
+Hs-underrapportering ved 3 t er 0,576 m, akkurat i den størrelsesordenen.
+Den harde forkastelsen forsvinner, og felle-settet krymper fra
+`{m04,m09,m14,m29}` til `{m04,m09,m14}` — mens `Δt` for samme konfigurasjon
+bare er 0,12 % og dermed ikke ville varslet noe hvis rutediff var eneste
+instrument. Samme konfigurasjon river opp avgangsrangeringens P90-hale
+(ΔP90 5,91 %, 7 inversjoner) — halen er der medlemmer med harde grenser bor
+(§6.3 i måledokumentet).
+
+**Énsidighetsregel kodifisert som invariant for eventuell senere grovning**
+(gjelder hvis noen i en senere fase vurderer å tynne et hardt felt utover
+1 t): en grovnet tidsskive for et hardt felt skal ta **maksimum av de
+underliggende naboskivene**, aldri et gjennomsnitt eller en interpolert
+verdi. Samme retningslogikk som Hs-avrundingen (§9.3), men på tidsaksen —
+og samme pris: en slik grovning skal sette et eksplisitt flagg om at
+**gjennomførbarhetstall kan være konservativt skjeve** (færre gjennomførbare
+medlemmer enn sannheten er en akseptabel feilretning; flere er det ikke).
+Dette er ikke en aktiv kode-invariant i v2.0 (ingen hardt felt grovnes), men
+en **grense produsenten aldri skal krysse uten denne kompensasjonen**, skrevet
+inn før noen får bruk for den — jf. `T-6H`s asymmetriske funn (§6.2 i
+måledokumentet: 7,2 % Δt men INGEN tapt felle, fordi fronten da er utsmurt
+til et annet tidspunkt) som viser at skade fra grovning ikke er monoton og
+derfor ikke kan sjekkes med bare ett scenario.
+
+### 9.3 LÅST — Hs: hardt krav (uendret prinsipp, nå formelt vedtatt)
 
 **Hs går inn i harde avvisninger** (`docs/specs/rutemotor.md` §5.3, steg
 `hsM > boat.maxHsM` → forkast noden; §5.3.2s klaringskrav
@@ -427,34 +591,334 @@ den sanne verdien kan derfor skjule en reell avvisning eller en reell
 kystbuffer-innstramning — det er retningen som er farlig, ikke
 kvantiseringsfeilens størrelse i seg selv.
 
-**Regel, gjeldende uansett hva målingen konkluderer om bit-bredde/skala:**
-**kvantisering av Hs skal aldri kunne gjøre feltet MILDERE enn kilden.**
-Konkret: for enhver kildeverdi `hs`, skal den dekodede verdien
+**Regel: kvantisering av Hs skal aldri kunne gjøre feltet MILDERE enn
+kilden.** Konkret: for enhver kildeverdi `hs`, skal den dekodede verdien
 `hs_kvantisert ≥ hs` (avrunding **opp**, ikke til nærmeste). Dette er en
 konservativ-retning-regel, samme filosofi som `clearanceNm`s
 aldri-overestimer-krav i rutemotor-spec-en (§4.1 der) — bare speilvendt,
 fordi her er det den *lave* verdien som er den farlige, ikke den høye.
 
-**Hvordan dette implementeres (skala/offset-formen)** avhenger av §9.1s
-bit-bredde-valg, men uansett endelig form skal enhetstesten være:
-`decode(encode(hs)) ≥ hs` for et representativt utvalg `hs`-verdier
-inkludert grenseverdier (`hs = boat.maxHsM` eksakt, `hs` like under en
-kvantiseringsterskel). Dette er en **hard, ikke-omsettelig** regel i denne
-spec-en — kvantiseringsmålingen avgjør bit-bredde og skala, men avgjør
-**ikke** om regelen gjelder. Endelig presis avrundingsformel skrives inn
-her når målingen lander (§19).
+**Målt, ikke antatt:** med vanlig («nearest») avrunding og 19 cm trinn
+(6-bit global) mistes en hard forkastelse med 6,9 cm margin (`m26`, S-8);
+med samme trinn avrundet **opp** mistes ingen forkastelse, men prisen er to
+falske feller over 240 medlemsevalueringer og én ankomst skjøvet ut av
+dagslysvinduet. Feltprøven i måledokumentets §8.4 viser at vanlig avrunding
+mister ekte overskridelser **også ved 4,7 cm trinn** (3 av 123 punkter) —
+kravet gjelder derfor uavhengig av trinnstørrelse, ikke bare ved grove
+trinn.
 
-### 9.3 Placeholder-kontrakt inntil målingen lander
+**Enhetstesten:** `decode(encode(hs)) ≥ hs` for et representativt utvalg
+`hs`-verdier inkludert grenseverdier (`hs = boat.maxHsM` eksakt, `hs` like
+under en kvantiseringsterskel). Låst som regresjonstest i
+`packages/routing/src/pack-degradation.test.ts` («konservativ Hs sletter
+aldri en hard forkastelse») og skal ha et motstykke i
+`packages/weather` når den ekte kodeveien finnes (§17).
+
+**Koblingen til §9.2 er eksplisitt, ikke to uavhengige krav:** avrunding
+opp fjerner kvantiseringens bidrag til en for lav Hs, men ikke
+interpolasjonens — målt underrapportering mellom tidsskivene er −0,117 m
+allerede uten kvantisering ved 1 t, og −0,576 m ved 3 t. Fortegnet sikres
+av avrundingen; størrelsen sikres av oppløsningen (§9.2). Ett krav uten det
+andre er ikke trygt.
+
+### 9.4 LÅST — kystsonen: operasjonell definisjon, strømoppløsning, ¼-regelen
+
+**Strøm: NorKyst 800 m urørt i kystsonen, 1,6 km tillatt utaskjærs.**
+Begrunnelsen er strukturbredde, ikke en fast kilometergrense i seg selv:
+kyststrømmens fronter/virvler er 1–5 km brede, og målingens sonder
+(§7.2 i måledokumentet) viser at effekten kommer når nodeavstanden nærmer
+seg strukturbredden — ved 3,3 km halvbredde er det **vind-/bølgenettet på
+2,5 km**, ikke strømnettet på 0,8 km, som er den begrensende faktoren
+(`R-HALV` med 1,25 km reproduserer det analytiske feltet på samme sonde).
+**¼-regelen** (nodeavstand ≤ ¼ av den smaleste strukturen pakken skal
+representere, begrunnet i bilineær rekonstruksjon: `w_min = 4×
+kildegitter`) står som **dokumentert begrunnelse, merket ekstrapolasjon**
+— den er ikke en direkte måling på ekte NorKyst-data, bare på tre
+syntetiske båndbredder (måledokumentets §11 forbehold 4). Produsenten skal
+derfor kjøre en **byggetids-verifisering per flis**: maks avvik mellom
+dekodet og kildeverdi på en valideringsdag, sjekket mot det som faktisk
+sendes — ikke en antakelse om at ¼-regelen holder, en kontroll som beviser
+det for hver bygget flis.
+
+**«Kun tidevanns-hovedkomponent» er ikke et strømlag.** Målt: 5,93 % anger
+på v1s referansestrekk og en plan som **ikke er gjennomførbar** under
+sannheten (`tss-ved-skagen`-TSS-bruddet, §7.1 i måledokumentet). En pakke
+som bare bærer tidevannets hovedkomponent skal merkes som **manglende
+strømdata** (N2, samme kontrakt som §12s `hsM === undefined`-rad), ikke som
+strømdata med redusert kvalitet.
+
+**Kystsonen defineres operasjonelt slik (beslutning tatt av spec-eier under
+Magnus' V3-mandat 2026-09-02 — kravspekens F2.2-revisjon delegerer nettopp
+denne definisjonen hit):**
+
+> En 32×32-nodes subflis (§7) klassifiseres som **kystsone** hvis avstanden
+> fra subflisens senterpunkt til nærmeste punkt på kystlinjevektoren i
+> `tools/chart-pack` (`docs/specs/farbarhetsmaske.md` §3 — samme
+> vektordatasett som bygger farbarhetsmasken, ikke en ny kilde) er **≤ 20
+> nm**. Er avstanden større, er subflisen **utaskjærs**.
+
+**Hvorfor denne regelen og ikke NorKyst-dekning eller skjærgårdsklasse:**
+
+1. **Byggbar med eksisterende data.** `tools/chart-pack` har allerede
+   kystlinje som vektordata (flisdelt 0,5°×0,25°, `farbarhetsmaske.md` §3.1).
+   `tools/weather-pack` kan gjøre ett avstandsoppslag per subflis mot dette
+   datasettet ved byggetid — ingen ny kilde, intet nytt vedlikeholdsbehov.
+   NorKyst-dekning duger ikke som kriterium: NorKyst v3 leveres nominelt i
+   800 m over **hele** domenet (spikens funn), så «har NorKyst 800 m-data»
+   skiller ikke kyst fra åpent hav — det ville klassifisert alt som
+   kystsone. Skjærgårdsklasse (en kvalitativ kategori fra Kartverkets
+   data) finnes ikke som et entydig, allerede bygget lag denne pipelinen
+   kan slå opp i uten selv å definere den — det hadde flyttet problemet, ikke
+   løst det.
+2. **Verifiserbar.** Regelen er et rent geometrisk predikat: gitt en
+   subflis og en kystlinje, er svaret deterministisk. Det kan
+   enhetstestes med en fast kystlinjestrekning og en kjent subflis-grid
+   (forventet klassifisering notert før testen skrives, samme disiplin som
+   golden-fikstene), og produsenten kan telle andelen kystsone/utaskjærs
+   per bygg og visualisere grensen på et kart for sanity-sjekk.
+3. **20 nm er valgt med margin, ikke tightest mulig.** Skjærgården og
+   fjordmunningene der kyststrømmens fronter/virvler er smalest (1–5 km,
+   §7.2 i måledokumentet) ligger godt innenfor 20 nm fra land nesten
+   overalt i det aktuelle kartområdet; 20 nm gir slingringsmonn mot at
+   grensen skal treffe midt i en reell smal struktur. Dette er ikke en målt
+   optimal terskel (ingen måling i denne runden tester nøyaktig 20 nm), men
+   en **konservativt valgt** terskel — samme filosofi som Hs-avrundingen:
+   usikker på eksakt tall, sikker på retningen (heller for mye kystsone enn
+   for lite).
+4. **Konservativ standardretning ved tvil.** Mangler en subflis
+   kystlinjedata i sitt dekningsområde (kant av chart-pack-domenet, eller
+   chart-pack ikke bygget for det området ennå), klassifiseres subflisen
+   **kystsone** (den dyrere, finere retningen), aldri utaskjærs — samme
+   «velg den trygge feilretningen når du er usikker»-logikk som resten av
+   §9.
+5. **Delt geometri med kvantiseringssubflisen (§7).** Klassifiseringen
+   gjøres på **samme** 32×32-subflis-rutenett som bærer skala/offset — ett
+   rutenett, to bruksområder, ikke to rutenett som kan komme i utakt.
+
+**Dette er ikke en måling — det er spec-eierens operasjonelle valg for å
+gjøre et ellers uverifiserbart krav («full oppløsning nær kysten») til noe
+byggbart.** Terskelen (20 nm) er ikke fikstur-testet i
+`kvantiseringsmaaling-2026-09-01.md` og står derfor med samme
+forbeholdsstatus som §9.8s midlertidige punkter — men selve **eksistensen**
+av en fast, geometrisk regel er en logikk-/arkitekturbeslutning, ikke en
+terskel, og hører derfor hjemme i LÅST NÅ. Termen justeres om
+byggetidsverifiseringen (over) viser at 20 nm systematisk klassifiserer en
+reell smal strømstruktur som utaskjærs.
+
+### 9.5 LÅST — TWS-vaktbånd, Tp-retning, strømmens manglende monotoni, dekodede skranker
+
+**TWS-hardgrensen sammenlignes med et vaktbånd, ikke med den nakne
+deklarerte grensen.** Vind lagres som u/v (§3, §9.1) og har derfor ingen
+triviell «rund alltid opp»-retning for skalarfarten slik Hs har — en
+kvantiseringsfeil kan gjøre dekodet TWS **lavere** enn sann TWS. For å
+unngå at en sann over-grense-vind slipper gjennom en hard avvisning fordi
+kvantiseringen tilfeldigvis rundet ned, skal `rutemotor.md`s
+`tws > boat.maxTwsKn`-test, når feltet er kvantisert, i praksis regne
+`decodedTws > (boat.maxTwsKn − maxDecodeErrorKn)`, der `maxDecodeErrorKn`
+er subflisens dokumenterte maksimale dekodefeil for TWS. For normal
+(«nearest») avrunding er dette `scale / 2` — allerede tilgjengelig fra
+subflisens lagrede skala, ingen ny feltverdi trengs. Dette er en
+matematiker-anbefalt korreksjon fra steg 3-runden, kodifisert her som krav,
+ikke bare et forbehold i en rapport.
+
+**Implementert 2026-09-02** i `packages/routing/src/expand.ts`
+(`twsExceedsHardLimit`, kalt fra `checkHardNode` — det eneste stedet i motoren
+`maxTwsKn` sammenlignes hardt), med `WeatherField.maxDecodeErrorKn` som
+bærer av tallet (`packages/routing/src/contracts.ts`). To presiseringer
+implementasjonen tvang fram:
+
+1. **Kontrakten bærer én verdi per felt, ikke per subflis.** Motoren har
+   ingen flisgeometri — den ser en `WeatherField`. Produsenten skal derfor
+   oppgi **maksimum over de subflisene pakken faktisk bærer** (en gyldig øvre
+   skranke for hver enkelt subflis). Finkornet per-subflis-bånd er en mulig
+   senere presisjonsgevinst, aldri en senere *oppmykning* — retningen er
+   låst: skranken skal aldri kunne være for liten.
+2. **`scale / 2` gjelder per kanal, ikke direkte på farten.** Med u/v-lagring
+   er farten `hypot(u,v)`, og en feil på `scale/2` i hver komponent gir
+   `√2 · scale/2` som skranke på farten (omvendt trekantulikhet;
+   interpolasjonen er en konveks kombinasjon og kan ikke forstørre den). Med
+   fart+retning som lagringsform ville tallet vært `scale/2` direkte — men den
+   lagringsformen er avvist (§3, §9.1). Utledningen står i kode i
+   `packages/routing/test-fixtures/pack-degradation.ts`
+   (`packTwsDecodeErrorKn`), som er den eneste kvantiserte
+   `WeatherField`-implementasjonen som finnes før `packages/weather` bygges.
+
+**`maxCurrentKn` har ingen hard sammenligning i v2.0** (den brukes kun i
+A\*-bounden, §5.5 i rutemotor-spec-en), så vaktbåndet er per i dag et
+TWS-begrep alene. Får strøm en gang en hard grense, gjelder samme regel — og
+merk at strøm ikke har noen konservativ avrundingsretning i det hele tatt (se
+avsnittet lenger ned), så et vaktbånd der må gå i **begge** retninger.
+
+**Tp: konservativ retning er NED der bratthet mater derating — merket
+umålt.** Bratthetsklassen `S = 2πHs/(g·Tp²)` (`docs/specs/rutemotor.md`
+§4.3) betyr at en relativ Tp-feil slår inn **dobbelt** i bratthetstallet.
+Symmetriargumentet med Hs tilsier at Tp bør avrundes ned (lavere Tp ⇒
+brattere sjø ⇒ mer konservativ derating) — men dette er **ikke** målt slik
+Hs' opp-avrunding er: måledokumentets §8.5 noterer eksplisitt at
+«`H-6GO`-eksperimentets motstykke for Tp mangler». Regelen låses likevel nå
+(logikk, ikke terskel) fordi symmetriargumentet er søkefritt gyldig
+uavhengig av fikstur — men skal **remåles** med samme metodikk som Hs
+(§8.3 i måledokumentet) når `packages/polar`s bratthetsderating er i
+produksjon (§9.8).
+
+**Strøm har ingen monoton konservativ retning — sagt eksplisitt, ikke
+underforstått.** I motsetning til Hs og (med vaktbånd) TWS, finnes det ikke
+en «avrund alltid opp/ned»-regel for strøm som gjør et kvantisert
+strømfelt entydig tryggere enn kilden: **både medstrøm og motstrøm kan
+være det farlige alternativet**, avhengig av kurs, TSS-geometri og
+avdriftsretning relativt land (motstrøm reduserer SOG og øker
+eksponeringstiden mot sjøgang/land; medstrøm kan gi falsk trygghet om reell
+avdrift eller sette båten inn i en TSS-baklengs situasjon — nøyaktig
+mekanismen `C-TID` demonstrerte). Vernet mot en kvantisert strømfeil som
+gjør en rute farligere er derfor **ikke** en avrundingsregel, men
+**oppløsning** (§9.4s ¼-regel) og **N5** (korridortoleransen fanger et
+avvikende strømfelt som en rutediff/anger-verdi, ikke som en garantert
+konservativ retning). Dette skal stå eksplisitt i kode-kommentarer der
+strømdekoding skjer, slik at ingen senere «fikser» strøm med en Hs-aktig
+opp/ned-regel som ikke har noen fysisk begrunnelse.
+
+**Deklarerte `maxTwsKn`/`maxCurrentKn` regnes på de DEKODEDE verdiene.**
+`search.ts`s `computeVmax` (A*-restestimatets admissibilitet,
+`docs/specs/rutemotor.md`) bruker feltets deklarerte maksimum til å bygge
+en øvre skranke som aldri skal undervurdere hva båten faktisk kan møte.
+Kvantisering kan løfte en dekodet verdi over kildens nominelle maksimum
+med inntil et halvt kvantiseringstrinn (målt **+0,09 kn** for `W-UV8G`,
+den globale-skala-varianten §10 avviser av andre grunner). Produsenten skal
+derfor enten (a) regne det deklarerte maksimumet **etter** dekoding
+(observert maks i det faktiske, kvantiserte feltet), eller (b) deklarere
+kildens maksimum pluss et halvt kvantiseringstrinn. Valg (a) foretrekkes —
+det krever ingen antakelse om trinnstørrelse og er allerede billig å
+beregne siden min/maks per subflis uansett beregnes for skala/offset (§9.4s
+Hs-trinn-sonde er samme mønster).
+
+### 9.6 LÅST — sentinelverdi og delt flisgeometri
+
+**Sentinelverdi `255` = «ingen data/land» for alle 8-bit-felt, aldri
+forvekslbart med `0`.** `0` er en gyldig dekodet verdi under mange
+skala/offset-kombinasjoner (vindstille, ingen strøm) og kan derfor ikke
+brukes som mangel-markør. Produsenten skal garantere at ingen gyldig
+kildeverdi i en subflis kan kode til rå byteverdi `255` under den valgte
+skala/offset (dvs. skalaen velges slik at det reelle maksimumet i
+subflisen encoder til ≤ 254, eller `255` ekskluderes eksplisitt fra
+encode-området). Dekoderen returnerer `undefined` (samme kontrakt som §12)
+når den leser rå byte `255`, uansett felt.
+
+**Flisorigo delt med kartflisene, og NorKyst-kystfliser er egne, mindre
+fliser.** Se §7 for full begrunnelse: værflisenes 2°-rutenett forankres i
+samme heltallsorigo som kartflisenes 0,5°×0,25°-rutenett (delt prefetch);
+strøm får **egne, mindre fliser (0,5°–1°)** fordi NorKyst-strukturen er
+finskala nok at 2°-værflisens subflis-oppløsning (32×32 noder over 2°) ikke
+gir nok noder per strømstruktur i kystsonen — kystflisene for strøm er en
+egen geometri, ikke en gjenbruk av vind/bølge-subflisene.
+
+### 9.7 LÅST — dekodingskontrakt: kvantisert er den residente representasjonen
+
+**Prinsipp (presiserer og delvis korrigerer §15s formulering — se
+oppdateringen der):** den kvantiserte byte-payloaden er selve den
+residente representasjonen i klienten, ikke en midlertidig form på vei til
+en fullt dekodet kopi. **Standardveien er å dekvantisere per oppslag,
+direkte fra `Uint8Array`** — én verdi (eller de fire naboverdiene til en
+bilineær interpolasjon) konverteres til `number` idet A*-søket faktisk
+spør om den, og resultatet kastes igjen. Det finnes **ingen** implisitt
+«dekod hele feltet til `Float32Array` først» steg i normalveien.
+
+**Fullt dekodede `Float32Array`-kopier lages kun ved profilert behov** —
+dvs. når måling faktisk viser at per-oppslag-dekvantisering er en
+ytelsesflaskehals for et gitt felt/medlem, ikke som en generell
+optimisme om at det vil bli det. Når det skjer, er mønsteret **per medlem,
+dekode-og-slipp**, med et **tak på samtidige dekodede kopier lik antall
+Web Worker-tråder** — aldri 30 fulle `Float32`-felt i minnet samtidig
+(N6: JS-heap < 500 MB under ensemble-kjøring). Dette er en innstramning av,
+ikke en motsigelse til, §15 punkt 3s progressive semantikk: progressiv
+betyr «ett medlem av gangen», dette legger til «og som utgangspunkt ikke
+engang ett fullt medlem av gangen — bare det oppslaget som faktisk trengs
+akkurat nå».
+
+### 9.8 MIDLERTIDIG — terskler som remåles på ekte MEPS/NorKyst-data i fase 3
+
+Disse er **ikke uavklarte i betydningen «vent»** — implementer med tallene
+som står. De er merket midlertidige fordi de er målt på **syntetiske**
+fikstur-felt (måledokumentets §11 forbehold 3, 6, 7), og skal **remåles**
+når `tools/weather-pack` bygger sin første ekte pakke (§17 pkt. 7):
+
+1. **Hs-trinn ≤ 5 cm.** Målt realisert trinn ved flis-skala er
+   1,17–1,24 cm på fikstursamlingen (§9.1 i måledokumentet,
+   `tools/kvantisering/hs-trinn.mjs`) — trygt god margin til 5 cm-kravet,
+   men terskelen selv er «fiksturbetinget»: en ekte MEPS/WAM800-scene med
+   brattere Hs-gradient innenfor én subflis kunne i prinsippet gi et annet
+   realisert trinn. Byggetids-kontrollen (min/maks Hs per subflis og skive,
+   allerede beregnet for skala/offset) skal kjøres på ekte data så snart
+   pipelinen finnes, og en subflis som bryter 5 cm skal enten deles
+   (mindre subflis) eller flagges.
+2. **«1 t holder»-tilstrekkeligheten.** At 1 t tidsoppløsning fanger
+   frontpassasjer og Hs-topper godt nok for harde felt er målt på én
+   analytisk frontfikstur (§6.2, §8.4 i måledokumentet) med en kjent,
+   uoppløst begrensning (10 nm vindstille-stripe, §11 forbehold 6 der).
+   Ekte MEPS-fronter kan ha andre bredde-/hastighetskombinasjoner.
+3. **5 km-grensen for fallback-/etter-48t-felt (§9.1 pkt. 3).** At 10-bit
+   kvantisering på 5 km er «trygt nok» for disse to smale unntakene er
+   ekstrapolert fra `K-ANB-UTASKJAERS`s 8-bit-måling (som i seg selv
+   flippet toppavgangen) og fra det generelle prinsippet at finere
+   kvantisering delvis kompenserer for grovere nett — **ikke** en direkte
+   måling av 5 km + 10-bit sammen. Fallback-scenarioet er per definisjon
+   sjeldent i drift; første gang det faktisk trer i kraft i produksjon bør
+   det logges og sammenlignes mot kontrollfeltet samme kjøring, som en
+   ekstra, gratis datapunkt mot denne terskelen.
+
+**Note (besluttet 2026-09-02, midlertidig eierskap): hvordan 48 t-horisonten
+telles i gjennomførbarhetsandelen (F4.2).** Medlemshorisonten på 48 t (§9.1
+pkt. 4) betyr at et medlems rute kan stoppe fordi **feltet tok slutt**, ikke
+fordi seilasen var umulig. Rutemotoren rapporterer da
+`coverage.weather = "partial"` (`packages/routing/src/reconstruct.ts`), og
+ingen dokument sa før nå hvordan det skal telles. Regelen:
+
+> Et medlem med `coverage.weather = "partial"` telles som **INKONKLUSIVT**
+> (egen kategori), **aldri som gjennomførbart og aldri som
+> ugjennomførbart**. Andelen inkonklusive rapporteres sammen med
+> gjennomførbarhetsandelen. **> 20 % inkonklusive på én avgang ⇒ horisonten
+> er for kort for den seilasen** — avgangen flagges i UI som «prognosen rekker
+> ikke fram», ikke som en dårlig avgang. Retningen er konservativ: et medlem
+> vi ikke har vær nok til å dømme, skal verken pynte på eller ødelegge
+> statistikken.
+
+Hvorfor ikke de to enklere alternativene: teller man partial som
+gjennomførbart, blir lange seilaser systematisk for optimistiske (jo lenger
+ruten er, jo flere medlemmer slipper unna med å bli avkortet før uværet);
+teller man partial som ugjennomførbart, straffes lange seilaser like
+systematisk, og gjennomførbarhetsandelen slutter å måle været. Begge skjuler
+det som faktisk skjedde — at prognosen ikke rakk fram — og bryter N2s ærlige
+degradering.
+
+**Terskelen 20 % er valgt, ikke målt** (samme tall og samme rolle som
+ADR-0005s inkonklusiv-porter, bevisst likt for å ha én mental modell), og
+avgrensningen mot `partial` av *andre* grunner enn horisonten (hull i feltet,
+degradert kilde) er ikke skilt ut her — rutemotorens flagg er i dag ett flagg.
+**Endelig eier er `docs/specs/robusthet.md` (fase 4)**, som eier F4.2s
+aggregering; denne noten er den kontrakten robusthet-spec-en arver og kan
+skjerpe, ikke et konkurrerende regelverk. Samme beslutning står som
+konsekvenspunkt i `docs/decisions/ADR-0005-ensemble-mekanisme.md`.
+
+### 9.9 Kontrakt: `QuantizationParams`
 
 ```ts
-// packages/weather — foreløpig type, feltene under fylles fra målingen.
+// packages/weather — låst kontrakt (§9), ikke lenger placeholder.
 interface QuantizationParams {
-  readonly bitsPerSample: number;        // <TBD> — §9.1 pkt. 1
-  readonly scale: number;                // per-flis, per-tidssteg
+  /** 8 for vind/strøm/Hs/Tp i normaldrift (§9.1, §9.3). 10 KUN for de to
+   *  smale 5 km-unntakene (fallback, kontrollens hale > 48 t — §9.1 pkt. 3).
+   *  16 er reservert via formatVersion, ikke brukt i v2.0. */
+  readonly bitsPerSample: 8 | 10;
+  readonly scale: number;                // per subflis (§7), per tidssteg
   readonly offset: number;
-  /** Hs ALENE: avrundingsretning er ALLTID "opp" (§9.2), uavhengig av
-   *  bitsPerSample/scale. Andre felt bruker vanlig nærmeste-verdi. */
-  readonly roundingMode: "nearest" | "up";
+  /** Hs: ALLTID "up" (§9.3). Tp: "down" når feltet brukes til
+   *  bratthetsderating (§9.5 — låst logikk, umålt terskel, §9.8).
+   *  TWS/vind-komponenter og strøm: "nearest" — se §9.5 for hvorfor disse
+   *  IKKE har en triviell avrundingsretning, og vaktbånd/N5 brukes i
+   *  stedet for retningsvalg i selve kvantiseringen. */
+  readonly roundingMode: "nearest" | "up" | "down";
+  /** Rå byteverdi reservert som "ingen data/land" (§9.6). ALLTID 255 for
+   *  8-bit-felt i v2.0 — feltet finnes i kontrakten for å gjøre
+   *  sentinelverdien eksplisitt i kode, ikke for å tillate at den varierer. */
+  readonly sentinelRawValue: 255;
 }
 ```
 
@@ -508,8 +972,23 @@ eller `ensemble_member`-dimensjonen mangler helt): `sourceStatus:
 degraded` med årsak, og batch-jobben faller tilbake til **forrige
 komplette kjøring**, ikke til et delvis ensemble — et robusthetsmål bygget
 på 22 av 30 medlemmer uten at det er synlig er nøyaktig den stille
-degraderingen N2 forbyr. Terskelen for «komplett» og hvor langt tilbake
-fallback-kjeden strekker seg er en driftsbeslutning, §18 pkt. 2.
+degraderingen N2 forbyr.
+
+**Fallback-dybde besluttet 2026-09-02 (§18 pkt. 2):** MET-produktets eget
+0–6 t aldersspenn mellom medlemmer i én kjøring er OK og krever ingen
+spesialbehandling ut over aldersspenn-feltet over. Er *hele siste kjøring*
+ufullstendig, faller batch-jobben tilbake **maks to kjøringer tilbake
+(~12 t)**. Er heller ikke den komplett, rapporterer pakken **«ingen
+brukbart ensemble»** (kontrollmedlemmet kan fortsatt leveres alene, med
+`sourceStatus: degraded` og tydelig årsak) — batch-jobben leter **ikke**
+videre bakover. Begrunnelse: et ensemble bygget på en kjøring som er over
+12 t gammel gir robusthetslaget (fase 4) et spredningsestimat fra en
+prognose som i praksis er en annen prognose enn den kontrollen/vinden
+ellers viser — det er «villedende eldre ensemble» kravspekens N2-prinsipp
+forbyr, ikke bare «gammelt ensemble». Terskelen for hvor mye lag-dybde
+robusthetslaget faktisk trenger å kjenne til *per medlem* (utover
+aldersspennet som helhet) er fortsatt en implementasjonsdetalj for
+`docs/specs/robusthet.md` (fase 4), ikke noe denne spec-en låser videre.
 
 ---
 
@@ -542,7 +1021,8 @@ ikke «vi vet noe, men ikke alt».
 | WAM800 grid utilgjengelig, Oceanforecast punkt brukt i stedet | `degraded`, årsak `"WAM800 util­gjengelig — punktbølge brukt"` | Grovere romlig oppløsning på bølge enn normalt |
 | Hs finnes, Tp mangler | ikke pakke-nivå degradert (Tp er valgfritt i `WeatherField.waves`) | `packages/polar` Hs-only-derating, eget mildere flagg |
 | Hs mangler helt for et gitt punkt/tid | feltet `undefined` for det punktet — **ikke** pakke-nivå `degraded` med mindre HELE feltet mangler | `FLAG_SJOEGANG_DATA_MANGLER` i rutemotoren |
-| NorKyst-nedtynning aktiv (§9) | ikke degradert — dette er en **villet** kvalitetsreduksjon innenfor budsjett, ikke et datahull | `resolution`-strengen viser den faktiske, nedtynnede oppløsningen (aldri den native 800 m hvis den ikke faktisk ble levert) |
+| NorKyst-nedtynning aktiv (utaskjærs, §9.4) | ikke degradert — dette er en **villet** kvalitetsreduksjon innenfor budsjett, ikke et datahull | `resolution`-strengen viser den faktiske, nedtynnede oppløsningen (1,6 km, aldri den native 800 m hvis den ikke faktisk ble levert) |
+| «Kun tidevanns-hovedkomponent» tilgjengelig, ingen NorKyst-strøm | **`degraded`** — dette ER et datahull, ikke en villet nedtynning (§9.4) | Merkes manglende strømdata (N2), ikke strømdata med redusert kvalitet |
 
 ---
 
@@ -603,36 +1083,59 @@ R2-blobber, de er ferske JSON-svar med kort levetid.
 
 ## 15. Klientens dekodingskontrakt (F3.5)
 
-**Prinsipp (allerede vedtatt i F3.5, gjentatt her fordi denne spec-en eier
-implementasjonen):** kvantisert byte-payload lastes som `ArrayBuffer`,
-sendes **transferable** til en Web Worker (unngår COOP/COEP-fellen —
-strukturert kloning av store buffere er dyrt og/eller blokkert av
-isolasjonshoder), og dekodes til `Float32Array` **i workeren, on demand**
-— ikke alle 30 medlemmer dekodet på forhånd «for sikkerhets skyld».
+**Prinsipp, presisert 2026-09-02 (§9.7 låser dekodingskontrakten mer
+eksplisitt enn F3.5 alene gjorde):** kvantisert byte-payload lastes som
+`ArrayBuffer`, sendes **transferable** til en Web Worker (unngår
+COOP/COEP-fellen — strukturert kloning av store buffere er dyrt og/eller
+blokkert av isolasjonshoder), og forblir den **residente** representasjonen
+i workeren — den dekvantiseres **per oppslag**, ikke til en forhåndsbygget
+`Float32Array` som standardvei (§9.7). Et fullt dekodet `Float32Array` for
+et medlem er et **unntak for profilert ytelsesbehov**, ikke normalveien.
 
 **Kontrakt:**
 
 1. Worker mottar `{ contentHash, quantizationParams, buffer: ArrayBuffer }`
-   (buffer transferred, ikke kopiert).
-2. Dekoding er en **ren funksjon**: `decode(buffer, params) → Float32Array`
-   — ingen I/O, ingen tilstand, samme regler som rutemotorens renhetskrav
-   (`docs/specs/rutemotor.md` §5.1), fordi det dekodede feltet mates
-   direkte inn i `WeatherField`, som må være deterministisk.
-3. Dekoding skjer **per medlem, ved behov** — progressiv semantikk
-   (ADR-0005): kontrollmedlemmet dekodes og brukes for alle avganger
-   først; øvrige 29 medlemmer dekodes progressivt mens de streames/brukes,
-   ikke alle på forhånd. Dette holder minneavtrykket nede (N6: JS-heap
-   < 500 MB under ensemble-kjøring) — 30 fullt dekodede `Float32`-felt
-   samtidig i minnet er nøyaktig den typen forhåndsarbeid progressiv
-   beregning skal unngå.
-4. **Hs-avrundingsregelen (§9.2) håndheves i `decode`, ikke et sted
-   nedstrøms** — det er én kodevei for Hs-dekoding, og den kan
-   enhetstestes isolert (`decode(encode(hs)) ≥ hs`) uten å bygge en hel
-   rutepakke.
-5. Dekodede `Float32Array`-buffere for værUAVHENGIGE felt (strøm — §4)
-   deles på tvers av medlemmer (ADR-0005s presisering om delte
-   read-only-cacher gjelder identisk her); vind/bølge dekodes én gang per
-   medlem og aldri delt (de ER medlemsspesifikke).
+   (buffer transferred, ikke kopiert). `buffer` beholdes som `Uint8Array`
+   i workeren — dette ER den residente representasjonen (§9.7).
+2. **Standard oppslagsvei:** `decodeAt(buffer, params, i, j, t) → number`
+   (eller de fire nabo-oppslagene en bilineær interpolasjon trenger) er en
+   **ren funksjon** — ingen I/O, ingen tilstand, samme regler som
+   rutemotorens renhetskrav (`docs/specs/rutemotor.md` §5.1). Resultatet
+   brukes og kastes; det bygges ingen mellomliggende full kopi av feltet.
+3. **Unntaksvei (profilert behov):** `decodeAll(buffer, params) →
+   Float32Array` finnes som en egen, separat ren funksjon for de tilfellene
+   måling faktisk viser at gjentatte per-oppslag-dekvantiseringer er en
+   flaskehals. Brukt, er mønsteret **per medlem, dekode-og-slipp**, med et
+   **tak på samtidige dekodede kopier lik antall Web Worker-tråder**
+   (§9.7) — aldri 30 fulle `Float32`-felt i minnet samtidig (N6: JS-heap
+   < 500 MB under ensemble-kjøring).
+4. Uansett vei, skjer arbeidet **per medlem, ved behov** — progressiv
+   semantikk (ADR-0005): kontrollmedlemmet behandles for alle avganger
+   først; øvrige 29 medlemmer behandles progressivt mens de
+   streames/brukes, ikke alle på forhånd.
+5. **Hs-avrundingsregelen (§9.3) håndheves i dekodingen, ikke et sted
+   nedstrøms** — uansett om oppslagsveien eller unntaksveien brukes, er
+   det én kodevei for Hs-avrunding, og den kan enhetstestes isolert
+   (`decode(encode(hs)) ≥ hs`) uten å bygge en hel rutepakke.
+   **TWS-vaktbåndet (§9.5)** håndheves i rutemotorens **harde nodesjekk**,
+   ikke i dekoderen selv — dekoderen returnerer den rå dekodede farten;
+   vaktbånd-korreksjonen er en policy i
+   `packages/routing/src/expand.ts::twsExceedsHardLimit`, kalt fra
+   `checkHardNode`, ikke en endring av selve tallet.
+   **Rettet 2026-09-02 (§19):** dette punktet pekte tidligere på
+   `packages/routing/src/clearance.ts`. Det var feil sted: `clearance.ts` eier
+   kystbufferen (`docs/specs/rutemotor.md` §5.3.2) og ser aldri TWS. Den harde
+   TWS-grensen sammenlignes ett eneste sted i motoren —
+   `expand.ts::checkHardNode`, som søket, evaluatoren og rekonstruksjonens
+   sluttetappe alle kaller (én sannhet, `rutemotor.md` §5.3/§5.11). Feltet
+   `WeatherField.maxDecodeErrorKn` (kontrakten i
+   `packages/routing/src/contracts.ts`) bærer båndet inn dit; syntetiske og
+   Float32-felt oppgir `0`, og adferden er da bit-identisk med den nakne
+   sammenligningen.
+6. Dekodede verdier for værUAVHENGIGE felt (strøm — §4) deles på tvers av
+   medlemmer (ADR-0005s presisering om delte read-only-cacher gjelder
+   identisk her); vind/bølge dekodes per medlem og aldri delt (de ER
+   medlemsspesifikke).
 
 ---
 
@@ -682,8 +1185,10 @@ gjentas fritt fra minnet ved implementasjon):
    egenskapstester alene.
 2. Interpolasjon-tester (§3, punkt 4–5) — bilineær rom, lineær tid, på
    syntetiske felt med kjent analytisk svar.
-3. Hs-avrundingsregelen (§9.2) — `decode(encode(hs)) ≥ hs` over et
-   representativt utvalg inkludert grenseverdier.
+3. Hs-avrundingsregelen (§9.3) — `decode(encode(hs)) ≥ hs` over et
+   representativt utvalg inkludert grenseverdier, inkludert regresjonstesten
+   fra `packages/routing/src/pack-degradation.test.ts` portert til den ekte
+   `packages/weather`-kodeveien.
 4. `checkCompatibility`-bruken i pakke-peker-flyten (§14) — gjenbruk av
    eksisterende `package-header.test.ts`-mønster, ikke en ny
    implementasjon av semver-sjekken.
@@ -700,47 +1205,91 @@ gjentas fritt fra minnet ved implementasjon):
    golden-fiksturene i rutemotor-spec-en).
 7. Budsjettregnskapet (§8) reverifiseres med en test/rapport-skript som
    måler faktisk bygget pakkestørrelse mot 30 MB-grensen — ikke bare en
-   engangs manuell sjekk.
+   engangs manuell sjekk. Kjøres tidlig (§8), ikke først ved fase-slutt,
+   gitt at det oppdaterte regnestykket ligger nær grensen.
+8. **Kystsone-klassifiseringen (§9.4)** — gitt en fast, kjent
+   kystlinjestrekning og et kjent subflis-grid, verifiser at
+   avstandsberegningen klassifiserer forventede subfliser som kystsone/
+   utaskjærs (forventning notert før testen skrives), og at manglende
+   kystlinjedekning defaulter til kystsone (§9.4 punkt 4), ikke utaskjærs.
+9. **TWS-vaktbåndet (§9.5) — skrevet 2026-09-02, ikke lenger et krav som
+   venter.** Gitt en kjent `maxTwsKn` og en kjent `maxDecodeErrorKn`,
+   verifiser at **den harde nodesjekken** (`expand.ts::checkHardNode` via
+   `twsExceedsHardLimit` — ikke klareringssjekken, se §15 pkt. 5s rettelse)
+   forkaster en node der dekodet TWS er innenfor vaktbåndet under den nakne
+   grensen, ikke bare når den er over selve `maxTwsKn`. Finnes nå i
+   `packages/routing/src/expand.test.ts` (enhetsnivå, inkl. at
+   `maxDecodeErrorKn = 0` gir bit-identisk adferd) og
+   `packages/routing/src/pack-degradation.test.ts` (på et faktisk kvantisert
+   8-bit-felt: naken sammenligning mister harde forkastelser, vaktbåndet
+   mister ingen). Skal **porteres til den ekte `packages/weather`-kodeveien**
+   når den finnes — der er kravet i tillegg at `maxDecodeErrorKn` faktisk
+   regnes fra de brukte skala-parametrene og ikke settes til 0 «foreløpig».
+10. **Sentinelverdi 255 (§9.6)** — verifiser at encoder aldri produserer rå
+    byteverdi 255 for en gyldig kildeverdi i en gitt subflis (dvs. at
+    skala/offset-valget faktisk overholder garantien), og at dekoderen
+    returnerer `undefined` når den leser 255, for alle 8-bit-felt.
+11. **Dekode-og-slipp-taket (§9.7)** — en test/property som viser at antall
+    samtidig dekodede fulle `Float32Array`-kopier (unntaksveien) aldri
+    overstiger antall Web Worker-tråder, i et scenario som stresser flere
+    medlemmer «samtidig».
 
 ---
 
-## 18. Åpne spørsmål til Magnus
+## 18. Beslutninger 2026-09-02 (tidligere åpne spørsmål til Magnus)
 
-1. **WAM800-subsetting er ikke spiket.** Skal en liten oppfølgingsspike
-   (mål bbox-subset-kostnad mot de ~295 MB/fil store WAM800-filene) kjøres
-   FØR `tools/weather-pack` bygges, eller er Oceanforecast punkt-API
-   («degradert» bølgeoppløsning, men fungerende) et akseptabelt
-   utgangspunkt for første ende-til-ende-leveranse (fase 3-exit i
-   `01-prosjektplan.md`), med gridded WAM800 som en rask oppfølging?
-2. **Lagged-ensemble-dybde:** hvor gammelt kan et medlem være før
-   robusthetslaget (fase 4) bør vite om det spesifikt (ikke bare
-   ensemblets `init` som helhet)? Og: hvis siste kjøring er ufullstendig,
-   hvor mange kjøringer tilbake skal fallback-kjeden gå før pipelinen
-   heller flagger «ingen brukbart ensemble» enn å stadig lete lenger
-   bakover?
-3. **Flisstørrelse (§7):** er 2° et fornuftig utgangspunkt, eller bør
-   værflisene være enda grovere (færre, større filer — enklere
-   pekerlogikk) eller finere (mindre overflødig data per rute)? Dette er
-   uavhengig av kvantiseringsmålingen og kan besluttes nå.
-4. **Arkivpolitikk for R2** (§5, §13): forrige generasjon beholdes per
-   F2.3, men hvor mange generasjoner tilbake, og skal gamle
-   værpakker (i motsetning til kartpakker) i det hele tatt beholdes lenge
-   — de blir raskt operasjonelt ubrukelige (prognosen er utdatert), men
-   kan ha verdi for F3.3-kalibrering/backtesting. Uten en grense vokser
-   R2-bucketen ubegrenset.
-5. **MetAlerts-geometri:** eksakt regel for «varsel langs ruten» (buffer i
-   nm rundt sporet? hele varselpolygonet hvis det overlapper i det hele
-   tatt?) er ikke spesifisert. Lav hastegrad (F2.6 er visning, ikke
-   ruting), men bør besluttes før implementasjon, ikke under.
-6. **Sikt-kilde (F2.7)** er ikke identifisert. Skal dette research-es som
-   egen liten spike, eller er sikt-feltet lavt nok prioritert (kravspeken
-   sier eksplisitt «påvirker ikke rutingen i v2.0») til å vente til en
-   senere fase uten å blokkere fase 3-exit?
-7. **EOF-encoding (§10):** bekreftelse av at dette forblir en ren
-   formatreservasjon i v2.0, og at `k`-eksperimentet på ekte MEPS-data
-   (når den frosne testpakken finnes) er en forskningsoppgave uten
-   forpliktelse til å faktisk ta i bruk `eof`-encoding selv om det skulle
-   vise seg lovende.
+Alle sju punktene under sto som åpne spørsmål i utkast v0.1. Magnus besluttet
+dem samlet 2026-09-02, sammen med §9-formatlåsingen. Historikken beholdes
+(spørsmålsformuleringen viser *hvorfor* — samme disiplin som resten av denne
+spec-ens endringslogg), men punktene er ikke lenger åpne.
+
+1. **WAM800-subsetting — BESLUTTET.** Spiken kjøres **etter** fase 3-start,
+   ikke som blokkerende forutsetning. Oceanforecast punkt-API (bølger med
+   periode langs korridoren) er en **gyldig førsteleveranse** for fase 3-exit
+   — se §7 punkt 5 for hvordan dette er skrevet inn i subsetting-geometrien.
+   *(Opprinnelig spørsmål: skal spiken kjøres før eller etter at
+   `tools/weather-pack` bygges?)*
+2. **Lagged-ensemble-dybde — BESLUTTET.** MET-produktets eget 0–6 t
+   aldersspenn er greit uten spesialbehandling. Fallback ved ufullstendig
+   siste kjøring går **maks to kjøringer tilbake (~12 t)**; deretter
+   rapporteres «ingen brukbart ensemble» — pipelinen leter ikke lenger
+   bakover for å unngå en villedende eldre ensemble-tilstand. Se §11 for
+   den fulle regelen. *(Opprinnelig spørsmål: hvor gammelt kan et medlem
+   være, og hvor langt tilbake skal fallback-kjeden gå?)*
+3. **Flisstørrelse — BESLUTTET.** 2°×2° med ≤ 32×32-nodes subfliser for
+   skala/offset (samme subflis-grid brukt til kystsone-klassifisering, §9.4).
+   Se §7. *(Opprinnelig spørsmål: er 2° fornuftig, eller bør flisene være
+   grovere/finere?)*
+4. **Arkivpolitikk for R2 — BESLUTTET.** 7 døgns rullerende arkiv for
+   værpakker, bevisst kortere enn kartpakkenes (kystlinjedata endrer seg
+   sakte; værprognoser blir ubrukelige på dager). F3.3-kalibrering bruker
+   METs eget hindcast-arkiv, ikke vårt R2-vindu. Se §5. *(Opprinnelig
+   spørsmål: hvor mange generasjoner beholdes, og bør værpakker i det hele
+   tatt beholdes lenge for kalibreringsformål?)*
+5. **MetAlerts-geometri — BESLUTTET.** Et varsel vises når varselpolygonet
+   skjærer rutesporet bufret **5 nm**, eller inneholder start-/målpunktet.
+   Aktivt kulingsnivå (eller sterkere) farger anbefalingen. Se §4.5.
+   *(Opprinnelig spørsmål: buffer i nm, eller hele polygonet ved
+   overlapp?)*
+6. **Sikt-kilde — BESLUTTET (utsatt, ikke blokkerende).** Kilden er
+   fortsatt ikke identifisert; en liten oppfølgingsspike på
+   `fog_area_fraction` (eller tilsvarende proxy) kjøres senere, som egen
+   bølge. Blokkerer **ikke** fase 3-exit. Se §4.6. *(Opprinnelig spørsmål:
+   egen spike nå, eller vente til senere fase?)*
+7. **EOF-encoding — BESLUTTET (bekreftet).** Forblir en ren
+   formatreservasjon i v2.0 (`encoding: "raw"` overalt); `k`-eksperimentet
+   på ekte MEPS-data er en forskningsoppgave uten forpliktelse til å ta
+   `eof`-encoding i bruk. Se §10 — uendret fra utkastet, ingen ny
+   informasjon fra kvantiseringsmålingen endret denne vurderingen.
+   *(Opprinnelig spørsmål: bekreftelse av at dette forblir en ren
+   reservasjon.)*
+
+**Ingen nye åpne arkitekturspørsmål gjenstår i denne spec-en per
+2026-09-02.** Gjenværende usikkerhet er implementasjonsdetaljer (eksakt
+backoff-skjema §16, eksakt healthcheck-payload-form §13, MetAlerts-
+fargekoding §4.5) eller §9.8s daterte remålingspunkter — ingen av dem
+krever et nytt valg mellom retninger fra Magnus for at implementasjonen kan
+starte.
 
 ---
 
@@ -768,3 +1317,102 @@ gjentas fritt fra minnet ved implementasjon):
   interpolasjon i komponentrom, konvertering som siste steg.
   **§9 er ikke rørt** — kvantiseringstallene er fortsatt åpne og venter på
   Magnus, jf. boksen øverst.
+- **2026-09-02 — status endret til gjeldende; §9 låst (todelt); §18
+  besluttet samlet.** Grunnlag:
+  `docs/research/kvantiseringsmaaling-2026-09-01.md` (inkl. §9.1-tillegget
+  2026-09-02, kjørt etter fagagent-review) og kravspekens F2.2-revisjon
+  samme dato. Endringer:
+  - **§9 skrevet fullt ut**, merket punkt for punkt LÅST NÅ / MIDLERTIDIG
+    (§9.8). Låst: u/v 8-bit byte-alignet (10-bit avvist, §9.1); kontroll OG
+    medlemmer 2,5 km, 5 km kun for fallback/etter-48t-felt med 10-bit
+    (§9.1); medlemshorisont 48 t (§9.1); 1 t for harde felt m/énsidighets-
+    invariant for eventuell senere grovning (§9.2); Hs alltid opp (§9.3,
+    uendret prinsipp, nå formelt vedtatt); TWS-vaktbånd, Tp ned (umålt),
+    strøm uten monoton retning, deklarerte skranker på dekodede verdier
+    (§9.5); sentinel 255, delt flisorigo (§9.6); dekodingskontrakt
+    presisert til per-oppslag-dekvantisering som standard, full
+    `Float32Array`-dekoding kun ved profilert behov (§9.7 — **§15 oppdatert
+    tilsvarende**, ikke lenger i motstrid). Midlertidig, datert
+    remåling i fase 3: Hs-trinn ≤ 5 cm, «1 t holder», 5 km-grensen for
+    fallback/etter-48t (§9.8).
+  - **Kystsonen definert operasjonelt** (§9.4): 32×32-nodes subflis
+    klassifiseres kystsone hvis senterpunktet er ≤ 20 nm fra nærmeste
+    kystlinje i `tools/chart-pack`s vektordata; ellers utaskjærs; manglende
+    kystlinjedekning defaulter til kystsone. Beslutning tatt av spec-eier
+    under Magnus' V3-mandat — terskelen (20 nm) er ikke fikstur-testet og
+    står med samme forbeholdsstatus som §9.8.
+  - **§18 besluttet samlet** og omdøpt til beslutningslogg: WAM800-spike
+    etter fase 3-start (Oceanforecast punkt er gyldig førsteleveranse),
+    lagged-ensemble-fallback maks 2 kjøringer (~12 t) så «ingen brukbart
+    ensemble», 2°-fliser m/32×32-subfliser, R2-arkiv 7 døgn (kalibrering
+    bruker METs hindcast-arkiv), MetAlerts 5 nm-buffer/inneholder-endepunkt,
+    sikt utsatt (ikke blokkerende), EOF bekreftet ren reservasjon.
+  - **Budsjettregnskapet i §8 oppdatert og oppjustert**: vind-medlemmer
+    (2,5 km, 48 t, 8-bit) regner nå ~32 MB rått / ~20–28 MB etter
+    delta+gzip — vesentlig mer enn utkastets `~6 MB ved 8-bit/5 km`-
+    placeholder, fordi 5 km-lettelsen for medlemmer er avvist. Nytt sum-
+    overslag ~25–37 MB, ikke lenger klart under 30 MB-grensen; F2.2s
+    betingede budsjettrevisjon til ~40 MB er derfor en reell, ikke bare
+    hypotetisk, mulighet — budsjett-reverifiseringstesten (§17 pkt. 7) bør
+    kjøres tidlig.
+  - §4.1 (vind), §4.2 (strøm), §4.5 (MetAlerts), §4.6 (sikt), §5
+    (arkivpolitikk), §6 (resolution-strenger), §7 (flisrutenett, WAM800,
+    delt flisorigo), §11 (lagged-ensemble fallback), §12 (ny rad for
+    «kun tidevann»-degradering), §15 (dekodingskontrakt) oppdatert til å
+    reflektere §9/§18-beslutningene i stedet for å peke til dem som åpne.
+  - Ingen endring i §3s retningskonvensjoner eller §10s EOF-vurdering —
+    disse sto allerede riktig fra 2026-09-01.
+- **2026-09-02 (2) — konsistensreview av værpakke-bølgen: tre funn lukket.**
+  Funnene kom av at §9 ble låst raskere enn kode og naboavsnitt fulgte etter.
+  - **Funn 1 (sikkerhet) — TWS-vaktbåndet fantes bare i spec-en, ikke i
+    koden.** §9.5s krav
+    (`decodedTws > maxTwsKn − maxDecodeErrorKn`) er nå implementert:
+    `WeatherField` (`packages/routing/src/contracts.ts`) har fått
+    `maxDecodeErrorKn` (feltets/pakkens maksimale dekodefeil på vindfart;
+    syntetiske og Float32-felt oppgir 0), og
+    `packages/routing/src/expand.ts` har fått den delte funksjonen
+    `twsExceedsHardLimit(env, boat, field)` som `checkHardNode` kaller.
+    **Kallstedsgjennomgang:** den harde TWS-sammenligningen fantes ett
+    eneste sted i motoren (`checkHardNode`), og søket (`search.ts`, både
+    ekspansjonen og Tub-forhåndsruten), evaluatoren (`evaluate.ts`) og
+    rekonstruksjonens sluttetappe (`reconstruct.ts`) går alle gjennom den —
+    `corridor.ts` og `bailout.ts` sammenligner ikke TWS hardt i det hele
+    tatt (`bailout.ts` har sin egen harde Hs-grense per havn, som ikke er
+    kvantiseringsutsatt på samme måte, §9.3). `maxCurrentKn` sammenlignes
+    **ingen steder** hardt — den brukes kun i Vmax-skranken — så vaktbåndet
+    er per i dag et TWS-begrep alene; skulle strøm en gang få en hard
+    grense, gjelder samme regel og den skal da inn i samme delte funksjon.
+  - **A\*-bounden verifisert (§9.5 siste avsnitt, §9.6).** `computeVmax`
+    (`search.ts`) og bail-out-varianten bruker `weather.maxTwsKn`/
+    `weather.maxCurrentKn` som deklarerte skranker. Motoren kan ikke selv
+    verifisere at de er regnet på *dekodede* verdier — det er produsentens
+    plikt — men plikten er nå skrevet på selve kontraktsfeltet i
+    `contracts.ts`, der den brytes hvis noen tar tallet fra kilden.
+    **Vaktbåndet svekker ikke bounden:** det senker terskelen noder
+    forkastes på, så enhver akseptert node har lavere TWS enn før, mens
+    Vmax er uendret. Restestimatet forblir admissibelt (`rutemotor.md`
+    §5.5).
+  - **Tester.** `expand.test.ts`: vaktbånd-enhetstester (verdi rett under
+    grensen men innenfor dekodefeilen ⇒ avvist; skarphet på det flyttede
+    grensepunktet; dekodefeil 0 ⇒ bit-identisk adferd *og* uendret
+    avvisningstekst; båndet gjelder ikke Hs). `pack-degradation.test.ts`:
+    ny gruppe som pakker et felt som `W-UV8G` (8-bit u/v, én global skala —
+    konfigurasjonen målingen fant +0,09 kn på), måler mot **referansepakken**
+    (isolerer kvantiseringen fra grid/tid) og viser at den nakne
+    sammenligningen mister harde forkastelser der vaktbåndet ikke mister
+    én — begge halvdeler asserteres, ellers hadde testen ingen tenner.
+    Regresjon: alle sju golden-ruter **bit-identiske** (syntetiske felt har
+    `maxDecodeErrorKn = 0`).
+  - **Funn 2 (dokumentasjon) — 48 t-horisont vs. F4.2-telling** besluttet
+    og skrevet inn: ny note i §9.8 (`coverage.weather = "partial"` ⇒
+    INKONKLUSIVT, > 20 % ⇒ horisonten er for kort, flagges i UI), med
+    `docs/specs/robusthet.md` (fase 4) som endelig eier. Samme beslutning
+    lagt inn som konsekvenspunkt og falsifiseringsport i ADR-0005.
+  - **Funn 3 (mindre) — §8s budsjettabell** presisert: harde felt (Hs, TWS)
+    er 1 t gjennom **hele** kontrollens horisont; «hard-felt-vinduet» var en
+    tvetydig formulering og er fjernet, med eksplisitt setning om at det
+    ikke finnes noe vindu utenfor hvilket harde felt kan tynnes.
+  - **§15 pkt. 5 rettet:** vaktbåndet håndheves i `expand.ts::checkHardNode`
+    (delt funksjon), ikke i `clearance.ts` — `clearance.ts` eier kystbufferen
+    og ser aldri TWS. `docs/specs/rutemotor.md` §4.2/§5.3 og dens
+    endringslogg oppdatert tilsvarende.

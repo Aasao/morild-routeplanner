@@ -76,6 +76,9 @@ export function perturbedField(
     },
     maxTwsKn: base.maxTwsKn * p.speedScale,
     maxCurrentKn: base.maxCurrentKn,
+    // Perturbasjonen skalerer vinden, ikke pakkeformatet: dekodefeilen er
+    // basefeltets, skalert med samme faktor som farten den er en feil på.
+    maxDecodeErrorKn: base.maxDecodeErrorKn * p.speedScale,
     validFromS: base.validFromS - p.timeShiftS,
     validToS: base.validToS - p.timeShiftS,
     header: base.header,

@@ -199,6 +199,7 @@ export function frontWeather(o: FrontWeatherOptions): WeatherField {
     // Blandingen kan aldri overstige endepunktene, og stripa senker bare.
     maxTwsKn: Math.max(o.preTwsKn, o.postTwsKn),
     maxCurrentKn: Math.hypot(o.current?.u ?? 0, o.current?.v ?? 0),
+    maxDecodeErrorKn: 0,
     validFromS: o.validFromS,
     validToS: o.validToS,
     header: SYNTHETIC_HEADER,

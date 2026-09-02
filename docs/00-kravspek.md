@@ -105,11 +105,22 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
   Østersjø-turer planlegges.
 - **F2.2** Værpakker: cron-batch → komprimerte, innholdsadresserte felt i R2,
   **faste fliser over Skandinavia per modellkjøring** (ikke on-demand).
-  **Budsjett: ≤ 30 MB per rutepakke** — 8-bit kvantisering m/per-flis
-  skala/offset, ensemble-medlemmer på 5 km (kontroll på 2,5 km), tidstynning
-  (1 t 0–24, 3 t etterpå), delta-koding — **og romlig nedtynning av
-  NorKyst-strøm i pakken** (spike-funn 2026-08-30: 800 m-rådata sprenger
-  ellers budsjettet; full oppløsning beholdes kun nær ruten/kysten).
+  **Budsjett: ≤ 30 MB per rutepakke** (revidert 2026-09-02 etter
+  kvantiseringsmålingen, `docs/research/kvantiseringsmaaling-2026-09-01.md`):
+  8-bit kvantisering m/per-flis skala/offset, u/v i byteformatet;
+  **ensemble-medlemmer og kontroll på 2,5 km** (5 km målt
+  rangeringsfarlig — toppavgang-flipp fra oppløsningen alene; 5 km
+  tillates kun for fallback-/etter-48 t-felt, da med 10-bit);
+  **medlemshorisont 48 t** (primærkutt, rangeringsnøytralt for
+  avgangsvinduet), kontroll full horisont; **felt som inngår i harde
+  avvisninger (Hs, TWS) alltid 1 t innen horisonten** (3 t målt å miste
+  felle-medlem via interpolasjon), 3 t kun for felt uten hard-semantikk;
+  Hs avrundes alltid opp; delta-koding + gzip. **NorKyst-strøm beholdes
+  på 800 m i kystsonen** (kystsonen defineres operasjonelt i
+  `specs/vaerpakker.md`); «kun tidevannskomponent» er ikke et strømlag.
+  Budsjettregel: den ekte pakken måles i fase 3; lander den over 30 MB
+  tross delta+gzip, legges budsjettrevisjon til ~40 MB frem for Magnus
+  med målt tall — rangeringskvalitet ofres ikke for et rundt tall.
   Lagged-ensemble-politikk: siste komplette 30 medlemmer (én fil per
   kjøring med ensemble-dimensjon, jf. `spike-thredds.md`), aldersspenn i
   metadata.
@@ -274,6 +285,15 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-02 (værpakke-format, V1–V3 besluttet av Magnus etter
+  fagagent-review):** F2.2 revidert — medlemmer 2,5 km (5 km strøket som
+  rangeringsfarlig), horisont 48 t for medlemmer, harde felt alltid 1 t,
+  Hs opp, NorKyst 800 m i kystsonen, betinget budsjettregel (~40 MB ved
+  målt behov). §18-spørsmålene i `specs/vaerpakker.md` besluttet som
+  samlepakke (WAM800-spike etter fase 3-start, lagged-fallback maks 2
+  kjøringer, 2°-fliser m/subfliser, R2-arkiv 7 døgn, MetAlerts-regel
+  5 nm-buffer, sikt utsatt, EOF ren reservasjon). §9-formatlåsing todelt:
+  logikk/énsidighetsregler låst nå, terskler midlertidige til ekte data.
 - **2026-08-31 (3) (steg 3-beslutninger, se
   `docs/research/steg3-plan-2026-08-31.md`):** tidsbokset målepakke
   (~1 uke), fase 3 starter 2026-09-07 uansett måleutfall;
