@@ -1,0 +1,172 @@
+{
+ "beskrivelse": "Kvantiseringsmåling 2026-09-01 — se docs/research/kvantiseringsmaaling-2026-09-01.md",
+ "referanse": "REF",
+ "tidToleranse": 0.02,
+ "korridorNm": 0.5,
+ "konfigurasjoner": [
+  {
+   "id": "REF",
+   "akse": "baseline",
+   "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+   "spec": {
+    "id": "REF",
+    "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "H-8O",
+   "akse": "bølge",
+   "note": "Hs 8-bit per flis, avrundet OPP (konservativt)",
+   "spec": {
+    "id": "H-8O",
+    "note": "Hs 8-bit per flis, avrundet OPP (konservativt)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "hsQuant": {
+     "bits": 8,
+     "rounding": "opp",
+     "scale": "flis"
+    },
+    "tpQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "H-6G",
+   "akse": "bølge",
+   "note": "Hs 6-bit global (trinn 19 cm) — stresstest",
+   "spec": {
+    "id": "H-6G",
+    "note": "Hs 6-bit global (trinn 19 cm) — stresstest",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "hsQuant": {
+     "bits": 6,
+     "rounding": "nearest",
+     "scale": "global"
+    },
+    "tpQuant": {
+     "bits": 6,
+     "rounding": "nearest",
+     "scale": "global"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "H-6GO",
+   "akse": "bølge",
+   "note": "Hs 6-bit global, avrundet OPP (kontrolleksperiment)",
+   "spec": {
+    "id": "H-6GO",
+    "note": "Hs 6-bit global, avrundet OPP (kontrolleksperiment)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "hsQuant": {
+     "bits": 6,
+     "rounding": "opp",
+     "scale": "global"
+    },
+    "tpQuant": {
+     "bits": 6,
+     "rounding": "nearest",
+     "scale": "global"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  }
+ ]
+}

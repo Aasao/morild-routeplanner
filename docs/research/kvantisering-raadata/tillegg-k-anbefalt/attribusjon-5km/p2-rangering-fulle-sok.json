@@ -1,0 +1,143 @@
+{
+ "metode": "fullt Pareto-søk per medlem (dyrt)",
+ "perKonfig": {
+  "REF": {
+   "akse": "baseline",
+   "offsetH": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "p50": [
+    14.402916666666666,
+    14.381388888888889,
+    14.305,
+    14.289722222222222,
+    13.835416666666667
+   ],
+   "p90": [
+    14.486555555555555,
+    14.486527777777777,
+    15.262194444444445,
+    14.4825,
+    14.4825
+   ],
+   "gjennomfoerbare": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "rangP50": [
+    4,
+    3,
+    2,
+    1,
+    0
+   ],
+   "rangP90": [
+    3,
+    2,
+    4,
+    0,
+    1
+   ],
+   "telling": {
+    "sok": 150,
+    "evalueringer": 0,
+    "baseSamples": 35190784,
+    "fliser": 34366,
+    "oppslag": 14580573
+   },
+   "motRef": {
+    "toppAvgangH": 4,
+    "toppAvgangRefH": 4,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "inversjonerP90": 0,
+    "kendallP50": 1,
+    "maksDP50Rel": 0,
+    "maksDP90Rel": 0,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "R-2X": {
+   "akse": "rom",
+   "offsetH": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "p50": [
+    14.401388888888889,
+    14.439722222222223,
+    14.296388888888888,
+    14.2975,
+    14.319166666666668
+   ],
+   "p90": [
+    14.486555555555555,
+    14.486527777777777,
+    15.265666666666666,
+    14.4825,
+    14.4825
+   ],
+   "gjennomfoerbare": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "rangP50": [
+    3,
+    4,
+    0,
+    1,
+    2
+   ],
+   "rangP90": [
+    3,
+    2,
+    4,
+    0,
+    1
+   ],
+   "telling": {
+    "sok": 150,
+    "evalueringer": 0,
+    "baseSamples": 32586752,
+    "fliser": 31823,
+    "oppslag": 14612712
+   },
+   "motRef": {
+    "toppAvgangH": 2,
+    "toppAvgangRefH": 4,
+    "sammeTopp": false,
+    "inversjonerP50": 4,
+    "inversjonerP90": 0,
+    "kendallP50": 0.2,
+    "maksDP50Rel": 0.03496461376298754,
+    "maksDP90Rel": 0.00022750478215046908,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  }
+ }
+}

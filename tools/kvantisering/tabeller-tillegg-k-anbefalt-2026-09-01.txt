@@ -1,0 +1,125 @@
+## P1a — ruteeffekt per konfigurasjon (aggregert over alle scenarioer)
+
+Δt og korridor gjelder **ankomstscenarioene**; `uoppnaelig-mal` og `hull-i-vaerfeltet` ender per konstruksjon ikke i målet, og «tid» er der hvor langt beste delrute rakk — de er derfor holdt utenfor prosenttallene og vurdert på de diskrete feltene alene.
+
+| konfig | akse | maks \|Δt\| | maks korridor (nm) | maks anger | maks optimisme | plan feiler under sannhet | diskrete endringer | N5-brudd |
+|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 0.00 % | 0.000 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `K-ANB-KYST` | kombinasjon | 0.02 % | 2.143 | 0.00 % | 0.06 % | — | ingen | s8-vind-mot-strom-kontroll, sonde-stromband-9km |
+| `K-ANB-UTASKJAERS` | kombinasjon | 0.52 % | 2.150 | 0.26 % | 0.29 % | — | ingen | sonde-stromband-3km |
+
+### P1b — feltnær diagnose (kontekstkolonne, ikke beslutningsgrunnlag)
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) | verste Hs for lav (m) | maks strømfeil (kn) | TWS over deklarert skranke |
+|---|---|---|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `K-ANB-KYST` | 13.88 | 1.617 | 7.77 | 0.142 | -0.116 | 0.002 | 4165 punkter, maks +0.02 kn |
+| `K-ANB-UTASKJAERS` | 13.77 | 1.595 | 7.46 | 0.144 | -0.116 | 0.002 | 4200 punkter, maks +0.02 kn |
+
+#### Feltsonde kun på frontfeltet (`s3-front-kontroll`) — der tidsaksen biter
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) |
+|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `K-ANB-KYST` | 13.88 | 1.617 | 7.77 | 0.142 |
+| `K-ANB-UTASKJAERS` | 13.77 | 1.595 | 7.46 | 0.144 |
+
+### P1c — verste konfigurasjon per scenario
+
+| scenario | kilde | kommer fram | REF-tid (t) | verste Δt (konfig) | verste korridor (konfig) | verste anger (konfig) |
+|---|---|---|---|---|---|---|
+| skjaeloy-skagen-apent | golden | ja | 15.294 | 0.01 % (`K-ANB-UTASKJAERS`) | 0.008 (`K-ANB-UTASKJAERS`) | 0.00 % (`K-ANB-KYST`) |
+| bohuslan-trange-sund | golden | ja | 4.329 | 0.00 % (`K-ANB-KYST`) | 0.001 (`K-ANB-UTASKJAERS`) | 0.00 % (`K-ANB-KYST`) |
+| ren-kryssetappe | golden | nei | 11.518 | 0.00 % (`K-ANB-KYST`) | 0.000 (`K-ANB-KYST`) | 0.00 % (`K-ANB-KYST`) |
+| tss-ved-skagen | golden | nei | 5.012 | -0.11 % (`K-ANB-KYST`) | 1.745 (`K-ANB-KYST`) | -0.11 % (`K-ANB-KYST`) |
+| uoppnaelig-mal | golden | nei | 10.008 | -10.01 % (`K-ANB-KYST`) | 9.868 (`K-ANB-KYST`) | -6.27 % (`K-ANB-UTASKJAERS`) |
+| hull-i-vaerfeltet | golden | nei | 5.511 | 0.00 % (`K-ANB-KYST`) | 0.002 (`K-ANB-UTASKJAERS`) | 0.00 % (`K-ANB-KYST`) |
+| natt-og-dagslysankomst | golden | ja | 8.314 | 0.00 % (`K-ANB-KYST`) | 0.000 (`K-ANB-KYST`) | 0.00 % (`K-ANB-KYST`) |
+| s3-front-kontroll | E1′ | ja | 14.301 | 0.04 % (`K-ANB-UTASKJAERS`) | 0.022 (`K-ANB-UTASKJAERS`) | 0.00 % (`K-ANB-KYST`) |
+| s8-vind-mot-strom-kontroll | E1′ | ja | 13.197 | -0.02 % (`K-ANB-KYST`) | 2.143 (`K-ANB-KYST`) | -0.01 % (`K-ANB-UTASKJAERS`) |
+| sonde-stromband-9km | sonde | ja | 13.271 | -0.19 % (`K-ANB-UTASKJAERS`) | 1.084 (`K-ANB-KYST`) | 0.03 % (`K-ANB-UTASKJAERS`) |
+| sonde-stromband-3km | sonde | ja | 13.168 | 0.52 % (`K-ANB-UTASKJAERS`) | 2.150 (`K-ANB-UTASKJAERS`) | 0.26 % (`K-ANB-UTASKJAERS`) |
+
+### P1d — rader med diskret endring, tapt gjennomførbarhet, eller anger > 1 %
+
+| scenario | konfig | Δt | korridor (nm) | anger | optimisme | diskret endring |
+|---|---|---|---|---|---|---|
+| uoppnaelig-mal | `K-ANB-KYST` | -10.01 % | 9.868 | -6.32 % | 4.10 % | — |
+| uoppnaelig-mal | `K-ANB-UTASKJAERS` | -9.96 % | 9.867 | -6.27 % | 4.10 % | — |
+
+## P2a — avgangsrangering S-5 (billig: kontrollsøk + evaluering)
+
+| konfig | akse | P50 per avgang (t) | topp-avgang | topp lik REF | inversjoner P50 | inversjoner P90 | maks ΔP50 | maks ΔP90 | gj.førbarhetsdiff |
+|---|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | (ref) | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `K-ANB-KYST` | kombinasjon | 14.841 / 14.770 / 14.579 / 14.384 / 14.416 | +3 t | ja | 0 | 1 | 0.01 % | 0.85 % | 0,0,0,0,0 |
+| `K-ANB-UTASKJAERS` | kombinasjon | 14.853 / 14.409 / 14.586 / 14.355 / 14.416 | +3 t | ja | 2 | 6 | 2.45 % | 4.47 % | 0,0,0,0,0 |
+
+## P2b — avgangsrangering S-5 (fulle Pareto-søk per medlem)
+
+| konfig | akse | P50 per avgang (t) | topp-avgang | topp lik REF | inversjoner P50 | inversjoner P90 | maks ΔP50 | maks ΔP90 | gj.førbarhetsdiff |
+|---|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 14.403 / 14.381 / 14.305 / 14.290 / 13.835 | +4 t | (ref) | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `K-ANB-KYST` | kombinasjon | 14.403 / 14.383 / 14.306 / 14.290 / 13.836 | +4 t | ja | 0 | 1 | 0.01 % | 0.00 % | 0,0,0,0,0 |
+| `K-ANB-UTASKJAERS` | kombinasjon | 14.443 / 14.445 / 14.293 / 14.299 / 14.299 | +2 t | **NEI** | 3 | 3 | 3.35 % | 5.36 % | 0,0,0,0,0 |
+
+## P3 — gjennomførbarhets- og felle-flips
+
+| konfig | akse | fast rute: gj.f.diff | fast: hardfeil lik REF | flippede medlemmer | felle-sett lik REF | egen rute: gj.f.diff | egen: maks Δt | egen: maks korridor (nm) |
+|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 0 … 0 | ja | — | (ref) | 0 … 0 | 0.00 % | 0.000 |
+| `K-ANB-KYST` | kombinasjon | 0 … 0 | ja | — | ja | 0 … 0 | 0.18 % | 2.143 |
+| `K-ANB-UTASKJAERS` | kombinasjon | 0 … 0 | ja | — | ja | 0 … 0 | 0.04 % | 0.022 |
+
+### P3 — felle-sett per avgang (kjørte konfigurasjoner)
+
+| fikstur | avgang | konfig | hardfeil (fast rute) | felle-sett (R2 pareto) |
+|---|---|---|---|---|
+| S-3 | +0 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `K-ANB-KYST` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `K-ANB-UTASKJAERS` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `K-ANB-KYST` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `K-ANB-UTASKJAERS` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `K-ANB-KYST` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `K-ANB-UTASKJAERS` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `K-ANB-KYST` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `K-ANB-UTASKJAERS` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +8 t | `REF` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `K-ANB-KYST` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `K-ANB-UTASKJAERS` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-8 | +0 t | `REF` | [m26, m27] | [] |
+| S-8 | +0 t | `K-ANB-KYST` | [m26, m27] | [] |
+| S-8 | +0 t | `K-ANB-UTASKJAERS` | [m26, m27] | [] |
+| S-8 | +3 t | `REF` | [m26, m27] | [] |
+| S-8 | +3 t | `K-ANB-KYST` | [m26, m27] | [] |
+| S-8 | +3 t | `K-ANB-UTASKJAERS` | [m26, m27] | [] |
+| S-8 | +6 t | `REF` | [m26, m27] | [] |
+| S-8 | +6 t | `K-ANB-KYST` | [m26, m27] | [] |
+| S-8 | +6 t | `K-ANB-UTASKJAERS` | [m26, m27] | [] |
+
+### P3 — avvisningsårsaker der de flyttet seg
+
+| fikstur | avgang | konfig | medlem | REF | konfig |
+|---|---|---|---|---|---|
+
+## Dekodekostnad (deterministiske tellere, P1 summert)
+
+| konfig | gridnoder samplet | fliser bygget | feltoppslag |
+|---|---|---|---|
+| `REF` | 2194432 | 2143 | 828344 |
+| `K-ANB-KYST` | 2178048 | 2127 | 827135 |
+| `K-ANB-UTASKJAERS` | 1244160 | 1215 | 825137 |
+
+
+===== ATTRIBUSJON: R-2X (5 km, Float32) i P2b — docs/research/kvantisering-raadata/tillegg-k-anbefalt/attribusjon-5km =====
+
+
+## P2b — avgangsrangering S-5 (fulle Pareto-søk per medlem)
+
+| konfig | akse | P50 per avgang (t) | topp-avgang | topp lik REF | inversjoner P50 | inversjoner P90 | maks ΔP50 | maks ΔP90 | gj.førbarhetsdiff |
+|---|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 14.403 / 14.381 / 14.305 / 14.290 / 13.835 | +4 t | (ref) | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `R-2X` | rom | 14.401 / 14.440 / 14.296 / 14.297 / 14.319 | +2 t | **NEI** | 4 | 0 | 3.50 % | 0.02 % | 0,0,0,0,0 |

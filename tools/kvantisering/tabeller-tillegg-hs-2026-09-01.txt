@@ -1,0 +1,68 @@
+
+## P3 — gjennomførbarhets- og felle-flips
+
+| konfig | akse | fast rute: gj.f.diff | fast: hardfeil lik REF | flippede medlemmer | felle-sett lik REF | egen rute: gj.f.diff | egen: maks Δt | egen: maks korridor (nm) |
+|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 0 … 0 | ja | — | (ref) | 0 … 0 | 0.00 % | 0.000 |
+| `H-8O` | bølge | 0 … 0 | ja | — | ja | 0 … 0 | 0.18 % | 1.096 |
+| `H-6G` | bølge | 0 … 1 | **NEI** | S-8+0t: −m26; S-8+3t: −m26; S-8+6t: −m26 | ja | 0 … 1 | 0.32 % | 4.485 |
+| `H-6GO` | bølge | -1 … 0 | **NEI** | S-3+6t: +m11; S-3+8t: +m15 | **NEI** | -2 … 0 | 0.39 % | 5.024 |
+
+### P3 — felle-sett per avgang (kjørte konfigurasjoner)
+
+| fikstur | avgang | konfig | hardfeil (fast rute) | felle-sett (R2 pareto) |
+|---|---|---|---|---|
+| S-3 | +0 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `H-6G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `H-6GO` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `H-6G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `H-6GO` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `H-6G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `H-6GO` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `H-6G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `H-6GO` | [m04, m09, m11, m14, m24] | [m04, m09, m11, m14] |
+| S-3 | +8 t | `REF` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `H-8O` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `H-6G` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `H-6GO` | [m04, m09, m14, m15, m24, m29] | [m04, m09, m14, m15, m29] |
+| S-8 | +0 t | `REF` | [m26, m27] | [] |
+| S-8 | +0 t | `H-8O` | [m26, m27] | [] |
+| S-8 | +0 t | `H-6G` | [m27] | [] |
+| S-8 | +0 t | `H-6GO` | [m26, m27] | [] |
+| S-8 | +3 t | `REF` | [m26, m27] | [] |
+| S-8 | +3 t | `H-8O` | [m26, m27] | [] |
+| S-8 | +3 t | `H-6G` | [m27] | [] |
+| S-8 | +3 t | `H-6GO` | [m26, m27] | [] |
+| S-8 | +6 t | `REF` | [m26, m27] | [] |
+| S-8 | +6 t | `H-8O` | [m26, m27] | [] |
+| S-8 | +6 t | `H-6G` | [m27] | [] |
+| S-8 | +6 t | `H-6GO` | [m26, m27] | [] |
+
+### P3 — avvisningsårsaker der de flyttet seg
+
+| fikstur | avgang | konfig | medlem | REF | konfig |
+|---|---|---|---|---|---|
+| S-3 | +6 t | `H-6GO` | m04 | boatLimits @ 0.00 t | boatLimits @ 0.00 t |
+| S-3 | +6 t | `H-6GO` | m09 | boatLimits @ 0.00 t | boatLimits @ 0.00 t |
+| S-3 | +6 t | `H-6GO` | m11 | ingen | boatLimits @ 3.07 t |
+| S-3 | +6 t | `H-6GO` | m14 | boatLimits @ 2.20 t | boatLimits @ 1.27 t |
+| S-3 | +6 t | `H-6GO` | m24 | boatLimits @ 2.36 t | boatLimits @ 2.37 t |
+| S-3 | +8 t | `H-6GO` | m04 | boatLimits @ 0.00 t | boatLimits @ 0.00 t |
+| S-3 | +8 t | `H-6GO` | m09 | boatLimits @ 0.00 t | boatLimits @ 0.00 t |
+| S-3 | +8 t | `H-6GO` | m14 | boatLimits @ 0.00 t | boatLimits @ 0.00 t |
+| S-3 | +8 t | `H-6GO` | m15 | ingen | boatLimits @ 8.48 t |
+| S-3 | +8 t | `H-6GO` | m24 | boatLimits @ 3.19 t | boatLimits @ 2.21 t |
+| S-3 | +8 t | `H-6GO` | m29 | boatLimits @ 13.96 t | boatLimits @ 14.12 t |
+| S-8 | +0 t | `H-6G` | m26 | boatLimits @ 8.32 t | ingen |
+| S-8 | +0 t | `H-6G` | m27 | boatLimits @ 8.01 t | boatLimits @ 8.54 t |
+| S-8 | +3 t | `H-6G` | m26 | boatLimits @ 8.32 t | ingen |
+| S-8 | +3 t | `H-6G` | m27 | boatLimits @ 8.01 t | boatLimits @ 8.54 t |
+| S-8 | +6 t | `H-6G` | m26 | boatLimits @ 8.32 t | ingen |
+| S-8 | +6 t | `H-6G` | m27 | boatLimits @ 8.01 t | boatLimits @ 8.54 t |

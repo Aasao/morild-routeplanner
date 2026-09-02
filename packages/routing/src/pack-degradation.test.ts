@@ -1,0 +1,362 @@
+/**
+ * Enhetstester for værpakke-degraderingen
+ * (`test-fixtures/pack-degradation.ts`) — modellen kvantiseringsmålingen
+ * 2026-09-01 hviler på.
+ *
+ * Testene sikrer de egenskapene *målingen* trenger for å være gyldig:
+ * determinisme, at Float32-referansen faktisk rekonstruerer feltet, at flere
+ * bit gir mindre feil enn færre, at konservativ avrunding er konservativ, og
+ * at pakken aldri later som om den dekker mer enn skivene sine.
+ */
+import { describe, expect, it } from "vitest";
+import {
+  domainAround,
+  FLOAT32,
+  latStepDegFor,
+  lonStepDegFor,
+  packField,
+  probePack,
+  quant,
+  REF_PACK,
+  withPack,
+} from "../test-fixtures/pack-degradation.js";
+import {
+  constantWeather,
+  syntheticField,
+} from "../test-fixtures/synthetic-weather.js";
+import { SKAGEN, SKJAELOY } from "../test-fixtures/golden-scenarios.js";
+import { s8WindAgainstCurrentEnsemble } from "../test-fixtures/ensemble-s8-wind-current.js";
+
+const T0 = 1_781_668_800;
+const DOMAIN = domainAround([SKJAELOY, SKAGEN]);
+
+function field() {
+  return syntheticField({
+    seed: 20260615,
+    baseSpeedKn: 12,
+    baseFromDeg: 240,
+    speedVariationKn: 4,
+    dirVariationDeg: 35,
+    baseHsM: 1.0,
+    validFromS: T0 - 3600,
+    validToS: T0 + 8 * 24 * 3600,
+  });
+}
+
+const PROBE_HOURS = [0, 6, 12] as const;
+
+function probe(spec = REF_PACK) {
+  const base = field();
+  const packed = packField(base, spec, DOMAIN).field;
+  return probePack(base, packed, DOMAIN, T0, PROBE_HOURS, 11);
+}
+
+describe("pakkedegradering: determinisme", () => {
+  it("to pakker av samme felt og spec gir bit-identiske samples", () => {
+    const spec = withPack("Q8", "8-bit u/v", { windQuant: quant(8) });
+    const a = packField(field(), spec, DOMAIN).field;
+    const b = packField(field(), spec, DOMAIN).field;
+    const rows: string[] = [];
+    for (const h of [0, 5, 11]) {
+      for (let i = 0; i < 7; i++) {
+        const lat = 57.9 + i * 0.2;
+        const lon = 10.1 + i * 0.11;
+        const t = T0 + h * 3600 + 917;
+        rows.push(
+          JSON.stringify([
+            a.wind(lat, lon, t),
+            a.waves(lat, lon, t),
+            a.current(lat, lon, t),
+          ]),
+        );
+        expect(
+          JSON.stringify([
+            b.wind(lat, lon, t),
+            b.waves(lat, lon, t),
+            b.current(lat, lon, t),
+          ]),
+        ).toBe(rows[rows.length - 1]);
+      }
+    }
+    // Flis-cachen er ren memoisering: andre oppslag gir samme tall.
+    for (let i = 0; i < 7; i++) {
+      const lat = 57.9 + i * 0.2;
+      const lon = 10.1 + i * 0.11;
+      expect(JSON.stringify(a.wind(lat, lon, T0 + 917))).toBe(
+        JSON.stringify(a.wind(lat, lon, T0 + 917)),
+      );
+    }
+  });
+});
+
+describe("pakkedegradering: Float32-referansen rekonstruerer feltet", () => {
+  it("2,5 km/1 t uten kvantisering ligger tett på det analytiske feltet", () => {
+    const p = probe();
+    // Det som står igjen er ren gridsamplingsfeil — den skal være liten, men
+    // ikke null: det er nettopp derfor referansen selv er en pakke.
+    expect(p.maxTwsErrKn).toBeLessThan(0.05);
+    expect(p.maxDirErrDeg).toBeLessThan(0.5);
+    expect(p.maxHsErrM).toBeLessThan(0.01);
+    expect(p.coverageLoss).toBe(0);
+  });
+
+  it("grovere grid gir større feil enn finere", () => {
+    const fin = probe();
+    const grov = probe(
+      withPack("S4", "10 km", { windKm: 10, waveKm: 10, currentKm: 3.2 }),
+    );
+    expect(grov.maxTwsErrKn).toBeGreaterThan(fin.maxTwsErrKn);
+    expect(grov.maxDirErrDeg).toBeGreaterThan(fin.maxDirErrDeg);
+  });
+
+  it("3 t tidssteg gir større feil enn 1 t", () => {
+    const t1 = probe();
+    const t3 = probe(withPack("T3", "3 t", { timeStepS: 3 * 3600 }));
+    expect(t3.maxTwsErrKn).toBeGreaterThan(t1.maxTwsErrKn);
+  });
+});
+
+describe("pakkedegradering: bitdybde", () => {
+  it("flere bit gir mindre vindfeil", () => {
+    const b8 = probe(withPack("W8", "8-bit u/v", { windQuant: quant(8) }));
+    const b10 = probe(withPack("W10", "10-bit u/v", { windQuant: quant(10) }));
+    const b12 = probe(withPack("W12", "12-bit u/v", { windQuant: quant(12) }));
+    expect(b10.rmsTwsErrKn).toBeLessThan(b8.rmsTwsErrKn);
+    expect(b12.rmsTwsErrKn).toBeLessThan(b10.rmsTwsErrKn);
+  });
+
+  it("global skala er grovere enn skala per flis ved samme bitdybde", () => {
+    const flis = probe(withPack("W8", "8-bit, flis", { windQuant: quant(8) }));
+    const glob = probe(
+      withPack("W8g", "8-bit, global", {
+        windQuant: quant(8, "nearest", "global"),
+      }),
+    );
+    expect(glob.rmsTwsErrKn).toBeGreaterThan(flis.rmsTwsErrKn);
+  });
+
+  it("8-bit retning gir feil under det halve trinnet 360/256", () => {
+    const p = probe(
+      withPack("D8", "fart+retning, 8-bit", {
+        windStorage: "fart-retning",
+        windQuant: quant(8),
+        dirQuant: quant(8),
+      }),
+    );
+    // Halve retningstrinnet er 0,70°; bilineær blanding av naboer kan ikke
+    // gjøre feilen større enn kildens egen variasjon over en gridcelle pluss
+    // det halve trinnet.
+    expect(p.maxDirErrDeg).toBeLessThan(1.5);
+  });
+});
+
+describe("pakkedegradering: konservativ avrunding av Hs", () => {
+  it("«opp» dekoder aldri Hs lavere enn sant i en gridnode", () => {
+    const base = field();
+    const spec = withPack("H8u", "Hs 8-bit opp", {
+      hsQuant: quant(8, "opp"),
+    });
+    const packed = packField(base, spec, DOMAIN).field;
+    const latStep = latStepDegFor(spec.waveKm);
+    const lonStep = lonStepDegFor(spec.waveKm);
+    let checked = 0;
+    for (let i = 0; i < 20; i++) {
+      const lat = Math.round(58.0 / latStep + i) * latStep;
+      for (let j = 0; j < 20; j++) {
+        const lon = Math.round(10.4 / lonStep + j) * lonStep;
+        const t = base.validFromS + 5 * 3600;
+        const r = base.waves(lat, lon, t);
+        const p = packed.waves(lat, lon, t);
+        expect(r).toBeDefined();
+        expect(p).toBeDefined();
+        expect(p!.hsM).toBeGreaterThanOrEqual(r!.hsM - 1e-12);
+        checked++;
+      }
+    }
+    expect(checked).toBe(400);
+  });
+
+  it("«nearest» kan dekode Hs for lavt — det er hele forskjellen", () => {
+    const p = probe(withPack("H8n", "Hs 8-bit nearest", { hsQuant: quant(8) }));
+    expect(p.worstHsUnderM).toBeLessThan(0);
+    const opp = probe(
+      withPack("H8u", "Hs 8-bit opp", { hsQuant: quant(8, "opp") }),
+    );
+    expect(opp.worstHsUnderM).toBeGreaterThanOrEqual(p.worstHsUnderM);
+  });
+});
+
+/**
+ * **Sikkerhetsegenskapen kvantiseringsmålingen 2026-09-01 hviler på**
+ * (`docs/research/kvantiseringsmaaling-2026-09-01.md` §8).
+ *
+ * S-8s medlem `m26` har verste Hs 4,069 m mot `testBoat().maxHsM = 4,0` —
+ * 6,9 cm margin. Målingen viste at kvantisering med vanlig avrunding *sletter*
+ * den harde forkastelsen (112 av 123 punkter over grensen forsvant ved 19 cm
+ * trinn, 3 av 123 ved 4,7 cm), mens avrunding **opp** ikke mister ett eneste
+ * punkt.
+ *
+ * Testen er skrevet slik at den har **tenner**: den krever både at opp-varianten
+ * bevarer alle overskridelser *og* at nearest-varianten mister minst én. Uten
+ * den andre halvdelen ville testen bestått selv om kvantiseringen sluttet å
+ * virke i det hele tatt.
+ *
+ * Egenskapen måles på selve feltet og ikke gjennom et søk: det er feltets
+ * kontrakt som skal holde, og en felttest er både raskere og mer presis enn å
+ * lete etter den samme sannheten gjennom en rute.
+ *
+ * **Hva testen IKKE påstår.** S-8s bølgefelt er statisk i tid og glatt i
+ * bredde, så testen isolerer *kvantiseringsfeilen*. Konservativ avrunding
+ * beskytter ikke mot at lineær interpolasjon undervurderer en Hs-topp mellom
+ * skivene — målt til −0,117 m allerede ved 1 t tidssteg uten noen
+ * kvantisering, og −0,576 m ved 3 t (rapportens §8.4). Det er tidssteget som
+ * er forsvaret mot den, ikke avrundingen.
+ */
+describe("pakkedegradering: konservativ Hs sletter aldri en hard forkastelse", () => {
+  function tellOverskridelser(hsSpec: ReturnType<typeof quant>) {
+    const fx = s8WindAgainstCurrentEnsemble();
+    const domain = domainAround([fx.start, fx.dest]);
+    const member = fx.members.find((m) => m.id === "m26");
+    expect(member, "S-8 må ha medlemmet m26").toBeDefined();
+    const packed = packField(
+      member!.weather,
+      withPack("X", "Hs-test", { hsQuant: hsSpec }),
+      domain,
+    ).field;
+
+    let over = 0;
+    let tapt = 0;
+    let verstUnderM = 0;
+    for (let a = 0; a <= 200; a++) {
+      const lat = 57.8 + (58.7 - 57.8) * (a / 200);
+      for (const h of [0, 3.7, 8.3]) {
+        const t = fx.departEpochS + h * 3600;
+        const sant = member!.weather.waves(lat, 10.8, t);
+        const dekodet = packed.waves(lat, 10.8, t);
+        if (sant === undefined || dekodet === undefined) continue;
+        verstUnderM = Math.min(verstUnderM, dekodet.hsM - sant.hsM);
+        if (sant.hsM > fx.boat.maxHsM) {
+          over++;
+          if (dekodet.hsM <= fx.boat.maxHsM) tapt++;
+        }
+      }
+    }
+    return { over, tapt, verstUnderM };
+  }
+
+  it("m26 har faktisk punkter over båtens Hs-grense (ellers måler testen ingenting)", () => {
+    expect(tellOverskridelser(FLOAT32).over).toBeGreaterThan(50);
+  });
+
+  it("avrunding OPP mister ingen overskridelse, selv med 19 cm trinn", () => {
+    for (const bits of [6, 8]) {
+      const r = tellOverskridelser(quant(bits, "opp", "global"));
+      expect(r.tapt, `${bits}-bit opp mistet ${r.tapt} av ${r.over}`).toBe(0);
+      expect(r.verstUnderM).toBe(0);
+    }
+  });
+
+  it("vanlig avrunding mister overskridelser — også ved 4,7 cm trinn", () => {
+    const grov = tellOverskridelser(quant(6, "nearest", "global"));
+    expect(grov.tapt).toBeGreaterThan(0);
+    expect(grov.verstUnderM).toBeLessThan(-0.05);
+
+    const fin = tellOverskridelser(quant(8, "nearest", "global"));
+    expect(
+      fin.tapt,
+      "8-bit global med vanlig avrunding er ikke trygg — den er bare mindre utrygg",
+    ).toBeGreaterThan(0);
+    expect(fin.tapt).toBeLessThan(grov.tapt);
+  });
+});
+
+describe("pakkedegradering: ærlig dekning", () => {
+  it("gyldighetsvinduet trimmes ned til siste hele tidsskive", () => {
+    const base = constantWeather({
+      speedKn: 10,
+      fromDeg: 180,
+      hsM: 1,
+      validFromS: T0,
+      validToS: T0 + 10 * 3600,
+    });
+    const packed = packField(
+      base,
+      withPack("T3", "3 t", { timeStepS: 3 * 3600 }),
+      DOMAIN,
+    ).field;
+    expect(packed.validFromS).toBe(T0);
+    expect(packed.validToS).toBe(T0 + 9 * 3600);
+    expect(packed.wind(58, 10.6, T0 + 9 * 3600 + 1)).toBeUndefined();
+    expect(packed.wind(58, 10.6, T0 + 9 * 3600)).toBeDefined();
+  });
+
+  it("mangler én av interpolasjonsnodene, mangler svaret", () => {
+    const base = syntheticField({
+      seed: 7,
+      baseSpeedKn: 11,
+      baseFromDeg: 270,
+      speedVariationKn: 3,
+      dirVariationDeg: 20,
+      validFromS: T0,
+      validToS: T0 + 6 * 3600,
+      bbox: { latMin: 58.2, latMax: 59.0, lonMin: 10.2, lonMax: 11.0 },
+    });
+    const packed = packField(base, REF_PACK, DOMAIN).field;
+    // Godt inne i boksen: data. Utenfor: ingen data, ingen ekstrapolasjon.
+    expect(packed.wind(58.6, 10.6, T0 + 3600)).toBeDefined();
+    expect(packed.wind(57.9, 10.6, T0 + 3600)).toBeUndefined();
+    expect(packed.wind(59.4, 10.6, T0 + 3600)).toBeUndefined();
+  });
+});
+
+describe("pakkedegradering: strømklassene", () => {
+  it("«tidevann-hoved» fjerner all romlig struktur", () => {
+    const base = field();
+    const packed = packField(
+      base,
+      withPack("CT", "kun hovedkomponent", { currentMode: "tidevann-hoved" }),
+      DOMAIN,
+    ).field;
+    const a = packed.current(58.0, 10.4, T0 + 3600);
+    const b = packed.current(58.9, 11.2, T0 + 3600);
+    expect(a).toBeDefined();
+    expect(b).toBeDefined();
+    expect(a!.u).toBe(b!.u);
+    expect(a!.v).toBe(b!.v);
+    // Referansen har derimot struktur — ellers målte testen ingenting.
+    const r1 = base.current(58.0, 10.4, T0 + 3600)!;
+    const r2 = base.current(58.9, 11.2, T0 + 3600)!;
+    expect(Math.hypot(r1.u - r2.u, r1.v - r2.v)).toBeGreaterThan(0.05);
+  });
+
+  it("grovere strømgrid gir større strømfeil", () => {
+    const c1 = probe();
+    const c4 = probe(withPack("C4", "3,2 km strøm", { currentKm: 3.2 }));
+    expect(c4.maxCurrentErrKn).toBeGreaterThanOrEqual(c1.maxCurrentErrKn);
+  });
+});
+
+describe("pakkedegradering: lagringsformen for vind", () => {
+  it("konstant felt gjenskapes eksakt i begge lagringsformer uten kvantisering", () => {
+    const base = constantWeather({
+      speedKn: 13.7,
+      fromDeg: 217.5,
+      validFromS: T0,
+      validToS: T0 + 12 * 3600,
+    });
+    for (const storage of ["uv", "fart-retning"] as const) {
+      const packed = packField(
+        base,
+        withPack("X", "float32", {
+          windStorage: storage,
+          windQuant: FLOAT32,
+          dirQuant: FLOAT32,
+        }),
+        DOMAIN,
+      ).field;
+      const w = packed.wind(58.3, 10.7, T0 + 4321)!;
+      expect(w.speedKn).toBeCloseTo(13.7, 4);
+      expect(w.fromDeg).toBeCloseTo(217.5, 3);
+    }
+  });
+});

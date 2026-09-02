@@ -1,0 +1,15 @@
+P2b REF         +0t  30/30  P50=14.403
+P2b REF         +1t  30/30  P50=14.381
+P2b REF         +2t  30/30  P50=14.305
+P2b REF         +3t  30/30  P50=14.290
+P2b REF         +4t  30/30  P50=13.835
+P2b R-2X        +0t  30/30  P50=14.401
+P2b R-2X        +1t  30/30  P50=14.440
+P2b R-2X        +2t  30/30  P50=14.296
+P2b R-2X        +3t  30/30  P50=14.297
+P2b R-2X        +4t  30/30  P50=14.319
+  ↳ R-2X        topp=2 t (REF 4 t) inv=4 maksΔP50=3.50 %
+
+P2b ferdig på 464 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-k-anbefalt\attribusjon-5km

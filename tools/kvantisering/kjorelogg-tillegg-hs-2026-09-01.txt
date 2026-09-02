@@ -1,0 +1,36 @@
+P3 S-3 +0t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t H-6GO       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t H-6GO       fast 26/30 hard=[m04,m09,m14,m24] egen 24/30 feller=[m04,m09,m14]
+P3 S-3 +4t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t H-6GO       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t H-6GO       fast 25/30 hard=[m04,m09,m11,m14,m24] egen 25/30 feller=[m04,m09,m11,m14]  ← FLIPP
+P3 S-3 +8t REF         fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t H-8O        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t H-6G        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t H-6GO       fast 24/30 hard=[m04,m09,m14,m15,m24,m29] egen 24/30 feller=[m04,m09,m14,m15,m29]  ← FLIPP
+P3 S-8 +0t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t H-8O        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t H-6G        fast 29/30 hard=[m27] egen 29/30 feller=[]  ← FLIPP
+P3 S-8 +0t H-6GO       fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t H-8O        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t H-6G        fast 29/30 hard=[m27] egen 29/30 feller=[]  ← FLIPP
+P3 S-8 +3t H-6GO       fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t H-8O        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t H-6G        fast 29/30 hard=[m27] egen 29/30 feller=[]  ← FLIPP
+P3 S-8 +6t H-6GO       fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+
+P3 ferdig på 157 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-hs-avrunding

@@ -37,6 +37,35 @@
  *
  * Toppavgangen i målingen er definert som **laveste P50-ankomst** (låst her,
  * før kjøring, slik at valget ikke kan gjøres etter at tallene er sett).
+ *
+ * ## FORBEHOLD ved gjenbruk (lagt til 2026-09-01, kvantiseringsmålingens review)
+ *
+ * **Tabellen over er målt med kontrollrute-metoden**: ett Pareto-søk på
+ * kontrollfeltet per avgang, deretter *evaluering* av de 30 medlemmene langs
+ * den ene ruten. Kvantiseringsmålingen
+ * (`docs/research/kvantiseringsmaaling-2026-09-01.md` §6.3) kjørte det samme
+ * vinduet på nytt med **fullt Pareto-søk per medlem** på det samme,
+ * **udegraderte** feltet, og fikk et annet svar:
+ *
+ * | metode | P50 per avgang (t) | toppavgang |
+ * |---|---|---|
+ * | kontrollrute + evaluering (denne fiksturens tall) | 14,859 / 14,769 / 14,731 / **14,422** / 14,712 | **+3 t** |
+ * | fullt Pareto-søk per medlem | 14,403 / 14,378 / 14,293 / 14,289 / **13,842** | **+4 t** |
+ *
+ * Begge er reprodusert bit-eksakt av harnessen (rapportens §2.4), og den
+ * nederste raden er identisk med S-5-raden for fasitvarianten F i
+ * E1′-kjøringen 2026-09-01. Det er altså ikke en feil i noen av dem — de måler
+ * to forskjellige ting: den ene rangerer avganger *gitt én delt plan*, den
+ * andre rangerer avganger *gitt at hvert medlem seiles optimalt*.
+ *
+ * **Konsekvens for den som gjenbruker fiksturen:** «toppavgang +3 t» er en
+ * egenskap ved metoden, ikke ved feltet, og tallet kan bare sammenlignes mot
+ * målinger gjort med *samme* metode. Kontrollrute-varianten er dessuten et
+ * svakt instrument for formatvalg: den flipper toppavgangen selv for værpakker
+ * som er strengt finere enn referansen (`T-30M`, `T-15M` — rapportens
+ * forbehold 2), fordi den delte kontrollruten velges nesten degenerert. Skal
+ * fiksturen brukes til å skille to varianter, bruk fullt søk per medlem, eller
+ * si eksplisitt i testen at den måler rangeringen langs en delt plan.
  */
 import type { EnsembleFixture } from "./ensemble.js";
 import { s3FrontEnsemble } from "./ensemble-s3-front.js";

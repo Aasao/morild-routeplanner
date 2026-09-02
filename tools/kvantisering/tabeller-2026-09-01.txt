@@ -1,0 +1,350 @@
+## P1a — ruteeffekt per konfigurasjon (aggregert over alle scenarioer)
+
+Δt og korridor gjelder **ankomstscenarioene**; `uoppnaelig-mal` og `hull-i-vaerfeltet` ender per konstruksjon ikke i målet, og «tid» er der hvor langt beste delrute rakk — de er derfor holdt utenfor prosenttallene og vurdert på de diskrete feltene alene.
+
+| konfig | akse | maks \|Δt\| | maks korridor (nm) | maks anger | maks optimisme | plan feiler under sannhet | diskrete endringer | N5-brudd |
+|---|---|---|---|---|---|---|---|---|
+| `ANALYTISK` | baseline | 1.27 % | 2.206 | 1.47 % | 0.00 % | — | ingen | sonde-stromband-9km, sonde-stromband-3km |
+| `REF` | baseline | 0.00 % | 0.000 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `W-UV8` | vind | 0.00 % | 0.001 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `W-UV10` | vind | 0.00 % | 0.000 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `W-UV12` | vind | 0.00 % | 0.000 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `W-UV8G` | vind | 0.38 % | 4.482 | 0.14 % | 0.09 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `W-SD8` | vind | 0.42 % | 3.553 | 0.15 % | 0.08 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll |
+| `W-SD10` | vind | 0.75 % | 4.921 | 1.03 % | 0.27 % | — | ingen | skjaeloy-skagen-apent, s8-vind-mot-strom-kontroll |
+| `T-30M` | konvergens | 0.01 % | 0.001 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `T-15M` | konvergens | 0.01 % | 0.001 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `R-HALV` | konvergens | 1.28 % | 2.206 | 1.47 % | 0.04 % | — | ingen | sonde-stromband-9km, sonde-stromband-3km |
+| `FIN-ALT` | konvergens | 0.26 % | 2.123 | 0.41 % | 0.03 % | — | ingen | sonde-stromband-9km, sonde-stromband-3km |
+| `R-2X` | rom | 0.73 % | 2.175 | 0.49 % | 0.30 % | — | ingen | sonde-stromband-3km |
+| `R-4X` | rom | 0.63 % | 7.914 | 0.00 % | 0.43 % | — | ingen | s3-front-kontroll, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `T-3H` | tid | 0.12 % | 2.821 | 0.57 % | 0.45 % | — | ingen | skjaeloy-skagen-apent, s3-front-kontroll |
+| `T-6H` | tid | 7.24 % | 5.998 | 4.75 % | 0.40 % | — | ingen | skjaeloy-skagen-apent, s3-front-kontroll |
+| `C-2X` | strøm | 0.03 % | 2.021 | 0.16 % | 0.06 % | — | ingen | sonde-stromband-3km |
+| `C-4X` | strøm | 0.63 % | 4.126 | 0.00 % | 0.23 % | — | ingen | s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `C-8X` | strøm | 1.03 % | 4.793 | 3.31 % | 2.07 % | **hull-i-vaerfeltet** | ingen | s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `C-TID` | strøm | 0.66 % | 7.660 | 5.93 % | 5.65 % | **tss-ved-skagen, hull-i-vaerfeltet** | ingen | skjaeloy-skagen-apent, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `C-8B` | strøm | 0.01 % | 1.085 | 0.00 % | 0.06 % | — | ingen | sonde-stromband-9km |
+| `H-8N` | bølge | 0.00 % | 0.001 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `H-8O` | bølge | 0.00 % | 0.003 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `H-8G` | bølge | 0.54 % | 4.549 | 0.51 % | 0.07 % | — | ingen | s3-front-kontroll, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `H-8GO` | bølge | 0.95 % | 6.088 | 2.35 % | 2.09 % | — | ingen | skjaeloy-skagen-apent, s3-front-kontroll, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `H-6G` | bølge | 6.21 % | 6.275 | 0.64 % | 0.45 % | — | ingen | skjaeloy-skagen-apent, s3-front-kontroll, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `H-6GO` | bølge | 0.87 % | 6.275 | 1.54 % | 1.27 % | — | **skjaeloy-skagen-apent** | skjaeloy-skagen-apent, s3-front-kontroll, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+| `P-8G` | bølge | 0.53 % | 4.549 | 0.37 % | 0.06 % | — | ingen | s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+| `K-ANBEFALT` | kombinasjon | 0.99 % | 4.859 | 1.14 % | 0.14 % | — | ingen | s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+| `K-VERSTE` | kombinasjon | 1.09 % | 4.728 | 1.46 % | 1.13 % | **hull-i-vaerfeltet** | **tss-ved-skagen** | skjaeloy-skagen-apent, natt-og-dagslysankomst, s3-front-kontroll, s8-vind-mot-strom-kontroll, sonde-stromband-9km, sonde-stromband-3km |
+
+### P1b — feltnær diagnose (kontekstkolonne, ikke beslutningsgrunnlag)
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) | verste Hs for lav (m) | maks strømfeil (kn) | TWS over deklarert skranke |
+|---|---|---|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `W-UV8` | 13.88 | 1.617 | 7.77 | 0.140 | -0.117 | 0.001 | 4165 punkter, maks +0.02 kn |
+| `W-UV10` | 13.88 | 1.617 | 7.83 | 0.140 | -0.117 | 0.001 | 4158 punkter, maks +0.00 kn |
+| `W-UV12` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.001 | 4158 punkter, maks +0.00 kn |
+| `W-UV8G` | 13.89 | 1.619 | 7.89 | 0.140 | -0.117 | 0.001 | 10584 punkter, maks +0.09 kn |
+| `W-SD8` | 13.90 | 1.617 | 7.65 | 0.140 | -0.117 | 0.001 | 4957 punkter, maks +0.00 kn |
+| `W-SD10` | 13.87 | 1.617 | 7.88 | 0.140 | -0.117 | 0.001 | 3493 punkter, maks +0.00 kn |
+| `T-30M` | 8.44 | 0.801 | 4.61 | 0.044 | -0.030 | 0.001 | 7688 punkter, maks +0.00 kn |
+| `T-15M` | 2.79 | 0.296 | 2.64 | 0.016 | -0.008 | 0.001 | 7692 punkter, maks +0.00 kn |
+| `R-HALV` | 13.92 | 1.624 | 8.01 | 0.139 | -0.117 | 0.001 | 7799 punkter, maks +0.00 kn |
+| `FIN-ALT` | 2.72 | 0.287 | 2.65 | 0.011 | -0.008 | 0.000 | 7687 punkter, maks +0.00 kn |
+| `R-2X` | 13.76 | 1.594 | 7.45 | 0.140 | -0.118 | 0.001 | 7808 punkter, maks +0.00 kn |
+| `R-4X` | 13.30 | 1.519 | 6.33 | 0.391 | -0.121 | 0.001 | 7789 punkter, maks +0.00 kn |
+| `T-3H` | 16.69 | 2.762 | 28.99 | 0.576 | -0.576 | 0.001 | 7805 punkter, maks +0.00 kn |
+| `T-6H` | 18.22 | 3.284 | 36.72 | 0.900 | -0.900 | 0.001 | 7969 punkter, maks +0.00 kn |
+| `C-2X` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `C-4X` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.054 | 7812 punkter, maks +0.00 kn |
+| `C-8X` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.364 | 7812 punkter, maks +0.00 kn |
+| `C-TID` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.914 | 7812 punkter, maks +0.00 kn |
+| `C-8B` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.002 | 7812 punkter, maks +0.00 kn |
+| `H-8N` | 13.88 | 1.617 | 7.82 | 0.141 | -0.118 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `H-8O` | 13.88 | 1.617 | 7.82 | 0.142 | -0.116 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `H-8G` | 13.88 | 1.617 | 7.82 | 0.151 | -0.133 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `H-8GO` | 13.88 | 1.617 | 7.82 | 0.174 | -0.105 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `H-6G` | 13.88 | 1.617 | 7.82 | 0.215 | -0.150 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `H-6GO` | 13.88 | 1.617 | 7.82 | 0.256 | -0.064 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `P-8G` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `K-ANBEFALT` | 13.88 | 1.617 | 7.83 | 0.142 | -0.116 | 0.000 | 4158 punkter, maks +0.00 kn |
+| `K-VERSTE` | 16.62 | 2.713 | 29.14 | 0.584 | -0.584 | 0.372 | 10584 punkter, maks +0.09 kn |
+
+#### Feltsonde kun på frontfeltet (`s3-front-kontroll`) — der tidsaksen biter
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) |
+|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `W-UV8` | 13.88 | 1.617 | 7.77 | 0.140 |
+| `W-UV10` | 13.88 | 1.617 | 7.83 | 0.140 |
+| `W-UV12` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `W-UV8G` | 13.89 | 1.619 | 7.89 | 0.140 |
+| `W-SD8` | 13.90 | 1.617 | 7.65 | 0.140 |
+| `W-SD10` | 13.87 | 1.617 | 7.88 | 0.140 |
+| `T-30M` | 8.44 | 0.801 | 4.61 | 0.044 |
+| `T-15M` | 2.79 | 0.296 | 2.64 | 0.012 |
+| `R-HALV` | 13.92 | 1.624 | 8.01 | 0.139 |
+| `FIN-ALT` | 2.72 | 0.287 | 2.65 | 0.011 |
+| `R-2X` | 13.76 | 1.594 | 7.45 | 0.140 |
+| `R-4X` | 13.30 | 1.519 | 6.33 | 0.143 |
+| `T-3H` | 16.69 | 2.762 | 28.99 | 0.576 |
+| `T-6H` | 18.22 | 3.284 | 36.72 | 0.900 |
+| `C-2X` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `C-4X` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `C-8X` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `C-TID` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `C-8B` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `H-8N` | 13.88 | 1.617 | 7.82 | 0.141 |
+| `H-8O` | 13.88 | 1.617 | 7.82 | 0.142 |
+| `H-8G` | 13.88 | 1.617 | 7.82 | 0.151 |
+| `H-8GO` | 13.88 | 1.617 | 7.82 | 0.174 |
+| `H-6G` | 13.88 | 1.617 | 7.82 | 0.215 |
+| `H-6GO` | 13.88 | 1.617 | 7.82 | 0.256 |
+| `P-8G` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `K-ANBEFALT` | 13.88 | 1.617 | 7.83 | 0.142 |
+| `K-VERSTE` | 16.62 | 2.713 | 29.14 | 0.584 |
+
+### P1c — verste konfigurasjon per scenario
+
+| scenario | kilde | kommer fram | REF-tid (t) | verste Δt (konfig) | verste korridor (konfig) | verste anger (konfig) |
+|---|---|---|---|---|---|---|
+| skjaeloy-skagen-apent | golden | ja | 15.294 | -6.21 % (`H-6G`) | 7.660 (`C-TID`) | 5.93 % (`C-TID`) |
+| bohuslan-trange-sund | golden | ja | 4.329 | 0.19 % (`T-6H`) | 0.490 (`C-TID`) | 0.00 % (`ANALYTISK`) |
+| ren-kryssetappe | golden | nei | 11.518 | -4.29 % (`W-UV8G`) | 4.793 (`W-UV8G`) | 0.00 % (`ANALYTISK`) |
+| tss-ved-skagen | golden | nei | 5.012 | 7.20 % (`K-VERSTE`) | 2.203 (`C-TID`) | 7.14 % (`K-VERSTE`) |
+| uoppnaelig-mal | golden | nei | 10.008 | 10.01 % (`C-8X`) | 20.093 (`K-VERSTE`) | 10.01 % (`C-8X`) |
+| hull-i-vaerfeltet | golden | nei | 5.511 | -0.14 % (`ANALYTISK`) | 3.835 (`C-TID`) | 0.00 % (`W-UV8`) |
+| natt-og-dagslysankomst | golden | ja | 8.314 | -0.42 % (`W-SD8`) | 3.067 (`W-SD8`) | 0.00 % (`ANALYTISK`) |
+| s3-front-kontroll | E1′ | ja | 14.301 | 7.24 % (`T-6H`) | 7.914 (`R-4X`) | 4.75 % (`T-6H`) |
+| s8-vind-mot-strom-kontroll | E1′ | ja | 13.197 | 0.99 % (`K-ANBEFALT`) | 6.265 (`C-TID`) | 3.22 % (`C-TID`) |
+| sonde-stromband-9km | sonde | ja | 13.271 | -0.95 % (`H-8GO`) | 4.728 (`K-VERSTE`) | 1.35 % (`C-TID`) |
+| sonde-stromband-3km | sonde | ja | 13.168 | 1.28 % (`R-HALV`) | 6.275 (`H-6G`) | 3.31 % (`C-8X`) |
+
+### P1d — rader med diskret endring, tapt gjennomførbarhet, eller anger > 1 %
+
+| scenario | konfig | Δt | korridor (nm) | anger | optimisme | diskret endring |
+|---|---|---|---|---|---|---|
+| skjaeloy-skagen-apent | `W-SD8` | 0.12 % | 1.065 | -1.42 % | -1.54 % | — |
+| skjaeloy-skagen-apent | `C-TID` | 0.26 % | 7.660 | 5.93 % | 5.65 % | — |
+| skjaeloy-skagen-apent | `H-8GO` | 0.25 % | 6.088 | 2.35 % | 2.09 % | — |
+| skjaeloy-skagen-apent | `H-6G` | -6.21 % | 4.215 | -5.79 % | 0.45 % | — |
+| skjaeloy-skagen-apent | `H-6GO` | 0.39 % | 2.500 | 1.54 % | 1.14 % | daylightArrival: true → false |
+| skjaeloy-skagen-apent | `K-VERSTE` | 0.33 % | 1.692 | 1.46 % | 1.13 % | — |
+| bohuslan-trange-sund | `C-TID` | -0.09 % | 0.490 | -1.68 % | -1.60 % | — |
+| ren-kryssetappe | `W-UV8G` | -4.29 % | 4.793 | -4.41 % | -0.13 % | — |
+| ren-kryssetappe | `K-VERSTE` | -4.29 % | 4.793 | -4.41 % | -0.13 % | — |
+| tss-ved-skagen | `T-6H` | -0.12 % | 1.665 | 3.54 % | 3.66 % | — |
+| tss-ved-skagen | `C-TID` | -0.14 % | 2.203 | — | -7.64 % | **planen holder ikke under sannheten**: tss @ 4.62 t |
+| tss-ved-skagen | `H-8GO` | -0.12 % | 1.665 | 3.30 % | 3.43 % | — |
+| tss-ved-skagen | `H-6G` | -0.11 % | 1.664 | 2.97 % | 3.08 % | — |
+| tss-ved-skagen | `H-6GO` | -0.11 % | 1.664 | 2.97 % | 3.07 % | — |
+| tss-ved-skagen | `K-VERSTE` | 7.20 % | 1.698 | 7.14 % | -0.06 % | safetyVerdict: "usikkert" → "trygt"; reachesDestination: false → true; finalLegStatus: "avvist-farbarhet" → "lagt-til" |
+| uoppnaelig-mal | `W-UV8G` | -10.01 % | 9.867 | -6.32 % | 4.10 % | — |
+| uoppnaelig-mal | `W-SD8` | -9.96 % | 9.869 | -6.28 % | 4.09 % | — |
+| uoppnaelig-mal | `R-4X` | 10.00 % | 12.699 | 9.96 % | -0.04 % | — |
+| uoppnaelig-mal | `T-3H` | -10.01 % | 9.868 | -6.32 % | 4.10 % | — |
+| uoppnaelig-mal | `T-6H` | 9.94 % | 4.885 | 9.86 % | -0.07 % | — |
+| uoppnaelig-mal | `C-8X` | 10.01 % | 8.284 | 10.01 % | 0.00 % | — |
+| uoppnaelig-mal | `C-TID` | -0.01 % | 8.810 | 4.74 % | 4.76 % | — |
+| uoppnaelig-mal | `H-6G` | -9.99 % | 3.959 | -9.47 % | 0.58 % | — |
+| uoppnaelig-mal | `H-6GO` | -0.04 % | 14.651 | -1.43 % | -1.39 % | — |
+| uoppnaelig-mal | `K-ANBEFALT` | -10.01 % | 9.868 | -6.32 % | 4.10 % | — |
+| uoppnaelig-mal | `K-VERSTE` | 9.95 % | 20.093 | 9.73 % | -0.19 % | — |
+| hull-i-vaerfeltet | `C-8X` | -0.02 % | 0.610 | — | 0.28 % | **planen holder ikke under sannheten**: noWeather @ 5.53 t |
+| hull-i-vaerfeltet | `C-TID` | 0.00 % | 3.835 | — | 0.67 % | **planen holder ikke under sannheten**: noWeather @ 5.55 t |
+| hull-i-vaerfeltet | `K-VERSTE` | -0.02 % | 0.610 | — | 0.23 % | **planen holder ikke under sannheten**: noWeather @ 5.52 t |
+| s3-front-kontroll | `T-6H` | 7.24 % | 5.998 | 4.75 % | -2.35 % | — |
+| s3-front-kontroll | `H-6GO` | -0.18 % | 5.024 | 1.11 % | 1.27 % | — |
+| s8-vind-mot-strom-kontroll | `W-SD10` | 0.75 % | 4.921 | 1.03 % | 0.27 % | — |
+| s8-vind-mot-strom-kontroll | `C-TID` | -0.36 % | 6.265 | 3.22 % | 3.58 % | — |
+| s8-vind-mot-strom-kontroll | `K-ANBEFALT` | 0.99 % | 4.859 | 1.14 % | 0.14 % | — |
+| sonde-stromband-9km | `C-TID` | -0.37 % | 2.108 | 1.35 % | 1.79 % | — |
+| sonde-stromband-9km | `H-8GO` | -0.95 % | 2.473 | -1.03 % | -0.01 % | — |
+| sonde-stromband-9km | `K-VERSTE` | 0.78 % | 4.728 | 1.07 % | 0.35 % | — |
+| sonde-stromband-3km | `ANALYTISK` | 1.27 % | 2.206 | 1.47 % | -0.00 % | — |
+| sonde-stromband-3km | `R-HALV` | 1.28 % | 2.206 | 1.47 % | -0.01 % | — |
+| sonde-stromband-3km | `C-8X` | 1.03 % | 2.206 | 3.31 % | 2.07 % | — |
+| sonde-stromband-3km | `C-TID` | 0.66 % | 2.206 | 2.05 % | 1.18 % | — |
+
+## P2a — avgangsrangering S-5 (billig: kontrollsøk + evaluering)
+
+| konfig | akse | P50 per avgang (t) | topp-avgang | topp lik REF | inversjoner P50 | inversjoner P90 | maks ΔP50 | maks ΔP90 | gj.førbarhetsdiff |
+|---|---|---|---|---|---|---|---|---|---|
+| `ANALYTISK` | baseline | 14.859 / 14.769 / 14.731 / 14.422 / 14.712 | +3 t | ja | 0 | 5 | 2.06 % | 10.20 % | 0,0,0,0,0 |
+| `REF` | baseline | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | (ref) | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `W-UV8` | vind | 14.841 / 14.771 / 14.581 / 14.382 / 14.415 | +3 t | ja | 0 | 0 | 0.01 % | 0.00 % | 0,0,0,0,0 |
+| `W-UV10` | vind | 14.840 / 14.771 / 14.580 / 14.382 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `W-UV12` | vind | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `W-UV8G` | vind | 14.842 / 14.768 / 14.744 / 14.356 / 14.413 | +3 t | ja | 0 | 5 | 1.12 % | 10.01 % | 0,0,0,0,0 |
+| `W-SD8` | vind | 14.840 / 14.782 / 14.745 / 14.356 / 14.417 | +3 t | ja | 0 | 5 | 1.13 % | 10.09 % | 0,0,0,0,0 |
+| `W-SD10` | vind | 14.841 / 14.768 / 14.744 / 14.353 / 14.416 | +3 t | ja | 0 | 5 | 1.12 % | 10.25 % | 0,0,0,0,0 |
+| `T-30M` | konvergens | 14.853 / 14.770 / 14.626 / 14.413 / 14.373 | +4 t | **NEI** | 1 | 1 | 0.31 % | 0.83 % | 0,0,0,0,0 |
+| `T-15M` | konvergens | 14.857 / 14.767 / 14.627 / 14.438 / 14.372 | +4 t | **NEI** | 1 | 1 | 0.39 % | 0.83 % | 0,0,0,0,0 |
+| `R-HALV` | konvergens | 14.842 / 14.780 / 14.611 / 14.382 / 14.779 | +3 t | ja | 1 | 4 | 2.52 % | 3.84 % | 0,0,0,0,0 |
+| `FIN-ALT` | konvergens | 14.858 / 14.768 / 14.744 / 14.437 / 14.718 | +3 t | ja | 0 | 5 | 2.10 % | 10.20 % | 0,0,0,0,0 |
+| `R-2X` | rom | 14.852 / 14.513 / 14.583 / 14.385 / 14.414 | +3 t | ja | 1 | 3 | 1.74 % | 3.20 % | 0,0,0,0,0 |
+| `R-4X` | rom | 14.457 / 14.407 / 14.683 / 14.425 / 14.649 | +1 t | **NEI** | 5 | 5 | 2.58 % | 6.37 % | 0,0,0,0,0 |
+| `T-3H` | tid | 14.997 / 14.452 / 14.792 / 14.648 / 14.553 | +1 t | **NEI** | 4 | 4 | 2.16 % | 4.46 % | 0,0,0,0,0 |
+| `T-6H` | tid | 14.911 / 15.327 / 14.611 / 13.973 / 13.959 | +4 t | **NEI** | 2 | 4 | 3.77 % | 9.96 % | 0,0,0,0,0 |
+| `C-2X` | strøm | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `C-4X` | strøm | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `C-8X` | strøm | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `C-TID` | strøm | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `C-8B` | strøm | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `H-8N` | bølge | 14.840 / 14.771 / 14.580 / 14.383 / 14.415 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `H-8O` | bølge | 14.840 / 14.770 / 14.579 / 14.384 / 14.416 | +3 t | ja | 0 | 1 | 0.01 % | 0.84 % | 0,0,0,0,0 |
+| `H-8G` | bølge | 14.560 / 14.337 / 14.373 / 14.349 / 14.752 | +1 t | **NEI** | 5 | 6 | 2.94 % | 4.53 % | 0,0,0,0,0 |
+| `H-8GO` | bølge | 14.638 / 14.818 / 14.608 / 14.643 / 14.438 | +4 t | **NEI** | 4 | 2 | 1.81 % | 3.87 % | 0,0,0,0,0 |
+| `H-6G` | bølge | 14.675 / 14.463 / 14.365 / 14.381 / 14.038 | +4 t | **NEI** | 2 | 3 | 2.62 % | 4.79 % | 0,0,0,0,0 |
+| `P-8G` | bølge | 14.840 / 14.771 / 14.580 / 14.383 / 14.416 | +3 t | ja | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `K-ANBEFALT` | kombinasjon | 14.840 / 14.770 / 14.579 / 14.384 / 14.416 | +3 t | ja | 0 | 1 | 0.01 % | 0.84 % | 0,0,0,0,0 |
+| `K-VERSTE` | kombinasjon | 14.688 / 14.386 / 14.361 / 14.515 / 14.738 | +2 t | **NEI** | 5 | 4 | 2.61 % | 5.59 % | 0,0,0,0,0 |
+
+## P2b — avgangsrangering S-5 (fulle Pareto-søk per medlem)
+
+| konfig | akse | P50 per avgang (t) | topp-avgang | topp lik REF | inversjoner P50 | inversjoner P90 | maks ΔP50 | maks ΔP90 | gj.førbarhetsdiff |
+|---|---|---|---|---|---|---|---|---|---|
+| `ANALYTISK` | baseline | 14.403 / 14.378 / 14.293 / 14.289 / 13.842 | +4 t | ja | 0 | 0 | 0.08 % | 0.01 % | 0,0,0,0,0 |
+| `REF` | baseline | 14.403 / 14.381 / 14.305 / 14.290 / 13.835 | +4 t | (ref) | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `R-4X` | rom | 14.403 / 14.439 / 14.289 / 14.314 / 14.274 | +4 t | ja | 2 | 1 | 3.17 % | 5.04 % | 0,0,0,0,0 |
+| `T-3H` | tid | 14.374 / 14.374 / 14.313 / 14.265 / 13.815 | +4 t | ja | 1 | 7 | 0.20 % | 5.91 % | 0,0,0,0,0 |
+| `K-ANBEFALT` | kombinasjon | 14.403 / 14.382 / 14.306 / 14.289 / 13.836 | +4 t | ja | 0 | 0 | 0.01 % | 0.00 % | 0,0,0,0,0 |
+
+## P3 — gjennomførbarhets- og felle-flips
+
+| konfig | akse | fast rute: gj.f.diff | fast: hardfeil lik REF | flippede medlemmer | felle-sett lik REF | egen rute: gj.f.diff | egen: maks Δt | egen: maks korridor (nm) |
+|---|---|---|---|---|---|---|---|---|
+| `ANALYTISK` | baseline | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.34 % | 10.139 |
+| `REF` | baseline | 0 … 0 | ja | — | (ref) | 0 … 0 | 0.00 % | 0.000 |
+| `W-UV8` | vind | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.00 % | 0.004 |
+| `W-UV10` | vind | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.00 % | 0.001 |
+| `W-UV12` | vind | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.00 % | 0.000 |
+| `W-UV8G` | vind | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.34 % | 10.140 |
+| `W-SD8` | vind | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.33 % | 10.138 |
+| `W-SD10` | vind | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.75 % | 10.138 |
+| `T-30M` | konvergens | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.18 % | 1.088 |
+| `T-15M` | konvergens | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.18 % | 1.088 |
+| `R-HALV` | konvergens | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.04 % | 2.440 |
+| `FIN-ALT` | konvergens | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.34 % | 10.139 |
+| `R-2X` | rom | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.03 % | 1.097 |
+| `R-4X` | rom | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.29 % | 9.214 |
+| `T-3H` | tid | 0 … 1 | **NEI** | S-3+8t: −m29 | **NEI** | 0 … 0 | 0.47 % | 7.374 |
+| `T-6H` | tid | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 7.24 % | 7.957 |
+| `C-2X` | strøm | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.00 % | 0.001 |
+| `C-4X` | strøm | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.16 % | 4.126 |
+| `C-8X` | strøm | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.97 % | 4.793 |
+| `C-TID` | strøm | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.36 % | 6.265 |
+| `C-8B` | strøm | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.00 % | 0.001 |
+| `H-8N` | bølge | 0 … 0 | ja | — | ja | 0 … 0 | 0.00 % | 0.001 |
+| `H-8O` | bølge | 0 … 0 | ja | — | ja | 0 … 0 | 0.18 % | 1.096 |
+| `H-8G` | bølge | 0 … 0 | ja | — | ja | 0 … 0 | 0.62 % | 5.296 |
+| `H-8GO` | bølge | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.85 % | 6.958 |
+| `H-6G` | bølge | 0 … 1 | **NEI** | S-8+0t: −m26; S-8+3t: −m26; S-8+6t: −m26 | ja | 0 … 1 | 0.32 % | 4.485 |
+| `P-8G` | bølge | 0 … 0 | ja | — | (ikke kjørt) | 0 … 0 | 0.53 % | 4.549 |
+| `K-ANBEFALT` | kombinasjon | 0 … 0 | ja | — | ja | 0 … 0 | 0.99 % | 4.859 |
+| `K-VERSTE` | kombinasjon | 0 … 1 | **NEI** | S-3+8t: −m29 | **NEI** | 0 … 0 | 1.02 % | 8.683 |
+
+### P3 — felle-sett per avgang (kjørte konfigurasjoner)
+
+| fikstur | avgang | konfig | hardfeil (fast rute) | felle-sett (R2 pareto) |
+|---|---|---|---|---|
+| S-3 | +0 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `H-8N` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `H-8G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `K-ANBEFALT` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `K-VERSTE` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `H-8N` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `H-8G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `K-ANBEFALT` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `K-VERSTE` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `H-8N` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `H-8G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `K-ANBEFALT` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `K-VERSTE` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `H-8N` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `H-8O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `H-8G` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `K-ANBEFALT` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `K-VERSTE` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +8 t | `REF` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `T-3H` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +8 t | `H-8N` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `H-8O` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `H-8G` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `K-ANBEFALT` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `K-VERSTE` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-8 | +0 t | `REF` | [m26, m27] | [] |
+| S-8 | +0 t | `H-8N` | [m26, m27] | [] |
+| S-8 | +0 t | `H-8O` | [m26, m27] | [] |
+| S-8 | +0 t | `H-8G` | [m26, m27] | [] |
+| S-8 | +0 t | `H-6G` | [m27] | [] |
+| S-8 | +0 t | `K-ANBEFALT` | [m26, m27] | [] |
+| S-8 | +0 t | `K-VERSTE` | [m26, m27] | [] |
+| S-8 | +3 t | `REF` | [m26, m27] | [] |
+| S-8 | +3 t | `H-8N` | [m26, m27] | [] |
+| S-8 | +3 t | `H-8O` | [m26, m27] | [] |
+| S-8 | +3 t | `H-8G` | [m26, m27] | [] |
+| S-8 | +3 t | `H-6G` | [m27] | [] |
+| S-8 | +3 t | `K-ANBEFALT` | [m26, m27] | [] |
+| S-8 | +3 t | `K-VERSTE` | [m26, m27] | [] |
+| S-8 | +6 t | `REF` | [m26, m27] | [] |
+| S-8 | +6 t | `H-8N` | [m26, m27] | [] |
+| S-8 | +6 t | `H-8O` | [m26, m27] | [] |
+| S-8 | +6 t | `H-8G` | [m26, m27] | [] |
+| S-8 | +6 t | `H-6G` | [m27] | [] |
+| S-8 | +6 t | `K-ANBEFALT` | [m26, m27] | [] |
+| S-8 | +6 t | `K-VERSTE` | [m26, m27] | [] |
+
+### P3 — avvisningsårsaker der de flyttet seg
+
+| fikstur | avgang | konfig | medlem | REF | konfig |
+|---|---|---|---|---|---|
+| S-3 | +8 t | `T-3H` | m29 | boatLimits @ 13.96 t | ingen |
+| S-3 | +8 t | `K-VERSTE` | m24 | boatLimits @ 3.19 t | boatLimits @ 3.01 t |
+| S-3 | +8 t | `K-VERSTE` | m29 | boatLimits @ 13.96 t | ingen |
+| S-8 | +0 t | `H-6G` | m26 | boatLimits @ 8.32 t | ingen |
+| S-8 | +0 t | `H-6G` | m27 | boatLimits @ 8.01 t | boatLimits @ 8.54 t |
+| S-8 | +3 t | `H-6G` | m26 | boatLimits @ 8.32 t | ingen |
+| S-8 | +3 t | `H-6G` | m27 | boatLimits @ 8.01 t | boatLimits @ 8.54 t |
+| S-8 | +6 t | `H-6G` | m26 | boatLimits @ 8.32 t | ingen |
+| S-8 | +6 t | `H-6G` | m27 | boatLimits @ 8.01 t | boatLimits @ 8.54 t |
+
+## Dekodekostnad (deterministiske tellere, P1 summert)
+
+| konfig | gridnoder samplet | fliser bygget | feltoppslag |
+|---|---|---|---|
+| `ANALYTISK` | 0 | 0 | 0 |
+| `REF` | 2194432 | 2143 | 828344 |
+| `W-UV8` | 2189312 | 2138 | 827828 |
+| `W-UV10` | 2192384 | 2141 | 827989 |
+| `W-UV12` | 2192384 | 2141 | 827932 |
+| `W-UV8G` | 2189312 | 2138 | 819825 |
+| `W-SD8` | 2178048 | 2127 | 824278 |
+| `W-SD10` | 2179072 | 2128 | 827257 |
+| `T-30M` | 3605504 | 3521 | 828302 |
+| `T-15M` | 4185088 | 4087 | 828290 |
+| `R-HALV` | 2963456 | 2894 | 829657 |
+| `FIN-ALT` | 9548800 | 9325 | 829644 |
+| `R-2X` | 1964032 | 1918 | 826060 |
+| `R-4X` | 1784832 | 1743 | 818126 |
+| `T-3H` | 1201152 | 1173 | 833077 |
+| `T-6H` | 986112 | 963 | 856649 |
+| `C-2X` | 1474560 | 1440 | 828277 |
+| `C-4X` | 1334272 | 1303 | 828074 |
+| `C-8X` | 1261568 | 1232 | 828160 |
+| `C-TID` | 948992 | 894 | 820067 |
+| `C-8B` | 2194432 | 2143 | 828342 |
+| `H-8N` | 2194432 | 2143 | 828329 |
+| `H-8O` | 2194432 | 2143 | 828374 |
+| `H-8G` | 2185216 | 2134 | 827825 |
+| `H-8GO` | 2169856 | 2119 | 824156 |
+| `H-6G` | 2180096 | 2129 | 817496 |
+| `H-6GO` | 2169856 | 2119 | 819323 |
+| `P-8G` | 2192384 | 2141 | 828425 |
+| `K-ANBEFALT` | 1469440 | 1435 | 827173 |
+| `K-VERSTE` | 391168 | 382 | 811892 |

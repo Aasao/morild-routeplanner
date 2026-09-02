@@ -1,0 +1,131 @@
+{
+ "beskrivelse": "Kvantiseringsmåling 2026-09-01 — se docs/research/kvantiseringsmaaling-2026-09-01.md",
+ "referanse": "REF",
+ "tidToleranse": 0.02,
+ "korridorNm": 0.5,
+ "konfigurasjoner": [
+  {
+   "id": "REF",
+   "akse": "baseline",
+   "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+   "spec": {
+    "id": "REF",
+    "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "K-ANB-KYST",
+   "akse": "kombinasjon",
+   "note": "ANBEFALT, kystsone: u/v 8-bit flis, 2,5 km vind/bølge, 1 t, strøm 0,8 km 8-bit flis, Hs 8-bit flis OPP, Tp 8-bit flis, retning 8-bit",
+   "spec": {
+    "id": "K-ANB-KYST",
+    "note": "ANBEFALT, kystsone: u/v 8-bit flis, 2,5 km vind/bølge, 1 t, strøm 0,8 km 8-bit flis, Hs 8-bit flis OPP, Tp 8-bit flis, retning 8-bit",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "dirQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "hsQuant": {
+     "bits": 8,
+     "rounding": "opp",
+     "scale": "flis"
+    },
+    "tpQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "K-ANB-UTASKJAERS",
+   "akse": "kombinasjon",
+   "note": "ANBEFALT, utaskjærs-enden: samme som K-ANB-KYST, men 5 km vind/bølge og 1,6 km strøm (det §10 tillater med flagg)",
+   "spec": {
+    "id": "K-ANB-UTASKJAERS",
+    "note": "ANBEFALT, utaskjærs-enden: samme som K-ANB-KYST, men 5 km vind/bølge og 1,6 km strøm (det §10 tillater med flagg)",
+    "windKm": 5,
+    "waveKm": 5,
+    "currentKm": 1.6,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "dirQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "hsQuant": {
+     "bits": 8,
+     "rounding": "opp",
+     "scale": "flis"
+    },
+    "tpQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  }
+ ]
+}

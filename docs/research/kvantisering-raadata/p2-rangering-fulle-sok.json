@@ -1,0 +1,350 @@
+{
+ "metode": "fullt Pareto-søk per medlem (dyrt)",
+ "perKonfig": {
+  "ANALYTISK": {
+   "akse": "baseline",
+   "offsetH": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "p50": [
+    14.40263888888889,
+    14.377777777777776,
+    14.293333333333333,
+    14.289166666666667,
+    13.841527777777777
+   ],
+   "p90": [
+    14.486555555555555,
+    14.486527777777777,
+    15.260333333333334,
+    14.4825,
+    14.4825
+   ],
+   "gjennomfoerbare": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "rangP50": [
+    4,
+    3,
+    2,
+    1,
+    0
+   ],
+   "rangP90": [
+    3,
+    2,
+    4,
+    0,
+    1
+   ],
+   "telling": {
+    "sok": 150,
+    "evalueringer": 0,
+    "baseSamples": 0,
+    "fliser": 0,
+    "oppslag": 0
+   },
+   "motRef": {
+    "toppAvgangH": 4,
+    "toppAvgangRefH": 4,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "inversjonerP90": 0,
+    "kendallP50": 1,
+    "maksDP50Rel": 0.0008155656530350726,
+    "maksDP90Rel": 0.00012194256323269238,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "REF": {
+   "akse": "baseline",
+   "offsetH": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "p50": [
+    14.402916666666666,
+    14.381388888888889,
+    14.305,
+    14.289722222222222,
+    13.835416666666667
+   ],
+   "p90": [
+    14.486555555555555,
+    14.486527777777777,
+    15.262194444444445,
+    14.4825,
+    14.4825
+   ],
+   "gjennomfoerbare": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "rangP50": [
+    4,
+    3,
+    2,
+    1,
+    0
+   ],
+   "rangP90": [
+    3,
+    2,
+    4,
+    0,
+    1
+   ],
+   "telling": {
+    "sok": 150,
+    "evalueringer": 0,
+    "baseSamples": 35190784,
+    "fliser": 34366,
+    "oppslag": 14580573
+   },
+   "motRef": {
+    "toppAvgangH": 4,
+    "toppAvgangRefH": 4,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "inversjonerP90": 0,
+    "kendallP50": 1,
+    "maksDP50Rel": 0,
+    "maksDP90Rel": 0,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "R-4X": {
+   "akse": "rom",
+   "offsetH": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "p50": [
+    14.40263888888889,
+    14.439166666666667,
+    14.289166666666667,
+    14.314166666666667,
+    14.27375
+   ],
+   "p90": [
+    14.486555555555555,
+    14.488527777777778,
+    14.493583333333333,
+    14.4825,
+    14.482861111111111
+   ],
+   "gjennomfoerbare": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "rangP50": [
+    3,
+    4,
+    1,
+    2,
+    0
+   ],
+   "rangP90": [
+    2,
+    3,
+    4,
+    0,
+    1
+   ],
+   "telling": {
+    "sok": 150,
+    "evalueringer": 0,
+    "baseSamples": 28456960,
+    "fliser": 27790,
+    "oppslag": 14582658
+   },
+   "motRef": {
+    "toppAvgangH": 4,
+    "toppAvgangRefH": 4,
+    "sammeTopp": true,
+    "inversjonerP50": 2,
+    "inversjonerP90": 1,
+    "kendallP50": 0.6,
+    "maksDP50Rel": 0.031681975606083365,
+    "maksDP90Rel": 0.0503604585768393,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "T-3H": {
+   "akse": "tid",
+   "offsetH": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "p50": [
+    14.373611111111112,
+    14.373750000000001,
+    14.3125,
+    14.265416666666667,
+    13.815277777777776
+   ],
+   "p90": [
+    14.491083333333334,
+    15.338666666666667,
+    14.482861111111111,
+    14.482861111111111,
+    15.338666666666667
+   ],
+   "gjennomfoerbare": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "rangP50": [
+    3,
+    4,
+    2,
+    1,
+    0
+   ],
+   "rangP90": [
+    2,
+    3,
+    0,
+    1,
+    4
+   ],
+   "telling": {
+    "sok": 150,
+    "evalueringer": 0,
+    "baseSamples": 18461696,
+    "fliser": 18029,
+    "oppslag": 14353269
+   },
+   "motRef": {
+    "toppAvgangH": 4,
+    "toppAvgangRefH": 4,
+    "sammeTopp": true,
+    "inversjonerP50": 1,
+    "inversjonerP90": 7,
+    "kendallP50": 0.8,
+    "maksDP50Rel": 0.0020346959045717153,
+    "maksDP90Rel": 0.059117325507796775,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "K-ANBEFALT": {
+   "akse": "kombinasjon",
+   "offsetH": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "p50": [
+    14.403472222222222,
+    14.382083333333334,
+    14.305833333333332,
+    14.289166666666667,
+    13.835972222222221
+   ],
+   "p90": [
+    14.486555555555555,
+    14.486527777777777,
+    15.262444444444444,
+    14.4825,
+    14.4825
+   ],
+   "gjennomfoerbare": [
+    30,
+    30,
+    30,
+    30,
+    30
+   ],
+   "rangP50": [
+    4,
+    3,
+    2,
+    1,
+    0
+   ],
+   "rangP90": [
+    3,
+    2,
+    4,
+    0,
+    1
+   ],
+   "telling": {
+    "sok": 150,
+    "evalueringer": 0,
+    "baseSamples": 24006656,
+    "fliser": 23444,
+    "oppslag": 14540400
+   },
+   "motRef": {
+    "toppAvgangH": 4,
+    "toppAvgangRefH": 4,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "inversjonerP90": 0,
+    "kendallP50": 1,
+    "maksDP50Rel": 0.00005825468950245197,
+    "maksDP90Rel": 0.00001638034431479932,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  }
+ }
+}

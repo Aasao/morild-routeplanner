@@ -1,0 +1,1264 @@
+{
+ "beskrivelse": "Realisert Hs-kvantiseringstrinn ved 8 bit med skala/offset per flis (32×32 noder), målt på S-3 og S-8 (kontroll + 30 medlemmer), 20 timesskiver.",
+ "bits": 8,
+ "tileNodes": 32,
+ "slices": 20,
+ "oppsummering": {
+  "K-ANB-KYST (2,5 km)": {
+   "maksTrinnM": 0.01240733791395718,
+   "maksSpennM": 3.1638711680590808,
+   "fliser": 12400,
+   "fliserOver5cm": 0,
+   "verstFelt": "m24"
+  },
+  "K-ANB-UTASKJAERS (5 km)": {
+   "maksTrinnM": 0.011664864368864237,
+   "maksSpennM": 2.9745404140603804,
+   "fliser": 7440,
+   "fliserOver5cm": 0,
+   "verstFelt": "m04"
+  }
+ },
+ "rader": [
+  {
+   "fikstur": "S-3",
+   "felt": "kontroll",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005500032742069943,
+   "maksSpennM": 1.4025083492278354,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "kontroll",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005506017231067795,
+   "maksSpennM": 1.404034393922288,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m00",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003828520318957553,
+   "maksSpennM": 0.976272681334176,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m00",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0038308911450442495,
+   "maksSpennM": 0.9768772419862837,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m01",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005500032742069943,
+   "maksSpennM": 1.4025083492278354,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m01",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005506017231067795,
+   "maksSpennM": 1.404034393922288,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m02",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006889421743059507,
+   "maksSpennM": 1.7568025444801743,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m02",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006906956015677183,
+   "maksSpennM": 1.7612737839976818,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m03",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.008314671051903439,
+   "maksSpennM": 2.120241118235377,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m03",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00834443821343191,
+   "maksSpennM": 2.127831744425137,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m04",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.011608089091772446,
+   "maksSpennM": 2.9600627184019737,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m04",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.011664864368864237,
+   "maksSpennM": 2.9745404140603804,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m05",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005500032742069943,
+   "maksSpennM": 1.4025083492278354,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m05",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005506017231067795,
+   "maksSpennM": 1.404034393922288,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m06",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006889421743059507,
+   "maksSpennM": 1.7568025444801743,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m06",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006906956015677183,
+   "maksSpennM": 1.7612737839976818,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m07",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.008314671051903439,
+   "maksSpennM": 2.120241118235377,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m07",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00834443821343191,
+   "maksSpennM": 2.127831744425137,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m08",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006190554645950962,
+   "maksSpennM": 1.5785914347174954,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m08",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006201100673120673,
+   "maksSpennM": 1.5812806716457717,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m09",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.011608089091772446,
+   "maksSpennM": 2.9600627184019737,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m09",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.011664864368864237,
+   "maksSpennM": 2.9745404140603804,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m10",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006889421743059507,
+   "maksSpennM": 1.7568025444801743,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m10",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006906956015677183,
+   "maksSpennM": 1.7612737839976818,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m11",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.008314671051903439,
+   "maksSpennM": 2.120241118235377,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m11",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00834443821343191,
+   "maksSpennM": 2.127831744425137,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m12",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006190554645950962,
+   "maksSpennM": 1.5785914347174954,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m12",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006201100673120673,
+   "maksSpennM": 1.5812806716457717,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m13",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003828520318957553,
+   "maksSpennM": 0.976272681334176,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m13",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0038308911450442495,
+   "maksSpennM": 0.9768772419862837,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m14",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.011608089091772446,
+   "maksSpennM": 2.9600627184019737,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m14",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.011664864368864237,
+   "maksSpennM": 2.9745404140603804,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m15",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.008314671051903439,
+   "maksSpennM": 2.120241118235377,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m15",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00834443821343191,
+   "maksSpennM": 2.127831744425137,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m16",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006190554645950962,
+   "maksSpennM": 1.5785914347174954,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m16",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006201100673120673,
+   "maksSpennM": 1.5812806716457717,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m17",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003828520318957553,
+   "maksSpennM": 0.976272681334176,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m17",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0038308911450442495,
+   "maksSpennM": 0.9768772419862837,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m18",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005500032742069943,
+   "maksSpennM": 1.4025083492278354,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m18",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005506017231067795,
+   "maksSpennM": 1.404034393922288,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m19",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006889421743059507,
+   "maksSpennM": 1.7568025444801743,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m19",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006906956015677183,
+   "maksSpennM": 1.7612737839976818,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m20",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006190554645950962,
+   "maksSpennM": 1.5785914347174954,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m20",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00620110033479637,
+   "maksSpennM": 1.5812805853730743,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m21",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003827861090974201,
+   "maksSpennM": 0.9761045781984212,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m21",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0038308911450442495,
+   "maksSpennM": 0.9768772419862837,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m22",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005500032742069943,
+   "maksSpennM": 1.4025083492278354,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m22",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005506014058051261,
+   "maksSpennM": 1.4040335848030716,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m23",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006889421743059507,
+   "maksSpennM": 1.7568025444801743,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m23",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006906956015677183,
+   "maksSpennM": 1.7612737839976818,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m24",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.01240733791395718,
+   "maksSpennM": 3.1638711680590808,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m24",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.011538413313049528,
+   "maksSpennM": 2.94229539482763,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m25",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003814367233163696,
+   "maksSpennM": 0.9726636444567425,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m25",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0038308848795723716,
+   "maksSpennM": 0.9768756442909547,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m26",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006872510497394136,
+   "maksSpennM": 1.7524901768355048,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m26",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006906956015677183,
+   "maksSpennM": 1.7612737839976818,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m27",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.008301192549580193,
+   "maksSpennM": 2.116804100142949,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m27",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00834443821343191,
+   "maksSpennM": 2.127831744425137,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m28",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006170735614246207,
+   "maksSpennM": 1.5735375816327828,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m28",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00620110033479637,
+   "maksSpennM": 1.5812805853730743,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m29",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.011594932681864716,
+   "maksSpennM": 2.9567078338755026,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-3",
+   "felt": "m29",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.011664853737913266,
+   "maksSpennM": 2.974537703167883,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "kontroll",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0030518266066698395,
+   "maksSpennM": 0.7782157847008091,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "kontroll",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0030518266066698395,
+   "maksSpennM": 0.7782157847008091,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m00",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0009759022828151473,
+   "maksSpennM": 0.24885508211786256,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m00",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0009759022828151473,
+   "maksSpennM": 0.24885508211786256,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m01",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0010884775605730888,
+   "maksSpennM": 0.2775617779461377,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m01",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0010884775605730888,
+   "maksSpennM": 0.2775617779461377,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m02",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0011268748913721921,
+   "maksSpennM": 0.287353097299909,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m02",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0011268748913721921,
+   "maksSpennM": 0.287353097299909,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m03",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0008632362486259692,
+   "maksSpennM": 0.22012524339962214,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m03",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0008632362486259692,
+   "maksSpennM": 0.22012524339962214,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m04",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.00019567977134540238,
+   "maksSpennM": 0.04989834169307761,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m04",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00019567977134540238,
+   "maksSpennM": 0.04989834169307761,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m05",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0021957801363340804,
+   "maksSpennM": 0.5599239347651905,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m05",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0021957801363340804,
+   "maksSpennM": 0.5599239347651905,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m06",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.002449074511289447,
+   "maksSpennM": 0.624514000378809,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m06",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.002449074511289447,
+   "maksSpennM": 0.624514000378809,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m07",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0025354685055874295,
+   "maksSpennM": 0.6465444689247946,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m07",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0025354685055874295,
+   "maksSpennM": 0.6465444689247946,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m08",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.001942281559408432,
+   "maksSpennM": 0.49528179764915015,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m08",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.001942281559408432,
+   "maksSpennM": 0.49528179764915015,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m09",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0004402794855271523,
+   "maksSpennM": 0.11227126880942384,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m09",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0004402794855271523,
+   "maksSpennM": 0.11227126880942384,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m10",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0034156579898530154,
+   "maksSpennM": 0.870992787412519,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m10",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0034156579898530154,
+   "maksSpennM": 0.870992787412519,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m11",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003809671462005807,
+   "maksSpennM": 0.9714662228114808,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m11",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.003809671462005807,
+   "maksSpennM": 0.9714662228114808,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m12",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003944062119802669,
+   "maksSpennM": 1.0057358405496806,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m12",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.003944062119802669,
+   "maksSpennM": 1.0057358405496806,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m13",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.003021326870190891,
+   "maksSpennM": 0.7704383518986773,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m13",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.003021326870190891,
+   "maksSpennM": 0.7704383518986773,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m14",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.000684879199708904,
+   "maksSpennM": 0.17464419592577052,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m14",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.000684879199708904,
+   "maksSpennM": 0.17464419592577052,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m15",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0043915602726681624,
+   "maksSpennM": 1.1198478695303815,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m15",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0043915602726681624,
+   "maksSpennM": 1.1198478695303815,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m16",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.004898149022578894,
+   "maksSpennM": 1.249028000757618,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m16",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.004898149022578894,
+   "maksSpennM": 1.249028000757618,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m17",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005070937011174859,
+   "maksSpennM": 1.2930889378495891,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m17",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005070937011174859,
+   "maksSpennM": 1.2930889378495891,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m18",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0038845631188168606,
+   "maksSpennM": 0.9905635952982994,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m18",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0038845631188168606,
+   "maksSpennM": 0.9905635952982994,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m19",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0008805589710543046,
+   "maksSpennM": 0.22454253761884768,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m19",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0008805589710543046,
+   "maksSpennM": 0.22454253761884768,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m20",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005123486984779524,
+   "maksSpennM": 1.3064891811187787,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m20",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005123486984779524,
+   "maksSpennM": 1.3064891811187787,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m21",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.00571450719300871,
+   "maksSpennM": 1.4571993342172211,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m21",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.00571450719300871,
+   "maksSpennM": 1.4571993342172211,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m22",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005916093179704004,
+   "maksSpennM": 1.508603760824521,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m22",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005916093179704004,
+   "maksSpennM": 1.508603760824521,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m23",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0045319903052863375,
+   "maksSpennM": 1.1556575278480161,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m23",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0045319903052863375,
+   "maksSpennM": 1.1556575278480161,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m24",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.001027318799563356,
+   "maksSpennM": 0.2619662938886558,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m24",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.001027318799563356,
+   "maksSpennM": 0.2619662938886558,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m25",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.005855413696890884,
+   "maksSpennM": 1.4931304927071753,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m25",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.005855413696890884,
+   "maksSpennM": 1.4931304927071753,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m26",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006530865363438527,
+   "maksSpennM": 1.6653706676768243,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m26",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006530865363438527,
+   "maksSpennM": 1.6653706676768243,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m27",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.006761249348233146,
+   "maksSpennM": 1.7241185837994522,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m27",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.006761249348233146,
+   "maksSpennM": 1.7241185837994522,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m28",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0051794174917558135,
+   "maksSpennM": 1.3207514603977324,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m28",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0051794174917558135,
+   "maksSpennM": 1.3207514603977324,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m29",
+   "variant": "K-ANB-KYST (2,5 km)",
+   "waveKm": 2.5,
+   "maksTrinnM": 0.0011740786280724056,
+   "maksSpennM": 0.2993900501584634,
+   "fliser": 200,
+   "fliserOver5cm": 0
+  },
+  {
+   "fikstur": "S-8",
+   "felt": "m29",
+   "variant": "K-ANB-UTASKJAERS (5 km)",
+   "waveKm": 5,
+   "maksTrinnM": 0.0011740786280724056,
+   "maksSpennM": 0.2993900501584634,
+   "fliser": 120,
+   "fliserOver5cm": 0
+  }
+ ]
+}

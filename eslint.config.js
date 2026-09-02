@@ -25,10 +25,11 @@ export default tseslint.config(
     },
   },
   {
-    // E1′-målescriptet er et node-script som kjører den bygde motoren og
-    // skriver rådata til disk. Det er ikke motorkode og skal ha node-globaler
-    // og lov til å skrive til stdout — det er hele poenget med det.
-    files: ["tools/e1-maaling/**/*.mjs"],
+    // E1′- og kvantiseringsmålescriptene er node-scripts som kjører den bygde
+    // motoren og skriver rådata til disk. Det er ikke motorkode og skal ha
+    // node-globaler og lov til å skrive til stdout — det er hele poenget med
+    // dem.
+    files: ["tools/e1-maaling/**/*.mjs", "tools/kvantisering/**/*.mjs"],
     languageOptions: {
       globals: { console: "readonly", process: "readonly", performance: "readonly" },
     },

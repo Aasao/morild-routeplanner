@@ -1,0 +1,985 @@
+P1 skjaeloy-skagen-apent        ANALYTISK   15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 skjaeloy-skagen-apent        REF         15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV8       15.294 t  Δt=-0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV10      15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV12      15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV8G      15.309 t  Δt=0.10 %  korridor=0.597 nm  anger=0.09 %  optimisme=0.02 %  BRUDD
+P1 skjaeloy-skagen-apent        W-SD8       15.312 t  Δt=0.12 %  korridor=1.065 nm  anger=-1.42 %  optimisme=1.57 %  BRUDD
+P1 skjaeloy-skagen-apent        W-SD10      15.311 t  Δt=0.11 %  korridor=1.067 nm  anger=0.11 %  optimisme=0.00 %  BRUDD
+P1 skjaeloy-skagen-apent        T-30M       15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        T-15M       15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        R-HALV      15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        FIN-ALT     15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        R-2X        15.294 t  Δt=-0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        R-4X        15.294 t  Δt=-0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 skjaeloy-skagen-apent        T-3H        15.312 t  Δt=0.12 %  korridor=1.072 nm  anger=0.57 %  optimisme=-0.45 %  BRUDD
+P1 skjaeloy-skagen-apent        T-6H        15.311 t  Δt=0.11 %  korridor=1.083 nm  anger=0.51 %  optimisme=-0.39 %  BRUDD
+P1 skjaeloy-skagen-apent        C-2X        15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 skjaeloy-skagen-apent        C-4X        15.294 t  Δt=-0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 skjaeloy-skagen-apent        C-8X        15.294 t  Δt=-0.00 %  korridor=0.002 nm  anger=-0.08 %  optimisme=0.08 %  ok
+P1 skjaeloy-skagen-apent        C-TID       15.334 t  Δt=0.26 %  korridor=7.660 nm  anger=5.93 %  optimisme=-5.35 %  BRUDD
+P1 skjaeloy-skagen-apent        C-8B        15.294 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 skjaeloy-skagen-apent        H-8N        15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        H-8O        15.294 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        H-8G        15.297 t  Δt=0.02 %  korridor=0.006 nm  anger=-0.02 %  optimisme=0.05 %  ok
+P1 skjaeloy-skagen-apent        H-8GO       15.332 t  Δt=0.25 %  korridor=6.088 nm  anger=2.35 %  optimisme=-2.05 %  BRUDD
+P1 skjaeloy-skagen-apent        H-6G        14.344 t  Δt=-6.21 %  korridor=4.215 nm  anger=-5.79 %  optimisme=-0.45 %  BRUDD
+P1 skjaeloy-skagen-apent        P-8G        15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 skjaeloy-skagen-apent        K-ANBEFALT  15.294 t  Δt=0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 skjaeloy-skagen-apent        K-VERSTE    15.344 t  Δt=0.33 %  korridor=1.692 nm  anger=1.46 %  optimisme=-1.12 %  BRUDD
+P1 bohuslan-trange-sund         ANALYTISK   4.329 t  Δt=-0.01 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         REF         4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         W-UV8       4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         W-UV10      4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         W-UV12      4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         W-UV8G      4.329 t  Δt=-0.01 %  korridor=0.006 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         W-SD8       4.329 t  Δt=0.01 %  korridor=0.001 nm  anger=-0.03 %  optimisme=0.04 %  ok
+P1 bohuslan-trange-sund         W-SD10      4.329 t  Δt=-0.01 %  korridor=0.003 nm  anger=-0.01 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         T-30M       4.329 t  Δt=-0.01 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         T-15M       4.329 t  Δt=-0.01 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         R-HALV      4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         FIN-ALT     4.329 t  Δt=-0.01 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         R-2X        4.329 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         R-4X        4.329 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.01 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         T-3H        4.331 t  Δt=0.03 %  korridor=0.012 nm  anger=-0.04 %  optimisme=0.08 %  ok
+P1 bohuslan-trange-sund         T-6H        4.338 t  Δt=0.19 %  korridor=0.058 nm  anger=-0.14 %  optimisme=0.34 %  ok
+P1 bohuslan-trange-sund         C-2X        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         C-4X        4.329 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         C-8X        4.329 t  Δt=0.00 %  korridor=0.003 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         C-TID       4.325 t  Δt=-0.09 %  korridor=0.490 nm  anger=-1.68 %  optimisme=1.63 %  ok
+P1 bohuslan-trange-sund         C-8B        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         H-8N        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         H-8O        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         H-8G        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         H-8GO       4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         H-6G        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         P-8G        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         K-ANBEFALT  4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 bohuslan-trange-sund         K-VERSTE    4.329 t  Δt=0.01 %  korridor=0.014 nm  anger=-0.06 %  optimisme=0.08 %  ok
+P1 ren-kryssetappe              ANALYTISK   11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              REF         11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV8       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV10      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV12      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV8G      11.024 t  Δt=-4.29 %  korridor=4.793 nm  anger=-4.41 %  optimisme=0.13 %  BRUDD
+P1 ren-kryssetappe              W-SD8       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-SD10      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-30M       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-15M       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              R-HALV      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              FIN-ALT     11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              R-2X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              R-4X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-3H        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-6H        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-2X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-4X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-8X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-TID       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-8B        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8N        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8O        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8G        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8GO       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-6G        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              P-8G        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              K-ANBEFALT  11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              K-VERSTE    11.024 t  Δt=-4.29 %  korridor=4.793 nm  anger=-4.41 %  optimisme=0.13 %  BRUDD
+P1 tss-ved-skagen               ANALYTISK   5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               REF         5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV8       5.012 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV10      5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV12      5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV8G      5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=-0.12 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               W-SD8       5.012 t  Δt=0.00 %  korridor=0.009 nm  anger=-0.04 %  optimisme=0.04 %  ok
+P1 tss-ved-skagen               W-SD10      5.012 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.02 %  optimisme=0.02 %  ok
+P1 tss-ved-skagen               T-30M       5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               T-15M       5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               R-HALV      5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               FIN-ALT     5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               R-2X        5.012 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               R-4X        5.012 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.01 %  optimisme=0.01 %  ok
+P1 tss-ved-skagen               T-3H        5.007 t  Δt=-0.11 %  korridor=1.748 nm  anger=-0.11 %  optimisme=0.01 %  BRUDD
+P1 tss-ved-skagen               T-6H        5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=3.54 %  optimisme=-3.53 %  BRUDD
+P1 tss-ved-skagen               C-2X        5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               C-4X        5.012 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               C-8X        5.012 t  Δt=0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               C-TID       5.005 t  Δt=-0.14 %  korridor=2.203 nm  anger=-  optimisme=8.27 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 tss-ved-skagen               C-8B        5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               H-8N        5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               H-8O        5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               H-8G        5.007 t  Δt=-0.11 %  korridor=1.744 nm  anger=-0.13 %  optimisme=0.02 %  BRUDD
+P1 tss-ved-skagen               H-8GO       5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=3.30 %  optimisme=-3.32 %  BRUDD
+P1 tss-ved-skagen               H-6G        5.007 t  Δt=-0.11 %  korridor=1.664 nm  anger=2.97 %  optimisme=-2.99 %  BRUDD
+P1 tss-ved-skagen               P-8G        5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               K-ANBEFALT  5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               K-VERSTE    5.373 t  Δt=7.20 %  korridor=1.698 nm  anger=7.14 %  optimisme=0.06 %  BRUDD [diskret endring]
+P1 uoppnaelig-mal               ANALYTISK   10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               REF         10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               W-UV8       10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               W-UV10      10.008 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               W-UV12      10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               W-UV8G      9.006 t  Δt=-10.01 %  korridor=9.867 nm  anger=-6.32 %  optimisme=-3.94 %  BRUDD
+P1 uoppnaelig-mal               W-SD8       9.011 t  Δt=-9.96 %  korridor=9.869 nm  anger=-6.28 %  optimisme=-3.93 %  BRUDD
+P1 uoppnaelig-mal               W-SD10      10.008 t  Δt=0.00 %  korridor=0.008 nm  anger=-0.02 %  optimisme=0.02 %  ok
+P1 uoppnaelig-mal               T-30M       10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               T-15M       10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               R-HALV      10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               FIN-ALT     10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               R-2X        10.008 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.01 %  optimisme=0.01 %  ok
+P1 uoppnaelig-mal               R-4X        11.009 t  Δt=10.00 %  korridor=12.699 nm  anger=9.96 %  optimisme=0.04 %  BRUDD
+P1 uoppnaelig-mal               T-3H        9.006 t  Δt=-10.01 %  korridor=9.868 nm  anger=-6.32 %  optimisme=-3.94 %  BRUDD
+P1 uoppnaelig-mal               T-6H        11.002 t  Δt=9.94 %  korridor=4.885 nm  anger=9.86 %  optimisme=0.07 %  BRUDD
+P1 uoppnaelig-mal               C-2X        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               C-4X        10.008 t  Δt=0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               C-8X        11.010 t  Δt=10.01 %  korridor=8.284 nm  anger=10.01 %  optimisme=0.00 %  BRUDD
+P1 uoppnaelig-mal               C-TID       10.007 t  Δt=-0.01 %  korridor=8.810 nm  anger=4.74 %  optimisme=-4.54 %  BRUDD
+P1 uoppnaelig-mal               C-8B        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               H-8N        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               H-8O        10.008 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               H-8G        10.000 t  Δt=-0.08 %  korridor=3.080 nm  anger=-0.26 %  optimisme=0.18 %  BRUDD
+P1 uoppnaelig-mal               H-8GO       10.010 t  Δt=0.02 %  korridor=5.786 nm  anger=-0.21 %  optimisme=0.23 %  BRUDD
+P1 uoppnaelig-mal               H-6G        9.008 t  Δt=-9.99 %  korridor=3.959 nm  anger=-9.47 %  optimisme=-0.58 %  BRUDD
+P1 uoppnaelig-mal               P-8G        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               K-ANBEFALT  9.006 t  Δt=-10.01 %  korridor=9.868 nm  anger=-6.32 %  optimisme=-3.94 %  BRUDD
+P1 uoppnaelig-mal               K-VERSTE    11.003 t  Δt=9.95 %  korridor=20.093 nm  anger=9.73 %  optimisme=0.19 %  BRUDD
+P1 hull-i-vaerfeltet            ANALYTISK   5.504 t  Δt=-0.14 %  korridor=1.769 nm  anger=-0.14 %  optimisme=0.00 %  BRUDD
+P1 hull-i-vaerfeltet            REF         5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV8       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV10      5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV12      5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV8G      5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.05 %  optimisme=0.05 %  ok
+P1 hull-i-vaerfeltet            W-SD8       5.511 t  Δt=0.00 %  korridor=0.007 nm  anger=-0.04 %  optimisme=0.04 %  ok
+P1 hull-i-vaerfeltet            W-SD10      5.511 t  Δt=0.00 %  korridor=0.004 nm  anger=-0.01 %  optimisme=0.01 %  ok
+P1 hull-i-vaerfeltet            T-30M       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            T-15M       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            R-HALV      5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            FIN-ALT     5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            R-2X        5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            R-4X        5.511 t  Δt=0.00 %  korridor=0.006 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            T-3H        5.511 t  Δt=0.00 %  korridor=0.002 nm  anger=-0.01 %  optimisme=0.01 %  ok
+P1 hull-i-vaerfeltet            T-6H        5.511 t  Δt=0.00 %  korridor=0.020 nm  anger=-0.07 %  optimisme=0.07 %  ok
+P1 hull-i-vaerfeltet            C-2X        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            C-4X        5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            C-8X        5.510 t  Δt=-0.02 %  korridor=0.610 nm  anger=-  optimisme=-0.28 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 hull-i-vaerfeltet            C-TID       5.511 t  Δt=0.00 %  korridor=3.835 nm  anger=-  optimisme=-0.67 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 hull-i-vaerfeltet            C-8B        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8N        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8O        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8G        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8GO       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-6G        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            P-8G        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            K-ANBEFALT  5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            K-VERSTE    5.510 t  Δt=-0.02 %  korridor=0.610 nm  anger=-  optimisme=-0.23 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 natt-og-dagslysankomst       ANALYTISK   8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       REF         8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV8       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV10      8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV12      8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV8G      8.283 t  Δt=-0.38 %  korridor=3.064 nm  anger=-0.49 %  optimisme=0.11 %  BRUDD
+P1 natt-og-dagslysankomst       W-SD8       8.279 t  Δt=-0.42 %  korridor=3.067 nm  anger=-0.50 %  optimisme=0.09 %  BRUDD
+P1 natt-og-dagslysankomst       W-SD10      8.314 t  Δt=-0.00 %  korridor=0.006 nm  anger=-0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       T-30M       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       T-15M       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       R-HALV      8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       FIN-ALT     8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       R-2X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       R-4X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       T-3H        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       T-6H        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       C-2X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       C-4X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       C-8X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       C-TID       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       C-8B        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       H-8N        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       H-8O        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       H-8G        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       H-8GO       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       H-6G        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       P-8G        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       K-ANBEFALT  8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 natt-og-dagslysankomst       K-VERSTE    8.283 t  Δt=-0.38 %  korridor=3.064 nm  anger=-0.49 %  optimisme=0.11 %  BRUDD
+P1 s3-front-kontroll            ANALYTISK   14.299 t  Δt=-0.01 %  korridor=0.005 nm  anger=0.01 %  optimisme=0.00 %  ok
+P1 s3-front-kontroll            REF         14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            W-UV8       14.301 t  Δt=-0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            W-UV10      14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            W-UV12      14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            W-UV8G      14.301 t  Δt=-0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            W-SD8       14.303 t  Δt=0.01 %  korridor=0.006 nm  anger=-0.01 %  optimisme=0.03 %  ok
+P1 s3-front-kontroll            W-SD10      14.301 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            T-30M       14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            T-15M       14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            R-HALV      14.300 t  Δt=-0.01 %  korridor=0.003 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 s3-front-kontroll            FIN-ALT     14.300 t  Δt=-0.01 %  korridor=0.003 nm  anger=0.00 %  optimisme=0.01 %  ok
+P1 s3-front-kontroll            R-2X        14.305 t  Δt=0.03 %  korridor=0.014 nm  anger=-0.02 %  optimisme=0.07 %  ok
+P1 s3-front-kontroll            R-4X        14.276 t  Δt=-0.17 %  korridor=7.914 nm  anger=-0.23 %  optimisme=0.07 %  BRUDD
+P1 s3-front-kontroll            T-3H        14.314 t  Δt=0.09 %  korridor=2.821 nm  anger=-0.33 %  optimisme=0.44 %  BRUDD
+P1 s3-front-kontroll            T-6H        15.337 t  Δt=7.24 %  korridor=5.998 nm  anger=4.75 %  optimisme=2.40 %  BRUDD
+P1 s3-front-kontroll            C-2X        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            C-4X        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            C-8X        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            C-TID       14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            C-8B        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            H-8N        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            H-8O        14.302 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.00 %  optimisme=0.03 %  ok
+P1 s3-front-kontroll            H-8G        14.288 t  Δt=-0.09 %  korridor=2.995 nm  anger=-0.09 %  optimisme=0.02 %  BRUDD
+P1 s3-front-kontroll            H-8GO       14.288 t  Δt=-0.09 %  korridor=1.062 nm  anger=-0.35 %  optimisme=0.28 %  BRUDD
+P1 s3-front-kontroll            H-6G        14.268 t  Δt=-0.24 %  korridor=3.478 nm  anger=0.18 %  optimisme=-0.40 %  BRUDD
+P1 s3-front-kontroll            P-8G        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.02 %  ok
+P1 s3-front-kontroll            K-ANBEFALT  14.302 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.00 %  optimisme=0.03 %  ok
+P1 s3-front-kontroll            K-VERSTE    14.286 t  Δt=-0.11 %  korridor=3.654 nm  anger=-0.39 %  optimisme=0.30 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   ANALYTISK   13.197 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   REF         13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV8       13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV10      13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV12      13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV8G      13.175 t  Δt=-0.16 %  korridor=4.482 nm  anger=-0.19 %  optimisme=0.03 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   W-SD8       13.207 t  Δt=0.08 %  korridor=3.553 nm  anger=0.15 %  optimisme=-0.08 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   W-SD10      13.296 t  Δt=0.75 %  korridor=4.921 nm  anger=1.03 %  optimisme=-0.27 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   T-30M       13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   T-15M       13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   R-HALV      13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   FIN-ALT     13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   R-2X        13.197 t  Δt=0.00 %  korridor=0.002 nm  anger=-0.01 %  optimisme=0.01 %  ok
+P1 s8-vind-mot-strom-kontroll   R-4X        13.167 t  Δt=-0.23 %  korridor=4.482 nm  anger=-0.21 %  optimisme=-0.01 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   T-3H        13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   T-6H        13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   C-2X        13.196 t  Δt=-0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   C-4X        13.176 t  Δt=-0.16 %  korridor=4.126 nm  anger=-0.16 %  optimisme=0.01 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   C-8X        13.325 t  Δt=0.97 %  korridor=4.793 nm  anger=0.96 %  optimisme=0.01 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   C-TID       13.150 t  Δt=-0.36 %  korridor=6.265 nm  anger=3.22 %  optimisme=-3.46 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   C-8B        13.197 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   H-8N        13.197 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   H-8O        13.197 t  Δt=0.00 %  korridor=0.002 nm  anger=-0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   H-8G        13.268 t  Δt=0.54 %  korridor=4.549 nm  anger=0.51 %  optimisme=0.03 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   H-8GO       13.308 t  Δt=0.85 %  korridor=5.787 nm  anger=0.75 %  optimisme=0.10 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   H-6G        13.191 t  Δt=-0.04 %  korridor=4.485 nm  anger=-0.11 %  optimisme=0.08 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   P-8G        13.267 t  Δt=0.53 %  korridor=4.549 nm  anger=0.37 %  optimisme=0.16 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   K-ANBEFALT  13.328 t  Δt=0.99 %  korridor=4.859 nm  anger=1.14 %  optimisme=-0.14 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   K-VERSTE    13.211 t  Δt=0.11 %  korridor=4.534 nm  anger=-0.06 %  optimisme=0.17 %  BRUDD
+P1 sonde-stromband-9km          ANALYTISK   13.279 t  Δt=0.06 %  korridor=1.053 nm  anger=0.00 %  optimisme=0.00 %  BRUDD
+P1 sonde-stromband-9km          REF         13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          W-UV8       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          W-UV10      13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          W-UV12      13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          W-UV8G      13.223 t  Δt=-0.36 %  korridor=1.927 nm  anger=-0.33 %  optimisme=-0.09 %  BRUDD
+P1 sonde-stromband-9km          W-SD8       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          W-SD10      13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          T-30M       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          T-15M       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          R-HALV      13.276 t  Δt=0.04 %  korridor=1.068 nm  anger=0.01 %  optimisme=-0.04 %  BRUDD
+P1 sonde-stromband-9km          FIN-ALT     13.276 t  Δt=0.04 %  korridor=1.065 nm  anger=0.01 %  optimisme=-0.03 %  BRUDD
+P1 sonde-stromband-9km          R-2X        13.243 t  Δt=-0.21 %  korridor=0.177 nm  anger=0.03 %  optimisme=-0.30 %  ok
+P1 sonde-stromband-9km          R-4X        13.188 t  Δt=-0.63 %  korridor=3.818 nm  anger=-0.26 %  optimisme=-0.43 %  BRUDD
+P1 sonde-stromband-9km          T-3H        13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          T-6H        13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          C-2X        13.271 t  Δt=0.00 %  korridor=0.013 nm  anger=-0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          C-4X        13.187 t  Δt=-0.63 %  korridor=1.748 nm  anger=-0.46 %  optimisme=-0.23 %  BRUDD
+P1 sonde-stromband-9km          C-8X        13.163 t  Δt=-0.81 %  korridor=0.690 nm  anger=-0.44 %  optimisme=-0.44 %  BRUDD
+P1 sonde-stromband-9km          C-TID       13.221 t  Δt=-0.37 %  korridor=2.108 nm  anger=1.35 %  optimisme=-1.76 %  BRUDD
+P1 sonde-stromband-9km          C-8B        13.272 t  Δt=0.01 %  korridor=1.085 nm  anger=0.00 %  optimisme=-0.06 %  BRUDD
+P1 sonde-stromband-9km          H-8N        13.271 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          H-8O        13.271 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          H-8G        13.266 t  Δt=-0.04 %  korridor=1.100 nm  anger=-0.03 %  optimisme=-0.07 %  BRUDD
+P1 sonde-stromband-9km          H-8GO       13.144 t  Δt=-0.95 %  korridor=2.473 nm  anger=-1.03 %  optimisme=0.01 %  BRUDD
+P1 sonde-stromband-9km          H-6G        13.284 t  Δt=0.10 %  korridor=1.040 nm  anger=-0.02 %  optimisme=0.06 %  BRUDD
+P1 sonde-stromband-9km          P-8G        13.266 t  Δt=-0.03 %  korridor=0.041 nm  anger=-0.03 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          K-ANBEFALT  13.271 t  Δt=0.00 %  korridor=0.013 nm  anger=-0.00 %  optimisme=-0.06 %  ok
+P1 sonde-stromband-9km          K-VERSTE    13.374 t  Δt=0.78 %  korridor=4.728 nm  anger=1.07 %  optimisme=-0.35 %  BRUDD
+P1 sonde-stromband-3km          ANALYTISK   13.336 t  Δt=1.27 %  korridor=2.206 nm  anger=1.47 %  optimisme=0.00 %  BRUDD
+P1 sonde-stromband-3km          REF         13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          W-UV8       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          W-UV10      13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          W-UV12      13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          W-UV8G      13.162 t  Δt=-0.04 %  korridor=1.266 nm  anger=0.14 %  optimisme=0.02 %  BRUDD
+P1 sonde-stromband-3km          W-SD8       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          W-SD10      13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          T-30M       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          T-15M       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          R-HALV      13.336 t  Δt=1.28 %  korridor=2.206 nm  anger=1.47 %  optimisme=0.01 %  BRUDD
+P1 sonde-stromband-3km          FIN-ALT     13.202 t  Δt=0.26 %  korridor=2.123 nm  anger=0.41 %  optimisme=0.05 %  BRUDD
+P1 sonde-stromband-3km          R-2X        13.264 t  Δt=0.73 %  korridor=2.175 nm  anger=0.49 %  optimisme=0.44 %  BRUDD
+P1 sonde-stromband-3km          R-4X        13.201 t  Δt=0.26 %  korridor=1.895 nm  anger=-0.12 %  optimisme=0.58 %  BRUDD
+P1 sonde-stromband-3km          T-3H        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          T-6H        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          C-2X        13.172 t  Δt=0.03 %  korridor=2.021 nm  anger=0.16 %  optimisme=0.07 %  BRUDD
+P1 sonde-stromband-3km          C-4X        13.228 t  Δt=0.46 %  korridor=0.737 nm  anger=-0.18 %  optimisme=0.83 %  BRUDD
+P1 sonde-stromband-3km          C-8X        13.303 t  Δt=1.03 %  korridor=2.206 nm  anger=3.31 %  optimisme=-2.02 %  BRUDD
+P1 sonde-stromband-3km          C-TID       13.255 t  Δt=0.66 %  korridor=2.206 nm  anger=2.05 %  optimisme=-1.17 %  BRUDD
+P1 sonde-stromband-3km          C-8B        13.168 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          H-8N        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          H-8O        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.20 %  ok
+P1 sonde-stromband-3km          H-8G        13.163 t  Δt=-0.04 %  korridor=1.266 nm  anger=0.15 %  optimisme=0.01 %  BRUDD
+P1 sonde-stromband-3km          H-8GO       13.188 t  Δt=0.15 %  korridor=4.662 nm  anger=0.04 %  optimisme=0.31 %  BRUDD
+P1 sonde-stromband-3km          H-6G        13.173 t  Δt=0.04 %  korridor=6.275 nm  anger=0.64 %  optimisme=-0.40 %  BRUDD
+P1 sonde-stromband-3km          P-8G        13.163 t  Δt=-0.04 %  korridor=1.266 nm  anger=0.15 %  optimisme=0.01 %  BRUDD
+P1 sonde-stromband-3km          K-ANBEFALT  13.172 t  Δt=0.03 %  korridor=2.021 nm  anger=0.16 %  optimisme=0.07 %  BRUDD
+P1 sonde-stromband-3km          K-VERSTE    13.312 t  Δt=1.09 %  korridor=2.404 nm  anger=0.30 %  optimisme=0.99 %  BRUDD
+
+P1 ferdig på 454 s
+
+P2 ANALYTISK   P50=[14.859 14.769 14.731 14.422 14.712] topp=3 t
+P2 REF         P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 W-UV8       P50=[14.841 14.771 14.581 14.382 14.415] topp=3 t
+P2 W-UV10      P50=[14.840 14.771 14.580 14.382 14.416] topp=3 t
+P2 W-UV12      P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 W-UV8G      P50=[14.842 14.768 14.744 14.356 14.413] topp=3 t
+P2 W-SD8       P50=[14.840 14.782 14.745 14.356 14.417] topp=3 t
+P2 W-SD10      P50=[14.841 14.768 14.744 14.353 14.416] topp=3 t
+P2 T-30M       P50=[14.853 14.770 14.626 14.413 14.373] topp=4 t
+P2 T-15M       P50=[14.857 14.767 14.627 14.438 14.372] topp=4 t
+P2 R-HALV      P50=[14.842 14.780 14.611 14.382 14.779] topp=3 t
+P2 FIN-ALT     P50=[14.858 14.768 14.744 14.437 14.718] topp=3 t
+P2 R-2X        P50=[14.852 14.513 14.583 14.385 14.414] topp=3 t
+P2 R-4X        P50=[14.457 14.407 14.683 14.425 14.649] topp=1 t
+P2 T-3H        P50=[14.997 14.452 14.792 14.648 14.553] topp=1 t
+P2 T-6H        P50=[14.911 15.327 14.611 13.973 13.959] topp=4 t
+P2 C-2X        P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 C-4X        P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 C-8X        P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 C-TID       P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 C-8B        P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 H-8N        P50=[14.840 14.771 14.580 14.383 14.415] topp=3 t
+P2 H-8O        P50=[14.840 14.770 14.579 14.384 14.416] topp=3 t
+P2 H-8G        P50=[14.560 14.337 14.373 14.349 14.752] topp=1 t
+P2 H-8GO       P50=[14.638 14.818 14.608 14.643 14.438] topp=4 t
+P2 H-6G        P50=[14.675 14.463 14.365 14.381 14.038] topp=4 t
+P2 P-8G        P50=[14.840 14.771 14.580 14.383 14.416] topp=3 t
+P2 K-ANBEFALT  P50=[14.840 14.770 14.579 14.384 14.416] topp=3 t
+P2 K-VERSTE    P50=[14.688 14.386 14.361 14.515 14.738] topp=2 t
+  ↳ ANALYTISK   topp=3 t (REF 3 t) inv=0 maksΔP50=2.06 %
+  ↳ W-UV8       topp=3 t (REF 3 t) inv=0 maksΔP50=0.01 %
+  ↳ W-UV10      topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ W-UV12      topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ W-UV8G      topp=3 t (REF 3 t) inv=0 maksΔP50=1.12 %
+  ↳ W-SD8       topp=3 t (REF 3 t) inv=0 maksΔP50=1.13 %
+  ↳ W-SD10      topp=3 t (REF 3 t) inv=0 maksΔP50=1.12 %
+  ↳ T-30M       topp=4 t (REF 3 t) inv=1 maksΔP50=0.31 %
+  ↳ T-15M       topp=4 t (REF 3 t) inv=1 maksΔP50=0.39 %
+  ↳ R-HALV      topp=3 t (REF 3 t) inv=1 maksΔP50=2.52 %
+  ↳ FIN-ALT     topp=3 t (REF 3 t) inv=0 maksΔP50=2.10 %
+  ↳ R-2X        topp=3 t (REF 3 t) inv=1 maksΔP50=1.74 %
+  ↳ R-4X        topp=1 t (REF 3 t) inv=5 maksΔP50=2.58 %
+  ↳ T-3H        topp=1 t (REF 3 t) inv=4 maksΔP50=2.16 %
+  ↳ T-6H        topp=4 t (REF 3 t) inv=2 maksΔP50=3.77 %
+  ↳ C-2X        topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ C-4X        topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ C-8X        topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ C-TID       topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ C-8B        topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ H-8N        topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ H-8O        topp=3 t (REF 3 t) inv=0 maksΔP50=0.01 %
+  ↳ H-8G        topp=1 t (REF 3 t) inv=5 maksΔP50=2.94 %
+  ↳ H-8GO       topp=4 t (REF 3 t) inv=4 maksΔP50=1.81 %
+  ↳ H-6G        topp=4 t (REF 3 t) inv=2 maksΔP50=2.62 %
+  ↳ P-8G        topp=3 t (REF 3 t) inv=0 maksΔP50=0.00 %
+  ↳ K-ANBEFALT  topp=3 t (REF 3 t) inv=0 maksΔP50=0.01 %
+  ↳ K-VERSTE    topp=2 t (REF 3 t) inv=5 maksΔP50=2.61 %
+
+P2 ferdig på 341 s
+
+P3 S-3 +0t ANALYTISK   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t W-UV10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t W-SD8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t W-SD10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t T-30M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t T-15M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t R-HALV      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t FIN-ALT     fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t R-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t R-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t T-3H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t T-6H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t C-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t C-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t C-8X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t C-TID       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t C-8B        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t H-8N        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t H-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t H-8GO       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t P-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t K-ANBEFALT  fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t K-VERSTE    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t ANALYTISK   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t W-UV10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t W-SD8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t W-SD10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t T-30M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t T-15M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t R-HALV      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t FIN-ALT     fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t R-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t R-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t T-3H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t T-6H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t C-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t C-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t C-8X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t C-TID       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t C-8B        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t H-8N        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t H-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t H-8GO       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t P-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t K-ANBEFALT  fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t K-VERSTE    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t ANALYTISK   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t W-UV10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t W-SD8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t W-SD10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t T-30M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t T-15M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t R-HALV      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t FIN-ALT     fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t R-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t R-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t T-3H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t T-6H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t C-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t C-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t C-8X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t C-TID       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t C-8B        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t H-8N        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t H-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t H-8GO       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t P-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t K-ANBEFALT  fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t K-VERSTE    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t ANALYTISK   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t W-UV10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t W-SD8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t W-SD10      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t T-30M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t T-15M       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t R-HALV      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t FIN-ALT     fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t R-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t R-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t T-3H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t T-6H        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t C-2X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t C-4X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t C-8X        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t C-TID       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t C-8B        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t H-8N        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t H-8O        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t H-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t H-8GO       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t H-6G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t P-8G        fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t K-ANBEFALT  fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t K-VERSTE    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +8t ANALYTISK   fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t REF         fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t W-UV8       fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t W-UV10      fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t W-UV12      fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t W-UV8G      fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t W-SD8       fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t W-SD10      fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t T-30M       fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t T-15M       fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t R-HALV      fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t FIN-ALT     fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t R-2X        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t R-4X        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t T-3H        fast 26/30 hard=[m04,m09,m14,m24] egen 25/30 feller=[m04,m09,m14]  ← FLIPP
+P3 S-3 +8t T-6H        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t C-2X        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t C-4X        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t C-8X        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t C-TID       fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t C-8B        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t H-8N        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t H-8O        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t H-8G        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t H-8GO       fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t H-6G        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t P-8G        fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t K-ANBEFALT  fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t K-VERSTE    fast 26/30 hard=[m04,m09,m14,m24] egen 25/30 feller=[m04,m09,m14]  ← FLIPP
+P3 S-8 +0t ANALYTISK   fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t W-UV8       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t W-UV10      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t W-UV12      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t W-UV8G      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t W-SD8       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t W-SD10      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t T-30M       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t T-15M       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t R-HALV      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t FIN-ALT     fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t R-2X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t R-4X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t T-3H        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t T-6H        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t C-2X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t C-4X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t C-8X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t C-TID       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t C-8B        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t H-8N        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t H-8O        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t H-8G        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t H-8GO       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t H-6G        fast 29/30 hard=[m27] egen 29/30 feller=[]  ← FLIPP
+P3 S-8 +0t P-8G        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +0t K-ANBEFALT  fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t K-VERSTE    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t ANALYTISK   fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t W-UV8       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t W-UV10      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t W-UV12      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t W-UV8G      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t W-SD8       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t W-SD10      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t T-30M       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t T-15M       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t R-HALV      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t FIN-ALT     fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t R-2X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t R-4X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t T-3H        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t T-6H        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t C-2X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t C-4X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t C-8X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t C-TID       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t C-8B        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t H-8N        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t H-8O        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t H-8G        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t H-8GO       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t H-6G        fast 29/30 hard=[m27] egen 29/30 feller=[]  ← FLIPP
+P3 S-8 +3t P-8G        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +3t K-ANBEFALT  fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t K-VERSTE    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t ANALYTISK   fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t W-UV8       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t W-UV10      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t W-UV12      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t W-UV8G      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t W-SD8       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t W-SD10      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t T-30M       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t T-15M       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t R-HALV      fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t FIN-ALT     fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t R-2X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t R-4X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t T-3H        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t T-6H        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t C-2X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t C-4X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t C-8X        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t C-TID       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t C-8B        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t H-8N        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t H-8O        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t H-8G        fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t H-8GO       fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t H-6G        fast 29/30 hard=[m27] egen 29/30 feller=[]  ← FLIPP
+P3 S-8 +6t P-8G        fast 28/30 hard=[m26,m27] egen 28/30 feller=(ikke kjørt)
+P3 S-8 +6t K-ANBEFALT  fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t K-VERSTE    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+
+P3 ferdig på 583 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata
+P1 skjaeloy-skagen-apent        ANALYTISK   15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 skjaeloy-skagen-apent        REF         15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV8       15.294 t  Δt=-0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV10      15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV12      15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        W-UV8G      15.309 t  Δt=0.10 %  korridor=0.597 nm  anger=0.09 %  optimisme=-0.02 %  BRUDD
+P1 skjaeloy-skagen-apent        W-SD8       15.312 t  Δt=0.12 %  korridor=1.065 nm  anger=-1.42 %  optimisme=-1.54 %  BRUDD
+P1 skjaeloy-skagen-apent        W-SD10      15.311 t  Δt=0.11 %  korridor=1.067 nm  anger=0.11 %  optimisme=-0.00 %  BRUDD
+P1 skjaeloy-skagen-apent        T-30M       15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        T-15M       15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        R-HALV      15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        FIN-ALT     15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        R-2X        15.294 t  Δt=-0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        R-4X        15.294 t  Δt=-0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 skjaeloy-skagen-apent        T-3H        15.312 t  Δt=0.12 %  korridor=1.072 nm  anger=0.57 %  optimisme=0.45 %  BRUDD
+P1 skjaeloy-skagen-apent        T-6H        15.311 t  Δt=0.11 %  korridor=1.083 nm  anger=0.51 %  optimisme=0.40 %  BRUDD
+P1 skjaeloy-skagen-apent        C-2X        15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 skjaeloy-skagen-apent        C-4X        15.294 t  Δt=-0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 skjaeloy-skagen-apent        C-8X        15.294 t  Δt=-0.00 %  korridor=0.002 nm  anger=-0.08 %  optimisme=-0.08 %  ok
+P1 skjaeloy-skagen-apent        C-TID       15.334 t  Δt=0.26 %  korridor=7.660 nm  anger=5.93 %  optimisme=5.65 %  BRUDD
+P1 skjaeloy-skagen-apent        C-8B        15.294 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 skjaeloy-skagen-apent        H-8N        15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        H-8O        15.294 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        H-8G        15.297 t  Δt=0.02 %  korridor=0.006 nm  anger=-0.02 %  optimisme=-0.05 %  ok
+P1 skjaeloy-skagen-apent        H-8GO       15.332 t  Δt=0.25 %  korridor=6.088 nm  anger=2.35 %  optimisme=2.09 %  BRUDD
+P1 skjaeloy-skagen-apent        H-6G        14.344 t  Δt=-6.21 %  korridor=4.215 nm  anger=-5.79 %  optimisme=0.45 %  BRUDD
+P1 skjaeloy-skagen-apent        H-6GO       15.353 t  Δt=0.39 %  korridor=2.500 nm  anger=1.54 %  optimisme=1.14 %  BRUDD [diskret endring]
+P1 skjaeloy-skagen-apent        P-8G        15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        K-ANBEFALT  15.294 t  Δt=0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 skjaeloy-skagen-apent        K-VERSTE    15.344 t  Δt=0.33 %  korridor=1.692 nm  anger=1.46 %  optimisme=1.13 %  BRUDD
+P1 bohuslan-trange-sund         ANALYTISK   4.329 t  Δt=-0.01 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         REF         4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         W-UV8       4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         W-UV10      4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         W-UV12      4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         W-UV8G      4.329 t  Δt=-0.01 %  korridor=0.006 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         W-SD8       4.329 t  Δt=0.01 %  korridor=0.001 nm  anger=-0.03 %  optimisme=-0.04 %  ok
+P1 bohuslan-trange-sund         W-SD10      4.329 t  Δt=-0.01 %  korridor=0.003 nm  anger=-0.01 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         T-30M       4.329 t  Δt=-0.01 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         T-15M       4.329 t  Δt=-0.01 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         R-HALV      4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         FIN-ALT     4.329 t  Δt=-0.01 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 bohuslan-trange-sund         R-2X        4.329 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         R-4X        4.329 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.01 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         T-3H        4.331 t  Δt=0.03 %  korridor=0.012 nm  anger=-0.04 %  optimisme=-0.08 %  ok
+P1 bohuslan-trange-sund         T-6H        4.338 t  Δt=0.19 %  korridor=0.058 nm  anger=-0.14 %  optimisme=-0.34 %  ok
+P1 bohuslan-trange-sund         C-2X        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         C-4X        4.329 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         C-8X        4.329 t  Δt=0.00 %  korridor=0.003 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         C-TID       4.325 t  Δt=-0.09 %  korridor=0.490 nm  anger=-1.68 %  optimisme=-1.60 %  ok
+P1 bohuslan-trange-sund         C-8B        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         H-8N        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         H-8O        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         H-8G        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         H-8GO       4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         H-6G        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         H-6GO       4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         P-8G        4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         K-ANBEFALT  4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         K-VERSTE    4.329 t  Δt=0.01 %  korridor=0.014 nm  anger=-0.06 %  optimisme=-0.08 %  ok
+P1 ren-kryssetappe              ANALYTISK   11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              REF         11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV8       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV10      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV12      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-UV8G      11.024 t  Δt=-4.29 %  korridor=4.793 nm  anger=-4.41 %  optimisme=-0.13 %  BRUDD
+P1 ren-kryssetappe              W-SD8       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              W-SD10      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-30M       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-15M       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              R-HALV      11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              FIN-ALT     11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              R-2X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              R-4X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-3H        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              T-6H        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-2X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-4X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-8X        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-TID       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              C-8B        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8N        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8O        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8G        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-8GO       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-6G        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              H-6GO       11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              P-8G        11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              K-ANBEFALT  11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              K-VERSTE    11.024 t  Δt=-4.29 %  korridor=4.793 nm  anger=-4.41 %  optimisme=-0.13 %  BRUDD
+P1 tss-ved-skagen               ANALYTISK   5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               REF         5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV8       5.012 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV10      5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV12      5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               W-UV8G      5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=-0.12 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               W-SD8       5.012 t  Δt=0.00 %  korridor=0.009 nm  anger=-0.04 %  optimisme=-0.04 %  ok
+P1 tss-ved-skagen               W-SD10      5.012 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.02 %  optimisme=-0.02 %  ok
+P1 tss-ved-skagen               T-30M       5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               T-15M       5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               R-HALV      5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               FIN-ALT     5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               R-2X        5.012 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               R-4X        5.012 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.01 %  optimisme=-0.01 %  ok
+P1 tss-ved-skagen               T-3H        5.007 t  Δt=-0.11 %  korridor=1.748 nm  anger=-0.11 %  optimisme=-0.01 %  BRUDD
+P1 tss-ved-skagen               T-6H        5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=3.54 %  optimisme=3.66 %  BRUDD
+P1 tss-ved-skagen               C-2X        5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               C-4X        5.012 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               C-8X        5.012 t  Δt=0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               C-TID       5.005 t  Δt=-0.14 %  korridor=2.203 nm  anger=-  optimisme=-7.64 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 tss-ved-skagen               C-8B        5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               H-8N        5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               H-8O        5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               H-8G        5.007 t  Δt=-0.11 %  korridor=1.744 nm  anger=-0.13 %  optimisme=-0.02 %  BRUDD
+P1 tss-ved-skagen               H-8GO       5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=3.30 %  optimisme=3.43 %  BRUDD
+P1 tss-ved-skagen               H-6G        5.007 t  Δt=-0.11 %  korridor=1.664 nm  anger=2.97 %  optimisme=3.08 %  BRUDD
+P1 tss-ved-skagen               H-6GO       5.007 t  Δt=-0.11 %  korridor=1.664 nm  anger=2.97 %  optimisme=3.07 %  BRUDD
+P1 tss-ved-skagen               P-8G        5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               K-ANBEFALT  5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.11 %  optimisme=0.00 %  BRUDD
+P1 tss-ved-skagen               K-VERSTE    5.373 t  Δt=7.20 %  korridor=1.698 nm  anger=7.14 %  optimisme=-0.06 %  BRUDD [diskret endring]
+P1 uoppnaelig-mal               ANALYTISK   10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               REF         10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               W-UV8       10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               W-UV10      10.008 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=-0.00 %  ok
+P1 uoppnaelig-mal               W-UV12      10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               W-UV8G      9.006 t  Δt=-10.01 %  korridor=9.867 nm  anger=-6.32 %  optimisme=4.10 %  BRUDD
+P1 uoppnaelig-mal               W-SD8       9.011 t  Δt=-9.96 %  korridor=9.869 nm  anger=-6.28 %  optimisme=4.09 %  BRUDD
+P1 uoppnaelig-mal               W-SD10      10.008 t  Δt=0.00 %  korridor=0.008 nm  anger=-0.02 %  optimisme=-0.02 %  ok
+P1 uoppnaelig-mal               T-30M       10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               T-15M       10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               R-HALV      10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               FIN-ALT     10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               R-2X        10.008 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.01 %  optimisme=-0.01 %  ok
+P1 uoppnaelig-mal               R-4X        11.009 t  Δt=10.00 %  korridor=12.699 nm  anger=9.96 %  optimisme=-0.04 %  BRUDD
+P1 uoppnaelig-mal               T-3H        9.006 t  Δt=-10.01 %  korridor=9.868 nm  anger=-6.32 %  optimisme=4.10 %  BRUDD
+P1 uoppnaelig-mal               T-6H        11.002 t  Δt=9.94 %  korridor=4.885 nm  anger=9.86 %  optimisme=-0.07 %  BRUDD
+P1 uoppnaelig-mal               C-2X        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               C-4X        10.008 t  Δt=0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               C-8X        11.010 t  Δt=10.01 %  korridor=8.284 nm  anger=10.01 %  optimisme=0.00 %  BRUDD
+P1 uoppnaelig-mal               C-TID       10.007 t  Δt=-0.01 %  korridor=8.810 nm  anger=4.74 %  optimisme=4.76 %  BRUDD
+P1 uoppnaelig-mal               C-8B        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               H-8N        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               H-8O        10.008 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               H-8G        10.000 t  Δt=-0.08 %  korridor=3.080 nm  anger=-0.26 %  optimisme=-0.18 %  BRUDD
+P1 uoppnaelig-mal               H-8GO       10.010 t  Δt=0.02 %  korridor=5.786 nm  anger=-0.21 %  optimisme=-0.23 %  BRUDD
+P1 uoppnaelig-mal               H-6G        9.008 t  Δt=-9.99 %  korridor=3.959 nm  anger=-9.47 %  optimisme=0.58 %  BRUDD
+P1 uoppnaelig-mal               H-6GO       10.003 t  Δt=-0.04 %  korridor=14.651 nm  anger=-1.43 %  optimisme=-1.39 %  BRUDD
+P1 uoppnaelig-mal               P-8G        10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               K-ANBEFALT  9.006 t  Δt=-10.01 %  korridor=9.868 nm  anger=-6.32 %  optimisme=4.10 %  BRUDD
+P1 uoppnaelig-mal               K-VERSTE    11.003 t  Δt=9.95 %  korridor=20.093 nm  anger=9.73 %  optimisme=-0.19 %  BRUDD
+P1 hull-i-vaerfeltet            ANALYTISK   5.504 t  Δt=-0.14 %  korridor=1.769 nm  anger=-0.14 %  optimisme=0.00 %  BRUDD
+P1 hull-i-vaerfeltet            REF         5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV8       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV10      5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV12      5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            W-UV8G      5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.05 %  optimisme=-0.05 %  ok
+P1 hull-i-vaerfeltet            W-SD8       5.511 t  Δt=0.00 %  korridor=0.007 nm  anger=-0.04 %  optimisme=-0.04 %  ok
+P1 hull-i-vaerfeltet            W-SD10      5.511 t  Δt=0.00 %  korridor=0.004 nm  anger=-0.01 %  optimisme=-0.01 %  ok
+P1 hull-i-vaerfeltet            T-30M       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            T-15M       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            R-HALV      5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            FIN-ALT     5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            R-2X        5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            R-4X        5.511 t  Δt=0.00 %  korridor=0.006 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            T-3H        5.511 t  Δt=0.00 %  korridor=0.002 nm  anger=-0.01 %  optimisme=-0.01 %  ok
+P1 hull-i-vaerfeltet            T-6H        5.511 t  Δt=0.00 %  korridor=0.020 nm  anger=-0.07 %  optimisme=-0.07 %  ok
+P1 hull-i-vaerfeltet            C-2X        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            C-4X        5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            C-8X        5.510 t  Δt=-0.02 %  korridor=0.610 nm  anger=-  optimisme=0.28 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 hull-i-vaerfeltet            C-TID       5.511 t  Δt=0.00 %  korridor=3.835 nm  anger=-  optimisme=0.67 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 hull-i-vaerfeltet            C-8B        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8N        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8O        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8G        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-8GO       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-6G        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            H-6GO       5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            P-8G        5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            K-ANBEFALT  5.511 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            K-VERSTE    5.510 t  Δt=-0.02 %  korridor=0.610 nm  anger=-  optimisme=0.23 %  BRUDD  ← PLANEN HOLDER IKKE UNDER SANNHETEN
+P1 natt-og-dagslysankomst       ANALYTISK   8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       REF         8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV8       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV10      8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV12      8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       W-UV8G      8.283 t  Δt=-0.38 %  korridor=3.064 nm  anger=-0.49 %  optimisme=-0.11 %  BRUDD
+P1 natt-og-dagslysankomst       W-SD8       8.279 t  Δt=-0.42 %  korridor=3.067 nm  anger=-0.50 %  optimisme=-0.09 %  BRUDD
+P1 natt-og-dagslysankomst       W-SD10      8.314 t  Δt=-0.00 %  korridor=0.006 nm  anger=-0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       T-30M       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       T-15M       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       R-HALV      8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       FIN-ALT     8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       R-2X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       R-4X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       T-3H        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       T-6H        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       C-2X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       C-4X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       C-8X        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       C-TID       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       C-8B        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       H-8N        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       H-8O        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       H-8G        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       H-8GO       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       H-6G        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       H-6GO       8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       P-8G        8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       K-ANBEFALT  8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       K-VERSTE    8.283 t  Δt=-0.38 %  korridor=3.064 nm  anger=-0.49 %  optimisme=-0.11 %  BRUDD
+P1 s3-front-kontroll            ANALYTISK   14.299 t  Δt=-0.01 %  korridor=0.005 nm  anger=0.01 %  optimisme=-0.00 %  ok
+P1 s3-front-kontroll            REF         14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            W-UV8       14.301 t  Δt=-0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            W-UV10      14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            W-UV12      14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            W-UV8G      14.301 t  Δt=-0.00 %  korridor=0.002 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            W-SD8       14.303 t  Δt=0.01 %  korridor=0.006 nm  anger=-0.01 %  optimisme=-0.03 %  ok
+P1 s3-front-kontroll            W-SD10      14.301 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            T-30M       14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            T-15M       14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            R-HALV      14.300 t  Δt=-0.01 %  korridor=0.003 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 s3-front-kontroll            FIN-ALT     14.300 t  Δt=-0.01 %  korridor=0.003 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 s3-front-kontroll            R-2X        14.305 t  Δt=0.03 %  korridor=0.014 nm  anger=-0.02 %  optimisme=-0.07 %  ok
+P1 s3-front-kontroll            R-4X        14.276 t  Δt=-0.17 %  korridor=7.914 nm  anger=-0.23 %  optimisme=-0.07 %  BRUDD
+P1 s3-front-kontroll            T-3H        14.314 t  Δt=0.09 %  korridor=2.821 nm  anger=-0.33 %  optimisme=-0.44 %  BRUDD
+P1 s3-front-kontroll            T-6H        15.337 t  Δt=7.24 %  korridor=5.998 nm  anger=4.75 %  optimisme=-2.35 %  BRUDD
+P1 s3-front-kontroll            C-2X        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            C-4X        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            C-8X        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            C-TID       14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            C-8B        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            H-8N        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            H-8O        14.302 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.00 %  optimisme=-0.03 %  ok
+P1 s3-front-kontroll            H-8G        14.288 t  Δt=-0.09 %  korridor=2.995 nm  anger=-0.09 %  optimisme=-0.02 %  BRUDD
+P1 s3-front-kontroll            H-8GO       14.288 t  Δt=-0.09 %  korridor=1.062 nm  anger=-0.35 %  optimisme=-0.28 %  BRUDD
+P1 s3-front-kontroll            H-6G        14.268 t  Δt=-0.24 %  korridor=3.478 nm  anger=0.18 %  optimisme=0.40 %  BRUDD
+P1 s3-front-kontroll            H-6GO       14.276 t  Δt=-0.18 %  korridor=5.024 nm  anger=1.11 %  optimisme=1.27 %  BRUDD
+P1 s3-front-kontroll            P-8G        14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            K-ANBEFALT  14.302 t  Δt=0.00 %  korridor=0.003 nm  anger=-0.00 %  optimisme=-0.03 %  ok
+P1 s3-front-kontroll            K-VERSTE    14.286 t  Δt=-0.11 %  korridor=3.654 nm  anger=-0.39 %  optimisme=-0.30 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   ANALYTISK   13.197 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   REF         13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV8       13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV10      13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV12      13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   W-UV8G      13.175 t  Δt=-0.16 %  korridor=4.482 nm  anger=-0.19 %  optimisme=-0.03 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   W-SD8       13.207 t  Δt=0.08 %  korridor=3.553 nm  anger=0.15 %  optimisme=0.08 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   W-SD10      13.296 t  Δt=0.75 %  korridor=4.921 nm  anger=1.03 %  optimisme=0.27 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   T-30M       13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   T-15M       13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   R-HALV      13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   FIN-ALT     13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   R-2X        13.197 t  Δt=0.00 %  korridor=0.002 nm  anger=-0.01 %  optimisme=-0.01 %  ok
+P1 s8-vind-mot-strom-kontroll   R-4X        13.167 t  Δt=-0.23 %  korridor=4.482 nm  anger=-0.21 %  optimisme=0.01 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   T-3H        13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   T-6H        13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   C-2X        13.196 t  Δt=-0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   C-4X        13.176 t  Δt=-0.16 %  korridor=4.126 nm  anger=-0.16 %  optimisme=-0.01 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   C-8X        13.325 t  Δt=0.97 %  korridor=4.793 nm  anger=0.96 %  optimisme=-0.01 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   C-TID       13.150 t  Δt=-0.36 %  korridor=6.265 nm  anger=3.22 %  optimisme=3.58 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   C-8B        13.197 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   H-8N        13.197 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   H-8O        13.197 t  Δt=0.00 %  korridor=0.002 nm  anger=-0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   H-8G        13.268 t  Δt=0.54 %  korridor=4.549 nm  anger=0.51 %  optimisme=-0.03 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   H-8GO       13.308 t  Δt=0.85 %  korridor=5.787 nm  anger=0.75 %  optimisme=-0.10 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   H-6G        13.191 t  Δt=-0.04 %  korridor=4.485 nm  anger=-0.11 %  optimisme=-0.08 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   H-6GO       13.248 t  Δt=0.39 %  korridor=4.485 nm  anger=0.16 %  optimisme=-0.23 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   P-8G        13.267 t  Δt=0.53 %  korridor=4.549 nm  anger=0.37 %  optimisme=-0.16 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   K-ANBEFALT  13.328 t  Δt=0.99 %  korridor=4.859 nm  anger=1.14 %  optimisme=0.14 %  BRUDD
+P1 s8-vind-mot-strom-kontroll   K-VERSTE    13.211 t  Δt=0.11 %  korridor=4.534 nm  anger=-0.06 %  optimisme=-0.17 %  BRUDD
+P1 sonde-stromband-9km          ANALYTISK   13.279 t  Δt=0.06 %  korridor=1.053 nm  anger=0.00 %  optimisme=0.00 %  BRUDD
+P1 sonde-stromband-9km          REF         13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          W-UV8       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          W-UV10      13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          W-UV12      13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          W-UV8G      13.223 t  Δt=-0.36 %  korridor=1.927 nm  anger=-0.33 %  optimisme=0.09 %  BRUDD
+P1 sonde-stromband-9km          W-SD8       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          W-SD10      13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          T-30M       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          T-15M       13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          R-HALV      13.276 t  Δt=0.04 %  korridor=1.068 nm  anger=0.01 %  optimisme=0.04 %  BRUDD
+P1 sonde-stromband-9km          FIN-ALT     13.276 t  Δt=0.04 %  korridor=1.065 nm  anger=0.01 %  optimisme=0.03 %  BRUDD
+P1 sonde-stromband-9km          R-2X        13.243 t  Δt=-0.21 %  korridor=0.177 nm  anger=0.03 %  optimisme=0.30 %  ok
+P1 sonde-stromband-9km          R-4X        13.188 t  Δt=-0.63 %  korridor=3.818 nm  anger=-0.26 %  optimisme=0.43 %  BRUDD
+P1 sonde-stromband-9km          T-3H        13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          T-6H        13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          C-2X        13.271 t  Δt=0.00 %  korridor=0.013 nm  anger=-0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          C-4X        13.187 t  Δt=-0.63 %  korridor=1.748 nm  anger=-0.46 %  optimisme=0.23 %  BRUDD
+P1 sonde-stromband-9km          C-8X        13.163 t  Δt=-0.81 %  korridor=0.690 nm  anger=-0.44 %  optimisme=0.44 %  BRUDD
+P1 sonde-stromband-9km          C-TID       13.221 t  Δt=-0.37 %  korridor=2.108 nm  anger=1.35 %  optimisme=1.79 %  BRUDD
+P1 sonde-stromband-9km          C-8B        13.272 t  Δt=0.01 %  korridor=1.085 nm  anger=0.00 %  optimisme=0.06 %  BRUDD
+P1 sonde-stromband-9km          H-8N        13.271 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          H-8O        13.271 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          H-8G        13.266 t  Δt=-0.04 %  korridor=1.100 nm  anger=-0.03 %  optimisme=0.07 %  BRUDD
+P1 sonde-stromband-9km          H-8GO       13.144 t  Δt=-0.95 %  korridor=2.473 nm  anger=-1.03 %  optimisme=-0.01 %  BRUDD
+P1 sonde-stromband-9km          H-6G        13.284 t  Δt=0.10 %  korridor=1.040 nm  anger=-0.02 %  optimisme=-0.06 %  BRUDD
+P1 sonde-stromband-9km          H-6GO       13.286 t  Δt=0.12 %  korridor=1.036 nm  anger=-0.04 %  optimisme=-0.09 %  BRUDD
+P1 sonde-stromband-9km          P-8G        13.266 t  Δt=-0.03 %  korridor=0.041 nm  anger=-0.03 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          K-ANBEFALT  13.271 t  Δt=0.00 %  korridor=0.013 nm  anger=-0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          K-VERSTE    13.374 t  Δt=0.78 %  korridor=4.728 nm  anger=1.07 %  optimisme=0.35 %  BRUDD
+P1 sonde-stromband-3km          ANALYTISK   13.336 t  Δt=1.27 %  korridor=2.206 nm  anger=1.47 %  optimisme=-0.00 %  BRUDD
+P1 sonde-stromband-3km          REF         13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          W-UV8       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          W-UV10      13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          W-UV12      13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          W-UV8G      13.162 t  Δt=-0.04 %  korridor=1.266 nm  anger=0.14 %  optimisme=-0.02 %  BRUDD
+P1 sonde-stromband-3km          W-SD8       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          W-SD10      13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          T-30M       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          T-15M       13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          R-HALV      13.336 t  Δt=1.28 %  korridor=2.206 nm  anger=1.47 %  optimisme=-0.01 %  BRUDD
+P1 sonde-stromband-3km          FIN-ALT     13.202 t  Δt=0.26 %  korridor=2.123 nm  anger=0.41 %  optimisme=-0.05 %  BRUDD
+P1 sonde-stromband-3km          R-2X        13.264 t  Δt=0.73 %  korridor=2.175 nm  anger=0.49 %  optimisme=-0.44 %  BRUDD
+P1 sonde-stromband-3km          R-4X        13.201 t  Δt=0.26 %  korridor=1.895 nm  anger=-0.12 %  optimisme=-0.57 %  BRUDD
+P1 sonde-stromband-3km          T-3H        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          T-6H        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          C-2X        13.172 t  Δt=0.03 %  korridor=2.021 nm  anger=0.16 %  optimisme=-0.07 %  BRUDD
+P1 sonde-stromband-3km          C-4X        13.228 t  Δt=0.46 %  korridor=0.737 nm  anger=-0.18 %  optimisme=-0.83 %  BRUDD
+P1 sonde-stromband-3km          C-8X        13.303 t  Δt=1.03 %  korridor=2.206 nm  anger=3.31 %  optimisme=2.07 %  BRUDD
+P1 sonde-stromband-3km          C-TID       13.255 t  Δt=0.66 %  korridor=2.206 nm  anger=2.05 %  optimisme=1.18 %  BRUDD
+P1 sonde-stromband-3km          C-8B        13.168 t  Δt=0.00 %  korridor=0.001 nm  anger=-0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          H-8N        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          H-8O        13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          H-8G        13.163 t  Δt=-0.04 %  korridor=1.266 nm  anger=0.15 %  optimisme=-0.01 %  BRUDD
+P1 sonde-stromband-3km          H-8GO       13.188 t  Δt=0.15 %  korridor=4.662 nm  anger=0.04 %  optimisme=-0.31 %  BRUDD
+P1 sonde-stromband-3km          H-6G        13.173 t  Δt=0.04 %  korridor=6.275 nm  anger=0.64 %  optimisme=0.40 %  BRUDD
+P1 sonde-stromband-3km          H-6GO       13.054 t  Δt=-0.87 %  korridor=6.275 nm  anger=-0.29 %  optimisme=0.38 %  BRUDD
+P1 sonde-stromband-3km          P-8G        13.163 t  Δt=-0.04 %  korridor=1.266 nm  anger=0.15 %  optimisme=-0.01 %  BRUDD
+P1 sonde-stromband-3km          K-ANBEFALT  13.172 t  Δt=0.03 %  korridor=2.021 nm  anger=0.16 %  optimisme=-0.07 %  BRUDD
+P1 sonde-stromband-3km          K-VERSTE    13.312 t  Δt=1.09 %  korridor=2.404 nm  anger=0.30 %  optimisme=-0.98 %  BRUDD
+
+P1 ferdig på 748 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata
+P2b ANALYTISK   +0t  30/30  P50=14.403
+P2b ANALYTISK   +1t  30/30  P50=14.378
+P2b ANALYTISK   +2t  30/30  P50=14.293
+P2b ANALYTISK   +3t  30/30  P50=14.289
+P2b ANALYTISK   +4t  30/30  P50=13.842
+P2b REF         +0t  30/30  P50=14.403
+P2b REF         +1t  30/30  P50=14.381
+P2b REF         +2t  30/30  P50=14.305
+P2b REF         +3t  30/30  P50=14.290
+P2b REF         +4t  30/30  P50=13.835
+P2b R-4X        +0t  30/30  P50=14.403
+P2b R-4X        +1t  30/30  P50=14.439
+P2b R-4X        +2t  30/30  P50=14.289
+P2b R-4X        +3t  30/30  P50=14.314
+P2b R-4X        +4t  30/30  P50=14.274
+P2b T-3H        +0t  30/30  P50=14.374
+P2b T-3H        +1t  30/30  P50=14.374
+P2b T-3H        +2t  30/30  P50=14.313
+P2b T-3H        +3t  30/30  P50=14.265
+P2b T-3H        +4t  30/30  P50=13.815
+P2b K-ANBEFALT  +0t  30/30  P50=14.403
+P2b K-ANBEFALT  +1t  30/30  P50=14.382
+P2b K-ANBEFALT  +2t  30/30  P50=14.306
+P2b K-ANBEFALT  +3t  30/30  P50=14.289
+P2b K-ANBEFALT  +4t  30/30  P50=13.836
+  ↳ ANALYTISK   topp=4 t (REF 4 t) inv=0 maksΔP50=0.08 %
+  ↳ R-4X        topp=4 t (REF 4 t) inv=2 maksΔP50=3.17 %
+  ↳ T-3H        topp=4 t (REF 4 t) inv=1 maksΔP50=0.20 %
+  ↳ K-ANBEFALT  topp=4 t (REF 4 t) inv=0 maksΔP50=0.01 %
+
+P2b ferdig på 1580 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata
