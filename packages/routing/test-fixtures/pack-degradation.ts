@@ -45,6 +45,14 @@
  *    (`validToS` rundes ned til siste hele skive) — vi later aldri som om
  *    pakken dekker mer enn skivene sine (N2).
  *
+ * 5. **Fast fysisk LSB er en egen skalamodus** (lagt til 2026-09-03 for D6-C,
+ *    målt i rapportens §9.2). Der `flis` og `global` utleder trinnet av
+ *    dataene, er `fast-lsb` et tall i spec-en — og da blir `maxDecodeErrorKn`
+ *    en formatkonstant i stedet for en funksjon av flisinnholdet. Bitbredden
+ *    snus tilsvarende fra parameter til *måling* (`PackStats.fixedLsb*`), og
+ *    klipping mot kanalens deklarerte område telles, fordi klipping er det ene
+ *    som gjør skranken ugyldig.
+ *
  * Ren og deterministisk som resten av fikstur-grunnlaget: ingen I/O, ingen
  * klokke, ingen RNG. Flis-cachen er ren memoisering — den kan ikke endre et
  * eneste returnert tall, bare hvor mange ganger kildefeltet spørres.
@@ -102,20 +110,55 @@ export type Rounding = "nearest" | "opp";
  * `flis` = skala/offset regnes fra min/maks i flisen (det typiske
  * pakkeformat-valget). `global` = én fast skala for hele feltet, utledet av
  * feltets deklarerte grenser — billigere header, grovere trinn.
+ * `fast-lsb` = trinnet er **oppgitt fysisk** (kn, m, s) og bitbredden er en
+ * konsekvens, ikke et valg; se `FixedLsbOffset` og `fastLsb()`.
  */
-export type ScaleMode = "flis" | "global";
+export type ScaleMode = "flis" | "global" | "fast-lsb";
+
+/**
+ * Hvor nullpunktet i det heltallige kodefeltet ligger, når trinnet er fast
+ * (`scale: "fast-lsb"`).
+ *
+ * - `ingen`: koden er `round(x / lsb)` — gitteret er ankret i **fysisk null**
+ *   og er dermed *det samme overalt*. To like sanne verdier dekoder likt
+ *   uansett hvilken flis de ligger i, og null er representerbart eksakt.
+ *   Kodefeltet må dekke hele kanalens deklarerte område, så bredden er
+ *   `⌈log2(2·⌈grense/lsb⌉ + 1)⌉` bit.
+ * - `flis`: koden er `round((x − min i flisen)/lsb)` med et **eksakt**
+ *   (ikke gitter-justert) flis-minimum i headeren. Kodene blir små — bredden
+ *   er `⌈log2(spenn/lsb + 1)⌉` — men gitteret *flytter seg mellom fliser*,
+ *   og to like sanne verdier på hver sin side av en flisgrense kan dekode
+ *   forskjellig. Det er nettopp den sømmen målingen skal se etter.
+ *
+ * Merk den tredje muligheten, som **ikke** trenger å måles fordi den kan
+ * bevises: et flis-offset som selv ligger på gitteret (`⌊min/lsb⌋·lsb`) gir
+ * `anker + round((x − anker)/lsb)·lsb = round(x/lsb)·lsb` for alle `x`, altså
+ * *bit-identiske dekodede verdier* med `ingen`. Kun bitbredden skiller dem.
+ * Enhetstesten «gitter-justert flis-offset er identisk med ingen offset»
+ * fastholder det.
+ */
+export type FixedLsbOffset = "flis" | "ingen";
 
 export interface QuantSpec {
   /** `null` = ingen kvantisering (Float32-referansen). */
   readonly bits: number | null;
   readonly rounding: Rounding;
   readonly scale: ScaleMode;
+  /**
+   * Fast fysisk trinn i kanalens egen enhet — kun for `scale: "fast-lsb"`,
+   * `null` ellers. Bitbredden er da ikke oppgitt, men **målt**
+   * (`PackStats.fixedLsbMaxSpanCodes`/`fixedLsbMaxAbsCode`).
+   */
+  readonly lsb: number | null;
+  readonly lsbOffset: FixedLsbOffset;
 }
 
 export const FLOAT32: QuantSpec = Object.freeze({
   bits: null,
   rounding: "nearest" as const,
   scale: "flis" as const,
+  lsb: null,
+  lsbOffset: "ingen" as const,
 });
 
 export function quant(
@@ -123,7 +166,32 @@ export function quant(
   rounding: Rounding = "nearest",
   scale: ScaleMode = "flis",
 ): QuantSpec {
-  return Object.freeze({ bits, rounding, scale });
+  return Object.freeze({ bits, rounding, scale, lsb: null, lsbOffset: "ingen" as const });
+}
+
+/**
+ * **Fast fysisk LSB** (D6-C-kandidaten): trinnet er et tall i spec-en, ikke en
+ * funksjon av dataene i flisen.
+ *
+ * Poenget er ikke båndbredde — det er at `maxDecodeErrorKn` blir en
+ * **formatkonstant** (`√2·lsb/2` for u/v) som kan verifiseres i spec-en og i
+ * en test, i stedet for en størrelse som avhenger av hva som tilfeldigvis lå i
+ * flisen. `bits` er derfor `null`: bredden er en konsekvens av `lsb`, offset-
+ * valget og feltets område, og måles av harnessen.
+ */
+export function fastLsb(
+  lsb: number,
+  lsbOffset: FixedLsbOffset = "ingen",
+  rounding: Rounding = "nearest",
+): QuantSpec {
+  if (!(lsb > 0)) throw new Error("fastLsb krever et positivt trinn");
+  return Object.freeze({
+    bits: null,
+    rounding,
+    scale: "fast-lsb" as const,
+    lsb,
+    lsbOffset,
+  });
 }
 
 // ------------------------------------------------------------- pakkespesifik
@@ -221,6 +289,31 @@ export interface PackStats {
   tiles: number;
   /** Oppslag i det ferdige feltet. */
   lookups: number;
+  /**
+   * **Bitbredde-regnskapet for fast LSB** (`scale: "fast-lsb"`), målt i
+   * *koder* relativt fysisk null, uavhengig av offset-valget:
+   *
+   * - `fixedLsbMaxSpanCodes` = største `maksKode − minKode` i én flis og
+   *   skive ⇒ et flis-offset trenger `⌈log2(spenn + 1)⌉` bit.
+   * - `fixedLsbMaxAbsCode` = største `|kode|` ⇒ uten offset trengs
+   *   `⌈log2(2·|kode| + 1)⌉` bit for å dekke det som faktisk forekom (og
+   *   kanalens deklarerte grense for det som *kan* forekomme).
+   *
+   * Begge er nuller for alle andre skalamoduser.
+   */
+  fixedLsbMaxSpanCodes: number;
+  fixedLsbMaxAbsCode: number;
+  /**
+   * Noder der koden måtte klippes til kanalens deklarerte område.
+   * **Klipping bryter vaktbåndet** — feilen er da ikke lenger begrenset av
+   * `lsb/2` — så dette tallet skal være 0, og målingen sjekker det.
+   */
+  fixedLsbClamped: number;
+}
+
+/** Bit som trengs for å representere heltallene `0 … codes`. */
+export function bitsForCodes(codes: number): number {
+  return codes <= 0 ? 1 : Math.ceil(Math.log2(codes + 1));
 }
 
 const NEG = -Infinity;
@@ -288,6 +381,10 @@ class TiledGrid {
     for (let ch = 0; ch < c; ch++) {
       const channel = this.channels[ch]!;
       const q = channel.quant;
+      if (q.scale === "fast-lsb") {
+        this.fastLsbChannel(raw, ch, c, channel);
+        continue;
+      }
       if (q.bits === null) {
         // Float32-referansen: verdiene rundes til Float32, ikke noe annet.
         for (let idx = ch; idx < raw.length; idx += c) {
@@ -354,6 +451,82 @@ class TiledGrid {
     this.stats.tiles++;
     this.cache.set(key, out);
     return out;
+  }
+
+  /**
+   * **Fast fysisk LSB.** Trinnet kommer fra spec-en, ikke fra dataene: ingen
+   * min/maks-avledet skala per flis og skive. Det er hele forskjellen — og
+   * grunnen til at `maxDecodeErrorKn` blir en formatkonstant.
+   *
+   * Kodene telles alltid **relativt fysisk null** i statistikken, uavhengig av
+   * offset-modus, slik at bitbredde-regnskapet for begge offset-valgene kan
+   * leses av samme kjøring.
+   */
+  private fastLsbChannel(
+    raw: Float64Array,
+    ch: number,
+    c: number,
+    channel: Channel,
+  ): void {
+    const q = channel.quant;
+    if (channel.kind === "vinkel") {
+      // En syklisk kanal har ingen fysisk nullpunkt-skala å feste et fast
+      // trinn i; 360/2^bits er dens egen faste LSB. Å late som noe annet
+      // ville vært en stille feil.
+      throw new Error("fast-lsb er ikke definert for sykliske kanaler");
+    }
+    const lsb = q.lsb;
+    if (lsb === null || !(lsb > 0)) {
+      throw new Error("fast-lsb krever et positivt trinn (lsb)");
+    }
+
+    let anchor = 0;
+    if (q.lsbOffset === "flis") {
+      let lo = Infinity;
+      for (let idx = ch; idx < raw.length; idx += c) {
+        const x = raw[idx]!;
+        if (!Number.isNaN(x) && x < lo) lo = x;
+      }
+      if (lo === Infinity) return; // hele flisen mangler data
+      anchor = lo;
+    }
+    const loCode = Math.round(channel.globalMin / lsb);
+    const hiCode = Math.round(channel.globalMax / lsb);
+
+    let codeLo = Infinity;
+    let codeHi = NEG;
+    for (let idx = ch; idx < raw.length; idx += c) {
+      const x = raw[idx]!;
+      if (Number.isNaN(x)) continue;
+      const zeroCode = Math.round(x / lsb);
+      if (zeroCode < codeLo) codeLo = zeroCode;
+      if (zeroCode > codeHi) codeHi = zeroCode;
+      const t = (x - anchor) / lsb;
+      let qi = q.rounding === "opp" ? Math.ceil(t) : Math.round(t);
+      if (q.lsbOffset === "ingen") {
+        // Uten offset er kodefeltet ankret i null og må dekke kanalens
+        // deklarerte område. Klipping utenfor er en ekte formatgrense — den
+        // teller, den skjules ikke.
+        if (qi < loCode) {
+          qi = loCode;
+          this.stats.fixedLsbClamped++;
+        } else if (qi > hiCode) {
+          qi = hiCode;
+          this.stats.fixedLsbClamped++;
+        }
+      }
+      raw[idx] = anchor + qi * lsb;
+    }
+    if (codeHi >= codeLo) {
+      const span = codeHi - codeLo;
+      if (span > this.stats.fixedLsbMaxSpanCodes) {
+        this.stats.fixedLsbMaxSpanCodes = span;
+      }
+      const abs = Math.max(Math.abs(codeLo), Math.abs(codeHi));
+      if (abs > this.stats.fixedLsbMaxAbsCode) {
+        this.stats.fixedLsbMaxAbsCode = abs;
+      }
+    }
   }
 
   private node(i: number, j: number, k: number, into: Float64Array): void {
@@ -455,6 +628,28 @@ export interface Pack {
  */
 export function packTwsDecodeErrorKn(spec: PackSpec, twsCapKn: number): number {
   const q = spec.windQuant;
+  /**
+   * **Fast fysisk LSB** — punkt 1 i utledningen over, men uten steg null:
+   * trinnet er `lsb`, oppgitt i spec-en, og *ikke* utledet av `hi − lo`.
+   * Skranken blir dermed uavhengig av feltet, av flisstørrelsen og av hva som
+   * tilfeldigvis lå i flisen: `√2·lsb/2` for u/v, `lsb/2` for fart+retning
+   * (nearest). Punkt 2 og 3 gjelder ordrett som før.
+   *
+   * Forutsetningen som ikke er gratis: **ingen klipping**. Klippes en kode mot
+   * kanalens deklarerte område, er feilen ikke lenger begrenset av trinnet, og
+   * skranken under er ikke gyldig. `PackStats.fixedLsbClamped` teller nettopp
+   * det, og målingen krever at den er 0.
+   */
+  if (q.scale === "fast-lsb") {
+    const lsb = q.lsb;
+    if (lsb === null || !(lsb > 0)) {
+      throw new Error("fast-lsb krever et positivt trinn (lsb)");
+    }
+    const oneSided = q.rounding === "opp" ? 1 : 0.5;
+    return spec.windStorage === "uv"
+      ? Math.SQRT2 * oneSided * lsb
+      : oneSided * lsb;
+  }
   if (q.bits === null) return 0; // Float32-referansen kvantiserer ikke.
   const levels = 2 ** q.bits - 1;
   const oneSided = q.rounding === "opp" ? 1 : 0.5;
@@ -474,7 +669,14 @@ export function packField(
   spec: PackSpec,
   domain: PackDomain,
 ): Pack {
-  const stats: PackStats = { baseSamples: 0, tiles: 0, lookups: 0 };
+  const stats: PackStats = {
+    baseSamples: 0,
+    tiles: 0,
+    lookups: 0,
+    fixedLsbMaxSpanCodes: 0,
+    fixedLsbMaxAbsCode: 0,
+    fixedLsbClamped: 0,
+  };
   const dt = spec.timeStepS;
   const t0 = base.validFromS;
   // Pakkens gyldighet er unionen av skivene den faktisk bærer.

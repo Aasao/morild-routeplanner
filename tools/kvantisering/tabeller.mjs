@@ -178,6 +178,68 @@ if (p1 !== null) {
   }
 }
 
+// ------------------------------------------------- P1e: vaktbånd og bitbredde
+
+/**
+ * **Vaktbånd-tabellen** (tillegg §9.2, fast fysisk LSB).
+ *
+ * Kolonnene her er *ikke* feltsonden i P1b: de måler pakken mot en pakke med
+ * identisk grid, flisgeometri og tidsnett, men Float32 vind. Differansen er
+ * dermed ren kvantiseringsfeil — den eneste størrelsen `maxDecodeErrorKn`
+ * påstår noe om (§9.5). «Innenfor» er kriteriet: vaktbåndet skal være en
+ * skranke over den målte feilen i alle scenarioer, ellers er båndet feil.
+ */
+if (p1 !== null) {
+  const medBand = REKKEFOLGE.filter((id) =>
+    p1.rader.some((r) => r.konfig === id && r.vaktband !== null && r.vaktband !== undefined),
+  );
+  if (medBand.length > 0) {
+    console.log(
+      "\n### P1e — vaktbånd mot målt kvantiseringsfeil (ren, uten grid-/tidsfeil)\n",
+    );
+    console.log(
+      "| konfig | LSB (kn) | vaktbånd (kn) | maks målt kvant.feil (kn) | RMS (kn) | innenfor båndet | maks over deklarert maks (kn) | fanget av båndet | klippede koder |",
+    );
+    console.log("|---|---|---|---|---|---|---|---|---|");
+    for (const id of medBand) {
+      const v = p1.rader
+        .filter((r) => r.konfig === id && r.vaktband)
+        .map((r) => r.vaktband);
+      const m = (f) => Math.max(...v.map(f));
+      const klipp = v.reduce((a, x) => a + (x.klippedeKoder ?? 0), 0);
+      console.log(
+        `| \`${id}\` | ${v[0].lsbKn === null ? "—" : num(v[0].lsbKn, 2)} | ${num(m((x) => x.bandKn), 4)} | ` +
+          `${num(m((x) => x.maksKvantiseringsfeilKn), 4)} | ${num(m((x) => x.rmsKvantiseringsfeilKn), 4)} | ` +
+          `${v.every((x) => x.innenfor) ? "ja" : "**NEI**"} | ${num(m((x) => x.maksOverDeklarertKn), 4)} | ` +
+          `${v.every((x) => x.overDeklarertFanget) ? "ja" : "**NEI**"} | ${klipp === 0 ? "0" : `**${klipp}**`} |`,
+      );
+    }
+
+    const medLsb = medBand.filter((id) =>
+      p1.rader.some((r) => r.konfig === id && r.vaktband && r.vaktband.lsbKn !== null),
+    );
+    if (medLsb.length > 0) {
+      console.log(
+        "\n### P1f — fast LSB: bitbredden er en konsekvens, ikke et valg\n",
+      );
+      console.log(
+        "| konfig | LSB (kn) | maks kodespenn i én flis+skive | bit m/flis-offset | maks \\|kode\\| | bit u/offset (realisert) | bit u/offset (deklarert område) |",
+      );
+      console.log("|---|---|---|---|---|---|---|");
+      for (const id of medLsb) {
+        const v = p1.rader
+          .filter((r) => r.konfig === id && r.vaktband && r.vaktband.lsbKn !== null)
+          .map((r) => r.vaktband);
+        const m = (f) => Math.max(...v.map(f));
+        console.log(
+          `| \`${id}\` | ${num(v[0].lsbKn, 2)} | ${m((x) => x.spennKoder)} | ${m((x) => x.bitMedFlisOffset)} | ` +
+            `${m((x) => x.absKode)} | ${m((x) => x.bitUtenOffsetRealisert)} | ${m((x) => x.bitUtenOffsetDeklarert)} |`,
+        );
+      }
+    }
+  }
+}
+
 // ------------------------------------------------------------------ P2
 
 for (const [fil, tittel] of [

@@ -506,6 +506,32 @@ med lavest forventet informasjonsverdi, ikke tilfeldig) og markere
 degraderingsrekkefølgen er en implementasjonsdetalj som kvantiseringsmålingen
 informerer, ikke en beslutning denne spec-en låser nå.
 
+**D6-C-notat (2026-09-03, kompresjonsspike — Magnus' beslutning).** Et
+**INTERIM budsjettak på 50 MB** per rutepakke gjelder mens
+komprimeringsstrategien revideres — dette er IKKE et nytt permanent
+budsjett, kun en midlertidig grense mens regnestykket over er i bevegelse
+(§19 (4)s 27,4 MB-vind-alene-funn presset budsjettspørsmålet før en
+komprimeringsspike var gjort). Grunnlag:
+`docs/research/kompresjonsmaaling-2026-09-03.md`. **Hovedfunn: dagens
+delta+gzip-skjema deltakoder langs FEIL AKSE.** MEPS-vind ved 2,5 km
+beveger seg ~15 celler/time — nabo-TIDSSTEGET på samme node er derfor svakt
+korrelert, mens NABOCELLEN I ROM på samme tidssteg er sterkt korrelert.
+Målt (kontroll+30 medlemmer, begge fliser 5_28/5_29, init 04Z 3. sept):
+å bytte prediktor fra tidsdelta til en romlig prediktor (venstre-nabo eller
+2D MED/Paeth, JPEG-LS-stil) mer enn HALVERER gzip-størrelsen ved SAMME
+kvantisering (dagens 8-bit adaptive skjema, tidsdelta: 26,84 MB → 2D MED:
+18,96 MB). Å I TILLEGG grovne kvantiseringen fra dagens per-subflis-per-
+tidssteg adaptive ~0,1–0,2 kn LSB til en FAST, global 0,5 kn LSB (§9.1s
+"finere enn ruteren trenger", jf. fagagentdiagnosen) og bruke 2D MED-
+prediktoren gir en samlet komprimeringsfaktor på **ca. 3,8×** (mot dagens
+1,06×) — 7,56 MB mot dagens 27,4 MB for de to målte flisene. **INGEN
+endring i produksjonspipelinen** (`pipeline.ts`, `package-format.ts`) er
+gjort av denne bølgen — dette er en spike (`tools/weather-pack/src/
+entropy-experiment.ts`) som informerer en fremtidig beslutning, ikke en
+låst ny kvantisering/prediktor. Se rapporten for full matrise, entropigap
+og representativitetsforbehold (én init, to fliser — 3–5 init over ulike
+regimer bør måles før noe her låses).
+
 ---
 
 ## 9. Kvantisering og oppløsning — LÅST (todelt), besluttet 2026-09-02
@@ -529,6 +555,23 @@ remålingssjekken (§17 pkt. 7 og under) inn i pipelinen fra dag én, ikke som
 en etterpåklokskap.
 
 ### 9.1 LÅST — vind: lagringsform, bit-bredde, romlig oppløsning, horisont
+
+**D6-C-notat (2026-09-03, kompresjonsspike).** Bit-bredden (8-bit) og
+subflis-geometrien punkt 1 låser er UENDRET av denne spiken. Det som ER
+undersøkt, uten å låses, er SKALAEN innenfor de 8 bitene: dagens per-
+subflis-per-tidssteg adaptive min/maks gir en LSB på ca. 0,1–0,2 kn —
+finere enn ruteren trenger, ifølge fagagentens diagnose (§9.8s
+skadeharness måler tap i rangeringskvalitet, ikke i rå kvantiseringsfeil
+alene). `docs/research/kompresjonsmaaling-2026-09-03.md` måler at en FAST,
+GLOBAL LSB på 0,5 kn (i stedet for dagens adaptive skjema) komprimerer
+vesentlig bedre — men er **IKKE klar til å låses**: den krever samme
+regresjons-/skadeharness som §9.8s MIDLERTIDIGE terskler ble målt med
+(`K-ANB-KYST` m.fl., `tools/kvantisering`, parallell bølge samme dag) for
+å bekrefte at 0,5 kn faktisk ikke forringer avgangsrangeringen på EKTE
+MEPS-data — kompresjonsspiken målte kun byte-størrelse og
+kvantiseringsfeil (`maxDecodeErrorKn`), ikke rangeringspåvirkning. Til det
+er gjort, er punkt 1s per-subflis-adaptive skjema fortsatt gjeldende
+produksjonsatferd.
 
 1. **u/v-komponenter, 8-bit, skala/offset per subflis** (§7, 32×32 noder,
    byte-alignet). 10-bit ble vurdert og **avvist**: målingens
@@ -1356,6 +1399,36 @@ starte.
 
 ## 19. Endringslogg
 
+- **2026-09-03 (6) — D6-C kompresjonsspike på den EKTE vindpakken
+  (vær-analytikeren).** Magnus besluttet D6-C etter §19 (4)s 27,4 MB-funn:
+  undersøk om delta+gzip er feil komprimeringsstrategi før en 40 MB-
+  budsjettrevisjon låses. `tools/weather-pack/src/entropy-experiment.ts`
+  (nytt, leser KUN allerede nedlastede blober — ingen nye THREDDS-kall)
+  rekonstruerte fysisk verdi fra de ekte 5_28/5_29-pakkene og målte
+  empirisk entropi + faktisk gzip/brotli for 5 kvantiseringsvarianter ×
+  6 prediktorer = 30 kombinasjoner. **Hovedfunn: tidsdelta er FEIL AKSE**
+  (MEPS-vind ved 2,5 km flytter ~15 celler/t — nabotidssteget er svakt
+  korrelert, nabocellen i ROM er sterkt korrelert). Beste målte
+  kombinasjon (fast global 0,5 kn LSB + 2D MED/Paeth-prediktor): **7,56 MB**
+  for begge fliser, kontroll+30 medlemmer (mot dagens 27,4 MB — faktor
+  **3,8×** der dagens skjema ga 1,06×), til en kostnad av
+  `maxDecodeErrorKn` 0,35 kn (mot dagens ~0,12 kn — fortsatt godt innenfor
+  det fagagenten anslo som tilstrekkelig, §9.1-notatet under). Satt
+  sammen med `docs/research/kompresjonsmaaling-2026-09-03.md`s
+  1°-flisregnskap (samme rute trenger kun 36 % av dagens 2°-flisers
+  nodeareal — en uavhengig, komponerbar besparelse), er en kombinert
+  pakke trolig innenfor et 15 MB-område i stedet for 27–40 MB, MEN
+  **ingen av tallene er låst**: én init, to fliser over åpent Skagerrak —
+  3–5 init over ulike værregimer trengs (rapportens §7), og den faste
+  LSB-en krever samme skadeharness som §9.8 (`tools/kvantisering`,
+  parallell bølge) før rangeringspåvirkningen (ikke bare byte-størrelsen)
+  er verifisert. `grid.ts`s flisstørrelse (`WEATHER_TILE_DEG`) er nå en
+  eksplisitt parameter (`tileIdForLonLat`/`tileBounds`/`tilesOverlapping`
+  tar en valgfri `tileSizeDeg`) — standarden er UENDRET (2°), bytte er
+  bevisst holdt til én linje for Magnus å beslutte. Et INTERIM
+  budsjettak på **50 MB** gjelder til budsjett-/kvantiseringsspørsmålet
+  er avgjort (§8-notatet). Ingen produksjonskode
+  (`pipeline.ts`/`package-format.ts`) er endret av denne bølgen.
 - **2026-09-03 (5) — Klienten kobler på ekte vær ende-til-ende (fase 3
   bølge 2C, pwa-agenten).** `apps/pwa`: pakke-peker → Cache API (eget
   navnerom per formatversjon-major, `navigator.storage.persist()` ved

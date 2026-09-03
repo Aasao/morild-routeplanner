@@ -12,6 +12,7 @@
  * ikke om referansen er lossy, og da er alle andre tall udefinerte.
  */
 import {
+  fastLsb,
   quant,
   REF_PACK,
   withPack,
@@ -66,6 +67,151 @@ export const KONFIGURASJONER = [
       windQuant: quant(10),
       dirQuant: quant(10),
     }),
+  },
+
+  /**
+   * **Fast fysisk LSB** (lagt til 2026-09-03, tillegg §9.2). Magnus' beslutning
+   * D6-C: fast LSB er kandidat til nytt vindformat, men skal låses **først**
+   * etter at harnessen er kjørt på den — det er sikkerhetssemantikk, ikke
+   * båndbredde.
+   *
+   * Forskjellen fra `W-UV8`/`W-UV8G` er ikke finheten, men **hvor trinnet kommer
+   * fra**: her er det et tall i spec-en (0,25 eller 0,5 kn), ikke `(maks −
+   * min)/255` i flisen og skiven. Konsekvensen er at `maxDecodeErrorKn` blir en
+   * formatkonstant (`√2·lsb/2`) som kan verifiseres, i stedet for en størrelse
+   * som avhenger av hva som lå i flisen. Prisen er at bitbredden blir en
+   * konsekvens og ikke et valg — harnessen måler den.
+   *
+   * To offset-varianter, fordi de skiller seg på **gitterets sømmer**:
+   * `-O` har et eksakt flis-minimum som nullpunkt (gitteret flytter seg mellom
+   * fliser), de andre er ankret i fysisk null (ett gitter for hele feltet). Den
+   * tredje varianten — gitter-justert flis-offset — er *bevist* identisk med
+   * «ingen offset» i enhetstesten og trenger ingen egen kjøring.
+   */
+  {
+    id: "F-LSB025",
+    akse: "vind",
+    spec: withPack("F-LSB025", "u/v fast LSB 0,25 kn, ankret i fysisk null (ingen offset)", {
+      windQuant: fastLsb(0.25, "ingen"),
+    }),
+  },
+  {
+    id: "F-LSB025O",
+    akse: "vind",
+    spec: withPack("F-LSB025O", "u/v fast LSB 0,25 kn, offset = eksakt flis-minimum", {
+      windQuant: fastLsb(0.25, "flis"),
+    }),
+  },
+  {
+    id: "F-LSB050",
+    akse: "vind",
+    spec: withPack("F-LSB050", "u/v fast LSB 0,5 kn, ankret i fysisk null (ingen offset)", {
+      windQuant: fastLsb(0.5, "ingen"),
+    }),
+  },
+  {
+    id: "F-LSB050O",
+    akse: "vind",
+    spec: withPack("F-LSB050O", "u/v fast LSB 0,5 kn, offset = eksakt flis-minimum", {
+      windQuant: fastLsb(0.5, "flis"),
+    }),
+  },
+
+  /**
+   * **Finhetskontrollen** (2026-09-03). P1 viste at `F-LSB025` og `F-LSB025O`
+   * — *samme* trinn, ulikt gitter-anker — havner på hver sin gren på
+   * `skjaeloy-skagen-apent` (0,08 % mot 2,80 % anger). Er det anker-lotteriet
+   * §11 forbehold 1 beskriver, skal et **finere** fast trinn legge begge
+   * ankere tilbake på referansens gren. Er det i stedet noe fast-LSB-formen
+   * gjør uansett finhet, skal effekten overleve. Kontrollen er ikke en
+   * formatkandidat: 0,1 kn er ikke byte-vennlig i noen ende.
+   */
+  {
+    id: "F-LSB010",
+    akse: "vind",
+    spec: withPack("F-LSB010", "u/v fast LSB 0,1 kn, ingen offset (finhetskontroll)", {
+      windQuant: fastLsb(0.1, "ingen"),
+    }),
+  },
+  {
+    id: "F-LSB010O",
+    akse: "vind",
+    spec: withPack("F-LSB010O", "u/v fast LSB 0,1 kn, offset per flis (finhetskontroll)", {
+      windQuant: fastLsb(0.1, "flis"),
+    }),
+  },
+  /**
+   * Finhetskontrollen **i helheten**. P2b viste at `K-KYST-F025` mister S-5s
+   * +4 t-gren (13,84 t → 14,31 t) der `K-ANB-KYST` med 8-bit flis-skala
+   * beholder den, mens `F-LSB025` *alene* på Float32-bunn ikke gjør det. Er
+   * årsaken at 0,25 kn er grovere enn det flis-skalaen faktisk leverer på
+   * disse feltene (~0,05–0,08 kn), skal et finere fast trinn i den samme
+   * helheten få grenen tilbake. Det er den eneste måten å skille «fast LSB er
+   * feil form» fra «0,25 kn er for grovt».
+   */
+  {
+    id: "K-KYST-F010",
+    akse: "kombinasjon",
+    spec: withPack(
+      "K-KYST-F010",
+      "K-ANB-KYST med vind på fast LSB 0,1 kn (ingen offset); ellers identisk",
+      {
+        windQuant: fastLsb(0.1, "ingen"),
+        windKm: 2.5,
+        waveKm: 2.5,
+        timeStepS: 3600,
+        currentKm: 0.8,
+        currentQuant: quant(8),
+        hsQuant: quant(8, "opp"),
+        tpQuant: quant(8),
+        dirQuant: quant(8),
+      },
+    ),
+  },
+
+  /**
+   * **Helheten**, ikke bare aksen. §9.1 slo fast at «skade er ikke monoton i
+   * grovhet», og at anbefalingen derfor må måles som den pakken den skal
+   * implementeres som. Disse to er `K-ANB-KYST` med vinden byttet til fast LSB
+   * — alt annet likt — slik at en effekt kan attribueres til byttet alene.
+   */
+  {
+    id: "K-KYST-F025",
+    akse: "kombinasjon",
+    spec: withPack(
+      "K-KYST-F025",
+      "K-ANB-KYST med vind på fast LSB 0,25 kn (ingen offset); ellers identisk",
+      {
+        windQuant: fastLsb(0.25, "ingen"),
+        windKm: 2.5,
+        waveKm: 2.5,
+        timeStepS: 3600,
+        currentKm: 0.8,
+        currentQuant: quant(8),
+        hsQuant: quant(8, "opp"),
+        tpQuant: quant(8),
+        dirQuant: quant(8),
+      },
+    ),
+  },
+  {
+    id: "K-KYST-F050",
+    akse: "kombinasjon",
+    spec: withPack(
+      "K-KYST-F050",
+      "K-ANB-KYST med vind på fast LSB 0,5 kn (ingen offset); ellers identisk",
+      {
+        windQuant: fastLsb(0.5, "ingen"),
+        windKm: 2.5,
+        waveKm: 2.5,
+        timeStepS: 3600,
+        currentKm: 0.8,
+        currentQuant: quant(8),
+        hsQuant: quant(8, "opp"),
+        tpQuant: quant(8),
+        dirQuant: quant(8),
+      },
+    ),
   },
 
   /**
@@ -324,4 +470,14 @@ export const FULLE_SOK_KONFIG = [
   // `R-2X` er den samme 5 km-nedtynningen UTEN kvantisering — kjøres for å
   // skille «5 km» fra «8 bit» som årsak.
   "R-2X",
+  // Tillegg §9.2 (fast fysisk LSB, 2026-09-03): formatvalg skal hvile på det
+  // sterke rangeringsinstrumentet (§11 forbehold 2), ikke på P2a.
+  "F-LSB025",
+  "F-LSB025O",
+  "F-LSB050",
+  "F-LSB050O",
+  "K-KYST-F025",
+  "K-KYST-F050",
+  "K-KYST-F010",
+  "F-LSB010",
 ];

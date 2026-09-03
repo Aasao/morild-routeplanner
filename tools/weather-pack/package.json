@@ -9,7 +9,8 @@
     "dry-run": "tsc -b . && node dist/cli.js",
     "cli": "tsc -b . && node dist/cli.js",
     "measure-full-size": "tsc -b . && node dist/measure-full-size.js",
-    "build-live": "tsc -b . && node dist/build-live-package.js"
+    "build-live": "tsc -b . && node dist/build-live-package.js",
+    "entropy-experiment": "tsc -b . && node dist/entropy-experiment.js"
   },
   "dependencies": {
     "@morild/protocol": "workspace:*",

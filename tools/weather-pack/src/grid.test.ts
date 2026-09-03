@@ -44,6 +44,26 @@ describe("tilesOverlapping", () => {
   });
 });
 
+describe("tileSizeDeg-parameter (D6-C, 2026-09-03 — flisstørrelse er nå eksplisitt, standard uendret)", () => {
+  it("tileIdForLonLat/tileBounds tar en valgfri tileSizeDeg uten å endre 2°-standarden", () => {
+    expect(tileIdForLonLat(10.5, 59.1)).toEqual(tileIdForLonLat(10.5, 59.1, 2));
+    expect(tileIdForLonLat(10.5, 59.1, 1)).toEqual({ lonIndex: 10, latIndex: 59 });
+    expect(tileBounds({ lonIndex: 10, latIndex: 59 }, 1)).toEqual({
+      west: 10,
+      south: 59,
+      east: 11,
+      north: 60,
+    });
+  });
+
+  it("tilesOverlapping med tileSizeDeg=1 gir flere, mindre fliser enn standard 2°", () => {
+    const bbox = { west: 9.0, south: 57.3, east: 11.5, north: 59.6 };
+    const tiles1 = tilesOverlapping(bbox, 1);
+    const tiles2 = tilesOverlapping(bbox, 2);
+    expect(tiles1.length).toBeGreaterThan(tiles2.length);
+  });
+});
+
 describe("computeSubtiles", () => {
   it("deler et 106x106-vindu (spike-funn 6) i <=32x32-subfliser med restrader/-kolonner", () => {
     const subtiles = computeSubtiles({ yStart: 0, yEnd: 105, xStart: 0, xEnd: 105 });

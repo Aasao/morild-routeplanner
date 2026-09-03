@@ -1,0 +1,365 @@
+{
+ "beskrivelse": "Kvantiseringsmåling 2026-09-01 — se docs/research/kvantiseringsmaaling-2026-09-01.md",
+ "referanse": "REF",
+ "tidToleranse": 0.02,
+ "korridorNm": 0.5,
+ "konfigurasjoner": [
+  {
+   "id": "REF",
+   "akse": "baseline",
+   "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+   "spec": {
+    "id": "REF",
+    "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB025",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,25 kn, ankret i fysisk null (ingen offset)",
+   "spec": {
+    "id": "F-LSB025",
+    "note": "u/v fast LSB 0,25 kn, ankret i fysisk null (ingen offset)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.25,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB025O",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,25 kn, offset = eksakt flis-minimum",
+   "spec": {
+    "id": "F-LSB025O",
+    "note": "u/v fast LSB 0,25 kn, offset = eksakt flis-minimum",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.25,
+     "lsbOffset": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB050",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,5 kn, ankret i fysisk null (ingen offset)",
+   "spec": {
+    "id": "F-LSB050",
+    "note": "u/v fast LSB 0,5 kn, ankret i fysisk null (ingen offset)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.5,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB050O",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,5 kn, offset = eksakt flis-minimum",
+   "spec": {
+    "id": "F-LSB050O",
+    "note": "u/v fast LSB 0,5 kn, offset = eksakt flis-minimum",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.5,
+     "lsbOffset": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "K-KYST-F025",
+   "akse": "kombinasjon",
+   "note": "K-ANB-KYST med vind på fast LSB 0,25 kn (ingen offset); ellers identisk",
+   "spec": {
+    "id": "K-KYST-F025",
+    "note": "K-ANB-KYST med vind på fast LSB 0,25 kn (ingen offset); ellers identisk",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.25,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": 8,
+     "rounding": "opp",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "K-KYST-F050",
+   "akse": "kombinasjon",
+   "note": "K-ANB-KYST med vind på fast LSB 0,5 kn (ingen offset); ellers identisk",
+   "spec": {
+    "id": "K-KYST-F050",
+    "note": "K-ANB-KYST med vind på fast LSB 0,5 kn (ingen offset); ellers identisk",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.5,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": 8,
+     "rounding": "opp",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  }
+ ]
+}

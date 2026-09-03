@@ -12,7 +12,9 @@ import { describe, expect, it } from "vitest";
 import { environmentAt, twsExceedsHardLimit } from "./expand.js";
 import { testBoat } from "../test-fixtures/test-boat.js";
 import {
+  bitsForCodes,
   domainAround,
+  fastLsb,
   FLOAT32,
   latStepDegFor,
   lonStepDegFor,
@@ -22,6 +24,7 @@ import {
   REF_PACK,
   withPack,
 } from "../test-fixtures/pack-degradation.js";
+import type { FixedLsbOffset } from "../test-fixtures/pack-degradation.js";
 import {
   constantWeather,
   syntheticField,
@@ -391,6 +394,209 @@ describe("pakkedegradering: TWS-vaktbånd mot nedrundet vind (§9.5)", () => {
       sjekket++;
     }
     expect(sjekket).toBeGreaterThan(30);
+  });
+});
+
+/**
+ * **Fast fysisk LSB** — kandidaten Magnus har besluttet (D6-C) å vurdere som
+ * nytt vindformat, målt i tillegget §9.2 til kvantiseringsmålingen.
+ *
+ * Egenskapen som skal testes er ikke «gir små feil» — det gjør 8-bit flis-
+ * skala også. Det er at **vaktbåndet blir en formatkonstant**: `√2·lsb/2`
+ * avhenger verken av feltet, flisstørrelsen eller hva som tilfeldigvis lå i
+ * flisen, og kan derfor skrives i spec-en og verifiseres. Testene under
+ * fastholder de fire leddene den påstanden hviler på:
+ *
+ * 1. båndet er felt-uavhengig (der flis-/global skala ikke er det),
+ * 2. den faktisk målte dekodefeilen ligger under båndet,
+ * 3. båndet **fanger overskridelsene** — ingen hard TWS-forkastelse går tapt
+ *    der den nakne sammenligningen mister flere,
+ * 4. forutsetningen båndet hviler på (ingen klipping) er sann på feltene vi
+ *    måler, og brytes synlig — ikke stille — når den ikke er det.
+ */
+describe("pakkedegradering: fast fysisk LSB (D6-C)", () => {
+  const LSB_KN = [0.25, 0.5] as const;
+
+  function fastSpec(lsb: number, offset: FixedLsbOffset) {
+    return withPack(
+      `F-LSB${lsb}-${offset}`,
+      `u/v fast LSB ${lsb} kn, offset «${offset}»`,
+      { windQuant: fastLsb(lsb, offset) },
+    );
+  }
+
+  it("vaktbåndet er en formatkonstant — samme tall for to ulike felt", () => {
+    // To felt med helt ulikt vindspenn. Flis- og global skala gir hver sitt
+    // vaktbånd her; fast LSB gir det samme.
+    const svakt = field();
+    const kraftig = syntheticField({
+      seed: 20260615,
+      baseSpeedKn: 30,
+      baseFromDeg: 240,
+      speedVariationKn: 12,
+      dirVariationDeg: 35,
+      baseHsM: 1.0,
+      validFromS: T0 - 3600,
+      validToS: T0 + 8 * 24 * 3600,
+    });
+    expect(kraftig.maxTwsKn).toBeGreaterThan(2 * svakt.maxTwsKn);
+
+    for (const lsb of LSB_KN) {
+      const spec = fastSpec(lsb, "ingen");
+      const a = packField(svakt, spec, DOMAIN).field.maxDecodeErrorKn;
+      const b = packField(kraftig, spec, DOMAIN).field.maxDecodeErrorKn;
+      expect(a).toBeCloseTo(Math.SQRT2 * (lsb / 2), 12);
+      expect(b).toBe(a);
+      // Offsetvalget kan ikke flytte skranken: trinnet er det samme.
+      expect(
+        packField(svakt, fastSpec(lsb, "flis"), DOMAIN).field.maxDecodeErrorKn,
+      ).toBe(a);
+    }
+
+    // Kontrasten: dagens globale 8-bit-skala arver feltets spenn.
+    const g8 = withPack("G8", "8-bit global", {
+      windQuant: quant(8, "nearest", "global"),
+    });
+    expect(packField(kraftig, g8, DOMAIN).field.maxDecodeErrorKn).toBeGreaterThan(
+      2 * packField(svakt, g8, DOMAIN).field.maxDecodeErrorKn,
+    );
+  });
+
+  it("uten offset ligger dekodede u/v på ett globalt gitter", () => {
+    const base = field();
+    const lsb = 0.25;
+    const packed = packField(base, fastSpec(lsb, "ingen"), DOMAIN).field;
+    // Gridnodene ligger på multipler av nodeavstanden (samme indeksering som
+    // `TiledGrid`), og tidsskivene på hele timer fra feltets `validFromS`.
+    // Treffer vi en node eksakt, er svaret nodeverdien.
+    const dLat = latStepDegFor(REF_PACK.windKm);
+    const dLon = lonStepDegFor(REF_PACK.windKm);
+    let sjekket = 0;
+    for (let a = 0; a < 6; a++) {
+      const lat = Math.round((58.2 + a * 0.1) / dLat) * dLat;
+      for (let b = 0; b < 6; b++) {
+        const lon = Math.round((10.4 + b * 0.1) / dLon) * dLon;
+        const w = packed.wind(lat, lon, base.validFromS + 4 * 3600);
+        if (w === undefined) continue;
+        const rad = (w.fromDeg * Math.PI) / 180;
+        for (const komp of [
+          -w.speedKn * Math.sin(rad),
+          -w.speedKn * Math.cos(rad),
+        ]) {
+          expect(Math.abs(komp / lsb - Math.round(komp / lsb))).toBeLessThan(1e-6);
+        }
+        sjekket++;
+      }
+    }
+    expect(sjekket).toBeGreaterThan(30);
+  });
+
+  it("gitter-justert flis-offset er identisk med ingen offset (bevist, ikke målt)", () => {
+    /**
+     * Den tredje offset-varianten et format kan velge: et flis-offset som
+     * selv ligger på LSB-gitteret. Da er
+     * `anker + round((x − anker)/lsb)·lsb = round(x/lsb)·lsb` for alle `x`,
+     * fordi ankeret er et helt antall trinn. Den varianten trenger derfor
+     * ingen egen måling — den ER «ingen offset», med færre bit.
+     */
+    for (const lsb of LSB_KN) {
+      const verdier = [-17.2, -4.13, -0.126, 0, 0.124, 3.77, 12.5, 16.99];
+      const anker = Math.floor(Math.min(...verdier) / lsb) * lsb;
+      for (const x of verdier) {
+        const medAnker = anker + Math.round((x - anker) / lsb) * lsb;
+        const utenAnker = Math.round(x / lsb) * lsb;
+        expect(medAnker).toBeCloseTo(utenAnker, 12);
+      }
+    }
+  });
+
+  it("den målte dekodefeilen er reell og ligger innenfor vaktbåndet", () => {
+    const base = field();
+    const referanse = packField(base, REF_PACK, DOMAIN).field;
+    for (const lsb of LSB_KN) {
+      for (const offset of ["ingen", "flis"] as const) {
+        const kvantisert = packField(base, fastSpec(lsb, offset), DOMAIN).field;
+        const p = probePack(referanse, kvantisert, DOMAIN, T0, PROBE_HOURS, 11);
+        // Feilen må være reell, ellers måler testen ingenting …
+        expect(p.maxTwsErrKn).toBeGreaterThan(lsb / 10);
+        // … og båndet er en ærlig skranke over den, også over det som stikker
+        // forbi feltets deklarerte maksvind.
+        expect(p.maxTwsErrKn).toBeLessThanOrEqual(kvantisert.maxDecodeErrorKn);
+        expect(p.maxTwsOverKn).toBeLessThanOrEqual(kvantisert.maxDecodeErrorKn);
+      }
+    }
+  });
+
+  it("naken sammenligning mister harde forkastelser — vaktbåndet mister ingen", () => {
+    const base = field();
+    const referanse = packField(base, REF_PACK, DOMAIN).field;
+    const boat = testBoat({ maxTwsKn: 13 });
+
+    for (const lsb of LSB_KN) {
+      const kvantisert = packField(base, fastSpec(lsb, "ingen"), DOMAIN).field;
+      let over = 0;
+      let taptNakent = 0;
+      let taptMedVaktband = 0;
+      for (const h of [0, 4, 9]) {
+        const t = T0 + h * 3600;
+        for (let a = 0; a <= 60; a++) {
+          const lat = 58.0 + (59.0 - 58.0) * (a / 60);
+          for (let b = 0; b <= 60; b++) {
+            const lon = 10.3 + (11.1 - 10.3) * (b / 60);
+            const pos = { lat, lon };
+            const sant = environmentAt(referanse, pos, t);
+            const dekodet = environmentAt(kvantisert, pos, t);
+            if (sant === undefined || dekodet === undefined) continue;
+            if (sant.wind.speedKn <= boat.maxTwsKn) continue;
+            over++;
+            if (dekodet.wind.speedKn <= boat.maxTwsKn) taptNakent++;
+            if (!twsExceedsHardLimit(dekodet, boat, kvantisert)) taptMedVaktband++;
+          }
+        }
+      }
+      expect(over, "grensen må faktisk krysses i feltet").toBeGreaterThan(100);
+      expect(
+        taptNakent,
+        `LSB ${lsb} kn uten vaktbånd skal sluke minst én forkastelse`,
+      ).toBeGreaterThan(0);
+      expect(
+        taptMedVaktband,
+        `LSB ${lsb} kn: vaktbåndet mistet ${taptMedVaktband} av ${over}`,
+      ).toBe(0);
+    }
+  });
+
+  it("ingen koder klippes på fiksturfeltet — og klipping telles når den skjer", () => {
+    const base = field();
+    for (const lsb of LSB_KN) {
+      for (const offset of ["ingen", "flis"] as const) {
+        const pakke = packField(base, fastSpec(lsb, offset), DOMAIN);
+        // Materialiser fliser (pakken er lat).
+        probePack(base, pakke.field, DOMAIN, T0, PROBE_HOURS, 11);
+        expect(pakke.stats.fixedLsbClamped).toBe(0);
+      }
+    }
+
+    // Positiv kontroll: et felt som under-deklarerer sin egen maksvind. Da må
+    // koder klippes, og da er `√2·lsb/2` IKKE lenger en gyldig skranke — hele
+    // grunnen til at klippingen telles i stedet for å skjules.
+    const underdeklarert = { ...field(), maxTwsKn: 5 };
+    const pakke = packField(underdeklarert, fastSpec(0.25, "ingen"), DOMAIN);
+    const p = probePack(base, pakke.field, DOMAIN, T0, PROBE_HOURS, 11);
+    expect(pakke.stats.fixedLsbClamped).toBeGreaterThan(0);
+    expect(p.maxTwsErrKn).toBeGreaterThan(pakke.field.maxDecodeErrorKn);
+  });
+
+  it("offset per flis kjøper bit, ikke nøyaktighet", () => {
+    const base = field();
+    for (const lsb of LSB_KN) {
+      const pakke = packField(base, fastSpec(lsb, "flis"), DOMAIN);
+      probePack(base, pakke.field, DOMAIN, T0, PROBE_HOURS, 11);
+      const medOffset = bitsForCodes(pakke.stats.fixedLsbMaxSpanCodes);
+      const utenOffset = bitsForCodes(2 * Math.round(base.maxTwsKn / lsb));
+      expect(pakke.stats.fixedLsbMaxSpanCodes).toBeGreaterThan(0);
+      expect(medOffset).toBeLessThan(utenOffset);
+    }
   });
 });
 

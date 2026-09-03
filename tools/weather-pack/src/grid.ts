@@ -29,20 +29,32 @@ export interface Bounds {
   readonly north: number;
 }
 
-/** Samme `Math.floor(v / steg)`-aritmetikk som kartflisene — delt origo (§7). */
-export function tileIdForLonLat(lon: number, lat: number): WeatherTileId {
+/**
+ * Samme `Math.floor(v / steg)`-aritmetikk som kartflisene — delt origo (§7).
+ * `tileSizeDeg` er en eksplisitt parameter (default `WEATHER_TILE_DEG`, §D6-C
+ * 2026-09-03: kompresjonsspiken målte hvor mye en 1°-flisstørrelse ville
+ * spare for Skjæløy–Skagen-korridoren, `docs/research/kompresjonsmaaling-
+ * 2026-09-03.md` §2 — men LÅSER IKKE et nytt standardtall her. Å bytte
+ * standard flisstørrelse er fortsatt bevisst én linje unna (endre
+ * `WEATHER_TILE_DEG` selv), ikke gjort av denne bølgen).
+ */
+export function tileIdForLonLat(
+  lon: number,
+  lat: number,
+  tileSizeDeg: number = WEATHER_TILE_DEG,
+): WeatherTileId {
   return {
-    lonIndex: Math.floor(lon / WEATHER_TILE_DEG),
-    latIndex: Math.floor(lat / WEATHER_TILE_DEG),
+    lonIndex: Math.floor(lon / tileSizeDeg),
+    latIndex: Math.floor(lat / tileSizeDeg),
   };
 }
 
-export function tileBounds(id: WeatherTileId): Bounds {
+export function tileBounds(id: WeatherTileId, tileSizeDeg: number = WEATHER_TILE_DEG): Bounds {
   return {
-    west: id.lonIndex * WEATHER_TILE_DEG,
-    south: id.latIndex * WEATHER_TILE_DEG,
-    east: (id.lonIndex + 1) * WEATHER_TILE_DEG,
-    north: (id.latIndex + 1) * WEATHER_TILE_DEG,
+    west: id.lonIndex * tileSizeDeg,
+    south: id.latIndex * tileSizeDeg,
+    east: (id.lonIndex + 1) * tileSizeDeg,
+    north: (id.latIndex + 1) * tileSizeDeg,
   };
 }
 
@@ -50,12 +62,12 @@ export function tileIdToString(id: WeatherTileId): string {
   return `${id.lonIndex}_${id.latIndex}`;
 }
 
-/** Alle 2°-fliser hvis grenser overlapper en gitt bbox (klientens rute-bbox eller batch-jobbens domene). */
-export function tilesOverlapping(bbox: Bounds): WeatherTileId[] {
-  const lonMin = Math.floor(bbox.west / WEATHER_TILE_DEG);
-  const lonMax = Math.floor(bbox.east / WEATHER_TILE_DEG);
-  const latMin = Math.floor(bbox.south / WEATHER_TILE_DEG);
-  const latMax = Math.floor(bbox.north / WEATHER_TILE_DEG);
+/** Alle fliser (§7, standardstørrelse `WEATHER_TILE_DEG`, se `tileIdForLonLat`) hvis grenser overlapper en gitt bbox (klientens rute-bbox eller batch-jobbens domene). */
+export function tilesOverlapping(bbox: Bounds, tileSizeDeg: number = WEATHER_TILE_DEG): WeatherTileId[] {
+  const lonMin = Math.floor(bbox.west / tileSizeDeg);
+  const lonMax = Math.floor(bbox.east / tileSizeDeg);
+  const latMin = Math.floor(bbox.south / tileSizeDeg);
+  const latMax = Math.floor(bbox.north / tileSizeDeg);
   const out: WeatherTileId[] = [];
   for (let latIndex = latMin; latIndex <= latMax; latIndex++) {
     for (let lonIndex = lonMin; lonIndex <= lonMax; lonIndex++) {

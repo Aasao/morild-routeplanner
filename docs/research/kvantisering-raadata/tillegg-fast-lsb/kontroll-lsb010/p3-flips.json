@@ -1,0 +1,2666 @@
+[
+ {
+  "fikstur": "S-3",
+  "offsetH": 0,
+  "medlemmer": 30,
+  "refRuteSteg": 16,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 1.99
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 4.955555555555556
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 9.407777777777778
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 2.453611111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.301111111111112,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1799168,
+     "fliser": 1757,
+     "oppslag": 105088,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 1.9902777777777778
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 4.955555555555556
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 9.4075
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 2.453611111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.301111111111112,
+     "korridorMotRefNm": 0.0003056250847514972
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1796096,
+     "fliser": 1754,
+     "oppslag": 105115,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 1.99
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 4.955555555555556
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 9.408055555555556
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 2.453611111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.301111111111112,
+     "korridorMotRefNm": 0.00020797803447331441
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1798144,
+     "fliser": 1756,
+     "oppslag": 105478,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 1.9913888888888889
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 4.956388888888889
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 9.408333333333333
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.1944444444444446
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.301666666666666,
+     "korridorMotRefNm": 0.002942311516619857
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1835008,
+     "fliser": 1792,
+     "oppslag": 105040,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.000038847020433414607
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-3",
+  "offsetH": 2,
+  "medlemmer": 30,
+  "refRuteSteg": 16,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 3.269722222222222
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 6.269722222222223
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 2.453611111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.321944444444444,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1790976,
+     "fliser": 1749,
+     "oppslag": 119980,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 3.269722222222222
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 6.269444444444445
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 2.453611111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.37,
+     "korridorMotRefNm": 10.139334504271964
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2148352,
+     "fliser": 2098,
+     "oppslag": 122893,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.0033553792742294897
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 3.27
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 6.27
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 2.453611111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.294444444444444,
+     "korridorMotRefNm": 1.084812185748882
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1797120,
+     "fliser": 1755,
+     "oppslag": 120049,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.0019201303361197752
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 3.270277777777778
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 6.270555555555555
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.1944444444444446
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.37,
+     "korridorMotRefNm": 10.138589535751107
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2148352,
+     "fliser": 2098,
+     "oppslag": 122659,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.0033553792742294897
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-3",
+  "offsetH": 4,
+  "medlemmer": 30,
+  "refRuteSteg": 16,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 4.333888888888889
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.4472222222222224
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.253055555555555,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1845248,
+     "fliser": 1802,
+     "oppslag": 132115,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 4.333055555555555
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.4472222222222224
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.252777777777778,
+     "korridorMotRefNm": 0.0008660915802418358
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1840128,
+     "fliser": 1797,
+     "oppslag": 137569,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.000019488998460309854
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 4.334722222222222
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.4472222222222224
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.253333333333334,
+     "korridorMotRefNm": 0.0028314640200409863
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1843200,
+     "fliser": 1800,
+     "oppslag": 136084,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.000019488998460434483
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 4.333888888888889
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.4505555555555554
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 14.253333333333334,
+     "korridorMotRefNm": 0.0014719493829403393
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1841152,
+     "fliser": 1798,
+     "oppslag": 137449,
+     "lsbSpennKoder": 256,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.000019488998460434483
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-3",
+  "offsetH": 6,
+  "medlemmer": 30,
+  "refRuteSteg": 15,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.8 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 2.1980555555555554
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.361111111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 13.292777777777777,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1774592,
+     "fliser": 1733,
+     "oppslag": 112561,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.8 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 2.1980555555555554
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.3602777777777777
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 13.2925,
+     "korridorMotRefNm": 1.0959661404167131
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1771520,
+     "fliser": 1730,
+     "oppslag": 111511,
+     "lsbSpennKoder": 257,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.000020896894721380844
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.8 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 2.1980555555555554
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.361111111111111
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 13.292777777777777,
+     "korridorMotRefNm": 0.0003725204871731044
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1774592,
+     "fliser": 1733,
+     "oppslag": 112870,
+     "lsbSpennKoder": 257,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.8 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 2.198611111111111
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 2.1752777777777776
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 26,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24"
+     ],
+     "timer": 13.293055555555556,
+     "korridorMotRefNm": 1.0962446990717258
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1823744,
+     "fliser": 1781,
+     "oppslag": 111490,
+     "lsbSpennKoder": 257,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.00002089689472151448
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-3",
+  "offsetH": 8,
+  "medlemmer": 30,
+  "refRuteSteg": 15,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 3.1905555555555556
+      },
+      "m29": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 13.965
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "timer": 13.230833333333333,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1745920,
+     "fliser": 1705,
+     "oppslag": 88234,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14",
+     "m29"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 3.1886111111111113
+      },
+      "m29": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 13.965
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "timer": 13.229722222222222,
+     "korridorMotRefNm": 0.004138259813668328
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1744896,
+     "fliser": 1704,
+     "oppslag": 88306,
+     "lsbSpennKoder": 257,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14",
+     "m29"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.00008397892129076915
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 3.1905555555555556
+      },
+      "m29": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 13.965
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "timer": 13.230277777777777,
+     "korridorMotRefNm": 0.002042474255045532
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1745920,
+     "fliser": 1705,
+     "oppslag": 88171,
+     "lsbSpennKoder": 257,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14",
+     "m29"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.000041989460645384576
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "avvisning": {
+      "m04": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.6 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.7 m over båtens grense 4 m",
+       "tH": 0
+      },
+      "m24": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 3.003888888888889
+      },
+      "m29": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.3 m over båtens grense 4 m",
+       "tH": 13.965555555555556
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 25,
+     "hardFeil": [
+      "m04",
+      "m09",
+      "m14",
+      "m24",
+      "m29"
+     ],
+     "timer": 13.230277777777777,
+     "korridorMotRefNm": 0.002314788823754231
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1746944,
+     "fliser": 1706,
+     "oppslag": 88219,
+     "lsbSpennKoder": 257,
+     "lsbAbsKode": 301,
+     "lsbKlippet": 0
+    },
+    "felleSett": [
+     "m04",
+     "m09",
+     "m14",
+     "m29"
+    ],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.000041989460645384576
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-8",
+  "offsetH": 0,
+  "medlemmer": 30,
+  "refRuteSteg": 15,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.315555555555555
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005833333333333
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.196666666666667,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2074624,
+     "fliser": 2026,
+     "oppslag": 76609,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.312777777777777
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005277777777778
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.266944444444444,
+     "korridorMotRefNm": 4.546178905014111
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2343936,
+     "fliser": 2289,
+     "oppslag": 76627,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.005325418876820703
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.315555555555555
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005833333333333
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.196666666666667,
+     "korridorMotRefNm": 3.6147717875475105e-7
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2073600,
+     "fliser": 2025,
+     "oppslag": 76792,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.312777777777777
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005555555555556
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.226666666666667,
+     "korridorMotRefNm": 4.546556633581355
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2342912,
+     "fliser": 2288,
+     "oppslag": 76597,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.002273301338721851
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-8",
+  "offsetH": 3,
+  "medlemmer": 30,
+  "refRuteSteg": 15,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.315555555555555
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005833333333333
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.196666666666667,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2074624,
+     "fliser": 2026,
+     "oppslag": 76609,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.312777777777777
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005277777777778
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.266944444444444,
+     "korridorMotRefNm": 4.546178905014111
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2343936,
+     "fliser": 2289,
+     "oppslag": 76627,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.005325418876820703
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.315555555555555
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005833333333333
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.196666666666667,
+     "korridorMotRefNm": 3.6147717875475105e-7
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2073600,
+     "fliser": 2025,
+     "oppslag": 76792,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.312777777777777
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005555555555556
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.226666666666667,
+     "korridorMotRefNm": 4.546556633581355
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2342912,
+     "fliser": 2288,
+     "oppslag": 76597,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.002273301338721851
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-8",
+  "offsetH": 6,
+  "medlemmer": 30,
+  "refRuteSteg": 15,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.315555555555555
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005833333333333
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.196666666666667,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2074624,
+     "fliser": 2026,
+     "oppslag": 76603,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.312777777777777
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005277777777778
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.266944444444444,
+     "korridorMotRefNm": 4.546178905014111
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2343936,
+     "fliser": 2289,
+     "oppslag": 76624,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.005325418876820703
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.315555555555555
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005833333333333
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.196666666666667,
+     "korridorMotRefNm": 3.6147717875475105e-7
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2073600,
+     "fliser": 2025,
+     "oppslag": 76786,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "avvisning": {
+      "m26": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.0 m over båtens grense 4 m",
+       "tH": 8.312777777777777
+      },
+      "m27": {
+       "kind": "boatLimits",
+       "reason": "Hs 4.1 m over båtens grense 4 m",
+       "tH": 8.005555555555556
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m26",
+      "m27"
+     ],
+     "timer": 13.226666666666667,
+     "korridorMotRefNm": 4.546556633581355
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2342912,
+     "fliser": 2288,
+     "oppslag": 76597,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 236,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.002273301338721851
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-1",
+  "offsetH": 0,
+  "medlemmer": 30,
+  "refRuteSteg": 16,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.325555555555555,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2597888,
+     "fliser": 2537,
+     "oppslag": 98791,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.303055555555556,
+     "korridorMotRefNm": 1.1967276130922802
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2775040,
+     "fliser": 2710,
+     "oppslag": 98770,
+     "lsbSpennKoder": 89,
+     "lsbAbsKode": 198,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.0015706197161249648
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.31861111111111,
+     "korridorMotRefNm": 1.2144437770290846
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2785280,
+     "fliser": 2720,
+     "oppslag": 98761,
+     "lsbSpennKoder": 89,
+     "lsbAbsKode": 198,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.0004847591716435413
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.360555555555555,
+     "korridorMotRefNm": 1.1966983521336239
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2775040,
+     "fliser": 2710,
+     "oppslag": 98905,
+     "lsbSpennKoder": 89,
+     "lsbAbsKode": 198,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.0024431862250833885
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-1",
+  "offsetH": 3,
+  "medlemmer": 30,
+  "refRuteSteg": 16,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.33388888888889,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2458624,
+     "fliser": 2401,
+     "oppslag": 102310,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.333333333333334,
+     "korridorMotRefNm": 0.0009535384021740726
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2456576,
+     "fliser": 2399,
+     "oppslag": 101797,
+     "lsbSpennKoder": 90,
+     "lsbAbsKode": 199,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.000038758187667150744
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.324166666666667,
+     "korridorMotRefNm": 0.6550484111109747
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2542592,
+     "fliser": 2483,
+     "oppslag": 101086,
+     "lsbSpennKoder": 90,
+     "lsbAbsKode": 199,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.000678268284175076
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 14.334166666666667,
+     "korridorMotRefNm": 0.001478922626478263
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 2459648,
+     "fliser": 2402,
+     "oppslag": 101932,
+     "lsbSpennKoder": 90,
+     "lsbAbsKode": 199,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.000019379093833513407
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-4",
+  "offsetH": 0,
+  "medlemmer": 30,
+  "refRuteSteg": 10,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.323611111111111,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1123328,
+     "fliser": 1097,
+     "oppslag": 11140,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.3225,
+     "korridorMotRefNm": 0.0031570525127133436
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1123328,
+     "fliser": 1097,
+     "oppslag": 11149,
+     "lsbSpennKoder": 64,
+     "lsbAbsKode": 147,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.00025698682942503214
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.323888888888889,
+     "korridorMotRefNm": 0.0016844911406610618
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1123328,
+     "fliser": 1097,
+     "oppslag": 11122,
+     "lsbSpennKoder": 64,
+     "lsbAbsKode": 147,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0.00006424670735625803
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.3225,
+     "korridorMotRefNm": 0.0032181875182490877
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1123328,
+     "fliser": 1097,
+     "oppslag": 11149,
+     "lsbSpennKoder": 64,
+     "lsbAbsKode": 147,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.00025698682942503214
+    }
+   }
+  }
+ },
+ {
+  "fikstur": "S-4",
+  "offsetH": 3,
+  "medlemmer": 30,
+  "refRuteSteg": 10,
+  "perKonfig": {
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.348611111111111,
+     "korridorMotRefNm": 0
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1270784,
+     "fliser": 1241,
+     "oppslag": 10969,
+     "lsbSpennKoder": 0,
+     "lsbAbsKode": 0,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": 0
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.3475,
+     "korridorMotRefNm": 0.0021673202876065843
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1270784,
+     "fliser": 1241,
+     "oppslag": 10978,
+     "lsbSpennKoder": 63,
+     "lsbAbsKode": 145,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.00025550942190997284
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.348055555555556,
+     "korridorMotRefNm": 0.0018597518256007386
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1270784,
+     "fliser": 1241,
+     "oppslag": 10942,
+     "lsbSpennKoder": 63,
+     "lsbAbsKode": 145,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.00012775471095498642
+    }
+   },
+   "K-KYST-F010": {
+    "akse": "kombinasjon",
+    "fast": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "avvisning": {}
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 4.3475,
+     "korridorMotRefNm": 0.002195617830759557
+    },
+    "telling": {
+     "sok": 1,
+     "evalueringer": 60,
+     "baseSamples": 1270784,
+     "fliser": 1241,
+     "oppslag": 10978,
+     "lsbSpennKoder": 63,
+     "lsbAbsKode": 145,
+     "lsbKlippet": 0
+    },
+    "felleSett": [],
+    "felleGrunn": "alltid",
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "dTidEgenRel": -0.00025550942190997284
+    }
+   }
+  }
+ }
+]

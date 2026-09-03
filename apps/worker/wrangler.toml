@@ -30,7 +30,7 @@ preview_bucket_name = "morild-mirror-preview"
 [[d1_databases]]
 binding = "PERSONAL_DB"
 database_name = "morild-personal"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "5ec56f7e-630a-41b1-9096-488daa64b62f"
 
 # Ikke-hemmelig — MET-vilkårene (N3) krever en offentlig, identifiserende
 # User-Agent, så den skal jo kunne leses, ikke skjules. Committet fallback

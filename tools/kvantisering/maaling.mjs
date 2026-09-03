@@ -44,6 +44,10 @@ import {
 } from "../../packages/routing/dist/src/index.js";
 import { INTERIM_BAILOUT_HARBOURS } from "../../packages/routing/dist/test-fixtures/bailout-harbours.js";
 import { trapVerdict } from "../../packages/routing/dist/test-fixtures/e1-outcome.js";
+import {
+  s1SlorEnsemble,
+  s4BohuslanEnsemble,
+} from "../../packages/routing/dist/test-fixtures/ensemble-golden.js";
 import { s3FrontEnsemble } from "../../packages/routing/dist/test-fixtures/ensemble-s3-front.js";
 import {
   s5DepartureWindowEnsemble,
@@ -61,9 +65,12 @@ import {
   GOLDEN_DEPART_S,
 } from "../../packages/routing/dist/test-fixtures/golden-scenarios.js";
 import {
+  bitsForCodes,
   domainAround,
+  FLOAT32,
   packField,
   probePack,
+  withPack,
 } from "../../packages/routing/dist/test-fixtures/pack-degradation.js";
 import { rectMask } from "../../packages/routing/dist/test-fixtures/synthetic-mask.js";
 import { testBoat } from "../../packages/routing/dist/test-fixtures/test-boat.js";
@@ -93,19 +100,50 @@ const SONDE_TIMER = [0.37, 2.13, 4.71, 7.29, 9.83, 12.41, 15.07, 17.63];
 
 // ------------------------------------------------------------------ verktøy
 
-let telling = { sok: 0, evalueringer: 0, baseSamples: 0, fliser: 0, oppslag: 0 };
+const TOM_TELLING = () => ({
+  sok: 0,
+  evalueringer: 0,
+  baseSamples: 0,
+  fliser: 0,
+  oppslag: 0,
+  // Fast-LSB-regnskapet (tillegg §9.2). Spenn/abs er MAKS over pakkene, ikke
+  // sum: de er bitbredde-krav, og kravet er det verste som forekom.
+  lsbSpennKoder: 0,
+  lsbAbsKode: 0,
+  lsbKlippet: 0,
+});
+
+let telling = TOM_TELLING();
 
 function nullstill() {
-  telling = { sok: 0, evalueringer: 0, baseSamples: 0, fliser: 0, oppslag: 0 };
+  telling = TOM_TELLING();
 }
 
 function tellPakke(pakke) {
   telling.baseSamples += pakke.stats.baseSamples;
   telling.fliser += pakke.stats.tiles;
   telling.oppslag += pakke.stats.lookups;
+  telling.lsbSpennKoder = Math.max(
+    telling.lsbSpennKoder,
+    pakke.stats.fixedLsbMaxSpanCodes ?? 0,
+  );
+  telling.lsbAbsKode = Math.max(
+    telling.lsbAbsKode,
+    pakke.stats.fixedLsbMaxAbsCode ?? 0,
+  );
+  telling.lsbKlippet += pakke.stats.fixedLsbClamped ?? 0;
 }
 
-const INGEN_STATS = { stats: { baseSamples: 0, tiles: 0, lookups: 0 } };
+const INGEN_STATS = {
+  stats: {
+    baseSamples: 0,
+    tiles: 0,
+    lookups: 0,
+    fixedLsbMaxSpanCodes: 0,
+    fixedLsbMaxAbsCode: 0,
+    fixedLsbClamped: 0,
+  },
+};
 
 /** Pakker et felt etter konfigurasjonen. `spec === null` ⇒ feltet urørt. */
 function pakk(felt, k, domene) {
@@ -301,6 +339,60 @@ function p1(konfigurasjoner) {
               sc.input.departEpochS,
               SONDE_TIMER,
             );
+      /**
+       * **Vaktbånd-verifikasjonen** (tillegg §9.2, 2026-09-03).
+       *
+       * Feltsonden over måler pakken mot det *analytiske* feltet og bærer
+       * dermed grid- og tidsfeilen i tillegg til kvantiseringens — den kan
+       * ikke brukes til å teste `maxDecodeErrorKn`, som per definisjon er en
+       * skranke på kvantiseringen alene (§9.5). Her bygges derfor en pakke med
+       * **nøyaktig samme grid, flisgeometri og tidsnett, men Float32 vind**,
+       * og pakken måles mot den. Da er differansen ren kvantiseringsfeil, og
+       * spørsmålet «fanger vaktbåndet overskridelsene?» blir målbart —
+       * ikke bare «ble rutene like?».
+       */
+      const vaktband =
+        k.spec === null || k.spec.windQuant === FLOAT32
+          ? null
+          : (() => {
+              const reinSpec = withPack(
+                `${k.id}-F32VIND`,
+                "samme pakke, men Float32 vind — instrument, ikke konfigurasjon",
+                { ...k.spec, windQuant: FLOAT32, dirQuant: FLOAT32 },
+              );
+              const rein = packField(sc.input.weather, reinSpec, domene);
+              const pr = probePack(
+                rein.field,
+                pakke.field,
+                domene,
+                sc.input.departEpochS,
+                SONDE_TIMER,
+              );
+              const band = pakke.field.maxDecodeErrorKn;
+              const lsb = k.spec.windQuant.lsb ?? null;
+              const twsCap = Math.max(sc.input.weather.maxTwsKn, 1);
+              return {
+                bandKn: band,
+                lsbKn: lsb,
+                deklarertMaksTwsKn: sc.input.weather.maxTwsKn,
+                maksKvantiseringsfeilKn: pr.maxTwsErrKn,
+                rmsKvantiseringsfeilKn: pr.rmsTwsErrKn,
+                innenfor: pr.maxTwsErrKn <= band,
+                maksOverDeklarertKn: pr.maxTwsOverKn,
+                overDeklarertFanget: pr.maxTwsOverKn <= band,
+                // Fast LSB: bitbredden er en konsekvens, ikke et valg.
+                klippedeKoder: pakke.stats.fixedLsbClamped,
+                spennKoder: pakke.stats.fixedLsbMaxSpanCodes,
+                absKode: pakke.stats.fixedLsbMaxAbsCode,
+                bitMedFlisOffset:
+                  lsb === null ? null : bitsForCodes(pakke.stats.fixedLsbMaxSpanCodes),
+                bitUtenOffsetRealisert:
+                  lsb === null ? null : bitsForCodes(2 * pakke.stats.fixedLsbMaxAbsCode),
+                bitUtenOffsetDeklarert:
+                  lsb === null ? null : bitsForCodes(2 * Math.round(twsCap / lsb)),
+              };
+            })();
+
       const rad = {
         konfig: k.id,
         akse: k.akse,
@@ -324,6 +416,7 @@ function p1(konfigurasjoner) {
         steg: r.steps.length,
         telling: { ...telling },
         feltsonde: sonde,
+        vaktband,
       };
       const t = spor(r);
 
@@ -409,7 +502,14 @@ function p1(konfigurasjoner) {
           `anger=${rad.motRef.angerRel === null ? "-" : `${(rad.motRef.angerRel * 100).toFixed(2)} %`}  ` +
           `optimisme=${(rad.optimismeRel * 100).toFixed(2)} %  ` +
           `${rad.motRef.n5Ok ? "ok" : "BRUDD"}${eksaktLik ? "" : " [diskret endring]"}` +
-          `${rad.motRef.angerMistetGjennomfoerbarhet ? "  ← PLANEN HOLDER IKKE UNDER SANNHETEN" : ""}`,
+          `${rad.motRef.angerMistetGjennomfoerbarhet ? "  ← PLANEN HOLDER IKKE UNDER SANNHETEN" : ""}` +
+          `${
+            rad.vaktband === null
+              ? ""
+              : `  vaktbånd=${rad.vaktband.bandKn.toFixed(3)} kn (målt ${rad.vaktband.maksKvantiseringsfeilKn.toFixed(3)})${
+                  rad.vaktband.innenfor ? "" : "  ← VAKTBÅND SPRENGT"
+                }${rad.vaktband.klippedeKoder > 0 ? `  ← ${rad.vaktband.klippedeKoder} KLIPPEDE KODER` : ""}`
+          }`,
       );
     }
   }
@@ -581,12 +681,38 @@ const ALLTID_R2 = new Set([
   "H-8O",
   "H-6G",
   "H-6GO",
+  // Tillegg §9.2 (fast fysisk LSB): formatkandidater får alltid full
+  // felledom, uansett om hardfeil-settet flyttet seg — det er nettopp den
+  // dommen beslutningen skal hvile på.
+  "F-LSB025",
+  "F-LSB025O",
+  "F-LSB050",
+  "F-LSB050O",
+  "K-KYST-F025",
+  "K-KYST-F050",
+  "F-LSB010",
+  "F-LSB010O",
+  "K-KYST-F010",
 ]);
 
 function p3(konfigurasjoner, fiksturFilter) {
   const matrise = [
     { id: "S-3", bygg: s3FrontEnsemble, avganger: [0, 2 * H, 4 * H, 6 * H, 8 * H] },
     { id: "S-8", bygg: s8WindAgainstCurrentEnsemble, avganger: [0, 3 * H, 6 * H] },
+    /**
+     * **S-1 og S-4** (lagt til 2026-09-03, tillegg §9.2).
+     *
+     * De to har `hardRejectionMemberIds: []` — ingen medlemmer møter en hard
+     * forkastelse per konstruksjon — og de er derfor ikke en test på *tapte*
+     * forkastelser, men på den motsatte feilen: at en pakke **finner på** en
+     * forkastelse eller mister gjennomførbarhet der fasiten ikke har noen.
+     * Felledommen er billig her (`trapVerdict` returnerer uten re-søk når det
+     * ikke finnes noen hard feil), så prisen for å ha dem med er lav og
+     * dekningen — åpent slørstrekk og trang skjærgård — er den bredden
+     * formatbeslutningen mangler i S-3/S-8 alene.
+     */
+    { id: "S-1", bygg: s1SlorEnsemble, avganger: [0, 3 * H] },
+    { id: "S-4", bygg: s4BohuslanEnsemble, avganger: [0, 3 * H] },
   ].filter((m) => fiksturFilter.length === 0 || fiksturFilter.includes(m.id));
 
   const ut = [];

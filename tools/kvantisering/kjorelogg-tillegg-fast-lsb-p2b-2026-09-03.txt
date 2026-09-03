@@ -1,0 +1,45 @@
+P2b REF         +0t  30/30  P50=14.403
+P2b REF         +1t  30/30  P50=14.381
+P2b REF         +2t  30/30  P50=14.305
+P2b REF         +3t  30/30  P50=14.290
+P2b REF         +4t  30/30  P50=13.835
+P2b F-LSB025    +0t  30/30  P50=14.402
+P2b F-LSB025    +1t  30/30  P50=14.376
+P2b F-LSB025    +2t  30/30  P50=14.297
+P2b F-LSB025    +3t  30/30  P50=14.291
+P2b F-LSB025    +4t  30/30  P50=13.823
+P2b F-LSB025O   +0t  30/30  P50=14.402
+P2b F-LSB025O   +1t  30/30  P50=14.381
+P2b F-LSB025O   +2t  30/30  P50=14.322
+P2b F-LSB025O   +3t  30/30  P50=14.290
+P2b F-LSB025O   +4t  30/30  P50=13.842
+P2b F-LSB050    +0t  30/30  P50=14.343
+P2b F-LSB050    +1t  30/30  P50=14.408
+P2b F-LSB050    +2t  30/30  P50=14.315
+P2b F-LSB050    +3t  30/30  P50=14.304
+P2b F-LSB050    +4t  30/30  P50=14.306
+P2b F-LSB050O   +0t  30/30  P50=14.398
+P2b F-LSB050O   +1t  30/30  P50=14.386
+P2b F-LSB050O   +2t  30/30  P50=14.310
+P2b F-LSB050O   +3t  30/30  P50=14.290
+P2b F-LSB050O   +4t  30/30  P50=13.850
+P2b K-KYST-F025 +0t  30/30  P50=14.402
+P2b K-KYST-F025 +1t  30/30  P50=14.446
+P2b K-KYST-F025 +2t  30/30  P50=14.298
+P2b K-KYST-F025 +3t  30/30  P50=14.298
+P2b K-KYST-F025 +4t  30/30  P50=14.308
+P2b K-KYST-F050 +0t  30/30  P50=14.344
+P2b K-KYST-F050 +1t  30/30  P50=14.408
+P2b K-KYST-F050 +2t  30/30  P50=14.380
+P2b K-KYST-F050 +3t  30/30  P50=14.305
+P2b K-KYST-F050 +4t  30/30  P50=14.307
+  ↳ F-LSB025    topp=4 t (REF 4 t) inv=0 maksΔP50=0.09 %
+  ↳ F-LSB025O   topp=4 t (REF 4 t) inv=0 maksΔP50=0.12 %
+  ↳ F-LSB050    topp=3 t (REF 4 t) inv=2 maksΔP50=3.40 %
+  ↳ F-LSB050O   topp=4 t (REF 4 t) inv=0 maksΔP50=0.11 %
+  ↳ K-KYST-F025 topp=2 t (REF 4 t) inv=4 maksΔP50=3.41 %
+  ↳ K-KYST-F050 topp=3 t (REF 4 t) inv=3 maksΔP50=3.41 %
+
+P2b ferdig på 2741 s
+
+Rådata skrevet til C:\Users\maasa\AppData\Local\Temp\claude\C--Utvikling-routeplanner-v2\3ff5cff8-cffb-42b3-a4bb-21e2af45d1aa\scratchpad\p2b

@@ -1,0 +1,373 @@
+## P1a — ruteeffekt per konfigurasjon (aggregert over alle scenarioer)
+
+Δt og korridor gjelder **ankomstscenarioene**; `uoppnaelig-mal` og `hull-i-vaerfeltet` ender per konstruksjon ikke i målet, og «tid» er der hvor langt beste delrute rakk — de er derfor holdt utenfor prosenttallene og vurdert på de diskrete feltene alene.
+
+| konfig | akse | maks \|Δt\| | maks korridor (nm) | maks anger | maks optimisme | plan feiler under sannhet | diskrete endringer | N5-brudd |
+|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 0.00 % | 0.000 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `F-LSB025` | vind | 1.08 % | 2.370 | 0.15 % | 0.06 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+| `F-LSB025O` | vind | 0.16 % | 1.707 | 2.80 % | 2.63 % | — | ingen | skjaeloy-skagen-apent |
+| `F-LSB050` | vind | 1.08 % | 2.370 | 2.75 % | 2.69 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+| `F-LSB050O` | vind | 0.17 % | 2.995 | 2.76 % | 2.58 % | — | ingen | skjaeloy-skagen-apent, s3-front-kontroll |
+| `K-KYST-F025` | kombinasjon | 1.08 % | 2.370 | 0.15 % | 0.06 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+| `K-KYST-F050` | kombinasjon | 1.08 % | 2.370 | 2.28 % | 2.22 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+
+### P1b — feltnær diagnose (kontekstkolonne, ikke beslutningsgrunnlag)
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) | verste Hs for lav (m) | maks strømfeil (kn) | TWS over deklarert skranke |
+|---|---|---|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `F-LSB025` | 13.86 | 1.619 | 7.77 | 0.140 | -0.117 | 0.001 | 15750 punkter, maks +0.14 kn |
+| `F-LSB025O` | 13.83 | 1.618 | 7.80 | 0.140 | -0.117 | 0.001 | 4212 punkter, maks +0.06 kn |
+| `F-LSB050` | 13.97 | 1.624 | 8.46 | 0.140 | -0.117 | 0.001 | 11346 punkter, maks +0.14 kn |
+| `F-LSB050O` | 13.95 | 1.616 | 8.22 | 0.140 | -0.117 | 0.001 | 4245 punkter, maks +0.11 kn |
+| `K-KYST-F025` | 13.86 | 1.619 | 7.77 | 0.142 | -0.116 | 0.002 | 15750 punkter, maks +0.14 kn |
+| `K-KYST-F050` | 13.97 | 1.624 | 8.46 | 0.142 | -0.116 | 0.002 | 11346 punkter, maks +0.14 kn |
+
+#### Feltsonde kun på frontfeltet (`s3-front-kontroll`) — der tidsaksen biter
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) |
+|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `F-LSB025` | 13.86 | 1.619 | 7.77 | 0.140 |
+| `F-LSB025O` | 13.83 | 1.618 | 7.80 | 0.140 |
+| `F-LSB050` | 13.97 | 1.624 | 8.46 | 0.140 |
+| `F-LSB050O` | 13.95 | 1.616 | 8.22 | 0.140 |
+| `K-KYST-F025` | 13.86 | 1.619 | 7.77 | 0.142 |
+| `K-KYST-F050` | 13.97 | 1.624 | 8.46 | 0.142 |
+
+### P1c — verste konfigurasjon per scenario
+
+| scenario | kilde | kommer fram | REF-tid (t) | verste Δt (konfig) | verste korridor (konfig) | verste anger (konfig) |
+|---|---|---|---|---|---|---|
+| skjaeloy-skagen-apent | golden | ja | 15.294 | 0.17 % (`F-LSB050O`) | 1.893 (`F-LSB050`) | 2.80 % (`F-LSB025O`) |
+| bohuslan-trange-sund | golden | ja | 4.329 | -0.16 % (`F-LSB050`) | 0.030 (`K-KYST-F050`) | 0.01 % (`F-LSB025`) |
+| ren-kryssetappe | golden | nei | 11.518 | 0.00 % (`F-LSB025`) | 0.000 (`F-LSB025`) | 0.00 % (`F-LSB025`) |
+| tss-ved-skagen | golden | nei | 5.012 | -0.12 % (`F-LSB025O`) | 1.745 (`K-KYST-F025`) | 0.12 % (`F-LSB050`) |
+| uoppnaelig-mal | golden | nei | 10.008 | 10.00 % (`F-LSB025O`) | 16.959 (`F-LSB050`) | 9.96 % (`F-LSB025O`) |
+| hull-i-vaerfeltet | golden | nei | 5.511 | 0.17 % (`F-LSB050O`) | 5.671 (`F-LSB050O`) | 0.12 % (`F-LSB050O`) |
+| natt-og-dagslysankomst | golden | ja | 8.314 | -0.69 % (`F-LSB025`) | 1.900 (`F-LSB025`) | 0.00 % (`F-LSB025O`) |
+| s3-front-kontroll | E1′ | ja | 14.301 | -0.04 % (`F-LSB050O`) | 2.995 (`F-LSB050O`) | 0.01 % (`F-LSB025`) |
+| s8-vind-mot-strom-kontroll | E1′ | ja | 13.197 | -1.08 % (`F-LSB025`) | 2.370 (`K-KYST-F025`) | 0.00 % (`F-LSB025O`) |
+| sonde-stromband-9km | sonde | ja | 13.271 | -0.03 % (`F-LSB025`) | 0.036 (`F-LSB025`) | 0.00 % (`F-LSB025O`) |
+| sonde-stromband-3km | sonde | ja | 13.168 | -0.04 % (`F-LSB025`) | 1.271 (`F-LSB025`) | 0.15 % (`F-LSB025`) |
+
+### P1d — rader med diskret endring, tapt gjennomførbarhet, eller anger > 1 %
+
+| scenario | konfig | Δt | korridor (nm) | anger | optimisme | diskret endring |
+|---|---|---|---|---|---|---|
+| skjaeloy-skagen-apent | `F-LSB025O` | 0.16 % | 1.707 | 2.80 % | 2.63 % | — |
+| skjaeloy-skagen-apent | `F-LSB050` | 0.05 % | 1.893 | 2.75 % | 2.69 % | — |
+| skjaeloy-skagen-apent | `F-LSB050O` | 0.17 % | 1.355 | 2.76 % | 2.58 % | — |
+| skjaeloy-skagen-apent | `K-KYST-F050` | 0.06 % | 1.893 | 2.28 % | 2.22 % | — |
+| uoppnaelig-mal | `F-LSB025O` | 10.00 % | 13.435 | 9.96 % | -0.04 % | — |
+| uoppnaelig-mal | `F-LSB050O` | 0.00 % | 3.489 | 3.56 % | 3.56 % | — |
+| s8-vind-mot-strom-kontroll | `F-LSB025` | -1.08 % | 2.370 | -1.08 % | 0.00 % | — |
+| s8-vind-mot-strom-kontroll | `F-LSB050` | -1.08 % | 2.370 | -1.08 % | 0.00 % | — |
+| s8-vind-mot-strom-kontroll | `K-KYST-F025` | -1.08 % | 2.370 | -1.07 % | 0.00 % | — |
+| s8-vind-mot-strom-kontroll | `K-KYST-F050` | -1.08 % | 2.370 | -1.07 % | 0.00 % | — |
+
+### P1e — vaktbånd mot målt kvantiseringsfeil (ren, uten grid-/tidsfeil)
+
+| konfig | LSB (kn) | vaktbånd (kn) | maks målt kvant.feil (kn) | RMS (kn) | innenfor båndet | maks over deklarert maks (kn) | fanget av båndet | klippede koder |
+|---|---|---|---|---|---|---|---|---|
+| `F-LSB025` | 0.25 | 0.1768 | 0.1387 | 0.1350 | ja | 0.1350 | ja | 0 |
+| `F-LSB025O` | 0.25 | 0.1768 | 0.1384 | 0.0462 | ja | 0.0567 | ja | 0 |
+| `F-LSB050` | 0.50 | 0.3536 | 0.2839 | 0.1862 | ja | 0.1449 | ja | 0 |
+| `F-LSB050O` | 0.50 | 0.3536 | 0.2834 | 0.1158 | ja | 0.1055 | ja | 0 |
+| `K-KYST-F025` | 0.25 | 0.1768 | 0.1387 | 0.1350 | ja | 0.1350 | ja | 0 |
+| `K-KYST-F050` | 0.50 | 0.3536 | 0.2839 | 0.1862 | ja | 0.1449 | ja | 0 |
+
+### P1f — fast LSB: bitbredden er en konsekvens, ikke et valg
+
+| konfig | LSB (kn) | maks kodespenn i én flis+skive | bit m/flis-offset | maks \|kode\| | bit u/offset (realisert) | bit u/offset (deklarert område) |
+|---|---|---|---|---|---|---|
+| `F-LSB025` | 0.25 | 87 | 7 | 99 | 8 | 8 |
+| `F-LSB025O` | 0.25 | 87 | 7 | 99 | 8 | 8 |
+| `F-LSB050` | 0.50 | 44 | 6 | 50 | 7 | 7 |
+| `F-LSB050O` | 0.50 | 44 | 6 | 50 | 7 | 7 |
+| `K-KYST-F025` | 0.25 | 87 | 7 | 99 | 8 | 8 |
+| `K-KYST-F050` | 0.50 | 44 | 6 | 50 | 7 | 7 |
+
+## P2b — avgangsrangering S-5 (fulle Pareto-søk per medlem)
+
+| konfig | akse | P50 per avgang (t) | topp-avgang | topp lik REF | inversjoner P50 | inversjoner P90 | maks ΔP50 | maks ΔP90 | gj.førbarhetsdiff |
+|---|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 14.403 / 14.381 / 14.305 / 14.290 / 13.835 | +4 t | (ref) | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `F-LSB025` | vind | 14.402 / 14.376 / 14.297 / 14.291 / 13.823 | +4 t | ja | 0 | 1 | 0.09 % | 0.01 % | 0,0,0,0,0 |
+| `F-LSB025O` | vind | 14.402 / 14.381 / 14.322 / 14.290 / 13.842 | +4 t | ja | 0 | 1 | 0.12 % | 0.01 % | 0,0,0,0,0 |
+| `F-LSB050` | vind | 14.343 / 14.408 / 14.315 / 14.304 / 14.306 | +3 t | **NEI** | 2 | 1 | 3.40 % | 0.11 % | 0,0,0,0,0 |
+| `F-LSB050O` | vind | 14.398 / 14.386 / 14.310 / 14.290 / 13.850 | +4 t | ja | 0 | 1 | 0.11 % | 0.04 % | 0,0,0,0,0 |
+| `K-KYST-F025` | kombinasjon | 14.402 / 14.446 / 14.298 / 14.298 / 14.308 | +2 t | **NEI** | 4 | 1 | 3.41 % | 0.01 % | 0,0,0,0,0 |
+| `K-KYST-F050` | kombinasjon | 14.344 / 14.408 / 14.380 / 14.305 / 14.307 | +3 t | **NEI** | 3 | 1 | 3.41 % | 0.11 % | 0,0,0,0,0 |
+
+## P3 — gjennomførbarhets- og felle-flips
+
+| konfig | akse | fast rute: gj.f.diff | fast: hardfeil lik REF | flippede medlemmer | felle-sett lik REF | egen rute: gj.f.diff | egen: maks Δt | egen: maks korridor (nm) |
+|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 0 … 0 | ja | — | (ref) | 0 … 0 | 0.00 % | 0.000 |
+| `F-LSB025` | vind | 0 … 0 | ja | — | ja | 0 … 0 | 1.08 % | 10.136 |
+| `F-LSB025O` | vind | 0 … 0 | ja | — | ja | 0 … 0 | 0.33 % | 10.140 |
+| `F-LSB050` | vind | 0 … 0 | ja | — | ja | 0 … 0 | 1.08 % | 10.142 |
+| `F-LSB050O` | vind | 0 … 0 | ja | — | ja | 0 … 0 | 0.52 % | 10.141 |
+| `K-KYST-F025` | kombinasjon | 0 … 0 | ja | — | ja | 0 … 0 | 1.08 % | 10.136 |
+| `K-KYST-F050` | kombinasjon | 0 … 0 | ja | — | ja | 0 … 0 | 1.08 % | 10.141 |
+
+### P3 — felle-sett per avgang (kjørte konfigurasjoner)
+
+| fikstur | avgang | konfig | hardfeil (fast rute) | felle-sett (R2 pareto) |
+|---|---|---|---|---|
+| S-3 | +0 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `F-LSB025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `F-LSB025O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `F-LSB050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `F-LSB050O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `K-KYST-F025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `K-KYST-F050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `F-LSB025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `F-LSB025O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `F-LSB050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `F-LSB050O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `K-KYST-F025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `K-KYST-F050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `F-LSB025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `F-LSB025O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `F-LSB050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `F-LSB050O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `K-KYST-F025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `K-KYST-F050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `F-LSB025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `F-LSB025O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `F-LSB050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `F-LSB050O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `K-KYST-F025` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `K-KYST-F050` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +8 t | `REF` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `F-LSB025` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `F-LSB025O` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `F-LSB050` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `F-LSB050O` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `K-KYST-F025` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `K-KYST-F050` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-8 | +0 t | `REF` | [m26, m27] | [] |
+| S-8 | +0 t | `F-LSB025` | [m26, m27] | [] |
+| S-8 | +0 t | `F-LSB025O` | [m26, m27] | [] |
+| S-8 | +0 t | `F-LSB050` | [m26, m27] | [] |
+| S-8 | +0 t | `F-LSB050O` | [m26, m27] | [] |
+| S-8 | +0 t | `K-KYST-F025` | [m26, m27] | [] |
+| S-8 | +0 t | `K-KYST-F050` | [m26, m27] | [] |
+| S-8 | +3 t | `REF` | [m26, m27] | [] |
+| S-8 | +3 t | `F-LSB025` | [m26, m27] | [] |
+| S-8 | +3 t | `F-LSB025O` | [m26, m27] | [] |
+| S-8 | +3 t | `F-LSB050` | [m26, m27] | [] |
+| S-8 | +3 t | `F-LSB050O` | [m26, m27] | [] |
+| S-8 | +3 t | `K-KYST-F025` | [m26, m27] | [] |
+| S-8 | +3 t | `K-KYST-F050` | [m26, m27] | [] |
+| S-8 | +6 t | `REF` | [m26, m27] | [] |
+| S-8 | +6 t | `F-LSB025` | [m26, m27] | [] |
+| S-8 | +6 t | `F-LSB025O` | [m26, m27] | [] |
+| S-8 | +6 t | `F-LSB050` | [m26, m27] | [] |
+| S-8 | +6 t | `F-LSB050O` | [m26, m27] | [] |
+| S-8 | +6 t | `K-KYST-F025` | [m26, m27] | [] |
+| S-8 | +6 t | `K-KYST-F050` | [m26, m27] | [] |
+| S-1 | +0 t | `REF` | [] | [] |
+| S-1 | +0 t | `F-LSB025` | [] | [] |
+| S-1 | +0 t | `F-LSB025O` | [] | [] |
+| S-1 | +0 t | `F-LSB050` | [] | [] |
+| S-1 | +0 t | `F-LSB050O` | [] | [] |
+| S-1 | +0 t | `K-KYST-F025` | [] | [] |
+| S-1 | +0 t | `K-KYST-F050` | [] | [] |
+| S-1 | +3 t | `REF` | [] | [] |
+| S-1 | +3 t | `F-LSB025` | [] | [] |
+| S-1 | +3 t | `F-LSB025O` | [] | [] |
+| S-1 | +3 t | `F-LSB050` | [] | [] |
+| S-1 | +3 t | `F-LSB050O` | [] | [] |
+| S-1 | +3 t | `K-KYST-F025` | [] | [] |
+| S-1 | +3 t | `K-KYST-F050` | [] | [] |
+| S-4 | +0 t | `REF` | [] | [] |
+| S-4 | +0 t | `F-LSB025` | [] | [] |
+| S-4 | +0 t | `F-LSB025O` | [] | [] |
+| S-4 | +0 t | `F-LSB050` | [] | [] |
+| S-4 | +0 t | `F-LSB050O` | [] | [] |
+| S-4 | +0 t | `K-KYST-F025` | [] | [] |
+| S-4 | +0 t | `K-KYST-F050` | [] | [] |
+| S-4 | +3 t | `REF` | [] | [] |
+| S-4 | +3 t | `F-LSB025` | [] | [] |
+| S-4 | +3 t | `F-LSB025O` | [] | [] |
+| S-4 | +3 t | `F-LSB050` | [] | [] |
+| S-4 | +3 t | `F-LSB050O` | [] | [] |
+| S-4 | +3 t | `K-KYST-F025` | [] | [] |
+| S-4 | +3 t | `K-KYST-F050` | [] | [] |
+
+### P3 — avvisningsårsaker der de flyttet seg
+
+| fikstur | avgang | konfig | medlem | REF | konfig |
+|---|---|---|---|---|---|
+
+## Dekodekostnad (deterministiske tellere, P1 summert)
+
+| konfig | gridnoder samplet | fliser bygget | feltoppslag |
+|---|---|---|---|
+| `REF` | 2194432 | 2143 | 828344 |
+| `F-LSB025` | 2181120 | 2130 | 828577 |
+| `F-LSB025O` | 2190336 | 2139 | 828842 |
+| `F-LSB050` | 2179072 | 2128 | 828283 |
+| `F-LSB050O` | 2185216 | 2134 | 828125 |
+| `K-KYST-F025` | 2177024 | 2126 | 827839 |
+| `K-KYST-F050` | 2172928 | 2122 | 828148 |
+
+=============== finhetskontroll 0,1 kn (kontroll-lsb010) ===============
+## P1a — ruteeffekt per konfigurasjon (aggregert over alle scenarioer)
+
+Δt og korridor gjelder **ankomstscenarioene**; `uoppnaelig-mal` og `hull-i-vaerfeltet` ender per konstruksjon ikke i målet, og «tid» er der hvor langt beste delrute rakk — de er derfor holdt utenfor prosenttallene og vurdert på de diskrete feltene alene.
+
+| konfig | akse | maks \|Δt\| | maks korridor (nm) | maks anger | maks optimisme | plan feiler under sannhet | diskrete endringer | N5-brudd |
+|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 0.00 % | 0.000 | 0.00 % | 0.06 % | — | ingen | ingen |
+| `F-LSB010` | vind | 0.53 % | 4.546 | 0.56 % | 0.42 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+| `F-LSB010O` | vind | 0.11 % | 1.068 | 0.11 % | 0.06 % | — | ingen | skjaeloy-skagen-apent |
+| `K-KYST-F010` | kombinasjon | 0.36 % | 4.547 | 0.23 % | 0.06 % | — | ingen | skjaeloy-skagen-apent, natt-og-dagslysankomst, s8-vind-mot-strom-kontroll, sonde-stromband-3km |
+
+### P1b — feltnær diagnose (kontekstkolonne, ikke beslutningsgrunnlag)
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) | verste Hs for lav (m) | maks strømfeil (kn) | TWS over deklarert skranke |
+|---|---|---|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 | -0.117 | 0.001 | 7812 punkter, maks +0.00 kn |
+| `F-LSB010` | 13.87 | 1.618 | 7.88 | 0.140 | -0.117 | 0.001 | 7812 punkter, maks +0.04 kn |
+| `F-LSB010O` | 13.89 | 1.618 | 7.88 | 0.140 | -0.117 | 0.001 | 4192 punkter, maks +0.03 kn |
+| `K-KYST-F010` | 13.87 | 1.618 | 7.88 | 0.142 | -0.116 | 0.002 | 7812 punkter, maks +0.04 kn |
+
+#### Feltsonde kun på frontfeltet (`s3-front-kontroll`) — der tidsaksen biter
+
+| konfig | maks TWS-feil (kn) | RMS TWS (kn) | maks retn.feil (°) | maks Hs-feil (m) |
+|---|---|---|---|---|
+| `REF` | 13.88 | 1.617 | 7.82 | 0.140 |
+| `F-LSB010` | 13.87 | 1.618 | 7.88 | 0.140 |
+| `F-LSB010O` | 13.89 | 1.618 | 7.88 | 0.140 |
+| `K-KYST-F010` | 13.87 | 1.618 | 7.88 | 0.142 |
+
+### P1c — verste konfigurasjon per scenario
+
+| scenario | kilde | kommer fram | REF-tid (t) | verste Δt (konfig) | verste korridor (konfig) | verste anger (konfig) |
+|---|---|---|---|---|---|---|
+| skjaeloy-skagen-apent | golden | ja | 15.294 | 0.13 % (`K-KYST-F010`) | 1.072 (`F-LSB010`) | 0.56 % (`F-LSB010`) |
+| bohuslan-trange-sund | golden | ja | 4.329 | -0.01 % (`F-LSB010`) | 0.003 (`K-KYST-F010`) | -0.03 % (`F-LSB010`) |
+| ren-kryssetappe | golden | nei | 11.518 | 0.00 % (`F-LSB010`) | 0.000 (`F-LSB010`) | 0.00 % (`F-LSB010`) |
+| tss-ved-skagen | golden | nei | 5.012 | -0.12 % (`F-LSB010`) | 1.665 (`K-KYST-F010`) | -0.02 % (`F-LSB010O`) |
+| uoppnaelig-mal | golden | nei | 10.008 | -10.01 % (`F-LSB010`) | 9.868 (`F-LSB010`) | -0.03 % (`F-LSB010O`) |
+| hull-i-vaerfeltet | golden | nei | 5.511 | 0.00 % (`F-LSB010`) | 0.006 (`F-LSB010`) | -0.03 % (`F-LSB010`) |
+| natt-og-dagslysankomst | golden | ja | 8.314 | -0.36 % (`F-LSB010`) | 3.069 (`F-LSB010`) | 0.00 % (`F-LSB010O`) |
+| s3-front-kontroll | E1′ | ja | 14.301 | 0.00 % (`K-KYST-F010`) | 0.003 (`K-KYST-F010`) | 0.00 % (`F-LSB010`) |
+| s8-vind-mot-strom-kontroll | E1′ | ja | 13.197 | 0.53 % (`F-LSB010`) | 4.547 (`K-KYST-F010`) | 0.53 % (`F-LSB010`) |
+| sonde-stromband-9km | sonde | ja | 13.271 | -0.03 % (`F-LSB010`) | 0.036 (`F-LSB010`) | 0.00 % (`F-LSB010O`) |
+| sonde-stromband-3km | sonde | ja | 13.168 | -0.04 % (`F-LSB010`) | 1.271 (`F-LSB010`) | 0.15 % (`F-LSB010`) |
+
+### P1d — rader med diskret endring, tapt gjennomførbarhet, eller anger > 1 %
+
+| scenario | konfig | Δt | korridor (nm) | anger | optimisme | diskret endring |
+|---|---|---|---|---|---|---|
+| uoppnaelig-mal | `F-LSB010` | -10.01 % | 9.868 | -6.33 % | 4.10 % | — |
+| uoppnaelig-mal | `K-KYST-F010` | -9.96 % | 9.868 | -6.27 % | 4.09 % | — |
+
+### P1e — vaktbånd mot målt kvantiseringsfeil (ren, uten grid-/tidsfeil)
+
+| konfig | LSB (kn) | vaktbånd (kn) | maks målt kvant.feil (kn) | RMS (kn) | innenfor båndet | maks over deklarert maks (kn) | fanget av båndet | klippede koder |
+|---|---|---|---|---|---|---|---|---|
+| `F-LSB010` | 0.10 | 0.0707 | 0.0583 | 0.0416 | ja | 0.0416 | ja | 0 |
+| `F-LSB010O` | 0.10 | 0.0707 | 0.0506 | 0.0179 | ja | 0.0258 | ja | 0 |
+| `K-KYST-F010` | 0.10 | 0.0707 | 0.0583 | 0.0416 | ja | 0.0416 | ja | 0 |
+
+### P1f — fast LSB: bitbredden er en konsekvens, ikke et valg
+
+| konfig | LSB (kn) | maks kodespenn i én flis+skive | bit m/flis-offset | maks \|kode\| | bit u/offset (realisert) | bit u/offset (deklarert område) |
+|---|---|---|---|---|---|---|
+| `F-LSB010` | 0.10 | 217 | 8 | 248 | 9 | 10 |
+| `F-LSB010O` | 0.10 | 217 | 8 | 248 | 9 | 10 |
+| `K-KYST-F010` | 0.10 | 217 | 8 | 248 | 9 | 10 |
+
+## P2b — avgangsrangering S-5 (fulle Pareto-søk per medlem)
+
+| konfig | akse | P50 per avgang (t) | topp-avgang | topp lik REF | inversjoner P50 | inversjoner P90 | maks ΔP50 | maks ΔP90 | gj.førbarhetsdiff |
+|---|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 14.403 / 14.381 / 14.305 / 14.290 / 13.835 | +4 t | (ref) | 0 | 0 | 0.00 % | 0.00 % | 0,0,0,0,0 |
+| `F-LSB010` | vind | 14.339 / 14.318 / 14.305 / 14.288 / 13.817 | +4 t | ja | 0 | 1 | 0.44 % | 0.03 % | 0,0,0,0,0 |
+| `K-KYST-F010` | kombinasjon | 14.339 / 14.318 / 14.305 / 14.288 / 13.833 | +4 t | ja | 0 | 1 | 0.44 % | 0.03 % | 0,0,0,0,0 |
+
+## P3 — gjennomførbarhets- og felle-flips
+
+| konfig | akse | fast rute: gj.f.diff | fast: hardfeil lik REF | flippede medlemmer | felle-sett lik REF | egen rute: gj.f.diff | egen: maks Δt | egen: maks korridor (nm) |
+|---|---|---|---|---|---|---|---|---|
+| `REF` | baseline | 0 … 0 | ja | — | (ref) | 0 … 0 | 0.00 % | 0.000 |
+| `F-LSB010` | vind | 0 … 0 | ja | — | ja | 0 … 0 | 0.53 % | 10.139 |
+| `F-LSB010O` | vind | 0 … 0 | ja | — | ja | 0 … 0 | 0.19 % | 1.214 |
+| `K-KYST-F010` | kombinasjon | 0 … 0 | ja | — | ja | 0 … 0 | 0.34 % | 10.139 |
+
+### P3 — felle-sett per avgang (kjørte konfigurasjoner)
+
+| fikstur | avgang | konfig | hardfeil (fast rute) | felle-sett (R2 pareto) |
+|---|---|---|---|---|
+| S-3 | +0 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `F-LSB010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `F-LSB010O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +0 t | `K-KYST-F010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `F-LSB010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `F-LSB010O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +2 t | `K-KYST-F010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `F-LSB010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `F-LSB010O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +4 t | `K-KYST-F010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `REF` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `F-LSB010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `F-LSB010O` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +6 t | `K-KYST-F010` | [m04, m09, m14, m24] | [m04, m09, m14] |
+| S-3 | +8 t | `REF` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `F-LSB010` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `F-LSB010O` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-3 | +8 t | `K-KYST-F010` | [m04, m09, m14, m24, m29] | [m04, m09, m14, m29] |
+| S-8 | +0 t | `REF` | [m26, m27] | [] |
+| S-8 | +0 t | `F-LSB010` | [m26, m27] | [] |
+| S-8 | +0 t | `F-LSB010O` | [m26, m27] | [] |
+| S-8 | +0 t | `K-KYST-F010` | [m26, m27] | [] |
+| S-8 | +3 t | `REF` | [m26, m27] | [] |
+| S-8 | +3 t | `F-LSB010` | [m26, m27] | [] |
+| S-8 | +3 t | `F-LSB010O` | [m26, m27] | [] |
+| S-8 | +3 t | `K-KYST-F010` | [m26, m27] | [] |
+| S-8 | +6 t | `REF` | [m26, m27] | [] |
+| S-8 | +6 t | `F-LSB010` | [m26, m27] | [] |
+| S-8 | +6 t | `F-LSB010O` | [m26, m27] | [] |
+| S-8 | +6 t | `K-KYST-F010` | [m26, m27] | [] |
+| S-1 | +0 t | `REF` | [] | [] |
+| S-1 | +0 t | `F-LSB010` | [] | [] |
+| S-1 | +0 t | `F-LSB010O` | [] | [] |
+| S-1 | +0 t | `K-KYST-F010` | [] | [] |
+| S-1 | +3 t | `REF` | [] | [] |
+| S-1 | +3 t | `F-LSB010` | [] | [] |
+| S-1 | +3 t | `F-LSB010O` | [] | [] |
+| S-1 | +3 t | `K-KYST-F010` | [] | [] |
+| S-4 | +0 t | `REF` | [] | [] |
+| S-4 | +0 t | `F-LSB010` | [] | [] |
+| S-4 | +0 t | `F-LSB010O` | [] | [] |
+| S-4 | +0 t | `K-KYST-F010` | [] | [] |
+| S-4 | +3 t | `REF` | [] | [] |
+| S-4 | +3 t | `F-LSB010` | [] | [] |
+| S-4 | +3 t | `F-LSB010O` | [] | [] |
+| S-4 | +3 t | `K-KYST-F010` | [] | [] |
+
+### P3 — avvisningsårsaker der de flyttet seg
+
+| fikstur | avgang | konfig | medlem | REF | konfig |
+|---|---|---|---|---|---|
+
+## Dekodekostnad (deterministiske tellere, P1 summert)
+
+| konfig | gridnoder samplet | fliser bygget | feltoppslag |
+|---|---|---|---|
+| `REF` | 2194432 | 2143 | 828344 |
+| `F-LSB010` | 2187264 | 2136 | 828595 |
+| `F-LSB010O` | 2189312 | 2138 | 829302 |
+| `K-KYST-F010` | 2176000 | 2125 | 827460 |

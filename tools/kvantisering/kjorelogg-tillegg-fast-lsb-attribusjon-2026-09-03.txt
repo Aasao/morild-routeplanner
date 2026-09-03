@@ -1,0 +1,33 @@
+P3 S-3 +0t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +0t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t W-UV8       fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t W-UV12      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +8t REF         fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t W-UV8       fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+P3 S-3 +8t W-UV12      fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+
+P3 ferdig på 64 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-fast-lsb\attribusjon-sokestoy
+P3 S-3 +0t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +2t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +4t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +6t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t W-UV8G      fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=(ikke kjørt)
+P3 S-3 +8t REF         fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t W-UV8G      fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=(ikke kjørt)
+
+P3 ferdig på 42 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-fast-lsb\attribusjon-global8

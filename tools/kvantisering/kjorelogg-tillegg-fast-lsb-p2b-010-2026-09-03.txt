@@ -1,0 +1,21 @@
+P2b REF         +0t  30/30  P50=14.403
+P2b REF         +1t  30/30  P50=14.381
+P2b REF         +2t  30/30  P50=14.305
+P2b REF         +3t  30/30  P50=14.290
+P2b REF         +4t  30/30  P50=13.835
+P2b F-LSB010    +0t  30/30  P50=14.339
+P2b F-LSB010    +1t  30/30  P50=14.318
+P2b F-LSB010    +2t  30/30  P50=14.305
+P2b F-LSB010    +3t  30/30  P50=14.288
+P2b F-LSB010    +4t  30/30  P50=13.817
+P2b K-KYST-F010 +0t  30/30  P50=14.339
+P2b K-KYST-F010 +1t  30/30  P50=14.318
+P2b K-KYST-F010 +2t  30/30  P50=14.305
+P2b K-KYST-F010 +3t  30/30  P50=14.288
+P2b K-KYST-F010 +4t  30/30  P50=13.833
+  ↳ F-LSB010    topp=4 t (REF 4 t) inv=0 maksΔP50=0.44 %
+  ↳ K-KYST-F010 topp=4 t (REF 4 t) inv=0 maksΔP50=0.44 %
+
+P2b ferdig på 744 s
+
+Rådata skrevet til C:\Users\maasa\AppData\Local\Temp\claude\C--Utvikling-routeplanner-v2\3ff5cff8-cffb-42b3-a4bb-21e2af45d1aa\scratchpad\p2b-010

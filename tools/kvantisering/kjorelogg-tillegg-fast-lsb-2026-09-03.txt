@@ -1,0 +1,168 @@
+P1 skjaeloy-skagen-apent        REF         15.294 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 skjaeloy-skagen-apent        F-LSB025    15.315 t  Δt=0.14 %  korridor=1.073 nm  anger=0.08 %  optimisme=-0.06 %  BRUDD  vaktbånd=0.177 kn (målt 0.120)
+P1 skjaeloy-skagen-apent        F-LSB025O   15.319 t  Δt=0.16 %  korridor=1.707 nm  anger=2.80 %  optimisme=2.63 %  BRUDD  vaktbånd=0.177 kn (målt 0.127)
+P1 skjaeloy-skagen-apent        F-LSB050    15.303 t  Δt=0.05 %  korridor=1.893 nm  anger=2.75 %  optimisme=2.69 %  BRUDD  vaktbånd=0.354 kn (målt 0.265)
+P1 skjaeloy-skagen-apent        F-LSB050O   15.320 t  Δt=0.17 %  korridor=1.355 nm  anger=2.76 %  optimisme=2.58 %  BRUDD  vaktbånd=0.354 kn (målt 0.254)
+P1 skjaeloy-skagen-apent        K-KYST-F025 15.316 t  Δt=0.14 %  korridor=1.072 nm  anger=0.09 %  optimisme=-0.06 %  BRUDD  vaktbånd=0.177 kn (målt 0.120)
+P1 skjaeloy-skagen-apent        K-KYST-F050 15.303 t  Δt=0.06 %  korridor=1.893 nm  anger=2.28 %  optimisme=2.22 %  BRUDD  vaktbånd=0.354 kn (målt 0.265)
+P1 bohuslan-trange-sund         REF         4.329 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.01 %  ok
+P1 bohuslan-trange-sund         F-LSB025    4.329 t  Δt=-0.01 %  korridor=0.018 nm  anger=0.01 %  optimisme=0.01 %  ok  vaktbånd=0.177 kn (målt 0.113)
+P1 bohuslan-trange-sund         F-LSB025O   4.328 t  Δt=-0.03 %  korridor=0.006 nm  anger=-0.08 %  optimisme=-0.06 %  ok  vaktbånd=0.177 kn (målt 0.133)
+P1 bohuslan-trange-sund         F-LSB050    4.322 t  Δt=-0.16 %  korridor=0.030 nm  anger=-0.12 %  optimisme=0.03 %  ok  vaktbånd=0.354 kn (målt 0.263)
+P1 bohuslan-trange-sund         F-LSB050O   4.326 t  Δt=-0.06 %  korridor=0.011 nm  anger=-0.08 %  optimisme=-0.03 %  ok  vaktbånd=0.354 kn (målt 0.271)
+P1 bohuslan-trange-sund         K-KYST-F025 4.329 t  Δt=-0.01 %  korridor=0.018 nm  anger=0.01 %  optimisme=0.01 %  ok  vaktbånd=0.177 kn (målt 0.113)
+P1 bohuslan-trange-sund         K-KYST-F050 4.322 t  Δt=-0.16 %  korridor=0.030 nm  anger=-0.12 %  optimisme=0.03 %  ok  vaktbånd=0.354 kn (målt 0.263)
+P1 ren-kryssetappe              REF         11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 ren-kryssetappe              F-LSB025    11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok  vaktbånd=0.177 kn (målt 0.000)
+P1 ren-kryssetappe              F-LSB025O   11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok  vaktbånd=0.177 kn (målt 0.000)
+P1 ren-kryssetappe              F-LSB050    11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok  vaktbånd=0.354 kn (målt 0.000)
+P1 ren-kryssetappe              F-LSB050O   11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok  vaktbånd=0.354 kn (målt 0.000)
+P1 ren-kryssetappe              K-KYST-F025 11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok  vaktbånd=0.177 kn (målt 0.000)
+P1 ren-kryssetappe              K-KYST-F050 11.518 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok  vaktbånd=0.354 kn (målt 0.000)
+P1 tss-ved-skagen               REF         5.012 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 tss-ved-skagen               F-LSB025    5.012 t  Δt=0.00 %  korridor=0.004 nm  anger=-0.02 %  optimisme=-0.02 %  ok  vaktbånd=0.177 kn (målt 0.139)
+P1 tss-ved-skagen               F-LSB025O   5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=-0.10 %  optimisme=0.02 %  BRUDD  vaktbånd=0.177 kn (målt 0.123)
+P1 tss-ved-skagen               F-LSB050    5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=0.12 %  optimisme=0.24 %  BRUDD  vaktbånd=0.354 kn (målt 0.250)
+P1 tss-ved-skagen               F-LSB050O   5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=0.11 %  optimisme=0.23 %  BRUDD  vaktbånd=0.354 kn (målt 0.273)
+P1 tss-ved-skagen               K-KYST-F025 5.007 t  Δt=-0.11 %  korridor=1.745 nm  anger=-0.12 %  optimisme=-0.02 %  BRUDD  vaktbånd=0.177 kn (målt 0.139)
+P1 tss-ved-skagen               K-KYST-F050 5.006 t  Δt=-0.12 %  korridor=1.665 nm  anger=0.12 %  optimisme=0.24 %  BRUDD  vaktbånd=0.354 kn (målt 0.250)
+P1 uoppnaelig-mal               REF         10.008 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 uoppnaelig-mal               F-LSB025    10.010 t  Δt=0.02 %  korridor=15.460 nm  anger=0.87 %  optimisme=0.85 %  BRUDD  vaktbånd=0.177 kn (målt 0.135)
+P1 uoppnaelig-mal               F-LSB025O   11.009 t  Δt=10.00 %  korridor=13.435 nm  anger=9.96 %  optimisme=-0.04 %  BRUDD  vaktbånd=0.177 kn (målt 0.138)
+P1 uoppnaelig-mal               F-LSB050    10.002 t  Δt=-0.06 %  korridor=16.959 nm  anger=-0.30 %  optimisme=-0.24 %  BRUDD  vaktbånd=0.354 kn (målt 0.247)
+P1 uoppnaelig-mal               F-LSB050O   10.008 t  Δt=0.00 %  korridor=3.489 nm  anger=3.56 %  optimisme=3.56 %  BRUDD  vaktbånd=0.354 kn (målt 0.283)
+P1 uoppnaelig-mal               K-KYST-F025 10.010 t  Δt=0.02 %  korridor=15.460 nm  anger=0.87 %  optimisme=0.85 %  BRUDD  vaktbånd=0.177 kn (målt 0.135)
+P1 uoppnaelig-mal               K-KYST-F050 10.002 t  Δt=-0.06 %  korridor=16.959 nm  anger=-0.30 %  optimisme=-0.24 %  BRUDD  vaktbånd=0.354 kn (målt 0.247)
+P1 hull-i-vaerfeltet            REF         5.511 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.00 %  ok
+P1 hull-i-vaerfeltet            F-LSB025    5.511 t  Δt=0.00 %  korridor=0.006 nm  anger=-0.03 %  optimisme=-0.03 %  ok  vaktbånd=0.177 kn (målt 0.092)
+P1 hull-i-vaerfeltet            F-LSB025O   5.510 t  Δt=-0.02 %  korridor=0.478 nm  anger=0.08 %  optimisme=0.10 %  ok  vaktbånd=0.177 kn (målt 0.100)
+P1 hull-i-vaerfeltet            F-LSB050    5.510 t  Δt=-0.02 %  korridor=0.492 nm  anger=0.00 %  optimisme=0.02 %  ok  vaktbånd=0.354 kn (målt 0.216)
+P1 hull-i-vaerfeltet            F-LSB050O   5.520 t  Δt=0.17 %  korridor=5.671 nm  anger=0.12 %  optimisme=-0.05 %  BRUDD  vaktbånd=0.354 kn (målt 0.228)
+P1 hull-i-vaerfeltet            K-KYST-F025 5.511 t  Δt=0.00 %  korridor=0.006 nm  anger=-0.03 %  optimisme=-0.03 %  ok  vaktbånd=0.177 kn (målt 0.092)
+P1 hull-i-vaerfeltet            K-KYST-F050 5.510 t  Δt=-0.02 %  korridor=0.493 nm  anger=0.00 %  optimisme=0.02 %  ok  vaktbånd=0.354 kn (målt 0.216)
+P1 natt-og-dagslysankomst       REF         8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 natt-og-dagslysankomst       F-LSB025    8.256 t  Δt=-0.69 %  korridor=1.900 nm  anger=-0.69 %  optimisme=0.00 %  BRUDD  vaktbånd=0.177 kn (målt 0.050)
+P1 natt-og-dagslysankomst       F-LSB025O   8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok  vaktbånd=0.177 kn (målt 0.000)
+P1 natt-og-dagslysankomst       F-LSB050    8.340 t  Δt=0.31 %  korridor=1.853 nm  anger=-0.13 %  optimisme=-0.45 %  BRUDD  vaktbånd=0.354 kn (målt 0.184)
+P1 natt-og-dagslysankomst       F-LSB050O   8.314 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok  vaktbånd=0.354 kn (målt 0.000)
+P1 natt-og-dagslysankomst       K-KYST-F025 8.256 t  Δt=-0.69 %  korridor=1.900 nm  anger=-0.69 %  optimisme=0.00 %  BRUDD  vaktbånd=0.177 kn (målt 0.050)
+P1 natt-og-dagslysankomst       K-KYST-F050 8.340 t  Δt=0.31 %  korridor=1.853 nm  anger=-0.13 %  optimisme=-0.45 %  BRUDD  vaktbånd=0.354 kn (målt 0.184)
+P1 s3-front-kontroll            REF         14.301 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.02 %  ok
+P1 s3-front-kontroll            F-LSB025    14.301 t  Δt=-0.00 %  korridor=0.002 nm  anger=0.01 %  optimisme=-0.01 %  ok  vaktbånd=0.177 kn (målt 0.101)
+P1 s3-front-kontroll            F-LSB025O   14.304 t  Δt=0.02 %  korridor=0.007 nm  anger=-0.01 %  optimisme=-0.05 %  ok  vaktbånd=0.177 kn (målt 0.128)
+P1 s3-front-kontroll            F-LSB050    14.299 t  Δt=-0.02 %  korridor=0.004 nm  anger=-0.01 %  optimisme=-0.01 %  ok  vaktbånd=0.354 kn (målt 0.284)
+P1 s3-front-kontroll            F-LSB050O   14.295 t  Δt=-0.04 %  korridor=2.995 nm  anger=-0.02 %  optimisme=0.00 %  BRUDD  vaktbånd=0.354 kn (målt 0.263)
+P1 s3-front-kontroll            K-KYST-F025 14.301 t  Δt=0.00 %  korridor=0.001 nm  anger=0.00 %  optimisme=-0.02 %  ok  vaktbånd=0.177 kn (målt 0.101)
+P1 s3-front-kontroll            K-KYST-F050 14.299 t  Δt=-0.01 %  korridor=0.002 nm  anger=-0.01 %  optimisme=-0.01 %  ok  vaktbånd=0.354 kn (målt 0.284)
+P1 s8-vind-mot-strom-kontroll   REF         13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok
+P1 s8-vind-mot-strom-kontroll   F-LSB025    13.054 t  Δt=-1.08 %  korridor=2.370 nm  anger=-1.08 %  optimisme=0.00 %  BRUDD  vaktbånd=0.177 kn (målt 0.135)
+P1 s8-vind-mot-strom-kontroll   F-LSB025O   13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok  vaktbånd=0.177 kn (målt 0.000)
+P1 s8-vind-mot-strom-kontroll   F-LSB050    13.054 t  Δt=-1.08 %  korridor=2.370 nm  anger=-1.08 %  optimisme=0.00 %  BRUDD  vaktbånd=0.354 kn (målt 0.135)
+P1 s8-vind-mot-strom-kontroll   F-LSB050O   13.197 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.00 %  ok  vaktbånd=0.354 kn (målt 0.000)
+P1 s8-vind-mot-strom-kontroll   K-KYST-F025 13.055 t  Δt=-1.08 %  korridor=2.370 nm  anger=-1.07 %  optimisme=0.00 %  BRUDD  vaktbånd=0.177 kn (målt 0.135)
+P1 s8-vind-mot-strom-kontroll   K-KYST-F050 13.055 t  Δt=-1.08 %  korridor=2.370 nm  anger=-1.07 %  optimisme=0.00 %  BRUDD  vaktbånd=0.354 kn (målt 0.135)
+P1 sonde-stromband-9km          REF         13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok
+P1 sonde-stromband-9km          F-LSB025    13.267 t  Δt=-0.03 %  korridor=0.036 nm  anger=-0.03 %  optimisme=0.06 %  ok  vaktbånd=0.177 kn (målt 0.042)
+P1 sonde-stromband-9km          F-LSB025O   13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok  vaktbånd=0.177 kn (målt 0.000)
+P1 sonde-stromband-9km          F-LSB050    13.267 t  Δt=-0.03 %  korridor=0.036 nm  anger=-0.03 %  optimisme=0.06 %  ok  vaktbånd=0.354 kn (målt 0.042)
+P1 sonde-stromband-9km          F-LSB050O   13.271 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=0.06 %  ok  vaktbånd=0.354 kn (målt 0.000)
+P1 sonde-stromband-9km          K-KYST-F025 13.268 t  Δt=-0.03 %  korridor=0.034 nm  anger=-0.03 %  optimisme=0.06 %  ok  vaktbånd=0.177 kn (målt 0.042)
+P1 sonde-stromband-9km          K-KYST-F050 13.268 t  Δt=-0.03 %  korridor=0.034 nm  anger=-0.03 %  optimisme=0.06 %  ok  vaktbånd=0.354 kn (målt 0.042)
+P1 sonde-stromband-3km          REF         13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok
+P1 sonde-stromband-3km          F-LSB025    13.162 t  Δt=-0.04 %  korridor=1.271 nm  anger=0.15 %  optimisme=-0.01 %  BRUDD  vaktbånd=0.177 kn (målt 0.042)
+P1 sonde-stromband-3km          F-LSB025O   13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok  vaktbånd=0.177 kn (målt 0.000)
+P1 sonde-stromband-3km          F-LSB050    13.162 t  Δt=-0.04 %  korridor=1.271 nm  anger=0.15 %  optimisme=-0.01 %  BRUDD  vaktbånd=0.354 kn (målt 0.042)
+P1 sonde-stromband-3km          F-LSB050O   13.168 t  Δt=0.00 %  korridor=0.000 nm  anger=0.00 %  optimisme=-0.20 %  ok  vaktbånd=0.354 kn (målt 0.000)
+P1 sonde-stromband-3km          K-KYST-F025 13.162 t  Δt=-0.04 %  korridor=1.271 nm  anger=0.15 %  optimisme=-0.01 %  BRUDD  vaktbånd=0.177 kn (målt 0.042)
+P1 sonde-stromband-3km          K-KYST-F050 13.162 t  Δt=-0.04 %  korridor=1.271 nm  anger=0.15 %  optimisme=-0.01 %  BRUDD  vaktbånd=0.354 kn (målt 0.042)
+
+P1 ferdig på 317 s
+
+P3 S-3 +0t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t F-LSB025    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t F-LSB025O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t F-LSB050    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t F-LSB050O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t K-KYST-F025 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +0t K-KYST-F050 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t F-LSB025    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t F-LSB025O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t F-LSB050    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t F-LSB050O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t K-KYST-F025 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +2t K-KYST-F050 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t F-LSB025    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t F-LSB025O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t F-LSB050    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t F-LSB050O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t K-KYST-F025 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +4t K-KYST-F050 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t REF         fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t F-LSB025    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t F-LSB025O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t F-LSB050    fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t F-LSB050O   fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t K-KYST-F025 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +6t K-KYST-F050 fast 26/30 hard=[m04,m09,m14,m24] egen 26/30 feller=[m04,m09,m14]
+P3 S-3 +8t REF         fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t F-LSB025    fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t F-LSB025O   fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t F-LSB050    fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t F-LSB050O   fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t K-KYST-F025 fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-3 +8t K-KYST-F050 fast 25/30 hard=[m04,m09,m14,m24,m29] egen 25/30 feller=[m04,m09,m14,m29]
+P3 S-8 +0t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t F-LSB025    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t F-LSB025O   fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t F-LSB050    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t F-LSB050O   fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t K-KYST-F025 fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +0t K-KYST-F050 fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t F-LSB025    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t F-LSB025O   fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t F-LSB050    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t F-LSB050O   fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t K-KYST-F025 fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +3t K-KYST-F050 fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t REF         fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t F-LSB025    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t F-LSB025O   fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t F-LSB050    fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t F-LSB050O   fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t K-KYST-F025 fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-8 +6t K-KYST-F050 fast 28/30 hard=[m26,m27] egen 28/30 feller=[]
+P3 S-1 +0t REF         fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +0t F-LSB025    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +0t F-LSB025O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +0t F-LSB050    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +0t F-LSB050O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +0t K-KYST-F025 fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +0t K-KYST-F050 fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +3t REF         fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +3t F-LSB025    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +3t F-LSB025O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +3t F-LSB050    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +3t F-LSB050O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +3t K-KYST-F025 fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-1 +3t K-KYST-F050 fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +0t REF         fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +0t F-LSB025    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +0t F-LSB025O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +0t F-LSB050    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +0t F-LSB050O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +0t K-KYST-F025 fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +0t K-KYST-F050 fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +3t REF         fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +3t F-LSB025    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +3t F-LSB025O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +3t F-LSB050    fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +3t F-LSB050O   fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +3t K-KYST-F025 fast 30/30 hard=[] egen 30/30 feller=[]
+P3 S-4 +3t K-KYST-F050 fast 30/30 hard=[] egen 30/30 feller=[]
+
+P3 ferdig på 400 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-fast-lsb

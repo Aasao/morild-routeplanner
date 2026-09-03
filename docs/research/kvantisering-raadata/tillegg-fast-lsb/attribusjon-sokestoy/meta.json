@@ -1,0 +1,161 @@
+{
+ "beskrivelse": "Kvantiseringsmåling 2026-09-01 — se docs/research/kvantiseringsmaaling-2026-09-01.md",
+ "referanse": "REF",
+ "tidToleranse": 0.02,
+ "korridorNm": 0.5,
+ "konfigurasjoner": [
+  {
+   "id": "REF",
+   "akse": "baseline",
+   "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+   "spec": {
+    "id": "REF",
+    "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "W-UV8",
+   "akse": "vind",
+   "note": "u/v 8-bit, skala/offset per flis",
+   "spec": {
+    "id": "W-UV8",
+    "note": "u/v 8-bit, skala/offset per flis",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "W-UV12",
+   "akse": "vind",
+   "note": "u/v 12-bit per flis",
+   "spec": {
+    "id": "W-UV12",
+    "note": "u/v 12-bit per flis",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": 12,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  }
+ ]
+}

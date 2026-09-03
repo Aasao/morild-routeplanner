@@ -9,12 +9,16 @@
   enhetstestet i `packages/routing/src/pack-degradation.test.ts`),
   `tools/kvantisering/` (matrise, kjøring, tabellgenerering).
 - **Rådata:** `docs/research/kvantisering-raadata/` (JSON), tillegg i
-  `docs/research/kvantisering-raadata/tillegg-hs-avrunding/` og
+  `docs/research/kvantisering-raadata/tillegg-hs-avrunding/`,
   `docs/research/kvantisering-raadata/tillegg-k-anbefalt/`
-  (+ `.../attribusjon-5km/`, se §9.1).
+  (+ `.../attribusjon-5km/`, se §9.1) og
+  `docs/research/kvantisering-raadata/tillegg-fast-lsb/`
+  (+ `.../attribusjon-sokestoy/`, `.../attribusjon-global8/`,
+  `.../kontroll-lsb010/`, se §9.2).
   Genererte tabeller: `tools/kvantisering/tabeller-2026-09-01.txt`,
   `tools/kvantisering/tabeller-tillegg-hs-2026-09-01.txt`,
-  `tools/kvantisering/tabeller-tillegg-k-anbefalt-2026-09-01.txt`.
+  `tools/kvantisering/tabeller-tillegg-k-anbefalt-2026-09-01.txt`,
+  `tools/kvantisering/tabeller-tillegg-fast-lsb-2026-09-03.txt`.
 - **Status:** måling, ikke beslutning. Anbefalingene i §9–§10 er input til
   `specs/vaerpakker.md`; Magnus avgjør.
 
@@ -94,6 +98,27 @@
    flipp. P90-halen rives derimot bare opp når grovt nett og kvantisering
    opptrer *sammen* (5,36 % mot 0,02 % for Float32 på 5 km og 0,00 % for 8 bit
    på 2,5 km) — en interaksjon, ikke en sum.
+
+9. **Tillegg 2026-09-03 (§9.2): fast fysisk LSB på vind (D6-C) består alle
+   sikkerhetskriteriene, men ingen av de to foreslåtte trinnene kan låses.**
+   Formen gir det den ble foreslått for: et vaktbånd som er en *formatkonstant*
+   (`√2·lsb/2`), uavhengig av feltets dynamiske område — og på en stormpakke er
+   den bevisbare skranken nesten dobbelt så stram som dagens 8-bit-per-flis
+   (0,18 kn mot 0,33 kn ved 60 kn deklarert maks). Målt: null flips, null tapte
+   harde forkastelser og null felle-endringer over **fire** fiksturer (S-1, S-3,
+   S-4, S-8; P3-matrisen er utvidet), null diskrete endringer i P1, ingen
+   klipping, og vaktbåndet er en ærlig skranke over den målte
+   kvantiseringsfeilen i alle elleve scenarioer (0,139 mot 0,177 kn; 0,284 mot
+   0,354 kn). Men **rangeringen** skiller: 0,5 kn flipper S-5s toppavgang
+   allerede på vindaksen alene (ΔP50 3,40 %), og 0,25 kn — som er ren på aksen
+   alene (ΔP50 0,09 %) — mister +4 t-grenen i den **fullstendige** kystpakken
+   (ΔP50 3,41 %, mot `K-ANB-KYST`s 0,01 % med 8 bit per flis). Årsaken er ikke
+   formen, men finheten: 0,25 kn er ~3× grovere enn flis-skalaens trinn i den
+   verste målte flisen (0,085 kn), og mer i typiske fliser — og
+   finhetskontrollen beviser det paret, ved at
+   **0,1 kn består både på aksen alene og i hele kystpakken** (topp +4 t, null
+   inversjoner, ΔP50 0,44 %). Anbefalingen er derfor: fast LSB kan låses, men på
+   0,1 kn med gitter-justert flis-offset, ikke på 0,25 eller 0,5 kn.
 
 ---
 
@@ -204,6 +229,12 @@ Harnessen måler altså den fiksturen den tror den måler, med begge metodene.
 Konvergenskonfigurasjonene ble lagt til **etter** første kjøring, da den viste
 at `REF` selv flytter S-5s P50 opptil 2 % mot det analytiske feltet. Uten dem
 er 2,5 km/1 t en udokumentert antakelse, ikke en referanse.
+
+Senere tillegg har utvidet matrisen: §9.1 la til `K-ANB-KYST`/`K-ANB-UTASKJAERS`
+(2026-09-02), og §9.2 la til `F-LSB025`, `F-LSB025O`, `F-LSB050`, `F-LSB050O`,
+`K-KYST-F025`, `K-KYST-F050` pluss finhetskontrollene `F-LSB010`, `F-LSB010O`,
+`K-KYST-F010` (2026-09-03, fast fysisk LSB). Samme tillegg utvidet **P3s
+fiksturmatrise** fra S-3/S-8 til også S-1 og S-4 (12 avganger i alt).
 
 ---
 
@@ -744,11 +775,330 @@ grunnen til at lettelsen ble foreslått i det hele tatt.
 
 ---
 
+### 9.2 Tillegg 2026-09-03 — fast fysisk LSB på vind (D6-C)
+
+> Kjørt 2026-09-03 av rutemotor-agenten etter Magnus' beslutning **D6-C**: fast
+> fysisk LSB for vindkvantisering er *kandidat* til nytt format, men skal låses
+> **først** etter at kvantiseringsharnessen er kjørt på den — valget er
+> sikkerhetssemantikk, ikke båndbredde.
+> Rådata: `docs/research/kvantisering-raadata/tillegg-fast-lsb/`
+> (+ `attribusjon-sokestoy/`, `attribusjon-global8/`, `kontroll-lsb010/`).
+> Tabeller: `tools/kvantisering/tabeller-tillegg-fast-lsb-2026-09-03.txt`.
+> Kjørelogger: `tools/kvantisering/kjorelogg-tillegg-fast-lsb-*.txt`.
+
+**Hvorfor dette er sikkerhetssemantikk og ikke båndbredde.** Trinnet er i dag
+en funksjon av dataene: `(maks − min i flisen og skiven)/255`. Da er også
+`maxDecodeErrorKn` — TWS-vaktbåndet i `expand.ts::twsExceedsHardLimit`,
+§9.5 — en funksjon av dataene, og den eneste skranken som kan *bevises* uten å
+kjenne flisinnholdet er den globale: `√2/2 · 2·maksTWS/255`. Den vokser altså
+med feltets deklarerte maksvind, og er dårligst nettopp i uvær. Med et fast
+fysisk trinn blir skranken `√2·lsb/2` — et tall i spec-en, uavhengig av felt,
+flisstørrelse og flisinnhold:
+
+| feltets deklarerte maksvind | 8 bit per flis (bevisbar skranke) | fast LSB 0,25 kn | fast LSB 0,5 kn |
+|---|---|---|---|
+| 17,2 kn (golden-feltene) | 0,095 kn | 0,177 kn | 0,354 kn |
+| 28 kn (S-3s frontfelt) | 0,155 kn | 0,177 kn | 0,354 kn |
+| 60 kn (stormpakke) | 0,333 kn | 0,177 kn | 0,354 kn |
+| 80 kn | 0,444 kn | 0,177 kn | 0,354 kn |
+
+Bruddpunktet er ~22,7 kn: over det gir fast LSB 0,25 kn et **strammere**
+bevisbart vaktbånd enn 8 bit per flis, og på en stormpakke er det nesten dobbelt
+så stramt. Det er hele argumentet for D6-C — og prisen er at *realisert*
+oppløsning blir dårligere enn flis-skalaen leverer: verste målte flisspenn er
+21,7 kn, som ved 8 bit gir trinnet 21,7/255 = 0,085 kn — og typiske fliser gir
+finere. Flis-skalaen er altså minst ~3× finere enn 0,25 kn på disse feltene. Det
+er den avveiningen målingen skal prise.
+
+**Hva som er lagt til i pakkemodellen** (`pack-degradation.ts`): en tredje
+skalamodus `fast-lsb` med et fysisk trinn og to nullpunkt-varianter —
+`ingen` (koden er `round(x/lsb)`, ett gitter for hele feltet, ankret i fysisk
+null) og `flis` (koden er `round((x − eksakt flis-minimum)/lsb)`, gitteret
+flytter seg mellom fliser). Den tredje varianten et format kan velge, et
+**gitter-justert** flis-offset, er *bevist* identisk med `ingen` i dekodede
+verdier (`anker + round((x−anker)/lsb)·lsb = round(x/lsb)·lsb` når ankeret er et
+helt antall trinn) og har derfor ingen egen kjøring — bare en enhetstest.
+Bitbredden er ikke en parameter, men en **måling** (kodespenn per flis og maks
+`|kode|`), og klipping mot kanalens deklarerte område **telles**: klippes en
+kode, er `√2·lsb/2` ikke lenger en gyldig skranke, og det skal ikke kunne skje
+stille.
+
+**Konfigurasjonene** (hver **én endring** fra `REF`, unntatt `K-`-radene som er
+`K-ANB-KYST` med kun vinden byttet):
+
+| id | trinn | nullpunkt | ellers |
+|---|---|---|---|
+| `F-LSB025` / `F-LSB025O` | 0,25 kn | fysisk null / flis-minimum | `REF` (Float32 på alt annet) |
+| `F-LSB050` / `F-LSB050O` | 0,5 kn | fysisk null / flis-minimum | `REF` |
+| `K-KYST-F025` / `K-KYST-F050` | 0,25 / 0,5 kn | fysisk null | `K-ANB-KYST` (Hs 8-bit flis OPP, strøm 0,8 km 8-bit, retning 8-bit, 2,5 km, 1 t) |
+| `F-LSB010` / `F-LSB010O` | 0,1 kn | fysisk null / flis-minimum | **finhetskontroll**, lagt til underveis (se Resultat 3 og 4) |
+| `K-KYST-F010` | 0,1 kn | fysisk null | samme kontroll, i hele kystpakken |
+
+**Et instrument som manglet: P1e.** Feltsonden i P1b måler pakken mot det
+*analytiske* feltet og bærer dermed grid- og tidsfeilen i tillegg til
+kvantiseringens. Den kan derfor ikke teste vaktbåndet, som per definisjon er en
+skranke på kvantiseringen alene. P1e bygger i stedet en pakke med **nøyaktig
+samme grid, flisgeometri og tidsnett, men Float32 vind**, og måler pakken mot
+den: differansen er ren kvantiseringsfeil. Uten den ville «rutene ble like»
+vært det eneste beviset, og oppgaven var eksplisitt at vaktbåndet skulle
+verifiseres, ikke bare rutene.
+
+**Kriteriene er de forhåndsregistrerte** (§2.2, §9.1): ingen felle- eller
+gjennomførbarhetsflips, ingen tapte harde forkastelser, ingen diskrete
+sikkerhetsendringer, rangering innenfor bånd — og for dette tillegget i
+tillegg: vaktbåndet skal være en gyldig skranke, og ingen koder skal klippes.
+Kontinuerlige tall tolkes mot støygulvene: ~1,3 % Δt / ~2,2 nm korridor (§4) og
+søkets egen ~6 % suboptimalitet (§11 forbehold 1). Bare flips og **parede**
+mekanismefunn er beslutningsdyktige.
+
+**P2a er bevisst ikke kjørt** i dette tillegget: §11 forbehold 2 slår fast at
+den billige rangeringen flipper toppavgangen selv for pakker som er strengt
+finere enn referansen, og at formatbeslutninger ikke skal hvile på den. Alle
+rangeringstall her er fulle Pareto-søk per medlem (P2b).
+
+#### Resultat 1: vaktbåndet holder, og det er nå målt på riktig grunnlag
+
+| konfig | LSB | vaktbånd | maks målt kvant.feil | innenfor båndet | maks over deklarert maksvind | fanget av båndet | klippede koder |
+|---|---|---|---|---|---|---|---|
+| `F-LSB025` | 0,25 kn | 0,1768 kn | 0,1387 kn | **ja** | 0,1350 kn | **ja** | 0 |
+| `F-LSB025O` | 0,25 kn | 0,1768 kn | 0,1384 kn | **ja** | 0,0567 kn | **ja** | 0 |
+| `F-LSB050` | 0,5 kn | 0,3536 kn | 0,2839 kn | **ja** | 0,1449 kn | **ja** | 0 |
+| `F-LSB050O` | 0,5 kn | 0,3536 kn | 0,2834 kn | **ja** | 0,1055 kn | **ja** | 0 |
+| `K-KYST-F025` | 0,25 kn | 0,1768 kn | 0,1387 kn | **ja** | 0,1350 kn | **ja** | 0 |
+| `K-KYST-F050` | 0,5 kn | 0,3536 kn | 0,2839 kn | **ja** | 0,1449 kn | **ja** | 0 |
+| `F-LSB010` | 0,1 kn | 0,0707 kn | 0,0583 kn | **ja** | 0,0416 kn | **ja** | 0 |
+| `F-LSB010O` | 0,1 kn | 0,0707 kn | 0,0506 kn | **ja** | 0,0258 kn | **ja** | 0 |
+| `K-KYST-F010` | 0,1 kn | 0,0707 kn | 0,0583 kn | **ja** | 0,0416 kn | **ja** | 0 |
+
+Den målte feilen ligger om lag 20 % under skranken i alle seks (0,139/0,177 og
+0,284/0,354), over elleve scenarioer og åtte skjeve sondetimer. Vaktbåndet **fanger også overskridelsene
+oppover**: den dekodede vinden går inntil 0,14 kn forbi feltets egen deklarerte
+maksvind (`F-LSB025`: 15 750 sondepunkter; `F-LSB025O`: 4 212 — det globale
+gitteret runder oftere forbi taket enn det flis-ankrede), og alle
+overskridelsene er mindre enn båndet. Det er §10 krav 6 målt, ikke antatt.
+Enhetstesten `pakkedegradering: fast fysisk LSB (D6-C)` fastholder i tillegg
+den harde varianten: på et gitter med båtgrense midt i vindspennet mister den
+nakne sammenligningen forkastelser, vaktbåndet mister **null** — for begge
+LSB-verdier — og en positiv kontroll viser at skranken *brytes* når koder
+klippes (et felt som under-deklarerer sin egen maksvind), som er grunnen til at
+klipping telles.
+
+#### Resultat 2: ingen flips, ingen tapte forkastelser — på fire fiksturer
+
+P3-matrisen er utvidet med **S-1** (åpent slørstrekk) og **S-4** (trang
+skjærgård) fordi formatvalget mangler bredde i S-3/S-8 alene. De to har ingen
+harde forkastelser per konstruksjon og tester derfor den motsatte feilen: at en
+pakke *finner på* en forkastelse eller mister gjennomførbarhet der fasiten ikke
+har noen. Felledommen er billig der (`trapVerdict` returnerer uten R2-re-søk når
+det ikke finnes hard feil), så bredden koster lite.
+
+| fikstur | avganger | hardfeil-sett lik `REF` | felle-sett lik `REF` | gj.førbarhetsdiff (fast/egen) |
+|---|---|---|---|---|
+| S-3 | 5 (`{m04,m09,m14,m24}`, +8 t også `m29`) | **ja, alle 6 konfigurasjoner** | **ja** (inkl. `m29`-fella `T-3H` mistet) | 0 / 0 |
+| S-8 | 3 (`{m26,m27}`) | **ja** | **ja** (tomt sett, som `REF`) | 0 / 0 |
+| S-1 | 2 (tomt) | **ja** | **ja** | 0 / 0 |
+| S-4 | 2 (tomt) | **ja** | **ja** | 0 / 0 |
+
+Ingen konfigurasjon flytter én eneste hard forkastelse, ett eneste felle-sett
+eller ett eneste gjennomførbart medlem, i noen av de tolv avgangene. `REF`
+reproduserte samtidig hovedkjøringens og §9.1s hardfeil- og felle-sett eksakt —
+determinismen holder over tre uavhengige kjøringer.
+
+Finhetskontrollene (`F-LSB010`, `F-LSB010O`, `K-KYST-F010`) ble kjørt gjennom
+den **samme** P3-matrisen i `kontroll-lsb010/` og gir samme svar: identiske
+hardfeil-sett, identiske felle-sett og 0 i gjennomførbarhetsdiff i alle tolv
+avganger.
+
+Merk hva som **ikke** følger av dette: at vaktbåndet ble bredere (0,18/0,35 kn
+mot 0,10–0,16 kn) betyr at motoren forkaster litt tidligere. Prisen for den
+konservatismen — falske forkastelser — er målt til **null** her, men marginene i
+fiksturene er artefakter (§11 forbehold 5), og det tallet generaliserer ikke.
+
+#### Resultat 3: P1 — ingen diskrete endringer, og N5-bruddene er korridor alene
+
+| konfig | maks \|Δt\| | maks korridor | maks anger | diskrete endringer | N5-brudd |
+|---|---|---|---|---|---|
+| `F-LSB010` | 0,53 % | 4,546 nm | 0,56 % | **ingen** | 4 (kun korridor) |
+| `F-LSB010O` | 0,11 % | 1,068 nm | 0,11 % | **ingen** | 1 (kun korridor) |
+| `K-KYST-F010` | 0,36 % | 4,547 nm | 0,23 % | **ingen** | 4 (kun korridor) |
+| `F-LSB025` | 1,08 % | 2,370 nm | 0,15 % | **ingen** | 4 (kun korridor) |
+| `F-LSB025O` | 0,16 % | 1,707 nm | 2,80 % | **ingen** | 1 (kun korridor) |
+| `F-LSB050` | 1,08 % | 2,370 nm | 2,75 % | **ingen** | 4 (kun korridor) |
+| `F-LSB050O` | 0,17 % | 2,995 nm | 2,76 % | **ingen** | 2 (kun korridor) |
+| `K-KYST-F025` | 1,08 % | 2,370 nm | 0,15 % | **ingen** | 4 (kun korridor) |
+| `K-KYST-F050` | 1,08 % | 2,370 nm | 2,28 % | **ingen** | 4 (kun korridor) |
+
+Ingen `safetyVerdict`, `reachesDestination`, `recheckPassed`, `finalLegStatus`
+eller `daylightArrival` endrer seg i noe scenario. Alle N5-brudd er
+korridorkravet alene (maks \|Δt\| er 1,08 %, godt innenfor ±2 %). Korridorene
+ligger stort sett på eller under §4s støygulv på 2,21 nm; unntakene er 2,37 nm
+og 2,99 nm ved 0,25/0,5 kn og **4,55 nm** ved 0,1 kn på
+`s8-vind-mot-strom-kontroll` — der Δt likevel er +0,53 % og angeren +0,53 %.
+Korridorkravet skiller altså ikke finhetsgradene i det hele tatt: den *fineste*
+kandidaten har det største korridoravviket. Det er nok en bekreftelse på §4s
+konklusjon om at korridor på dette nivået måler grenvalg, ikke degradering.
+
+**Angeren på `skjaeloy-skagen-apent` er et anker-lotteri, og det er vist
+paret.** Tre av seks konfigurasjoner får 2,3–2,8 % anger der: planen lover
+15,30–15,32 t i sitt eget felt og bruker 15,64–15,72 t under sannheten, mot
+`REF`s 15,29 t. Men `F-LSB025` og `F-LSB025O` har **samme trinn** og skiller seg
+bare på hvor gitteret er ankret — og gir 0,08 % mot 2,80 %. Samme grovhet, to
+utfall: det er ikke en systematisk degradering, det er hvilken av to nesten like
+grener søket lander på. Tre kontroller til:
+
+1. `W-UV8`/`W-UV12` (flis-skala, ~0,05 kn trinn) på S-3: korridor **0,000 nm** i
+   alle fem avganger — de degraderer ikke grenvalget i det hele tatt.
+2. `W-UV8G` (global 8-bit, 0,19 kn trinn — *ikke* fast LSB) på S-3 +2 t:
+   **10,14 nm** korridor, nøyaktig samme gren som alle fire fast-LSB-pakkene tar
+   der. Grenskiftet tilhører altså **grovhetsklassen ~0,2 kn**, ikke fast
+   LSB-formen.
+3. Finhetskontrollen `F-LSB010`/`F-LSB010O` (0,1 kn): angeren på samme scenario
+   faller til 0,56 % / 0,11 % — lotteriet lukker seg når trinnet blir fint nok.
+   Korridorbruddene består derimot (4 scenarioer for `F-LSB010`), som bekrefter
+   at korridorkriteriet ikke skiller noe på dette nivået.
+
+Men merk hva som **ikke** lukker seg: S-3 +2 t-grenen (10,14 nm) tas fortsatt av
+`F-LSB010` (null-ankret) og ikke av `F-LSB010O` (flis-ankret) — ved et trinn på
+0,1 kn. Grenvalget der koster 0,33–0,34 % i tid uansett hvem som tar den, altså
+to praktisk talt like ruter, og verken hardfeil-sett, felle-sett eller
+gjennomførbarhet flytter seg. Det er en *tie-break*, ikke en degradering — men
+det er også en påminnelse om at ankeret velger side helt ned til de fineste
+trinnene vi har målt.
+
+#### Resultat 4: P2b — det er her kandidatene skiller lag
+
+| konfig | P50 per avgang (t) | topp | inv. P50 | maks ΔP50 | maks ΔP90 |
+|---|---|---|---|---|---|
+| `REF` | 14,403 / 14,381 / 14,305 / 14,290 / **13,835** | +4 t | — | — | — |
+| `F-LSB025` | 14,402 / 14,376 / 14,297 / 14,291 / **13,823** | +4 t | 0 | **0,09 %** | 0,01 % |
+| `F-LSB025O` | 14,402 / 14,381 / 14,322 / 14,290 / **13,842** | +4 t | 0 | 0,12 % | 0,01 % |
+| `F-LSB050O` | 14,398 / 14,386 / 14,310 / 14,290 / **13,850** | +4 t | 0 | 0,11 % | 0,04 % |
+| `F-LSB050` | 14,343 / 14,408 / 14,315 / **14,304** / 14,306 | **+3 t** | 2 | **3,40 %** | 0,11 % |
+| `K-KYST-F025` | 14,402 / 14,446 / **14,298** / 14,298 / 14,308 | **+2 t** | 4 | **3,41 %** | 0,01 % |
+| `K-KYST-F050` | 14,344 / 14,408 / 14,380 / **14,305** / 14,307 | **+3 t** | 3 | **3,41 %** | 0,11 % |
+| `K-ANB-KYST` (§9.1, samme instrument) | 14,403 / 14,383 / 14,306 / 14,290 / **13,836** | +4 t | 0 | 0,01 % | 0,00 % |
+
+`REF` reproduserte §9.1s rad bit-eksakt, så radene er direkte sammenlignbare.
+Bildet er skarpt og bimodalt: enten beholder +4 t-avgangen sin gren (13,82–13,85
+t) eller så mister den den (14,31 t), og differansen er den samme 3,4 % i alle
+tre som mister den. Det er ikke gradvis forverring — det er den samme grenen som
+faller ut.
+
+- **0,25 kn på vindaksen alene er umulig å skille fra referansen** (0 P50-
+  inversjoner, ΔP50 0,09 %), på begge nullpunkt-varianter.
+- **0,5 kn flipper toppavgangen allerede på aksen alene** — men bare i
+  null-ankret form (`F-LSB050`), ikke i flis-ankret (`F-LSB050O`). Nok en gang
+  anker-lotteriet, og nettopp derfor diskvalifiserende: en formatkonstant kan
+  ikke hvile på hvilket anker som tilfeldigvis vinner.
+- **I helheten flipper begge.** `K-KYST-F025` mister +4 t-grenen (14,308 mot
+  `K-ANB-KYST`s 13,836) med **kun vindkvantiseringen endret** — 8 bit per flis →
+  fast 0,25 kn. Det er den samme ikke-monotone interaksjonen §9.1 fant mellom
+  grovt nett og bitbredde: hver del er uskyldig alene, sammen er de ikke.
+
+Attribusjonen er dermed **ikke** «fast LSB er feil form», men «0,25 kn er
+grovere enn det flis-skalaen faktisk leverer (≤ 0,085 kn i verste målte flis),
+og S-5s +4 t-fortrinn tåler ikke den forskjellen når resten av pakken også er
+kvantisert». Finhetskontrollen skiller de to forklaringene:
+
+| konfig | P50 per avgang (t) | topp | inv. P50 | maks ΔP50 |
+|---|---|---|---|---|
+| `REF` (reprodusert, fjerde uavhengige kjøring) | 14,403 / 14,381 / 14,305 / 14,290 / **13,835** | +4 t | — | — |
+| `F-LSB010` (0,1 kn, vindaksen alene) | 14,339 / 14,318 / 14,305 / 14,288 / **13,817** | +4 t | **0** | 0,44 % |
+| `K-KYST-F010` (0,1 kn i hele kystpakken) | 14,339 / 14,318 / 14,305 / 14,288 / **13,833** | +4 t | **0** | 0,44 % |
+
+Med et fast trinn på 0,1 kn beholder **både** vindaksen alene og den
+fullstendige kystpakken +4 t-grenen, med null inversjoner og maks ΔP50 0,44 %.
+Det er den parede kontrollen konklusjonen trengte: fast LSB som *form* bryter
+ingenting — det er trinnet på 0,25 kn som er for grovt til å bære S-5s
++4 t-fortrinn sammen med resten av kvantiseringen. Hvor mellom 0,1 og 0,25 kn
+grensen går, er **ikke** målt (og §6.2 advarer mot å anta monotoni).
+
+#### Resultat 5: bitbredden er en konsekvens, og den er målt
+
+| konfig | vaktbånd | maks kodespenn i én flis+skive | bit m/flis-offset | maks \|kode\| | bit u/offset (realisert) | bit u/offset (deklarert område) |
+|---|---|---|---|---|---|---|
+| `F-LSB050` / `F-LSB050O` | 0,354 kn | 44 koder (22,0 kn) | **6** | 50 | 7 | 7 |
+| `F-LSB025` / `F-LSB025O` | 0,177 kn | 87 koder (21,75 kn) | **7** | 99 | 8 | 8 |
+| `F-LSB010` / `F-LSB010O` | 0,071 kn | 217 koder (21,7 kn) | **8** | 248 | 9 | 10 |
+
+Uten offset må kodefeltet dekke hele det deklarerte området, og bredden vokser
+med feltets maksvind: ved 60 kn deklarert maks trenger 0,5 kn **8 bit**, 0,25 kn
+**9 bit** og 0,1 kn **11 bit**. Med et **gitter-justert flis-offset** — bevist
+identisk med null-ankeret i dekodede verdier, se enhetstesten — følger bredden i
+stedet *spennet i flisen*, og 8 bit dekker 255·lsb: 63,75 kn ved 0,25 kn og
+25,5 kn ved 0,1 kn. Målt verste spenn på disse feltene er 21,7 kn, altså 217 av
+255 koder ved 0,1 kn — det holder her, men marginen er 3,8 kn og et stormfelt
+med større komponentspenn i én flis vil sprenge den.
+
+Derav kravet produsenten må kjøre, i nøyaktig samme form som §9.1s Hs-krav
+(«spenn ≤ 12,75 m i én flis»): **kodespennet i én flis og skive skal aldri
+overstige feltbredden.** Gjør det det, klippes koder — og da er `√2·lsb/2` ikke
+lenger en gyldig skranke. Modellen teller klipping nettopp derfor; her var den
+0 i samtlige kjøringer.
+
+#### Hva dette betyr for §10 (anbefaling, ikke beslutning)
+
+1. **Sikkerhetskriteriene består for begge LSB-verdier.** Ingen flips, ingen
+   tapte forkastelser, ingen felle-endringer, ingen diskrete endringer, ingen
+   klipping, og vaktbåndet er en gyldig og *fanget* skranke i alle elleve
+   scenarioer. Formen «fast fysisk LSB» er altså ikke i seg selv et
+   sikkerhetsproblem — den er tvert imot det eneste alternativet som gir en
+   **bevisbar** skranke uavhengig av feltets dynamiske område, og på en
+   stormpakke er den skranken nesten dobbelt så stram som dagens.
+2. **0,5 kn kan ikke låses.** Den flipper S-5s toppavgang på vindaksen alene i
+   null-ankret form (ΔP50 3,40 %) — samme klasse som `R-4X` (3,17 %) og
+   `K-ANB-UTASKJAERS` (3,35 %), som §10 avviste og trakk i tvil.
+3. **0,25 kn kan ikke låses *slik den ble målt* heller.** Den er ren på
+   vindaksen, men mister S-5s +4 t-gren i den fullstendige kystpakken
+   (ΔP50 3,41 %). §9.1s lærdom gjelder: anbefalingen må måles som den helheten
+   den skal implementeres som, og på det instrumentet består den ikke.
+4. **Det målte punktet som består alt, er 0,1 kn.** `F-LSB010` og
+   `K-KYST-F010` beholder S-5s +4 t-gren med null inversjoner (ΔP50 0,44 %),
+   har vaktbånd **0,071 kn** — strammere enn dagens 8-bit-per-flis for ethvert
+   felt som deklarerer mer enn ~9 kn — og ingen klipping. Prisen er bredden:
+   0,1 kn krever 11 bit uten offset ved 60 kn deklarert maks, og er bare
+   byte-alignet med **gitter-justert flis-offset** (målt 217 av 255 koder, med
+   3,8 kn margin). Anbefalingen til §10 blir derfor: *hvis* fast LSB skal låses,
+   lås det på et trinn som er målt — 0,1 kn — sammen med et gitter-justert
+   flis-offset og en produsent-kontroll på kodespennet; **ikke** på 0,25 eller
+   0,5 kn. Alternativet er å beholde 8 bit per flis (§9.1), som består alt, men
+   da uten en feltuavhengig skranke i uvær. Dette er en anbefaling til Magnus;
+   beslutningen hører hjemme i `docs/specs/vaerpakker.md` §9, som fortsatt står
+   åpen.
+
+#### Forbehold som gjelder spesielt dette tillegget
+
+1. **Grensen mellom 0,1 og 0,25 kn er ikke oppløst.** To punkter er målt; hvor
+   det tipper vet vi ikke, og §6.2 har allerede vist at skade ikke er monoton i
+   grovhet. Et trinn må velges fra de *målte* punktene, ikke interpoleres.
+2. **Anker-lotteriet er reelt og ubehagelig.** Samme trinn med to nullpunkt gir
+   0,08 % og 2,80 % anger på samme scenario, og 0,5 kn flipper rangeringen i én
+   ankervariant og ikke i den andre. Det betyr at *ett* måltall for én
+   ankervariant ikke er nok bevis for et format — begge ankere må måles, som her.
+   Det betyr også at fiksturenes utfall er sensitive på en måte som §11
+   forbehold 1 forutså.
+3. **Bitbredden er målt på syntetiske felt.** 87 koder i den verste flisen er en
+   egenskap ved disse feltene. Kravet er derfor formulert som en kontroll
+   produsenten kjører på ekte data, ikke som et tall å stole på.
+4. **Kun vindkanalen.** Hs, Tp, strøm og retning er urørt av dette tillegget;
+   §10s rader for dem står uendret.
+5. **0,1 kn-punktet er ikke forhåndsregistrert.** De tre `*010`-konfigurasjonene
+   ble lagt til *etter* at 0,25 og 0,5 kn var kjørt, som en kontroll av
+   mekanismen. De er kjørt gjennom hele P1-, P2b- og P3-protokollen på samme
+   fiksturer og med samme kriterier, men den som leser anbefalingen bør vite at
+   valget av nettopp 0,1 kn er informert av de foregående resultatene. Skal
+   trinnet låses, hører det hjemme i en egen, forhåndsregistrert kjøring — helst
+   med minst ett punkt mellom 0,1 og 0,25 kn (0,125 kn er byte-vennlig i binær
+   forstand og et naturlig kandidat, men er **ikke målt**).
+6. §11s forbehold 1, 3, 5, 6 og 7 gjelder uendret.
+
+---
+
 ## 10. Anbefalte formatvalg med sikkerhetsmargin
 
 | felt | anbefaling | målt grunnlag | margin |
 |---|---|---|---|
-| **Vind** | u/v-komponenter, **10 bit**, skala/offset **per flis** (flis ≤ 32×32 noder) — **se §9.1: 8 bit er nå målt som helhet og består; byte-alignet 8 bit anbefales** | 8 bit per flis gir null ruteeffekt; 10 bit er 4× finere | 2 bit over målt grense |
+| **Vind** | u/v-komponenter, **10 bit**, skala/offset **per flis** (flis ≤ 32×32 noder) — **se §9.1: 8 bit er nå målt som helhet og består; byte-alignet 8 bit anbefales.** **Se §9.2 (2026-09-03): fast fysisk LSB (D6-C) består alle sikkerhetskriteriene og gir et bevisbart konstant vaktbånd, men verken 0,25 eller 0,5 kn kan låses på rangeringskriteriet — trinnet må være finere enn 0,25 kn, eller flis-skalaen beholdes** | 8 bit per flis gir null ruteeffekt; 10 bit er 4× finere | 2 bit over målt grense |
 | **Vind — avvist** | én global skala; fart + retning som lagringsform | `W-UV8G`: 5 N5-brudd + 0,09 kn over deklarert maks. `W-SD10`: 1,03 % anger der `W-UV10` har 0,00 % | — |
 | **Romlig, vind/bølge** | **kildeoppløsning (2,5 km)** i kystsonen; 5 km tillatt på åpent hav med eksplisitt flagg — **utaskjærs-lettelsen er trukket i tvil av §9.1: `R-2X` flipper toppavgangen i P2b (ΔP50 3,50 %)** | `R-2X`: 0,73 % Δt, ingen flips. `R-4X`: 4 N5-brudd, 7,9 nm korridor, og 3,17 % ΔP50 i P2b — over ±2 %-båndet | 2× |
 | **Tid** | **1 t. Ingen nedtynning.** | `T-3H` mister en felle (§6.2) og river opp P90-halen (5,91 %, 7 inversjoner, §6.3). `T-30M`/`T-15M` kjøper ingenting for 64 %+ flere noder | 3× (grensen ligger mellom 1 t og 3 t; ikke oppløst nærmere) |
@@ -890,6 +1240,27 @@ node tools/kvantisering/hs-trinn.mjs
 node tools/kvantisering/tabeller.mjs \
   --inn docs/research/kvantisering-raadata/tillegg-k-anbefalt \
   > tools/kvantisering/tabeller-tillegg-k-anbefalt-2026-09-01.txt
+
+# Tillegg §9.2 (fast fysisk LSB, D6-C), 2026-09-03:
+node tools/kvantisering/maaling.mjs --del p1,p3 \
+  --konfig F-LSB025,F-LSB025O,F-LSB050,F-LSB050O,K-KYST-F025,K-KYST-F050 \
+  --ut docs/research/kvantisering-raadata/tillegg-fast-lsb
+node tools/kvantisering/maaling.mjs --del p2b \
+  --konfig F-LSB025,F-LSB025O,F-LSB050,F-LSB050O,K-KYST-F025,K-KYST-F050 \
+  --ut docs/research/kvantisering-raadata/tillegg-fast-lsb
+# attribusjon: er grenskiftet fast-LSB-formen eller grovhetsklassen?
+node tools/kvantisering/maaling.mjs --del p3 --konfig W-UV8,W-UV12 --fikstur S-3 \
+  --ut docs/research/kvantisering-raadata/tillegg-fast-lsb/attribusjon-sokestoy
+node tools/kvantisering/maaling.mjs --del p3 --konfig W-UV8G --fikstur S-3 \
+  --ut docs/research/kvantisering-raadata/tillegg-fast-lsb/attribusjon-global8
+# finhetskontroll: lukker lotteriet seg ved et finere fast trinn?
+node tools/kvantisering/maaling.mjs --del p1 --konfig F-LSB010,F-LSB010O \
+  --ut docs/research/kvantisering-raadata/tillegg-fast-lsb/kontroll-lsb010
+node tools/kvantisering/maaling.mjs --del p2b --konfig K-KYST-F010,F-LSB010 \
+  --ut docs/research/kvantisering-raadata/tillegg-fast-lsb/kontroll-lsb010
+node tools/kvantisering/tabeller.mjs \
+  --inn docs/research/kvantisering-raadata/tillegg-fast-lsb \
+  > tools/kvantisering/tabeller-tillegg-fast-lsb-2026-09-03.txt
 ```
 
 Kjøretid på utviklingsmaskinen: P1 ≈ 12 min, P2a ≈ 6 min, P3 ≈ 10 min,
