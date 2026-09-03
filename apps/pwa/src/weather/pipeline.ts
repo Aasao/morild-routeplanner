@@ -172,15 +172,25 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
     })),
   ];
 
+  // MetAlerts hentes PARALLELT med ensemble-beregningen (starter så snart
+  // kontrollruten finnes, blokkerer ikke medlemmene), men pipelinen løser
+  // seg først når også den jobben er ferdig. Før var den fire-and-forget
+  // (`void`), og «pipelinen er ferdig» garanterte da IKKE at `onMetAlerts`
+  // hadde gått — et kappløp mellom `Response.json()`s event-loop-hopp og
+  // ensemblets synkrone `planRoute`: grønt på Node 24 lokalt, rødt på
+  // Node 22 i CI (PR #1). `runMetAlertsForControl` fanger sine egne feil,
+  // så denne await-en kan ikke kaste.
+  let metAlertsDone: Promise<void> = Promise.resolve();
   const { outcomes } = await runEnsemble(jobs, deps.poolSize, deps.workerFactory, {
     onControlResult: (outcome) => {
       callbacks.onControlResult?.(outcome);
       if (outcome.result) {
-        void runMetAlertsForControl(deps, callbacks, outcome.result.steps);
+        metAlertsDone = runMetAlertsForControl(deps, callbacks, outcome.result.steps);
       }
     },
     ...(callbacks.onMemberResult ? { onMemberResult: callbacks.onMemberResult } : {}),
   });
+  await metAlertsDone;
 
   if (outcomes.length === 0) {
     callbacks.onError?.("Ingen ensemble-medlemmer kunne beregnes");
