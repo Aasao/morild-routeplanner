@@ -4,17 +4,33 @@ compatibility_date = "2026-09-01"
 
 # Rent proxy/cache-lag (ADR-0002: "klienten beregner, skyen forbereder") —
 # ingen ruteberegning, ingen NetCDF-dekoding kjører her.
-# Se docs/specs/app-skjelett.md for ruteoversikt og begrunnelser.
+# Se docs/specs/app-skjelett.md for ruteoversikt og docs/decisions/ADR-0006
+# for tilgangsmodellen (to bindinger under).
 
-# [FORESLÅTT — se docs/specs/app-skjelett.md §6.6 og §11 punkt 1]
-# Bucketnavnet er ikke koordinert med tools/weather-pack (bølge 1C) sin
-# bruk av R2_BUCKET_NAME i .dev.vars.example ennå. Må rettes til samme
-# streng begge steder før første ekte deploy. `wrangler dev` bruker en
-# lokal R2-simulering og trenger ikke bucketen å eksistere på kontoen.
+# ADR-0006 pkt. 1: offentlig speil. Åpne-data-avledede pakker (vær, kart,
+# pekere) — ingen Access, prefiks-filtrert av `/blob/` (`ALLOWED_BLOB_PREFIXES`
+# i src/routes/blob.ts, som peker KUN hit). Bucketen er omdøpt fra
+# `morild-data` til `morild-mirror` i denne bølgen for å gjøre skillet mot
+# den personlige bindingen under tydelig i selve navnet, ikke bare i kode-
+# kommentarer — ingen bucket er opprettet på Cloudflare-kontoen ennå (§8 i
+# app-skjelett.md), så omdøpingen koster ingenting akkurat nå.
 [[r2_buckets]]
-binding = "DATA_BUCKET"
-bucket_name = "morild-data"
-preview_bucket_name = "morild-data-preview"
+binding = "MIRROR_BUCKET"
+bucket_name = "morild-mirror"
+preview_bucket_name = "morild-mirror-preview"
+
+# ADR-0006 pkt. 2: personlige data (ruter, analyser, innstillinger,
+# havnebok, F6.1-synk). Bevisst D1, ikke enda en R2-bøtte, slik at
+# `/blob/`/`/pointer/` strukturelt IKKE kan lese herfra (ingen R2Bucket-
+# objekt i den offentlige rutekoden peker hit — hele API-formen, SQL over
+# D1Database, er en annen kodesti enn `R2Bucket.get()`). Tom i denne fasen;
+# fase 5 fyller inn skjema. `database_id` er en plassholder inntil databasen
+# er opprettet — se rapport til Magnus for det manuelle steget
+# (`wrangler d1 create morild-personal`).
+[[d1_databases]]
+binding = "PERSONAL_DB"
+database_name = "morild-personal"
+database_id = "00000000-0000-0000-0000-000000000000"
 
 # Ikke-hemmelig — MET-vilkårene (N3) krever en offentlig, identifiserende
 # User-Agent, så den skal jo kunne leses, ikke skjules. Committet fallback
@@ -23,3 +39,52 @@ preview_bucket_name = "morild-data-preview"
 # BeatTheBingo).
 [vars]
 MET_USER_AGENT = "morild-routeplanner/0.1.0 maasao@gmail.com"
+# ADR-0006 pkt. 3: interim CORS `*` inntil Worker er montert under
+# Pages-domenet (`/api/*`, se `[[routes]]`-kommentaren under) — samme
+# opphav trenger ingen CORS-header i det hele tatt. FRIST: sett til `"false"`
+# (eller fjern) samme commit som `[[routes]]` under aktiveres — dette er
+# eksplisitt IKKE en varig innstilling (ADR-0006, review-funn 2026-09-03).
+INTERIM_CORS_ANY_ORIGIN = "true"
+
+# ADR-0006 pkt. 4: misbruksvern på `/proxy/metalerts`. Rate Limiting-
+# bindingen er en Workers Runtime API (GA, wrangler ≥4.36 — vi har 4.128),
+# ikke et eget betalt produkt; antatt gratisplan-kompatibel, bekreftes ved
+# faktisk `wrangler deploy` (se rapport til Magnus). `namespace_id` er en
+# fritt valgt streng-kodet heltalls-ID, kun brukt til å skille flere
+# ratelimit-bindinger fra hverandre i samme Worker — vi har bare én.
+# `simple.period` må være 10 eller 60 (Cloudflares eneste to gyldige
+# verdier); 20 forespørsler / 10 s er romslig nok for to enheter (telefon +
+# nettbrett) med normal periodisk oppdatering + noen få manuelle retries,
+# men fanger en løkkende klient-bug lenge før den når METs 20 req/s-grense
+# eller Workerens dags-gratiskvote. Nøkkelen `limit()` kalles med er en
+# FAST streng (§ src/routes/metalerts.ts) — dette er aggregert vern for
+# HELE appen/identiteten (slik MET selv rammer 20 req/s-regelen: «per
+# applikasjon», ikke per klient-IP), ikke per-bruker-throttling.
+[[ratelimits]]
+name = "METALERTS_RATE_LIMITER"
+namespace_id = "1"
+[ratelimits.simple]
+limit = 20
+period = 10
+
+# ADR-0006 pkt. 3: Worker skal eksponeres under Pages-domenet (`/api/*`),
+# ikke et eget *.workers.dev-opphav, slik at CORS `*` kan bortfalle helt
+# (samme opphav). Dette krever en ekte custom domain — Pages' genererte
+# `*.pages.dev`-URL støtter ikke Workers Routes, og ingen slikt domene er
+# valgt ennå (app-skjelett.md §8). IKKE aktivert i denne bølgen. Når Magnus
+# har lagt et domene til Cloudflare (DNS-sone), fjern kommentaren og sett
+# inn det faktiske domenet, og slå av INTERIM_CORS_ANY_ORIGIN over i samme
+# commit:
+#
+# [[routes]]
+# pattern = "DITT-DOMENE.eksempel/api/*"
+# zone_name = "DITT-DOMENE.eksempel"
+#
+# Vurdert mot Pages Functions (kolokalisere denne Workeren som
+# `apps/pwa/functions/api/[[path]].ts`): begge er gratisplan-kompatible.
+# Valgt bort for NÅ fordi (a) det krever å flytte `apps/worker`s kode inn i
+# `apps/pwa`, som en annen agent-bølge eier parallelt i denne fasen, og
+# (b) en frittstående, selvstendig deploybar Worker (egen `wrangler deploy`,
+# egen `wrangler dev`-port) er enklere å teste og versjonere isolert fra
+# PWA-bygget. Revurderes hvis Magnus foretrekker ett samlet deploy-steg
+# fremfor to.

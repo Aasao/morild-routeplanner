@@ -7,6 +7,42 @@
  * ikke treffer api.met.no direkte — denne ruten ER den mekanismen kravet
  * peker på, ikke en implementasjonsdetalj.
  *
+ * **D2 (ADR-0006 pkt. 4, 2026-09-03): ingen `bbox`-passthrough.** Tidligere
+ * versjon videreførte en klientstyrt `bbox`-parameter til MET, som i praksis
+ * er en klientstyrt cache-buster (hver unik bbox er en egen cache-nøkkel,
+ * og en app som "shifter" bbox-en litt for hvert kall — f.eks. basert på
+ * kartutsnitt — kan umerkelig omgå TTL-cachingen og treffe MET langt
+ * oftere enn tiltenkt). Proxyen henter nå ALLTID hele Skandinavia-settet
+ * (samme URL, ingen query-parametre), én gang per TTL uansett hvor mange
+ * klienter/kartutsnitt som spør. **Filtrering til synlig kartutsnitt skjer
+ * i klienten** (`apps/pwa`) på det fulle, ufiltrerte GeoJSON-svaret.
+ *
+ * **Responskontrakt (til pwa-agenten):** kroppen er MET sitt
+ * `current.json`-format UENDRET (samme skjema som før — proxyen tolker
+ * aldri innholdet, kun cacher/videresender det, jf. ADR-0002). To ekstra
+ * svar-headere er lagt til, begge lesbare fra `fetch()`-klienten:
+ * - `fetched-at`: ISO 8601-tidsstempel for når INNHOLDET sist ble bekreftet
+ *   gyldig mot MET (enten en fersk 200 eller en 304-revalidering) — IKKE
+ *   "nå" for hver respons. Dette er selve alderen appen skal vise
+ *   (CLAUDE.md §"Offline er normaltilstand": "si tydelig hvor gamle de
+ *   er"), ikke et estimat klienten må regne ut selv fra `cache-control`.
+ * - `source-status`: `"ok"` i denne bølgen. Reservert verdi `"degraded"` for
+ *   en fremtidig bølge som legger til fallback ved MET-utilgjengelighet
+ *   (§12-mønsteret i vaerpakker.md) — **ikke implementert ennå, dokumentert
+ *   som kjent gap, ikke stille utelatt**: i dag propagerer en MET-feil
+ *   (nettverksfeil, 5xx) som et kastet unntak/ikke-`ok`-svar helt til
+ *   klienten i stedet for å falle tilbake til `record`-oppføringen under.
+ *
+ * **Misbruksvern (D2/ADR-0006 pkt. 4):** én Cloudflare rate-limit-regel
+ * (`env.METALERTS_RATE_LIMITER`, wrangler.toml `[[ratelimits]]`) foran HELE
+ * ruten, nøklet på en FAST streng — dette er aggregert vern for hele
+ * appen/identiteten (slik MET selv rammer sin 20 req/s-regel: «per
+ * applikasjon»), ikke per-klient-throttling. Bindingen er valgfri i
+ * `Env`-kontrakten: mangler den (typisk lokal `wrangler dev` uten ekte
+ * ratelimit-infrastruktur, se rapport til Magnus), fungerer proxyen
+ * fortsatt, bare uten håndhevelsen — ærlig degradering fremfor å late som
+ * en grense vi ikke har.
+ *
  * Betinget henting (review-funn 2026-09-03, docs/legal/met-norway-api.md
  * pkt. 3 / §16: «bruk If-Modified-Since/ETag der tilgjengelig»): når den
  * korte serveringscachen (`cacheKey`) er utløpt, skal vi IKKE gjøre en
@@ -36,6 +72,10 @@ const FALLBACK_MAX_AGE_S = 300;
 const RECORD_MAX_AGE_S = 60 * 60 * 24 * 30;
 /** Skiller bokføringsoppføringen fra den faktiske serveringscachen på samme URL. */
 const RECORD_MARKER_PARAM = "__morild_revalidation_record";
+/** Fast nøkkel — aggregert rate-limit for hele appen, ikke per klient. */
+const RATE_LIMIT_KEY = "metalerts-proxy";
+const FETCHED_AT_HEADER = "fetched-at";
+const SOURCE_STATUS_HEADER = "source-status";
 
 function recordCacheKey(upstream: URL): Request {
   const recordUrl = new URL(upstream.toString());
@@ -43,24 +83,47 @@ function recordCacheKey(upstream: URL): Request {
   return new Request(recordUrl.toString(), { method: "GET" });
 }
 
-function baseHeaders(source: Headers): Headers {
-  const headers = new Headers(source);
-  headers.set("access-control-allow-origin", "*");
+function tooManyRequests(): Response {
+  // 429, ikke en generell feil — appens fetch-feilhåndtering (app-skjelett.md
+  // §5.5/§7) er allerede bygget for å tolke 429 som "prøv cache", akkurat
+  // som en ekte MET-blokkering ville gitt.
+  return new Response(JSON.stringify({ error: "For mange forespørsler mot MetAlerts-proxyen" }), {
+    status: 429,
+    headers: {
+      "content-type": "application/json",
+      "retry-after": "10",
+    },
+  });
+}
+
+/** Kopi av headerne — ingen CORS-logikk her; det er `cors.ts`s ene ansvar (ADR-0006 pkt. 3). */
+function cloneHeaders(source: Headers): Headers {
+  return new Headers(source);
+}
+
+function stampFreshness(headers: Headers, fetchedAt: string): Headers {
+  headers.set(FETCHED_AT_HEADER, fetchedAt);
+  headers.set(SOURCE_STATUS_HEADER, "ok");
   return headers;
 }
 
 export async function handleMetAlerts(
-  requestUrl: URL,
-  env: Env,
+  request: Request,
+  env: Pick<Env, "MET_USER_AGENT" | "METALERTS_RATE_LIMITER">,
   ctx: ExecutionContext,
 ): Promise<Response> {
-  const upstream = new URL(METALERTS_URL);
-  // Kun bbox videreføres — ingen generell query-passthrough mot et skjema
-  // Workeren ikke eier.
-  const bbox = requestUrl.searchParams.get("bbox");
-  if (bbox) {
-    upstream.searchParams.set("bbox", bbox);
+  if (env.METALERTS_RATE_LIMITER) {
+    const { success } = await env.METALERTS_RATE_LIMITER.limit({ key: RATE_LIMIT_KEY });
+    if (!success) {
+      return tooManyRequests();
+    }
   }
+  // else: ingen ratelimit-binding tilgjengelig i dette miljøet (typisk
+  // lokal `wrangler dev`) — proxyen fungerer likevel, se filens
+  // toppkommentar om ærlig degradering.
+
+  // D2: ingen query-parametre videreføres — se filens toppkommentar.
+  const upstream = new URL(METALERTS_URL);
 
   const cache = caches.default;
   const cacheKey = new Request(upstream.toString(), { method: "GET" });
@@ -85,13 +148,15 @@ export async function handleMetAlerts(
   }
 
   const upstreamResponse = await fetch(upstream.toString(), { headers: requestHeaders });
+  const revalidatedAt = new Date().toISOString();
 
   if (upstreamResponse.status === 304 && record) {
     // Behold cachet body — MET bekrefter at varslene er uendret. Ta med
     // ev. nye ferskhetsheadere fra 304-svaret (MET kan forlenge levetiden
     // uten å sende ny kropp); fall tilbake til bokføringsoppføringens egne
-    // headere, deretter FALLBACK_MAX_AGE_S.
-    const headers = baseHeaders(record.headers);
+    // headere, deretter FALLBACK_MAX_AGE_S. `fetched-at` oppdateres til NÅ
+    // — vi har nettopp bekreftet mot MET at innholdet fortsatt er gyldig.
+    const headers = stampFreshness(cloneHeaders(record.headers), revalidatedAt);
     const freshCacheControl = upstreamResponse.headers.get("cache-control");
     const freshExpires = upstreamResponse.headers.get("expires");
     if (freshCacheControl) {
@@ -118,7 +183,7 @@ export async function handleMetAlerts(
     return clientResponse;
   }
 
-  const headers = baseHeaders(upstreamResponse.headers);
+  const headers = stampFreshness(cloneHeaders(upstreamResponse.headers), revalidatedAt);
   // §16: "respekter Expires" — vi setter kun en nedre cache-grense hvis MET
   // ikke selv sender en; vi finner aldri på en lengre enn opphavet ba om.
   if (!headers.has("cache-control")) {

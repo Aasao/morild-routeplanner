@@ -14,6 +14,11 @@ tools/chart-pack/testdata/pack/
 
 # tools/weather-pack: dry-run-demoens output (aldri ekte data, se README).
 tools/weather-pack/.dry-run-output/
+# tools/weather-pack: ekte, live-bygde pakker (bølge 2A, 2026-09-03) — ekte
+# MEPS-data, ikke commit-verdig (store binærfiler + ferskvare, R2 er
+# distribusjonsveien, ikke git). Grid-indeks-cachen ligger her også.
+tools/weather-pack/out/
+tools/weather-pack/.grid-index-cache.json
 
 # apps/worker: wrangler dev sitt lokale build-/runtime-cache.
 .wrangler/

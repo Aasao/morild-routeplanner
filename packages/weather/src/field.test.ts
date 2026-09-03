@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLayer,
   layerMaxDecodeError,
+  serializeLayer,
   type LayerGeometry,
 } from "./package-format.js";
 import {
@@ -13,6 +14,7 @@ import {
   decodeWindAt,
   DecodeAllBudget,
   windLayerMaxDecodeErrorKn,
+  windMemberLayersFromBytes,
   withDecodeAllBudget,
   type WaveLayers,
   type WindMemberLayers,
@@ -129,6 +131,35 @@ describe("decodeWindAt — komponentrom, konvertering som siste steg (§3)", () 
     const w = decodeWindAt(member, 58.5, 10.5, T0 + 1800)!;
     expect(w.speedKn).toBeCloseTo(15, 1);
     expect(w.fromDeg).toBeCloseTo(225, 0);
+  });
+
+  it("windMemberLayersFromBytes gjenoppbygger et vind-medlem fra en konkatenert u+v R2-blob (§15 klientkontrakt)", () => {
+    const g = geom();
+    const [u, v] = windToUV(12, 300);
+    const uLayer = buildLayer({
+      sample: () => u,
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+    });
+    const vLayer = buildLayer({
+      sample: () => v,
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+    });
+    const uBytes = serializeLayer(uLayer, { deltaCoded: true });
+    const vBytes = serializeLayer(vLayer, { deltaCoded: true });
+    const blob = new Uint8Array(uBytes.length + vBytes.length);
+    blob.set(uBytes, 0);
+    blob.set(vBytes, uBytes.length);
+
+    const member = windMemberLayersFromBytes(blob);
+    const w = decodeWindAt(member, 58.5, 10.5, T0)!;
+    expect(w.speedKn).toBeCloseTo(12, 1);
+    expect(w.fromDeg).toBeCloseTo(300, 0);
   });
 });
 

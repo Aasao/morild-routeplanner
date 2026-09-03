@@ -35,6 +35,18 @@ const HELLO_ROUTE_START_LAYER_ID = "hello-route-start";
 const HELLO_ROUTE_END_LAYER_ID = "hello-route-end";
 
 /**
+ * Fase 3 bølge 2C: ruten beregnet på EKTE nedlastet vær (ikke den
+ * syntetiske golden-fikstur-beviset over). Egen kilde/lag, egen farge
+ * (teal, ikke oransje/rød som hello-route), slik at de to aldri kan
+ * forveksles på skjermen mens begge finnes side om side i denne bølgen.
+ */
+const WEATHER_ROUTE_SOURCE_ID = "weather-route";
+const WEATHER_ROUTE_CASING_LAYER_ID = "weather-route-line-casing";
+const WEATHER_ROUTE_LINE_LAYER_ID = "weather-route-line";
+const WEATHER_ROUTE_START_LAYER_ID = "weather-route-start";
+const WEATHER_ROUTE_END_LAYER_ID = "weather-route-end";
+
+/**
  * N2 / ærlig degradering: Kartverkets sjøkartraster dekker norsk farvann.
  * Utenfor (f.eks. dansk/svensk side av Skagerrak) er det ingen kartdata —
  * MapLibre ville uten et eksplisitt `background`-lag vist rått svart, som
@@ -71,6 +83,10 @@ export function createMap(container: HTMLElement): MapLibreMap {
           data: { type: "FeatureCollection", features: [] },
         },
         [HELLO_ROUTE_SOURCE_ID]: {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        },
+        [WEATHER_ROUTE_SOURCE_ID]: {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
         },
@@ -134,6 +150,46 @@ export function createMap(container: HTMLElement): MapLibreMap {
           paint: {
             "circle-radius": 6,
             "circle-color": "#e2492d",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+          },
+        },
+        {
+          id: WEATHER_ROUTE_CASING_LAYER_ID,
+          type: "line",
+          source: WEATHER_ROUTE_SOURCE_ID,
+          filter: ["==", ["geometry-type"], "LineString"],
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffffff", "line-width": 7 },
+        },
+        {
+          id: WEATHER_ROUTE_LINE_LAYER_ID,
+          type: "line",
+          source: WEATHER_ROUTE_SOURCE_ID,
+          filter: ["==", ["geometry-type"], "LineString"],
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#0a8f7a", "line-width": 4 },
+        },
+        {
+          id: WEATHER_ROUTE_START_LAYER_ID,
+          type: "circle",
+          source: WEATHER_ROUTE_SOURCE_ID,
+          filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "role"], "start"]],
+          paint: {
+            "circle-radius": 6,
+            "circle-color": "#1c9e4a",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+          },
+        },
+        {
+          id: WEATHER_ROUTE_END_LAYER_ID,
+          type: "circle",
+          source: WEATHER_ROUTE_SOURCE_ID,
+          filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "role"], "end"]],
+          paint: {
+            "circle-radius": 6,
+            "circle-color": "#0a8f7a",
             "circle-stroke-color": "#ffffff",
             "circle-stroke-width": 2,
           },
@@ -237,11 +293,12 @@ export function buildHelloRouteFeatureCollection(
   return { type: "FeatureCollection", features };
 }
 
-export function drawHelloRoute(
+function drawRouteOnSource(
   map: MapLibreMap,
+  sourceId: string,
   steps: readonly HelloRouteStep[],
 ): void {
-  const source = map.getSource(HELLO_ROUTE_SOURCE_ID);
+  const source = map.getSource(sourceId);
   if (!isSetDataCapable(source)) {
     return;
   }
@@ -256,4 +313,19 @@ export function drawHelloRoute(
     new LngLatBounds([first.lon, first.lat], [first.lon, first.lat]),
   );
   map.fitBounds(bounds, { padding: 40, duration: 0 });
+}
+
+export function drawHelloRoute(
+  map: MapLibreMap,
+  steps: readonly HelloRouteStep[],
+): void {
+  drawRouteOnSource(map, HELLO_ROUTE_SOURCE_ID, steps);
+}
+
+/** Fase 3 bølge 2C: kontrollmedlemmets rute på ekte nedlastet vær. Se toppkommentaren for hvorfor dette er et EGET lag, ikke hello-route-laget gjenbrukt. */
+export function drawWeatherRoute(
+  map: MapLibreMap,
+  steps: readonly HelloRouteStep[],
+): void {
+  drawRouteOnSource(map, WEATHER_ROUTE_SOURCE_ID, steps);
 }

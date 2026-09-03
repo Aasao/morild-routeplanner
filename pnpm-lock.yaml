@@ -32,9 +32,21 @@ importers:
 
   apps/pwa:
     dependencies:
+      '@morild/charts':
+        specifier: workspace:*
+        version: link:../../packages/charts
+      '@morild/geo':
+        specifier: workspace:*
+        version: link:../../packages/geo
+      '@morild/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
       '@morild/routing':
         specifier: workspace:*
         version: link:../../packages/routing
+      '@morild/weather':
+        specifier: workspace:*
+        version: link:../../packages/weather
       maplibre-gl:
         specifier: ^6.7.0
         version: 6.7.0

@@ -50,3 +50,36 @@ body {
   background: rgba(255, 255, 255, 0.9);
   text-align: center;
 }
+
+/*
+ * Fase 3 bølge 2C: værpanelet. Plassert under hello-route-stripen, som en
+ * skrollbar kolonne øverst til venstre — bevisst enkel/uferdig styling
+ * (fase 4/5 eier den ekte robusthetspresentasjonen,
+ * docs/specs/app-skjelett.md §2), men ALDRI skjult bak et lukket ikon:
+ * alle flagg/statuser skal være synlige uten klikk (N2).
+ */
+#weather-panel {
+  position: absolute;
+  top: 34px;
+  left: 0;
+  z-index: 10;
+  max-width: min(420px, 100%);
+  max-height: calc(100% - 34px - 28px);
+  overflow-y: auto;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #0b3d63;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+#weather-panel ul {
+  margin: 2px 0;
+  padding-left: 18px;
+}
+
+#weather-panel > div:not(:last-child) {
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(11, 61, 99, 0.15);
+}

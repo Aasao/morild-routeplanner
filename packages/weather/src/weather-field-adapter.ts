@@ -57,6 +57,20 @@ export interface WeatherPackage {
 export interface ToWeatherFieldOptions {
   /** Avgangstidspunktet — 48-timersgrensen for medlemmer regnes herfra, ikke fra feltets `t0S`. */
   readonly departEpochS: number;
+  /**
+   * Overstyrer kontroll-vs-medlem-avgjørelsen som ellers utledes av
+   * `memberIndex === 0`. Lagt til i fase 3 bølge 2C: en progressiv
+   * worker-pool (ADR-0005) dekoder ETT medlem per Worker-kall og bygger da
+   * en `WeatherPackage` med `windMembers` av lengde 1 for HVERT kall — uten
+   * denne overstyringen ville et hvilket som helst medlem (også medlem
+   * 5, 12, …) blitt tolket som kontrollen bare fordi det står alene på
+   * indeks 0 i sin egen ett-elements array, og dermed feilaktig fått FULL
+   * horisont i stedet for 48 t-medlemsgrensen (§9.1 pkt. 4) — nøyaktig den
+   * typen stille feilklassifisering N2 forbyr. Udefinert ⇒ uendret
+   * standardoppførsel (`memberIndex === 0`), så eksisterende kallere (hele
+   * pakken i én `WeatherPackage`) er upåvirket.
+   */
+  readonly isControl?: boolean;
 }
 
 /**
@@ -79,7 +93,7 @@ export function toWeatherField(
   const g = member.u.layer.geometry;
   const layerValidFromS = g.t0S;
   const layerValidToS = g.t0S + (g.timeSteps - 1) * g.dtS;
-  const isControl = memberIndex === 0;
+  const isControl = opts.isControl ?? memberIndex === 0;
   const validToS = isControl
     ? layerValidToS
     : Math.min(layerValidToS, opts.departEpochS + MEMBER_HORIZON_S);

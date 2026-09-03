@@ -40,6 +40,7 @@ import {
 } from "@morild/weather";
 import { contentHash, r2Key, type PointerFieldEntry } from "./package-writer.js";
 import { combineSourceStatuses, ensembleFellBackToOlderRun, noUsableEnsemble, STATUS_OK } from "./source-status.js";
+import { MEPS_LCC_PARAMS, rotateGridRelativeWindToTrueNorth, type LccProjectionParams } from "./lambert-rotation.js";
 import type { PackageHeader } from "@morild/protocol";
 
 export interface WindGridDims {
@@ -61,6 +62,23 @@ export interface FetchedWindComponents {
 }
 
 /**
+ * **Enhet, m/s inn — IKKE konvertert her (§19, 2026-09-03-funn).** MEPS'
+ * `x_wind_10m`/`y_wind_10m` leveres i **m/s** (bekreftet via `.das`-oppslag
+ * live 2026-09-03: `String units "m/s"`), mens `docs/specs/vaerpakker.md`
+ * §3s tabell krever **knop** for det lagrede u/v-formatet. Denne funksjonen
+ * returnerer verdiene UKONVERTERT (samme enhet som kilden ga) — kalleren
+ * (`build-live-package.ts`) MÅ kalle `convertWindComponentsToKnots` FØR
+ * `buildWindMemberLayers`/`buildWindMemberPackage`. Dry-run-banen
+ * (`dry-run-fixtures.ts`, `pipeline.test.ts`, `measure-full-size.ts`)
+ * konverterer bevisst IKKE — de syntetiske fixture-verdiene ER allerede
+ * definert i knop-skala (testene sammenligner mot dem uendret), og har
+ * aldri representert en fysisk m/s-kilde. **Dette var en reell,
+ * udetektert enhetsfeil frem til denne bølgen:** ingen kode konverterte
+ * m/s→knop noe sted, og synthetic-fixturenes enhetsløshet skjulte det
+ * fullstendig — se `docs/research/pakkestoerrelse-ekte-2026-09-03.md` for
+ * hvordan det ble oppdaget (rundtur-verifisering mot ekte data ga et
+ * konsistent avvik på nøyaktig m/s→knop-faktoren, 1,9438×).
+ *
  * Henter x_wind_10m og y_wind_10m for ALLE medlemmer i ETT kall hver
  * (§7 punkt 2). `window` er allerede løst (grid-indeks-cache er kallerens
  * ansvar via `resolveIndexWindow`, §7 punkt 1).
@@ -90,6 +108,74 @@ export async function fetchWindComponents(args: {
 
   const [u, v] = await Promise.all([fetchOne("x_wind_10m"), fetchOne("y_wind_10m")]);
   return { dims: outDims, u, v };
+}
+
+/**
+ * m/s → knop. 1 knop = 1852 m / 3600 s (definisjonen av det internasjonale
+ * nautiske mil) ⇒ 1 m/s = 3600/1852 knop ≈ 1,9438 knop.
+ */
+export const METERS_PER_SECOND_TO_KNOTS = 3600 / 1852;
+
+/**
+ * Konverterer `components.u`/`components.v` **i-place** fra m/s til knop
+ * (§3s lagringskontrakt). Ren enhetsskalering — endrer verken retning
+ * (skalering med en positiv konstant roterer ingenting) eller den relative
+ * strukturen i feltet, kun tallverdien. MÅ kalles FØR
+ * `applyLccRotationToWindComponents`/`buildWindMemberLayers` for ekte
+ * MEPS-data (se `fetchWindComponents`s dokumentasjon for hvorfor dette
+ * ikke gjøres der). Rekkefølge i forhold til LCC-rotasjonen er i seg selv
+ * likegyldig (skalering og rotasjon kommuterer), men konvensjonen her er
+ * "konverter enhet FØRST, roter dernest".
+ */
+export function convertWindComponentsToKnots(components: FetchedWindComponents): void {
+  for (let i = 0; i < components.u.length; i++) {
+    components.u[i] = (components.u[i] ?? 0) * METERS_PER_SECOND_TO_KNOTS;
+    components.v[i] = (components.v[i] ?? 0) * METERS_PER_SECOND_TO_KNOTS;
+  }
+}
+
+/**
+ * **Griddrelativt → sann nord** (`lambert-rotation.ts`, §19 2026-09-03).
+ * MEPS' `x_wind_10m`/`y_wind_10m` er komponenter langs det Lambert-
+ * projiserte griddets EGNE x/y-akser (CF `standard_name "x_wind"`/
+ * `"y_wind"`, `grid_mapping "projection_lambert"` — bekreftet via ekte
+ * `.das`-oppslag), IKKE sann øst/nord slik `@morild/weather::uvToWind`
+ * (§3) forutsetter. Denne funksjonen roterer `components.u`/`components.v`
+ * **i-place** til sanne øst/nord-komponenter, node for node, FØR
+ * `buildWindMemberLayers` kalles — rotasjonsvinkelen avhenger kun av
+ * lengdegrad (samme vinkel for alle tidssteg/medlemmer på samme (y,x)).
+ *
+ * `lonAtNode(y, x)` er kildens EKTE lengdegrad for noden (fra grid-probe-
+ * oppslaget, IKKE den lineære lat/lon-tilnærmingen `windLayerGeometry`
+ * ellers bruker for byte-regnskapet — rotasjonen bruker alltid den ekte
+ * projiserte lengdegraden, siden feil lengdegrad her ville gitt feil
+ * rotasjonsvinkel, ikke bare feil geometri).
+ *
+ * IKKE brukt i dry-run/syntetiske baner (fixturens (u,v) er allerede
+ * definert som "sann øst/nord" per konstruksjon der) — kun kallerens
+ * ansvar bak `--live`.
+ */
+export function applyLccRotationToWindComponents(
+  components: FetchedWindComponents,
+  lonAtNode: (y: number, x: number) => number,
+  params: LccProjectionParams = MEPS_LCC_PARAMS,
+): void {
+  const { timeCount, memberCount, yCount, xCount } = components.dims;
+  for (let y = 0; y < yCount; y++) {
+    for (let x = 0; x < xCount; x++) {
+      const lon = lonAtNode(y, x);
+      for (let t = 0; t < timeCount; t++) {
+        for (let m = 0; m < memberCount; m++) {
+          const idx = flatIndex(components.dims, t, m, y, x);
+          const uGrid = components.u[idx] ?? 0;
+          const vGrid = components.v[idx] ?? 0;
+          const [uTrue, vTrue] = rotateGridRelativeWindToTrueNorth(uGrid, vGrid, lon, params);
+          components.u[idx] = uTrue;
+          components.v[idx] = vTrue;
+        }
+      }
+    }
+  }
 }
 
 export interface WindLayerGeometryInput {

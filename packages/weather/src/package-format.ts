@@ -567,3 +567,97 @@ export function deserializeLayer(bytes: Uint8Array): Layer {
   // flagget som ble lest over.
   return deltaCoded ? deltaDecodeLayerPayload(rawLayer) : rawLayer;
 }
+
+// -------------------------------------------------- flerlags-rammededeling
+
+/**
+ * **Klientgap identifisert i fase 3 bølge 2C (`docs/specs/app-skjelett.md`
+ * §5.3, `docs/specs/vaerpakker.md` §15).** Ett vind-medlems R2-blob er
+ * `u`-lagets serialiserte bytes etterfulgt av `v`-lagets, konkatenert uten
+ * lengde-prefiks (`tools/weather-pack/src/pipeline.ts::buildWindMemberPackage`).
+ * `deserializeLayer` alene forutsetter at HELE input-arrayet er ett lag —
+ * ingen eksisterende funksjon lot klienten dele opp konkatenerte lag før
+ * denne. `readLayerFrame`/`readLayerFrames` regner ut nøyaktig hvor mange
+ * byte ETT serialisert lag opptar (samme header-/indeks-/nyttelast-
+ * regnestykke som `deserializeLayer` selv gjør internt) UTEN å kreve en
+ * separat lengde-kanal i R2-objektet — produsent og konsument er dermed
+ * fortsatt enige om formatet fra samme kildekode, ikke fra en ny,
+ * frittstående avtale.
+ */
+
+interface LayerHeaderPeek {
+  readonly bitsPerSample: 8 | 10;
+  readonly geometry: LayerGeometry;
+}
+
+/** Leser kun det som trengs for å regne ut et lags total byte-lengde — ingen full deserialisering. */
+function peekLayerHeader(bytes: Uint8Array, byteOffset: number): LayerHeaderPeek {
+  const view = new DataView(
+    bytes.buffer,
+    bytes.byteOffset + byteOffset,
+    bytes.byteLength - byteOffset,
+  );
+  const magic = String.fromCharCode(
+    view.getUint8(0),
+    view.getUint8(1),
+    view.getUint8(2),
+    view.getUint8(3),
+  );
+  if (magic !== WEATHER_LAYER_MAGIC) {
+    throw new Error(
+      `Ugyldig lag-magic "${magic}" ved byte-offset ${byteOffset} — forventet "${WEATHER_LAYER_MAGIC}"`,
+    );
+  }
+  const bitsPerSample = view.getUint8(4) as 8 | 10;
+  // roundingMode (5), channelKind (6) og deltaCoded-flagget (7) påvirker
+  // ikke byte-lengden — hoppes bevisst over her.
+  const geometry: LayerGeometry = {
+    latMin: view.getFloat64(8, true),
+    lonMin: view.getFloat64(16, true),
+    latStepDeg: view.getFloat64(24, true),
+    lonStepDeg: view.getFloat64(32, true),
+    nodesLat: view.getUint32(40, true),
+    nodesLon: view.getUint32(44, true),
+    tileNodes: view.getUint32(48, true),
+    t0S: view.getFloat64(52, true),
+    dtS: view.getFloat64(60, true),
+    timeSteps: view.getUint32(68, true),
+  };
+  return { bitsPerSample, geometry };
+}
+
+export interface LayerFrame {
+  readonly layer: Layer;
+  /** Antall byte dette laget faktisk opptok fra `byteOffset` — bruk til å finne neste lags startpunkt. */
+  readonly byteLength: number;
+}
+
+/**
+ * Leser ETT serialisert lag som starter ved `byteOffset` i `bytes`, og
+ * rapporterer hvor mange byte det opptok. `bytes` kan være lengre enn ett
+ * lag (flerlags-konkatenering, se toppkommentaren) — kun byte-vinduet dette
+ * laget faktisk eier sendes videre til `deserializeLayer`.
+ */
+export function readLayerFrame(bytes: Uint8Array, byteOffset = 0): LayerFrame {
+  const { bitsPerSample, geometry } = peekLayerHeader(bytes, byteOffset);
+  const layout = computeSubtileLayout(geometry);
+  const elementBytes = bitsPerSample <= 8 ? 1 : 2;
+  const indexBytes = layout.subtileRows * layout.subtileCols * geometry.timeSteps * 16; // f64 scale + f64 offset
+  const payloadBytes = layout.totalSamples * elementBytes;
+  const byteLength = HEADER_BYTES + indexBytes + payloadBytes;
+  const frame = bytes.subarray(byteOffset, byteOffset + byteLength);
+  const layer = deserializeLayer(frame);
+  return { layer, byteLength };
+}
+
+/** Leser `count` sekvensielt konkatenerte lag fra starten av `bytes` (§15). */
+export function readLayerFrames(bytes: Uint8Array, count: number): Layer[] {
+  const layers: Layer[] = [];
+  let offset = 0;
+  for (let i = 0; i < count; i++) {
+    const { layer, byteLength } = readLayerFrame(bytes, offset);
+    layers.push(layer);
+    offset += byteLength;
+  }
+  return layers;
+}

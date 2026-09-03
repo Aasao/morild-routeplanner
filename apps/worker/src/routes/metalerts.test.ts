@@ -24,8 +24,10 @@ function createFakeCache() {
   };
 }
 
-function createEnv(): Env {
-  return { DATA_BUCKET: {} as unknown as Env["DATA_BUCKET"] };
+type FakeEnv = Pick<Env, "MET_USER_AGENT" | "METALERTS_RATE_LIMITER">;
+
+function createEnv(overrides: Partial<FakeEnv> = {}): FakeEnv {
+  return overrides;
 }
 
 function createCtx(): ExecutionContext & { readonly settled: Promise<unknown> } {
@@ -40,6 +42,10 @@ function createCtx(): ExecutionContext & { readonly settled: Promise<unknown> } 
       return Promise.all(pending);
     },
   } as unknown as ExecutionContext & { readonly settled: Promise<unknown> };
+}
+
+function request(pathAndQuery = "/proxy/metalerts"): Request {
+  return new Request(`https://worker.example${pathAndQuery}`);
 }
 
 afterEach(() => {
@@ -63,19 +69,20 @@ describe("handleMetAlerts — betinget henting mot MET (200-vei)", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const ctx = createCtx();
-    const response = await handleMetAlerts(
-      new URL("https://worker.example/proxy/metalerts"),
-      createEnv(),
-      ctx,
-    );
+    const response = await handleMetAlerts(request(), createEnv(), ctx);
     await ctx.settled;
 
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('{"features":[]}');
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [fetchedUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     // Første gang finnes ingen tidligere ETag å sende med.
     expect((init.headers as Record<string, string>)["If-None-Match"]).toBeUndefined();
+    // D2: aldri noen query-streng mot MET.
+    expect(new URL(fetchedUrl).search).toBe("");
+
+    expect(response.headers.get("source-status")).toBe("ok");
+    expect(response.headers.get("fetched-at")).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 
     const keys = [...cache.store.keys()];
     const recordKey = keys.find((k) => k.includes("__morild_revalidation_record"));
@@ -86,6 +93,26 @@ describe("handleMetAlerts — betinget henting mot MET (200-vei)", () => {
     const recordEntry = cache.store.get(recordKey!)!;
     expect(recordEntry.headers.get("etag")).toBe('"v1"');
     expect(recordEntry.headers.get("last-modified")).toBe("Wed, 03 Sep 2026 08:00:00 GMT");
+  });
+
+  it("D2: en bbox-parameter på klientforespørselen videreføres IKKE mot MET", async () => {
+    const cache = createFakeCache();
+    vi.stubGlobal("caches", { default: cache });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"features":[]}', { status: 200, headers: { "cache-control": "public, max-age=60" } }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ctx = createCtx();
+    await handleMetAlerts(
+      request("/proxy/metalerts?bbox=4,58,12,63"),
+      createEnv(),
+      ctx,
+    );
+    await ctx.settled;
+
+    const [fetchedUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(fetchedUrl).toBe("https://api.met.no/weatherapi/metalerts/2.0/current.json");
   });
 });
 
@@ -104,6 +131,8 @@ describe("handleMetAlerts — betinget henting mot MET (304-vei)", () => {
           etag: '"v1"',
           "last-modified": "Wed, 03 Sep 2026 08:00:00 GMT",
           "cache-control": "public, max-age=2592000",
+          "fetched-at": "2026-09-01T00:00:00.000Z",
+          "source-status": "ok",
         },
       }),
     );
@@ -118,11 +147,7 @@ describe("handleMetAlerts — betinget henting mot MET (304-vei)", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const ctx = createCtx();
-    const response = await handleMetAlerts(
-      new URL("https://worker.example/proxy/metalerts"),
-      createEnv(),
-      ctx,
-    );
+    const response = await handleMetAlerts(request(), createEnv(), ctx);
     await ctx.settled;
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -135,6 +160,10 @@ describe("handleMetAlerts — betinget henting mot MET (304-vei)", () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('{"features":["gammelt-varsel"]}');
     expect(response.headers.get("cache-control")).toBe("public, max-age=90");
+    // fetched-at skal oppdateres til NÅ (vi bekreftet nettopp mot MET at
+    // innholdet fortsatt er gyldig) — ikke stå igjen på den gamle verdien.
+    expect(response.headers.get("fetched-at")).not.toBe("2026-09-01T00:00:00.000Z");
+    expect(response.headers.get("source-status")).toBe("ok");
 
     // Serveringscachen skal være fornyet, slik at neste forespørsel treffer den direkte.
     const serveKey = new Request(
@@ -144,5 +173,64 @@ describe("handleMetAlerts — betinget henting mot MET (304-vei)", () => {
     const renewed = cache.store.get(serveKey);
     expect(renewed).toBeDefined();
     expect(await renewed!.clone().text()).toBe('{"features":["gammelt-varsel"]}');
+  });
+});
+
+describe("handleMetAlerts — misbruksvern (D2/ADR-0006 pkt. 4)", () => {
+  it("svarer 429 uten å kalle MET når rate-limit-bindingen sier nei", async () => {
+    const cache = createFakeCache();
+    vi.stubGlobal("caches", { default: cache });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const rateLimiter = { limit: vi.fn().mockResolvedValue({ success: false }) };
+    const ctx = createCtx();
+    const response = await handleMetAlerts(
+      request(),
+      createEnv({ METALERTS_RATE_LIMITER: rateLimiter as unknown as NonNullable<Env["METALERTS_RATE_LIMITER"]> }),
+      ctx,
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(rateLimiter.limit).toHaveBeenCalledWith({ key: "metalerts-proxy" });
+  });
+
+  it("fungerer som normalt (ærlig fallback) når rate-limit-bindingen mangler", async () => {
+    const cache = createFakeCache();
+    vi.stubGlobal("caches", { default: cache });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"features":[]}', { status: 200, headers: { "cache-control": "public, max-age=60" } }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ctx = createCtx();
+    const response = await handleMetAlerts(request(), createEnv(), ctx);
+    await ctx.settled;
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("lar en vellykket forespørsel gå gjennom når rate-limit-bindingen sier ja", async () => {
+    const cache = createFakeCache();
+    vi.stubGlobal("caches", { default: cache });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"features":[]}', { status: 200, headers: { "cache-control": "public, max-age=60" } }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const rateLimiter = { limit: vi.fn().mockResolvedValue({ success: true }) };
+    const ctx = createCtx();
+    const response = await handleMetAlerts(
+      request(),
+      createEnv({ METALERTS_RATE_LIMITER: rateLimiter as unknown as NonNullable<Env["METALERTS_RATE_LIMITER"]> }),
+      ctx,
+    );
+    await ctx.settled;
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -8,5 +8,12 @@
   },
   "include": ["src"],
   "exclude": ["src/workers"],
-  "references": [{ "path": "../../packages/routing" }, { "path": "./tsconfig.worker.json" }]
+  "references": [
+    { "path": "../../packages/geo" },
+    { "path": "../../packages/protocol" },
+    { "path": "../../packages/charts" },
+    { "path": "../../packages/weather" },
+    { "path": "../../packages/routing" },
+    { "path": "./tsconfig.worker.json" }
+  ]
 }

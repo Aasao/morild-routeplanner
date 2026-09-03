@@ -1069,32 +1069,67 @@ ikke bare på lykkelig vei).
 
 ## 14. Pakke-peker-API-et (`apps/worker`)
 
+**Rettet 2026-09-03 (D4, spec-drift lukket):** denne seksjonen spesifiserte
+tidligere `/api/weather/pointer` og `/api/weather/blob/:contentHash`. Det
+var aldri det `apps/worker` faktisk bygget (`docs/specs/app-skjelett.md`
+§6.2/§6.3, fase 3 bølge 1D) — koden bruker de generiske, pakketype-nøytrale
+stiene `/pointer/:name` og `/blob/:key`, fordi R2-nøkkelmønsteret allerede
+er delt mellom vær- og kartpakker. **Stiene under er nå én sannhet med
+`app-skjelett.md` §6.2** — se den for full rutetabell og ADR-0006 for
+tilgangsmodellen (to bindinger: offentlig speil vs. personlig, se under).
+
 Workeren eier **kun** proxy/cache og pakke-pekere (ADR-0002: klienten
 beregner, skyen forbereder) — ingen NetCDF-dekoding, ingen kvantisering
 skjer her.
 
 ```
-GET /api/weather/pointer
-  → pointer/vaer-skandinavia.json (cachet, ETag/If-None-Match mot R2)
+GET /pointer/:name
+  → pointer/<name>.json, f.eks. pointer/vaer-skandinavia.json
+    (cachet, kort levetid — ETag/If-None-Match mot R2)
   Svar: { formatVersion, tiles: [{ tileId, bbox, fields: [{ field, member,
           key, hash, header: PackageHeader }] }] }
 
-GET /api/weather/blob/:contentHash
-  → binærblob fra R2 (immutable — cache-control: max-age lang, siden
-    innholdsadressert data aldri endres under samme hash)
+GET /blob/:key
+  → binærblob fra R2, f.eks. weather/1/<contentHash>.bin
+    (immutable — cache-control: max-age lang, siden innholdsadressert
+    data aldri endres under samme hash; edge-cachet i tillegg via
+    Workerens `caches.default`)
 ```
 
-**Versjoneringsflyt:** klienten holder sin egen `clientFormatVersion`
-(kompilert inn, ikke hentet), kaller `/pointer`, og bruker
-`checkCompatibility` (§5) på hver `header.formatVersion` FØR den ber om
-noen `blob`. Inkompatibel major → klienten viser en forståelig melding
-(F2.3) og fortsetter på sist synkede lokale pakke hvis en finnes (F6.4:
-offline først).
+**R2-bindingen** `:key`/`:name` slås opp mot er ADR-0006s **offentlige
+speil** (`MIRROR_BUCKET` i `apps/worker/wrangler.toml`, fysisk bøtte
+`morild-mirror`) — IKKE samme binding som den personlige F6.1-synk-dataen
+(D1, `PERSONAL_DB`, tom til fase 5) bruker. `/pointer/` og `/blob/`
+importerer strukturelt ikke `PERSONAL_DB` i det hele tatt; se ADR-0006 og
+`app-skjelett.md` §6.6.
 
-**Punkt-API-ene** (tidevann, MetAlerts, evt. nowcast) går gjennom en
-egen, enklere proxy-rute (`/api/weather/point/...`) med korrekt
-User-Agent og cache-headere (§16) — de er ikke innholdsadresserte
-R2-blobber, de er ferske JSON-svar med kort levetid.
+**Versjoneringsflyt:** klienten holder sin egen `clientFormatVersion`
+(kompilert inn, ikke hentet), kaller `/pointer/:name`, og bruker
+`checkCompatibility` (§5) på hver `header.formatVersion` FØR den ber om
+noen `/blob/:key`. Inkompatibel major → klienten viser en forståelig
+melding (F2.3) og fortsetter på sist synkede lokale pakke hvis en finnes
+(F6.4: offline først).
+
+**Punkt-API-et for MetAlerts** går gjennom `/proxy/metalerts` (ikke
+`/api/weather/point/...` som tidligere utkast antok — samme sti-retting
+som over) med korrekt User-Agent og cache-headere (§16) — det er ikke et
+innholdsadressert R2-blob, det er et ferskt JSON-svar med kort levetid.
+**D2 (ADR-0006 pkt. 4, 2026-09-03):** ruten tar IKKE imot noen
+klientstyrt `bbox`- eller annen query-parameter (en tidligere `bbox`-
+passthrough var reelt en klientstyrt cache-buster). Den henter alltid hele
+Skandinavia-settet fra MET én gang per TTL og server det uendret;
+**filtrering til synlig kartutsnitt er klientens ansvar** (`apps/pwa`).
+Responsen har to ekstra headere klienten skal lese: `fetched-at` (ISO 8601
+— når innholdet sist ble bekreftet gyldig mot MET, IKKE "nå" for hver
+respons) og `source-status` (`"ok"` i denne bølgen; `"degraded"` reservert
+for en fremtidig MET-utilgjengelighet-fallback, ikke bygget ennå — se
+`apps/worker/src/routes/metalerts.ts`s toppkommentar for det kjente
+gapet). Ruten har også én Cloudflare rate-limit-regel foran seg
+(`apps/worker/wrangler.toml` `[[ratelimits]]`) som misbruksvern — se
+ADR-0006 pkt. 4.
+
+Tidevann/nowcast har ingen egen proxy-rute bygget ennå (åpent, ikke en del
+av denne rettingen).
 
 ---
 
@@ -1321,6 +1356,97 @@ starte.
 
 ## 19. Endringslogg
 
+- **2026-09-03 (5) — Klienten kobler på ekte vær ende-til-ende (fase 3
+  bølge 2C, pwa-agenten).** `apps/pwa`: pakke-peker → Cache API (eget
+  navnerom per formatversjon-major, `navigator.storage.persist()` ved
+  SW-registrering) → transferert `ArrayBuffer` → `planRoute` på
+  kontrollmedlemmet, deretter ensemble-medlemmer progressivt over en
+  worker-pool (`navigator.hardwareConcurrency`), MetAlerts filtrert i
+  klienten mot rutesporet (§4.5-kontrakten, gjenbruker
+  `@morild/charts`s punkt-/segmentprimitiver — ingen ny geometrikode i
+  `packages/weather`). To presiseringer i `@morild/weather` (§15s
+  dekodingskontrakt, ikke en formatendring):
+  1. **`readLayerFrame`/`readLayerFrames`** (`package-format.ts`) og
+     **`windMemberLayersFromBytes`** (`field.ts`): ingen eksisterende
+     funksjon lot en konsument dele opp et vind-medlems konkatenerte u+v-
+     blob (`tools/weather-pack::buildWindMemberPackage`s faktiske
+     byte-layout) tilbake til to lag — dette var et reelt klientgap, ikke
+     bare mangel på et bekvemmelighetswrapper.
+  2. **`toWeatherField`s nye `isControl`-overstyring**
+     (`weather-field-adapter.ts`): en per-medlem worker-pool bygger én
+     `WeatherPackage` med `windMembers` av lengde 1 PER kall — uten en
+     eksplisitt overstyring ville ethvert medlem blitt tolket som
+     kontrollen (alltid indeks 0 i sin egen ett-elements array) og
+     feilaktig fått full horisont i stedet for 48 t-medlemsgrensen (§9.1
+     pkt. 4). Bakoverkompatibel (default uendret: `memberIndex === 0`).
+  **Funn, viktig for `docs/specs/robusthet.md` (fase 4):**
+  `packages/routing/src/search.ts::environmentAt` setter
+  `coverage.weather = "partial"` så snart `waves === undefined ELLER
+  current === undefined` i ETT ENESTE punkt — ikke bare når et medlems
+  48 t-horisont faktisk er brukt opp. Med en vind-only-pakke (dagens
+  reelle tilstand, jf. (4) under og `tools/weather-pack`s README) er
+  `coverage.weather` derfor ALLTID `"partial"`, for ALLE medlemmer,
+  også kontrollen — og ADR-0005s inkonklusiv-regel («partial ⇒
+  inkonklusiv, aldri gjennomførbar/ugjennomførbar»), mekanisk anvendt,
+  gjør da HELE ensemblet inkonklusivt. Dette er ærlig (N2) og ikke en
+  feil, men gjør F4.2s gjennomførbarhetsandel ikke-meningsfull før
+  strøm/bølge faktisk finnes i pakken — verifisert med to isolerte
+  integrasjonstester (`apps/pwa/src/weather/pipeline.test.ts`) som
+  skiller "felt mangler helt" fra "medlemshorisont brukt opp". Ingen
+  endring i `packages/routing` gjort eller foreslått her (utenfor denne
+  bølgens mandat — rutemotor-endringer eies av @agent-rutemotor);
+  robusthet-spec-en bør ta stilling til om de to fenomenene trenger et
+  skille i `coverage`-kontrakten når strøm/bølge faktisk lander.
+- **2026-09-03 (4) — Første EKTE MEPS-pakke bygget og målt, vind-only
+  (fase 3 bølge 2A, vær-analytikeren).** `tools/weather-pack build-live`
+  koblet `--live` til ekte, sekvensiell OPeNDAP-henting mot
+  `mepslatest` (§11s `selectEnsembleRun` kjørt mot en EKTE katalog og
+  faktiske DDS-oppslag, ikke bare enhetstestet), bygde en ekte,
+  kvantisert, delta-kodet vindpakke for de to 2°-flisene
+  (`5_28`,`5_29`) Skjæløy–Skagen-ruten faktisk krysser. Full måling,
+  funn og anbefaling: `docs/research/pakkestoerrelse-ekte-2026-09-03.md`.
+  **To reelle konvensjonsfeil funnet og rettet** (nøyaktig den typen
+  CLAUDE.md advarer om, «v1 hadde subtile konvensjonsfeller her»): (1)
+  MEPS' `x_wind_10m`/`y_wind_10m` er i **m/s**, men §3 krever **knop** —
+  INGEN kode konverterte, usett fordi hele testsuiten kjørte mot
+  enhetsløse syntetiske fixtures (`pipeline.ts::convertWindComponentsToKnots`,
+  ny, kalt eksplisitt i live-banen, IKKE i den delte
+  `fetchWindComponents` — se kommentaren der for hvorfor). (2) MEPS'
+  u/v er griddrelative (Lambert-projeksjonens egne x/y-akser, CF
+  `standard_name "x_wind"/"y_wind"`), ikke sann øst/nord —
+  `tools/weather-pack/src/lambert-rotation.ts` (ny) roterer til sann nord
+  FØR kvantisering (2,7–6,3° konvergensvinkel i vår bbox). Rundtur-
+  verifisering etter begge rettelser: 0,0001–0,0286 kn avvik, godt
+  innenfor `maxDecodeErrorKn`-budsjettet. **Budsjettfunn (§8, viktig for
+  Magnus):** ekte MEPS-vind komprimerer nesten ikke med delta+gzip
+  (faktor **1,06×**, mot §8s antatte 1,5–2,5× og det syntetiske feltets
+  7,29×) — vind alene for de to nødvendige flisene er **27,4 MB**,
+  nær hele det opprinnelige 30 MB-budsjettet FØR strøm/bølge/metadata er
+  lagt til. §8s budsjettregel («>30 MB ⇒ 40 MB-forslag til Magnus») er nå
+  reelt utløst, ikke lenger en fjern mulighet — se rapporten §7 for
+  alternativer (ingen valgt her). Pekerformatet fikk et nytt, valgfritt
+  `missingFields`-felt (`package-writer.ts::PointerTileEntry`) som
+  eksplisitt markerer strøm/bølge som `degraded`/manglende for denne
+  bølgens pakke (§12/N2 — vises, aldri skjules), IKKE tatt inn i §5/§14s
+  formelle kontrakt ennå (§19-kandidat i rapporten). R2-opplasting IKKE
+  gjennomført — bøtta `morild-data` finnes ikke på kontoen ennå (§16 i
+  rapporten dokumenterer nøyaktig kommandoen Magnus må kjøre).
+- **2026-09-03 (3) — D4 spec-drift lukket, D2/ADR-0006 pkt. 4 implementert
+  (fase 3 bølge 2B, plattform-agenten).** §14 rettet: `/api/weather/pointer`
+  og `/api/weather/blob/:contentHash` var aldri det `apps/worker` bygget —
+  stiene er nå `/pointer/:name`/`/blob/:key`, samme sannhet som
+  `app-skjelett.md` §6.2 (ingen kodeendring, kun dokumentasjonen rettet).
+  MetAlerts-proxyen (§14) mistet sin `bbox`-passthrough (klientstyrt
+  cache-buster, D2) og fikk `fetched-at`/`source-status`-svarheadere +
+  én rate-limit-regel (ADR-0006 pkt. 4). `apps/worker`s R2-binding er
+  omdøpt `DATA_BUCKET` → `MIRROR_BUCKET` (bøtte `morild-data` →
+  `morild-mirror`, ADR-0006 pkt. 1) og har fått en søster-binding
+  `PERSONAL_DB` (D1, ADR-0006 pkt. 2, tom til fase 5) som `/pointer/` og
+  `/blob/` strukturelt ikke importerer. `/blob/` har fått edge-cache
+  (`caches.default`) og svarer 404 (ikke 400) for nøkler utenfor
+  `ALLOWED_BLOB_PREFIXES`, identisk med et ekte R2-miss (review-funn,
+  ADR-0006 Bekreftelse). Se `apps/worker/wrangler.toml`,
+  `docs/decisions/ADR-0006-tilgangsmodell.md`.
 - **2026-09-01 — utkast v0.1.** Skrevet parallelt med
   kvantiseringsmålingen (`docs/research/kvantiseringsmaaling-2026-09-01.md`,
   ikke lest av denne spec-en per instruks — §9 er bevisst tomt for tall).

@@ -1,20 +1,39 @@
 /**
- * `apps/pwa` — bootstrap: kart (F1.8), disclaimer, og "hello route"-beviset
- * for at rutemotoren kjører i en Web Worker (ADR-0002). Se
- * docs/specs/app-skjelett.md.
+ * `apps/pwa` — bootstrap: kart (F1.8), disclaimer, "hello route"-beviset
+ * for at rutemotoren kjører i en Web Worker (ADR-0002), og — fase 3
+ * bølge 2C — den ekte værpakke-flyten (pakke-peker → cache → dekoding →
+ * `planRoute` på ekte vær, ensemble-forberedelse, MetAlerts). Se
+ * docs/specs/app-skjelett.md og docs/specs/vaerpakker.md §5/§14/§15.
  */
 import "./style.css";
-import { createMap, drawHelloRoute, whenMapReady } from "./map.js";
+import { createMap, drawHelloRoute, drawWeatherRoute, whenMapReady } from "./map.js";
 import { runHelloRoute } from "./hello-route.js";
+import { DEFAULT_APP_CONFIG } from "./weather/config.js";
+import { browserCacheStorage, requestPersistentStorage } from "./weather/pack-cache.js";
+import { createRealWeatherWorker } from "./weather/ensemble.js";
+import { runWeatherPipeline } from "./weather/pipeline.js";
+import { allDisplayFlags } from "./weather/route-flags.js";
+import type { FieldPresenceStatus } from "./weather/field-status.js";
+import {
+  renderControlResult,
+  renderEnsembleSummary,
+  renderFieldStatuses,
+  renderFlags,
+  renderMetAlerts,
+  renderPointerStatus,
+} from "./weather-ui.js";
 
 function registerServiceWorker(): void {
   if (!("serviceWorker" in navigator)) {
     return;
   }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((err: unknown) => {
-      console.warn("Service worker-registrering feilet:", err);
-    });
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then(() => requestPersistentStorage())
+      .catch((err: unknown) => {
+        console.warn("Service worker-registrering feilet:", err);
+      });
   });
 }
 
@@ -26,6 +45,70 @@ function formatStatus(result: Awaited<ReturnType<typeof runHelloRoute>>): string
   const distance = result.totals.distanceNm.toFixed(1);
   const duration = (result.totals.durationS / 3600).toFixed(1);
   return `${result.scenario}: ${reachedText} — ${distance} nm, ${duration} t (syntetisk golden-fikstur, ikke ekte vær)`;
+}
+
+function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMap>): void {
+  const pointerStatusEl = document.querySelector<HTMLDivElement>("#weather-pointer-status");
+  const fieldStatusEl = document.querySelector<HTMLDivElement>("#weather-field-status");
+  const controlResultEl = document.querySelector<HTMLDivElement>("#weather-control-result");
+  const flagsEl = document.querySelector<HTMLDivElement>("#weather-flags");
+  const ensembleEl = document.querySelector<HTMLDivElement>("#weather-ensemble-summary");
+  const metalertsEl = document.querySelector<HTMLDivElement>("#weather-metalerts");
+
+  const cacheStorage = browserCacheStorage();
+  if (cacheStorage === undefined) {
+    if (pointerStatusEl) {
+      pointerStatusEl.textContent = "Cache API er ikke tilgjengelig i denne nettleseren — værpakke kan ikke lastes.";
+    }
+    return;
+  }
+
+  let lastFieldStatuses: readonly FieldPresenceStatus[] = [];
+
+  void runWeatherPipeline(
+    {
+      config: DEFAULT_APP_CONFIG,
+      fetchImpl: fetch.bind(window),
+      cacheStorage,
+      workerFactory: createRealWeatherWorker,
+      poolSize: navigator.hardwareConcurrency || 4,
+      nowEpochS: Math.floor(Date.now() / 1000),
+    },
+    {
+      onPointerStatus: (status) => {
+        if (pointerStatusEl) renderPointerStatus(pointerStatusEl, status);
+      },
+      onFieldStatuses: (statuses) => {
+        lastFieldStatuses = statuses;
+        if (fieldStatusEl) renderFieldStatuses(fieldStatusEl, statuses);
+      },
+      onControlResult: (outcome) => {
+        if (controlResultEl) renderControlResult(controlResultEl, outcome);
+        const result = outcome.result;
+        if (result === undefined) return;
+        if (flagsEl) {
+          renderFlags(flagsEl, allDisplayFlags(result, lastFieldStatuses));
+        }
+        if (result.steps.length > 0) {
+          mapReady
+            .then(() => drawWeatherRoute(map, result.steps))
+            .catch(() => {
+              /* kartet er uansett ikke kritisk for at værpanelet skal vise tall */
+            });
+        }
+      },
+      onMemberResult: (_outcome, summary) => {
+        if (ensembleEl) renderEnsembleSummary(ensembleEl, summary);
+      },
+      onMetAlerts: (result, relevant) => {
+        if (metalertsEl) renderMetAlerts(metalertsEl, result, relevant);
+      },
+      onError: (message) => {
+        if (pointerStatusEl) pointerStatusEl.textContent = `Værflyt: ${message}`;
+        console.warn("Værflyt feilet:", message);
+      },
+    },
+  );
 }
 
 function main(): void {
@@ -57,6 +140,7 @@ function main(): void {
     });
 
   registerServiceWorker();
+  runWeatherFlow(mapReady, map);
 }
 
 main();

@@ -17,7 +17,8 @@ ikke en lokal kopi. IKKE produksjonsklar — se "Hva venter" nederst.
 pnpm install
 pnpm --filter @morild/weather-pack dry-run   # bygger tsc + kjører dry-run-demo (liten, rask)
 pnpm --filter @morild/weather-pack cli -- --live  # nektes uten verifisert legal-fil (se under)
-pnpm --filter @morild/weather-pack measure-full-size  # ekte full-skala måling (§8) — se "Første ekte pakkestørrelse" under
+pnpm --filter @morild/weather-pack measure-full-size  # syntetisk full-skala måling (§8) — se "Første ekte pakkestørrelse" under
+pnpm --filter @morild/weather-pack build-live  # EKTE THREDDS-henting (§16-gate) — se "Live-bygging" under. Gjør faktiske, sekvensielle nettverkskall.
 ```
 
 `pnpm test` (fra repo-roten) kjører alle enhetstestene under `src/`.
@@ -34,15 +35,34 @@ demonstrasjonspakke fra et **syntetisk** vindfelt
 frosne, ekte MEPS-testfixture (§3 punkt 6, §17 pkt. 6) — det er kun
 weather-packs eget offline utviklings-/CI-spor.
 
-### `--live`
+### `--live` (`cli.ts`)
 
 Av som standard. Nekter å kjøre (avslutter med kode 1) med mindre
 `docs/legal/met-norway-*.md` finnes OG inneholder en linje som matcher
-`Status: ... verifisert` (`src/legal-gate.ts`). Per nå (denne bølgen) er
-selve THREDDS-hentingen ikke koblet inn i `cli.ts` sin `--live`-gren ennå —
-porten er bygget og testet, men CLI-en stopper eksplisitt etter at porten
-åpner i stedet for å late som en full produksjonskjøring skjedde. Se
-"Hva venter".
+`Status: ... verifisert` (`src/legal-gate.ts`). `cli.ts`s `--live`-gren
+selv gjør fortsatt ingen ekte henting (se `build-live-package.ts` under for
+det) — den demonstrerer bare at porten faktisk åpner/lukker riktig.
+
+### Live-bygging (`build-live-package.ts`, fase 3 bølge 2A, 2026-09-03)
+
+`pnpm --filter @morild/weather-pack build-live` gjør EKTE, sekvensielle
+OPeNDAP-kall mot `thredds.met.no` (§16 — aldri parallelle sesjoner) og
+bygger en full, kvantisert, delta-kodet vindpakke (kontroll+30 medlemmer,
+2,5 km, 48 t, 1 t) for de to 2°-flisene (`5_28`,`5_29`) som dekker
+Skjæløy–Skagen-ruten. Skriver til `out/` (git-ignorert):
+`out/weather/1/<hash>.bin` (én fil per medlem per flis, 60 filer),
+`out/pointer-vaer-skandinavia.json`, `out/build-report.json` (full måling
++ rundtur-verifisering). Grid-indeksvinduet caches permanent til
+`.grid-index-cache.json` (§7 punkt 1, git-ignorert).
+
+**Full måling, funn og budsjettvurdering:**
+`docs/research/pakkestoerrelse-ekte-2026-09-03.md`. Kort versjon: **to
+reelle konvensjonsfeil ble funnet og rettet** ved første kjøring mot ekte
+data (m/s→knop-konvertering manglet helt; MEPS' u/v er griddrelative, ikke
+sann nord — se `lambert-rotation.ts`), og **ekte MEPS-vind komprimerer
+mye dårligere enn antatt** (delta+gzip-faktor 1,06×, mot spec-ens antatte
+1,5–2,5× og det syntetiske feltets 7,29×) — vind alene for de to nødvendige
+flisene er 27,4 MB, nær hele det opprinnelige 30 MB-budsjettet.
 
 ## Struktur
 
@@ -59,8 +79,11 @@ porten er bygget og testet, men CLI-en stopper eksplisitt etter at porten
 | `src/dry-run-fixtures.ts` | Syntetisk `FetchLike` for dry-run/tester — ALDRI brukt bak `--live`. |
 | `src/pipeline.ts` | Orkestrerer fetch→subset→encode→skriv for vindfeltet via `@morild/weather`s `buildLayer`/`serializeLayer` (ekte pakkelag, delta-koding); samme steg-mønster gjenbrukes for andre felt. |
 | `src/cli.ts` | Entrypunkt (`dry-run` / `--live`-gate). |
-| `src/measure-full-size.ts` | Engangsmåling: ekte, full-skala vind-medlemspakke for Skjæløy→Skagen — se "Første ekte pakkestørrelse" under. IKKE en del av `pnpm test`. |
+| `src/measure-full-size.ts` | Engangsmåling: SYNTETISK, full-skala vind-medlemspakke for Skjæløy→Skagen — se "Første ekte pakkestørrelse" under. IKKE en del av `pnpm test`. |
 | `src/quantize.test.ts` | **Ikke lenger en lokal implementasjon.** Testet opprinnelig weather-packs egen (nå slettede) `quantize.ts`/`format-contract.ts`; tester nå `@morild/weather`s tilsvarende produsent-side-API (samme navn, samme scenarioer) — weather-packs egen regresjonsdekning av den delte modulen. |
+| `src/lambert-rotation.ts` | **Nytt, bølge 2A.** MEPS' u/v er griddrelative (Lambert-projeksjonens egne x/y-akser), ikke sann øst/nord — roterer til sann nord FØR kvantisering (§19 2026-09-03-funn, se `docs/research/pakkestoerrelse-ekte-2026-09-03.md` §5). |
+| `src/live-source.ts` | **Nytt, bølge 2A.** Ekte katalog-/DDS-parsing (§11 mot en EKTE `mepslatest`-katalog) og bbox→indeksvindu-probing (to-pass, samme strategi som spiken) — rene funksjoner skilt fra de tynne `fetchImpl`-nettverkskallene. |
+| `src/build-live-package.ts` | **Nytt, bølge 2A.** Hoved-orkestrator for EKTE THREDDS-bygging — se "Live-bygging" under. IKKE en del av `pnpm test` (gjør ekte nettverkskall). |
 
 ## `@morild/weather`-integrasjonen (fullført, 2026-09-03)
 
@@ -108,26 +131,30 @@ nøyaktig for et ekte uttrekk. Ekte reprojeksjon til et regulært
 lat/lon-rutenett er gjenstående arbeid (samme kategori som
 `grid.ts::classifyCoastalZone`s injiserte avstandsfunksjon).
 
-## Hva venter på `docs/legal/met-norway-*.md`
+## Status: `docs/legal/met-norway-*.md` (§16-gaten)
 
-- `--live` er bygget og testet (`legal-gate.test.ts`), men den faktiske
-  THREDDS-hentingen er **ikke koblet inn** i `cli.ts`s `--live`-gren ennå —
-  se kommentaren i `cli.ts`. Når legal-filen er verifisert, er neste steg å
-  erstatte `createDryRunFetch()` med `fetch` (global) bak `--live`, med
-  `buildUserAgent` og ekte `datasetUrl`-oppslag mot
-  `mepslatest`/`fou-hi`-katalogene (se `docs/research/spike-thredds.md`
-  for verifiserte stier).
-- Ingen ekte HTTP-kall er gjort fra dette repoet i denne bølgen.
+**Gaten er åpen** — `docs/legal/met-norway-thredds.md` matcher
+`legal-gate.ts`s `Status:\s*.*verifisert`-mønster (status der er formelt
+«delvis verifisert», som fortsatt inneholder substrengen «verifisert» —
+en bevisst, dokumentert regel i `legal-gate.ts`, ikke en smutthull-bug:
+lisens/vilkår ER verifisert, kun THREDDS' eksakte rate-grense er
+uverifisert, jf. samme dokuments «Gjenstår»-liste). `build-live-package.ts`
+gjør nå ekte THREDDS-kall bak denne porten — se "Live-bygging" over.
 
 ## Hva som IKKE er wiret opp ennå (bevisst, ikke glemt)
 
 - **Strøm (NorKyst), bølge (Oceanforecast/WAM800), tidevann, MetAlerts**:
   samme steg-mønster (`FetchLike` → dap2 → quantize → package-writer)
-  dekker dem alle, men kun VIND er fullt koblet sammen i `pipeline.ts`
-  denne bølgen (spec-ens mest detaljerte felt — u/v-lagring, TWS-vaktbånd,
-  lagged-ensemble). `docs/specs/vaerpakker.md` §7 punkt 5 gjør
-  Oceanforecast-punktbølge til en **gyldig førsteleveranse** for fase
-  3-exit — den er ikke bygget her ennå.
+  dekker dem alle, men kun VIND er fullt koblet sammen — nå BÅDE i
+  dry-run OG mot ekte THREDDS-data (bølge 2A). `docs/specs/vaerpakker.md`
+  §7 punkt 5 gjør Oceanforecast-punktbølge til en **gyldig
+  førsteleveranse** for fase 3-exit — den er ikke bygget her ennå.
+  **Advarsel til den som bygger strøm/bølge neste:** sjekk kildens
+  enhet (NorKyst er trolig m/s, ikke knop — samme felle som rammet
+  vind, se `pipeline.ts::fetchWindComponents`s dokumentasjon og
+  `docs/research/pakkestoerrelse-ekte-2026-09-03.md` §4) FØR du antar
+  `fetchWindComponents`-mønsteret håndterer det for deg. Det gjør det
+  ikke — konvertering er eksplisitt kallerens ansvar, per design.
 - **R2-opplasting**: `.github/workflows/weather-pack.yml` har et
   kommentert skjelett for opplastingssteget (bak secrets). Selve
   S3-kompatible PUT-kallet mot R2 er ikke skrevet — `package-writer.ts`
@@ -150,9 +177,30 @@ lat/lon-rutenett er gjenstående arbeid (samme kategori som
   bølge, tidevann/MetAlerts og metadata er ikke lagt til i samme måling
   ennå, og ekte MEPS-data (post-legal-gate) er ikke brukt.
 
-## Første ekte pakkestørrelse (§8, §17 pkt. 7 — MÅLT, 2026-09-03)
+## Første EKTE MEPS-måling (bølge 2A, `build-live-package.ts`, 2026-09-03)
 
-`pnpm --filter @morild/weather-pack measure-full-size` bygde en EKTE,
+`pnpm --filter @morild/weather-pack build-live` bygde (2026-09-03,
+kjøring `meps_lagged_6_h_latest_2_5km_20260903T04Z.nc`) en EKTE, kvantisert,
+delta-kodet vindpakke mot ekte THREDDS-data for de to 2°-flisene
+(`5_28`,`5_29`) som dekker Skjæløy–Skagen-ruten. **Bekrefter spådommen
+under nesten ordrett:** ekte MEPS-vind komprimerer BETYDELIG dårligere enn
+det syntetiske feltet.
+
+| Steg | Ekte MEPS (30 medl., 2 fliser) | Syntetisk (under, samme dag) |
+|---|---|---|
+| Rått | 28,94 MB | 31,49 MB (større bbox, se under) |
+| Etter delta+gzip | **27,41 MB (faktor 1,06×)** | 4,32 MB (faktor 7,29×) |
+
+**Budsjettkonsekvens:** vind alene for nøyaktig de flisene ruten trenger
+er 27,4 MB — nær hele det opprinnelige 30 MB-budsjettet FØR strøm, bølge
+og metadata er lagt til. Full måling, to reelle konvensjonsfeil funnet og
+rettet underveis (m/s→knop-konvertering manglet; MEPS' u/v er
+griddrelative, ikke sann nord), og en anbefaling til Magnus om
+budsjettspørsmålet: `docs/research/pakkestoerrelse-ekte-2026-09-03.md`.
+
+## Første SYNTETISKE pakkestørrelse (§8, §17 pkt. 7 — MÅLT, 2026-09-03, tidligere samme dag)
+
+`pnpm --filter @morild/weather-pack measure-full-size` bygde en
 kvantisert (`buildLayer`), delta-kodet og gzippet vind-medlems-pakke for
 HELE Skjæløy→Skagen-bboxen (samme bbox som
 `packages/weather/src/budget.test.ts`: 57,4–59,7° N, 8,0–12,6° Ø) på §9s

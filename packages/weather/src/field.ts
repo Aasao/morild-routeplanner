@@ -17,6 +17,7 @@ import {
   computeSubtileLayout,
   decodeLayerNode,
   layerMaxDecodeError,
+  readLayerFrames,
   type Layer,
   type SubtileLayout,
 } from "./package-format.js";
@@ -120,6 +121,25 @@ export function decodeWindAt(
   if (v === undefined) return undefined;
   const wind: DecodedWind = uvToWind(u, v);
   return wind;
+}
+
+/**
+ * Deler opp ETT vind-medlems R2-blob (u-lagets serialiserte bytes
+ * etterfulgt av v-lagets, konkatenert — `tools/weather-pack`s
+ * `buildWindMemberPackage`) til et `WindMemberLayers` klart for
+ * `decodeWindAt`/`toWeatherField` (`weather-field-adapter.ts`). Klientens
+ * standard inngangspunkt for et nedlastet vind-medlem (§15): kalleren gir
+ * den mottatte `ArrayBuffer`/`Uint8Array` rett inn, ingen mellomliggende
+ * full dekoding skjer her — kun rammedeling (`readLayerFrames`) og
+ * `buildLayerLookup`, begge O(1) i datastørrelsen (kun header/indeks leses
+ * eagerly, selve nyttelasten forblir kvantisert og udekodet).
+ */
+export function windMemberLayersFromBytes(bytes: Uint8Array): WindMemberLayers {
+  const [uLayer, vLayer] = readLayerFrames(bytes, 2);
+  if (uLayer === undefined || vLayer === undefined) {
+    throw new Error("windMemberLayersFromBytes: forventet to konkatenerte lag (u, v)");
+  }
+  return { u: buildLayerLookup(uLayer), v: buildLayerLookup(vLayer) };
 }
 
 // ------------------------------------------------------------------- strøm

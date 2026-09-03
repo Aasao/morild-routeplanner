@@ -6,5 +6,10 @@
     "lib": ["ES2022", "WebWorker"]
   },
   "include": ["src/workers"],
-  "references": [{ "path": "../../packages/routing" }]
+  "references": [
+    { "path": "../../packages/geo" },
+    { "path": "../../packages/protocol" },
+    { "path": "../../packages/weather" },
+    { "path": "../../packages/routing" }
+  ]
 }

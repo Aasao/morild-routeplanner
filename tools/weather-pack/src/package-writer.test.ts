@@ -61,6 +61,22 @@ describe("buildPointer", () => {
     expect(pointer.tiles).toHaveLength(1);
     expect(pointer.tiles[0]?.fields[0]?.field).toBe("wind");
   });
+
+  it("bærer eksplisitte missingFields for felt som bevisst ikke er inkludert (§12/N2)", () => {
+    const pointer = buildPointer("1.0.0", [
+      {
+        tileId: "5_29",
+        bbox: [10, 58, 12, 60],
+        fields: [],
+        missingFields: [
+          { field: "current", sourceStatus: { status: "degraded", reason: "NorKyst ikke hentet denne bølgen" } },
+          { field: "waves", sourceStatus: { status: "degraded", reason: "Oceanforecast ikke hentet denne bølgen" } },
+        ],
+      },
+    ]);
+    expect(pointer.tiles[0]?.missingFields).toHaveLength(2);
+    expect(pointer.tiles[0]?.missingFields?.[0]?.field).toBe("current");
+  });
 });
 
 describe("objectsOlderThanArchiveWindow (§5, §18 pkt. 4 — 7 døgns rullerende arkiv)", () => {

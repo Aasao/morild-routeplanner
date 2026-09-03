@@ -24,6 +24,20 @@
 
     <div id="hello-route-status" aria-live="polite">Kjører hello-route …</div>
 
+    <!--
+      Fase 3 bølge 2C: ekte værpakke → dekoding → planRoute-panel. Egen
+      stripe, atskilt fra hello-route-statusen over (som fortsatt viser det
+      syntetiske golden-beviset, se docs/specs/app-skjelett.md §5.3).
+    -->
+    <div id="weather-panel" aria-live="polite">
+      <div id="weather-pointer-status">Laster værpakke …</div>
+      <div id="weather-field-status"></div>
+      <div id="weather-control-result"></div>
+      <div id="weather-flags"></div>
+      <div id="weather-ensemble-summary"></div>
+      <div id="weather-metalerts"></div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

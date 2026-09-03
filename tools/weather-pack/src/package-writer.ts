@@ -5,7 +5,7 @@
  * `pipeline.ts`/`cli.ts` bak en injisert `PackageSink`.
  */
 import { createHash } from "node:crypto";
-import type { PackageHeader } from "@morild/protocol";
+import type { PackageHeader, SourceStatus } from "@morild/protocol";
 
 /** SHA-256 av den ferdig kvantiserte byte-payloaden (§5 — FØR evt. gzip). */
 export function contentHash(payload: Uint8Array): string {
@@ -29,10 +29,24 @@ export interface PointerFieldEntry {
   readonly header: PackageHeader;
 }
 
+/**
+ * Et felt bevisst IKKE inkludert i denne flisen (§12/N2 — "manglende data
+ * vises, aldri skjules"). IKKE en tom/gjettet `PointerFieldEntry` — det
+ * finnes ingen blob å referere til, kun en dokumentert grunn. Klienten kan
+ * lese denne lista og vise "strøm: ikke tilgjengelig" i stedet for å anta
+ * fravær av oppføring betyr "alt er ok".
+ */
+export interface PointerMissingFieldEntry {
+  readonly field: string; // "current" | "waves" | ...
+  readonly sourceStatus: Extract<SourceStatus, { status: "degraded" }>;
+}
+
 export interface PointerTileEntry {
   readonly tileId: string;
   readonly bbox: readonly [west: number, south: number, east: number, north: number];
   readonly fields: readonly PointerFieldEntry[];
+  /** Se `PointerMissingFieldEntry` — valgfri, tom/utelatt betyr "ingen kjente hull". */
+  readonly missingFields?: readonly PointerMissingFieldEntry[];
 }
 
 export interface WeatherPointer {

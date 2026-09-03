@@ -4,10 +4,13 @@ import { describe, expect, it } from "vitest";
 import { createDryRunFetch } from "./dry-run-fixtures.js";
 import type { IndexWindow } from "./grid.js";
 import {
+  applyLccRotationToWindComponents,
   buildWindMemberLayers,
   buildWindMemberPackage,
+  convertWindComponentsToKnots,
   fetchWindComponents,
   flatIndex,
+  METERS_PER_SECOND_TO_KNOTS,
   resolveEnsembleSourceStatus,
 } from "./pipeline.js";
 
@@ -177,6 +180,66 @@ describe("buildWindMemberPackage (fetch->subset->encode->skriv, ETT medlem)", ()
         bbox: SMALL_BBOX,
       });
     expect(build().hash).toBe(build().hash);
+  });
+});
+
+describe("convertWindComponentsToKnots (§19 2026-09-03 — reelt funn: THREDDS gir m/s, §3 krever knop)", () => {
+  it("skalerer u og v med nøyaktig 1852/3600 (definisjonen av 1 knop), bevarer retning", async () => {
+    const fetchImpl = createDryRunFetch();
+    const components = await fetchWindComponents({
+      datasetUrl: "https://x",
+      window: SMALL_WINDOW,
+      timeCount: 1,
+      memberCount: 1,
+      userAgent: USER_AGENT,
+      fetchImpl,
+    });
+    const idx = flatIndex(components.dims, 0, 0, 5, 5);
+    const uMs = components.u[idx] ?? NaN;
+    const vMs = components.v[idx] ?? NaN;
+    convertWindComponentsToKnots(components);
+    expect(components.u[idx]).toBeCloseTo(uMs * METERS_PER_SECOND_TO_KNOTS, 9);
+    expect(components.v[idx]).toBeCloseTo(vMs * METERS_PER_SECOND_TO_KNOTS, 9);
+    // 10 m/s er ca. 19,44 kn — sanity-sjekk av selve konstanten.
+    expect(METERS_PER_SECOND_TO_KNOTS * 10).toBeCloseTo(19.438, 2);
+  });
+});
+
+describe("applyLccRotationToWindComponents (§19 2026-09-03 — griddrelativt→sann nord)", () => {
+  it("er identitet på sentralmeridianen (15°Ø), endrer verdier vekk fra den", async () => {
+    const fetchImpl = createDryRunFetch();
+    const componentsOnMeridian = await fetchWindComponents({
+      datasetUrl: "https://x",
+      window: SMALL_WINDOW,
+      timeCount: 1,
+      memberCount: 1,
+      userAgent: USER_AGENT,
+      fetchImpl,
+    });
+    const beforeOnMeridian = componentsOnMeridian.u[flatIndex(componentsOnMeridian.dims, 0, 0, 5, 5)];
+    applyLccRotationToWindComponents(componentsOnMeridian, () => 15.0);
+    expect(componentsOnMeridian.u[flatIndex(componentsOnMeridian.dims, 0, 0, 5, 5)]).toBeCloseTo(
+      beforeOnMeridian ?? NaN,
+      9,
+    );
+
+    const componentsOffMeridian = await fetchWindComponents({
+      datasetUrl: "https://x",
+      window: SMALL_WINDOW,
+      timeCount: 1,
+      memberCount: 1,
+      userAgent: USER_AGENT,
+      fetchImpl,
+    });
+    const idx = flatIndex(componentsOffMeridian.dims, 0, 0, 5, 5);
+    const uBefore = componentsOffMeridian.u[idx] ?? NaN;
+    const vBefore = componentsOffMeridian.v[idx] ?? NaN;
+    const speedBefore = Math.hypot(uBefore, vBefore);
+    applyLccRotationToWindComponents(componentsOffMeridian, () => 8.0);
+    const uAfter = componentsOffMeridian.u[idx] ?? NaN;
+    const vAfter = componentsOffMeridian.v[idx] ?? NaN;
+    expect(Math.hypot(uAfter, vAfter)).toBeCloseTo(speedBefore, 9); // fart bevart
+    expect(uAfter).not.toBeCloseTo(uBefore, 6); // men retningen er endret
   });
 });
 

@@ -7,6 +7,8 @@ import {
   deltaEncodeLayerPayload,
   deserializeLayer,
   layerMaxDecodeError,
+  readLayerFrame,
+  readLayerFrames,
   sampleIndex,
   serializeLayer,
   subtileIndexOfNode,
@@ -300,5 +302,74 @@ describe("delta-koding koblet inn i subflis-lagringen (§8, §19 — tidligere l
     expect(Array.from(backDelta.payload as Uint8Array)).toEqual(
       Array.from(layer.payload as Uint8Array),
     );
+  });
+});
+
+describe("readLayerFrame/readLayerFrames — flerlags-rammededeling (klientgap, fase 3 bølge 2C)", () => {
+  it("readLayerFrame gjenkjenner nøyaktig byte-lengden til ETT lag, uansett trailing søppel etterpå", () => {
+    const g = testGeometry({ nodesLat: 6, nodesLon: 6, timeSteps: 2 });
+    const layer = buildLayer({
+      sample: smoothSource,
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+    });
+    const bytes = serializeLayer(layer);
+    const padded = new Uint8Array(bytes.length + 5);
+    padded.set(bytes, 0);
+    padded.fill(0xff, bytes.length);
+
+    const frame = readLayerFrame(padded, 0);
+    expect(frame.byteLength).toBe(bytes.length);
+    const layout = computeSubtileLayout(g);
+    expect(decodeLayerNode(frame.layer, layout, 2, 3, 1)).toBe(
+      decodeLayerNode(layer, layout, 2, 3, 1),
+    );
+  });
+
+  it("readLayerFrames deler en konkatenert u+v-payload (vind-medlemmets faktiske R2-byte-layout) tilbake til to lag", () => {
+    const g = testGeometry({ nodesLat: 5, nodesLon: 7, timeSteps: 3 });
+    const uLayer = buildLayer({
+      sample: (lat, lon, t) => smoothSource(lat, lon, t),
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+    });
+    const vLayer = buildLayer({
+      sample: (lat, lon, t) => -smoothSource(lat, lon, t),
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+    });
+    const uBytes = serializeLayer(uLayer, { deltaCoded: true });
+    const vBytes = serializeLayer(vLayer, { deltaCoded: true });
+    const concatenated = new Uint8Array(uBytes.length + vBytes.length);
+    concatenated.set(uBytes, 0);
+    concatenated.set(vBytes, uBytes.length);
+
+    const [backU, backV] = readLayerFrames(concatenated, 2);
+    expect(backU).toBeDefined();
+    expect(backV).toBeDefined();
+    const layout = computeSubtileLayout(g);
+    for (let i = 0; i < g.nodesLat; i++) {
+      for (let j = 0; j < g.nodesLon; j++) {
+        for (let k = 0; k < g.timeSteps; k++) {
+          expect(decodeLayerNode(backU!, layout, i, j, k)).toBe(
+            decodeLayerNode(uLayer, layout, i, j, k),
+          );
+          expect(decodeLayerNode(backV!, layout, i, j, k)).toBe(
+            decodeLayerNode(vLayer, layout, i, j, k),
+          );
+        }
+      }
+    }
+  });
+
+  it("kastet på ukjent magic ved offset > 0 (korrupt/feil-adressert fortsettelse)", () => {
+    const bogus = new Uint8Array(80);
+    expect(() => readLayerFrame(bogus, 4)).toThrow();
   });
 });
