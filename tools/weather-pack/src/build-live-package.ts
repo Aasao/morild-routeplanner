@@ -14,14 +14,25 @@
  * 2. Løser siste KOMPLETTE MEPS-ensemble-kjøring fra den ekte
  *    `mepslatest`-katalogen via §11s `selectEnsembleRun` (IKKE en antatt
  *    kjøring — DDS-en for hver kandidat sjekkes faktisk).
- * 3. For hver mål-flis (§7, 2°×2°, delt origo): probe grid-indeksvindu
+ * 3. Verifiserer den valgte kjøringens FAKTISKE LCC-projeksjonsparametre
+ *    mot `lambert-rotation.ts::MEPS_LCC_PARAMS` ved å hente og tolke
+ *    `.das` (`das-verification.ts`) — review-funn fase 3 bølge 2:
+ *    parametrene var tidligere kun verifisert ÉN GANG manuelt, ALDRI ved
+ *    et faktisk bygg. **Hard-feil ved avvik** (ærlig degradering: en
+ *    pakke med feil rotasjon skal ikke bygges i det hele tatt).
+ * 4. For hver mål-flis (§7, 2°×2°, delt origo): probe grid-indeksvindu
  *    (cached til disk, §7 punkt 1), hent x_wind_10m/y_wind_10m for ALLE
  *    30 medlemmer i ETT kall hver (§7 punkt 2), roter griddrelativt→sann
  *    nord (`lambert-rotation.ts`, §19 2026-09-03-funnet), kvantiser+skriv
  *    hvert medlem (`pipeline.ts`), mål rått/gzip/delta+gzip.
- * 4. Verifiser rundtur (dekode fra SERIALISERT payload, ikke fra
+ * 5. Verifiser rundtur (dekode fra SERIALISERT payload, ikke fra
  *    in-memory-laget) mot kildeverdier (post-rotasjon) på kjente noder.
- * 5. Skriv pakkefiler + peker til `out/`. Strøm/bølge er IKKE hentet denne
+ *    **NB:** denne rundturen tester IKKE selve rotasjonsvinkelen (den
+ *    dekoder rotert fart/retning mot ALLEREDE rotert kilde — et
+ *    sirkelbevis for rotasjonen), kun at kvantisering+lagring+
+ *    fart/retningsbudsjettet holder. Rotasjonens PARAMETRE dekkes av
+ *    steg 3, IKKE denne rundturen.
+ * 6. Skriv pakkefiler + peker til `out/`. Strøm/bølge er IKKE hentet denne
  *    bølgen (D4-beslutning) — flagges eksplisitt som `missingFields`
  *    (§12/N2), ALDRI stille utelatt.
  */
@@ -55,6 +66,13 @@ import {
 } from "./pipeline.js";
 import { buildPointer, type PointerFieldEntry, type PointerMissingFieldEntry, type PointerTileEntry } from "./package-writer.js";
 import { fieldMissingEntirely } from "./source-status.js";
+import {
+  parseLccAttributesFromDas,
+  verifyLccDasAttributes,
+  type DasLccAttributes,
+  type LccDasVerificationResult,
+} from "./das-verification.js";
+import { angularDiffDeg, maxDirectionErrorDeg } from "./direction-budget.js";
 import { decodeWindAt, windMemberLayersFromBytes } from "@morild/weather";
 import type { EnsembleRun } from "./lagged-ensemble.js";
 import type { PackageHeader } from "@morild/protocol";
@@ -125,7 +143,7 @@ type ResolveRunResult =
   | { readonly run: undefined; readonly sourceStatus: Extract<PackageHeader["sourceStatus"], { status: "degraded" }> };
 
 async function resolveLatestCompleteRun(fetchImpl: FetchLike, userAgent: string): Promise<ResolveRunResult> {
-  console.log(`[1/5] Henter katalog: ${CATALOG_URL}`);
+  console.log(`[1/6] Henter katalog: ${CATALOG_URL}`);
   const catalogXml = await fetchText(CATALOG_URL, userAgent, fetchImpl);
   const runNames = parseMepsLatestCatalogRunNames(catalogXml);
   console.log(`  Fant ${runNames.length} ekte kjøringer, nyest først: ${runNames.slice(0, 3).join(", ")}`);
@@ -169,6 +187,39 @@ async function resolveLatestCompleteRun(fetchImpl: FetchLike, userAgent: string)
     },
     sourceStatus: resolution.sourceStatus,
   };
+}
+
+// --- LCC-projeksjonsverifisering (review-funn fase 3 bølge 2) -----------
+
+/**
+ * Henter `.das` for den valgte kjøringen og verifiserer at MEPS' faktiske
+ * LCC-projeksjonsparametre fortsatt stemmer med de hardkodede konstantene
+ * `lambert-rotation.ts` bruker for griddrelativt→sann-nord-rotasjonen
+ * (`das-verification.ts`). Kaster ALDRI selv (som `resolveLatestCompleteRun`,
+ * returnerer en diskriminert union) — kalleren (`main`) avgjør at et avvik
+ * skal stoppe bygget.
+ */
+async function verifyLccProjection(
+  datasetUrl: string,
+  fetchImpl: FetchLike,
+  userAgent: string,
+): Promise<{ readonly verification: LccDasVerificationResult; readonly dasText: string }> {
+  console.log(`[2/6] Verifiserer LCC-projeksjonsparametre mot .das (hard-feil ved avvik)...`);
+  const dasText = await fetchText(`${datasetUrl}.das`, userAgent, fetchImpl);
+  const parsed: DasLccAttributes = parseLccAttributesFromDas(dasText);
+  const verification = verifyLccDasAttributes(parsed);
+  console.log(
+    `  Lest fra .das: standard_parallel=${parsed.standardParallelDeg.join(",")}, ` +
+      `longitude_of_central_meridian=${parsed.longitudeOfCentralMeridianDeg}, ` +
+      `latitude_of_projection_origin=${parsed.latitudeOfProjectionOriginDeg}, ` +
+      `earth_radius=${parsed.earthRadiusM ?? "(ikke oppgitt)"}`,
+  );
+  if (verification.ok) {
+    console.log(`  OK — samsvarer med lambert-rotation.ts::MEPS_LCC_PARAMS/das-verification.ts::MEPS_LCC_DAS_EXPECTATIONS.`);
+  } else {
+    console.error(`  AVVIK oppdaget — se rapport under. Bygget stoppes (feil rotasjon ville gitt en stille, voksende retningsskjevhet).`);
+  }
+  return { verification, dasText };
 }
 
 // --- Grid-indeks-cache (§7 punkt 1 — permanent på disk) -----------------
@@ -226,6 +277,10 @@ interface VerificationSample {
   readonly decodedSpeedKn: number;
   readonly decodedFromDeg: number;
   readonly speedErrorKn: number;
+  readonly dirErrorDeg: number;
+  /** `undefined` ⇒ retning dårlig definert ved denne farten (se `maxDirectionErrorDeg`) — IKKE et brudd. */
+  readonly dirBudgetDeg: number | undefined;
+  readonly dirWithinBudget: boolean;
 }
 
 function verifyRoundTrip(
@@ -239,7 +294,12 @@ function verifyRoundTrip(
   t0S: number,
   dtS: number,
   maxDecodeErrorKn: number,
-): { readonly samples: VerificationSample[]; readonly maxObservedErrorKn: number; readonly withinBudget: boolean } {
+): {
+  readonly samples: VerificationSample[];
+  readonly maxObservedErrorKn: number;
+  readonly maxObservedDirErrorDeg: number;
+  readonly withinBudget: boolean;
+} {
   const member = windMemberLayersFromBytes(payload);
   const { yCount, xCount, timeCount } = components.dims;
   const probePoints: Array<[y: number, x: number, t: number]> = [
@@ -250,6 +310,7 @@ function verifyRoundTrip(
   ];
   const samples: VerificationSample[] = [];
   let maxObservedErrorKn = 0;
+  let maxObservedDirErrorDeg = 0;
   for (const [y, x, t] of probePoints) {
     const lat = latMin + y * latStepDeg;
     const lon = lonAtNode(y, x); // ekte kildelengdegrad — konsistent med rotasjonen som faktisk ble brukt
@@ -267,6 +328,14 @@ function verifyRoundTrip(
     if (!decoded) continue;
     const errorKn = Math.abs(decoded.speedKn - sourceSpeedKn);
     maxObservedErrorKn = Math.max(maxObservedErrorKn, errorKn);
+    const dirErrorDeg = angularDiffDeg(decoded.fromDeg, sourceFromDeg);
+    // Budsjettet regnes fra KILDENS fart (den kjente, sanne vektorlengden
+    // FØR kvantisering) — ikke den dekodede farten, som selv bærer
+    // (den samme) kvantiseringsstøyen og derfor er et dårligere anker for
+    // "hvor stor kan retningsfeilen maks bli".
+    const dirBudgetDeg = maxDirectionErrorDeg(sourceSpeedKn, maxDecodeErrorKn);
+    const dirWithinBudget = dirBudgetDeg === undefined || dirErrorDeg <= dirBudgetDeg + 1e-9;
+    maxObservedDirErrorDeg = dirBudgetDeg === undefined ? maxObservedDirErrorDeg : Math.max(maxObservedDirErrorDeg, dirErrorDeg);
     samples.push({
       y,
       x,
@@ -278,9 +347,19 @@ function verifyRoundTrip(
       decodedSpeedKn: decoded.speedKn,
       decodedFromDeg: decoded.fromDeg,
       speedErrorKn: errorKn,
+      dirErrorDeg,
+      dirBudgetDeg,
+      dirWithinBudget,
     });
   }
-  return { samples, maxObservedErrorKn, withinBudget: maxObservedErrorKn <= maxDecodeErrorKn + 1e-9 };
+  const speedWithinBudget = maxObservedErrorKn <= maxDecodeErrorKn + 1e-9;
+  const dirWithinBudgetOverall = samples.every((s) => s.dirWithinBudget);
+  return {
+    samples,
+    maxObservedErrorKn,
+    maxObservedDirErrorDeg,
+    withinBudget: speedWithinBudget && dirWithinBudgetOverall,
+  };
 }
 
 // --- Hoved-orkestrering --------------------------------------------------
@@ -308,7 +387,7 @@ async function buildTile(
   const tileKey = tileIdToString(id);
   const bounds = tileBounds(id);
   const bbox: readonly [number, number, number, number] = [bounds.west, bounds.south, bounds.east, bounds.north];
-  console.log(`\n[3/5] Flis ${tileKey} (${bounds.west}-${bounds.east}°Ø, ${bounds.south}-${bounds.north}°N)`);
+  console.log(`\n[4/6] Flis ${tileKey} (${bounds.west}-${bounds.east}°Ø, ${bounds.south}-${bounds.north}°N)`);
 
   const probe = await resolveTileGrid(tileKey, bounds, run.domain, run.datasetUrl, fetchImpl, userAgent, gridCache);
   const { window } = probe;
@@ -396,13 +475,31 @@ async function buildTile(
       );
       firstMemberVerification = verification.samples;
       console.log(
-        `  [4/5] Rundtur-verifisering (medlem 0): maxDecodeErrorKn=${result.maxDecodeErrorKn.toFixed(4)}, ` +
-          `observert maks=${verification.maxObservedErrorKn.toFixed(4)}, innenfor budsjett=${verification.withinBudget}`,
+        `  [5/6] Rundtur-verifisering (dekker IKKE selve rotasjonsvinkelen — se steg 3) (medlem 0): maxDecodeErrorKn=${result.maxDecodeErrorKn.toFixed(4)}, ` +
+          `observert maks fart=${verification.maxObservedErrorKn.toFixed(4)} kn, observert maks retning=${verification.maxObservedDirErrorDeg.toFixed(1)}° (kun der budsjettet er definert), ` +
+          `innenfor budsjett=${verification.withinBudget}`,
       );
       for (const s of verification.samples) {
         console.log(
           `    (${s.lat.toFixed(3)}°N,${s.lon.toFixed(3)}°Ø,t=${s.t}h): kilde ${s.sourceSpeedKn.toFixed(2)} kn/${s.sourceFromDeg.toFixed(1)}°` +
-            ` → dekodet ${s.decodedSpeedKn.toFixed(2)} kn/${s.decodedFromDeg.toFixed(1)}° (feil ${s.speedErrorKn.toFixed(4)} kn)`,
+            ` → dekodet ${s.decodedSpeedKn.toFixed(2)} kn/${s.decodedFromDeg.toFixed(1)}° (fartfeil ${s.speedErrorKn.toFixed(4)} kn, ` +
+            `retningsfeil ${s.dirErrorDeg.toFixed(1)}° mot budsjett ${s.dirBudgetDeg === undefined ? "udefinert (lav fart)" : `${s.dirBudgetDeg.toFixed(1)}°`})`,
+        );
+      }
+      // Review-funn fase 3 bølge 2: `withinBudget` ble tidligere regnet
+      // (fart OG nå retning), men ALDRI brukt til å stoppe noe — et brudd
+      // ble kun synlig som en logglinje en operatør måtte lese manuelt.
+      // Ærlig degradering krever at bygget faktisk feiler her.
+      if (!verification.withinBudget) {
+        const brudd = verification.samples
+          .filter((s) => s.speedErrorKn > result.maxDecodeErrorKn + 1e-9 || !s.dirWithinBudget)
+          .map(
+            (s) =>
+              `(${s.lat.toFixed(3)}°N,${s.lon.toFixed(3)}°Ø,t=${s.t}h): fartfeil=${s.speedErrorKn.toFixed(4)}kn (budsjett ${result.maxDecodeErrorKn.toFixed(4)}kn), ` +
+              `retningsfeil=${s.dirErrorDeg.toFixed(1)}° (budsjett ${s.dirBudgetDeg === undefined ? "udefinert" : `${s.dirBudgetDeg.toFixed(1)}°`})`,
+          );
+        throw new Error(
+          `Rundtur-verifisering for flis ${tileKey} (medlem 0) er UTENFOR budsjett — nekter å skrive pakken: ${brudd.join("; ")}`,
         );
       }
     }
@@ -462,6 +559,17 @@ async function main(): Promise<void> {
     return;
   }
 
+  const { verification: lccVerification } = await verifyLccProjection(run.datasetUrl, fetchImpl, userAgent);
+  if (!lccVerification.ok) {
+    for (const m of lccVerification.mismatches) console.error(`    - ${m}`);
+    console.error(
+      `Nektet: LCC-projeksjonsparametrene lest fra .das stemmer ikke med de hardkodede konstantene ` +
+        `(lambert-rotation.ts::MEPS_LCC_PARAMS). Bygger IKKE en pakke med potensielt feil vindrotasjon.`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   const gridCache = loadGridCache();
   const summaries: TileBuildSummary[] = [];
   for (const id of TARGET_TILES) {
@@ -469,7 +577,7 @@ async function main(): Promise<void> {
     summaries.push(summary);
   }
 
-  console.log(`\n[5/5] Skriver peker...`);
+  console.log(`\n[6/6] Skriver peker...`);
   const tiles: PointerTileEntry[] = summaries.map((s) => ({
     tileId: s.tileId,
     bbox: s.bbox,
@@ -487,6 +595,11 @@ async function main(): Promise<void> {
   const report = {
     builtAt: new Date().toISOString(),
     run: { runName: run.runName, init: run.init, memberCount: run.memberCount, sourceStatus },
+    // Review-funn fase 3 bølge 2: de FAKTISK leste LCC-projeksjonsverdiene
+    // (ikke bare et "ok"-flagg) — slik at ethvert avvik som SKULLE dukket
+    // opp (bygget stoppet jo hardt hvis det gjorde det, se over) uansett er
+    // sporbart i etterkant for et vellykket bygg også.
+    lccProjection: { ok: lccVerification.ok, ...lccVerification.parsed },
     tiles: summaries.map((s) => ({
       tileId: s.tileId,
       bbox: s.bbox,

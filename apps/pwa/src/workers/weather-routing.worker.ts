@@ -1,14 +1,16 @@
 /**
  * Ekte-vær rutemotor-Worker (fase 3 bølge 2C).
  *
- * Kjører ETT ensemble-medlem per melding: bygger et `WeatherField` fra en
- * transferred, kvantisert vind-payload (`@morild/weather`s
- * `windMemberLayersFromBytes` + `toWeatherField`, §15) og kaller SAMME
- * `planRoute`-søkekjerne som `routing.worker.ts`s hello-route-bevis —
- * ADR-0005 krever eksplisitt at ensemblet kaller samme søk som kontrollen,
- * aldri en egen "lettvekts"-motor. Flere instanser av denne workeren utgjør
- * worker-poolen (`../weather/ensemble.ts`, størrelse
- * `navigator.hardwareConcurrency`).
+ * Kjører ETT ensemble-medlem per melding: bygger ETT `WeatherField` PER
+ * FLIS fra transferred, kvantiserte vind-payloader (`@morild/weather`s
+ * `windMemberLayersFromBytes` + `toWeatherField`, §15), syr dem sammen med
+ * `compositeWeatherField` (review-funn fase 3 bølge 2, funn 2: en rute kan
+ * krysse en flisgrense, §7 — `tile-select.ts` laster da flere fliser for
+ * samme medlem), og kaller SAMME `planRoute`-søkekjerne som
+ * `routing.worker.ts`s hello-route-bevis — ADR-0005 krever eksplisitt at
+ * ensemblet kaller samme søk som kontrollen, aldri en egen "lettvekts"-
+ * motor. Flere instanser av denne workeren utgjør worker-poolen
+ * (`../weather/ensemble.ts`, størrelse `navigator.hardwareConcurrency`).
  *
  * Start-/mål-punkt, farbarhetsmaske og båtmodell hentes fra samme
  * golden-fikstur (`skjaeloy-skagen-apent`) som `routing.worker.ts` allerede
@@ -27,18 +29,31 @@
  */
 import { planRoute, type RouteResult } from "@morild/routing";
 import { goldenScenarios } from "@morild/routing/test-fixtures/golden-scenarios";
-import { toWeatherField, windMemberLayersFromBytes, type WeatherPackage } from "@morild/weather";
+import {
+  compositeWeatherField,
+  toWeatherField,
+  windMemberLayersFromBytes,
+  type WeatherFieldLike,
+  type WeatherPackage,
+} from "@morild/weather";
 import type { PackageHeader } from "@morild/protocol";
 
 const SCENARIO_NAME = "skjaeloy-skagen-apent";
+
+/** Strukturell kopi av `../weather/ensemble.ts::TileWindSource` — se toppkommentaren. */
+export interface TileWindSource {
+  readonly tileId: string;
+  readonly windHeader: PackageHeader;
+  /** Transferred — u+v konkatenert, `windMemberLayersFromBytes`-formatet (§15). */
+  readonly windBuffer: ArrayBuffer;
+}
 
 export interface PlanRouteMemberRequest {
   readonly type: "plan-route-member";
   readonly memberIndex: number;
   readonly isControl: boolean;
-  readonly windHeader: PackageHeader;
-  /** Transferred — u+v konkatenert, `windMemberLayersFromBytes`-formatet (§15). */
-  readonly windBuffer: ArrayBuffer;
+  /** Én kilde per flis som dekker ruten OG har dette medlemmet (§7). */
+  readonly tiles: readonly TileWindSource[];
   readonly departEpochS: number;
 }
 
@@ -64,18 +79,27 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
   if (!scenario) {
     throw new Error(`Fant ikke golden-scenario "${SCENARIO_NAME}"`);
   }
-  const windMember = windMemberLayersFromBytes(new Uint8Array(msg.windBuffer));
-  const pkg: WeatherPackage = {
-    windMembers: [windMember],
-    windHeader: msg.windHeader,
-  };
-  // memberIndex er alltid 0 i DENNE ett-medlems-pakken (§ adapter-
-  // toppkommentar) — `isControl` overstyres eksplisitt fra meldingen, se
-  // `weather-field-adapter.ts::ToWeatherFieldOptions.isControl`.
-  const field = toWeatherField(pkg, 0, {
-    departEpochS: msg.departEpochS,
-    isControl: msg.isControl,
+  if (msg.tiles.length === 0) {
+    throw new Error("plan-route-member: meldingen manglet vinddata for alle fliser");
+  }
+  const tileFields: WeatherFieldLike[] = msg.tiles.map((tile) => {
+    const windMember = windMemberLayersFromBytes(new Uint8Array(tile.windBuffer));
+    const pkg: WeatherPackage = {
+      windMembers: [windMember],
+      windHeader: tile.windHeader,
+    };
+    // memberIndex er alltid 0 i DENNE ett-medlems-pakken (§ adapter-
+    // toppkommentar) — `isControl` overstyres eksplisitt fra meldingen, se
+    // `weather-field-adapter.ts::ToWeatherFieldOptions.isControl`.
+    return toWeatherField(pkg, 0, {
+      departEpochS: msg.departEpochS,
+      isControl: msg.isControl,
+    });
   });
+  // Sy sammen per-flis-feltene til ETT felt (funn 2): rutens punkter kan
+  // falle i hvilken som helst av rutens fliser, og motoren vet ikke noe om
+  // fliser i det hele tatt — den ser bare ett `WeatherField`.
+  const field = compositeWeatherField(tileFields);
   const result = planRoute({
     ...scenario.input,
     departEpochS: msg.departEpochS,

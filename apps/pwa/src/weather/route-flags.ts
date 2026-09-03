@@ -83,11 +83,48 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
   SJOEGANG_DATA_MANGLER: "Bølgedata manglet i minst ett punkt — klaringskravet falt tilbake til standardmarginen der",
 };
 
+/**
+ * Bevisst, ett-og-ett klassifisert alvorlighetsgrad per `RouteStep.flagNames`
+ * (review-funn etter fase 3 bølge 2: `displayFlagsForStepFlag` satte tidligere
+ * `"info"` for ALLE flagg, inkludert sikkerhetsflaggene — et brudd på CLAUDE.md
+ * §1 "usikker rute merkes eksplisitt". Kriteriet (dokumentert, ikke gjettet):
+ * berører flagget farbarhet, klaring eller at data mangler — warning (⚠).
+ * Er det et rent seilings-/kontekstflagg uten innvirkning på om ruten kan
+ * garanteres trygg — info.
+ *
+ * | Flagg                          | Alvorlighet | Begrunnelse |
+ * |---------------------------------|-------------|-------------|
+ * | `USIKKER_TILLIT`                 | warning | Satt når mask-sjekkens `tillit === "usikkert"` (`evaluate.ts`/`search.ts`) — akkurat den farbarhets-usikkerheten som gulver `safety.verdict` til minst `"usikkert"` (`rutemotor.md` §10). Direkte farbarhet. |
+ * | `MOTOR`                          | info    | Seilingsvalg (motor inne), ingen farbarhets-/klaringskonsekvens. |
+ * | `NATT`                           | info    | Tidspunkt på døgnet, ingen farbarhets-/klaringskonsekvens i seg selv. |
+ * | `KRYSS`                          | info    | Seilingsteknikk (baut), ingen farbarhets-/klaringskonsekvens. |
+ * | `VIND_MOT_STROM`                 | info    | Dynamisk sjøgangskomfort (kort, bratt sjø) — ikke en farbarhets-/klaringsfeil eller datamangel, kun et forhold motoren regner ut når den HAR data. |
+ * | `TSS_LANGS`                      | info    | Ren trafikkinformasjon (§ rutemotor.md: `tssAlongCostS` er 0 i v2.0, ingen kostnad, ingen farbarhetseffekt). |
+ * | `SJOEGANGS_MARGIN_OVERSKREDET`   | warning | Sjøgangstillegget overskrider maskens statiske klaringsmargin i punktet (`rutemotor.md` §12) — direkte klaring. |
+ * | `NEGATIV_VANNSTAND_RISIKO`       | warning | Risiko for negativ vannstand — direkte farbarhet (tørrfall-/grunnstøtingsrisiko). |
+ * | `SJOEGANG_DATA_MANGLER`          | warning | Bølgedata manglet i punktet, klaringskravet falt tilbake til statisk margin — eksplisitt datamangel som IKKE later som marginen er dekket (N2). |
+ *
+ * Ukjente/fremtidige flaggnavn (ikke i tabellen) klassifiseres `"warning"`
+ * som konservativt standardvalg — ærlig degradering (N2) betyr at et flagg
+ * vi ikke kjenner klassifiseringen av, aldri stille skal se ufarlig ut.
+ */
+const STEP_FLAG_SEVERITY: Record<string, "info" | "warning"> = {
+  USIKKER_TILLIT: "warning",
+  MOTOR: "info",
+  NATT: "info",
+  KRYSS: "info",
+  VIND_MOT_STROM: "info",
+  TSS_LANGS: "info",
+  SJOEGANGS_MARGIN_OVERSKREDET: "warning",
+  NEGATIV_VANNSTAND_RISIKO: "warning",
+  SJOEGANG_DATA_MANGLER: "warning",
+};
+
 export function displayFlagsForStepFlag(name: string): DisplayFlag {
   return {
     code: name,
     label: STEP_FLAG_LABEL_NO[name] ?? name,
-    severity: "info",
+    severity: STEP_FLAG_SEVERITY[name] ?? "warning",
   };
 }
 

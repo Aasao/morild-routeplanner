@@ -25,12 +25,24 @@ import type { PackageHeader } from "@morild/protocol";
  * import ville krysset den grensen. Hold de to i synk manuelt hvis formen
  * endres.
  */
+/**
+ * Ett medlems vinddata for ÉN flis (review-funn fase 3 bølge 2, funn 2: en
+ * rute kan krysse en flisgrense, §7, og trenger da vinddata fra FLERE
+ * fliser for samme medlem — Workeren syr dem sammen med
+ * `@morild/weather`s `compositeWeatherField`).
+ */
+export interface TileWindSource {
+  readonly tileId: string;
+  readonly windHeader: PackageHeader;
+  readonly windBuffer: ArrayBuffer;
+}
+
 export interface PlanRouteMemberRequest {
   readonly type: "plan-route-member";
   readonly memberIndex: number;
   readonly isControl: boolean;
-  readonly windHeader: PackageHeader;
-  readonly windBuffer: ArrayBuffer;
+  /** Én kilde per flis som dekker ruten OG har dette medlemmet (§7). */
+  readonly tiles: readonly TileWindSource[];
   readonly departEpochS: number;
 }
 
@@ -52,8 +64,7 @@ export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError;
 export interface MemberJob {
   readonly memberIndex: number;
   readonly isControl: boolean;
-  readonly windHeader: PackageHeader;
-  readonly windBuffer: ArrayBuffer;
+  readonly tiles: readonly TileWindSource[];
   readonly departEpochS: number;
 }
 
@@ -139,8 +150,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
       type: "plan-route-member",
       memberIndex: job.memberIndex,
       isControl: job.isControl,
-      windHeader: job.windHeader,
-      windBuffer: job.windBuffer,
+      tiles: job.tiles,
       departEpochS: job.departEpochS,
     };
     worker.addEventListener("message", (ev: MessageEvent<FromWorker>) => {
@@ -169,7 +179,10 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
         errorMessage: ev.message,
       });
     });
-    worker.postMessage(message, [job.windBuffer]);
+    worker.postMessage(
+      message,
+      job.tiles.map((t) => t.windBuffer),
+    );
   });
 }
 

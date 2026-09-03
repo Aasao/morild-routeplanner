@@ -2,13 +2,15 @@
  * Hvilke(n) av pekerens faste 2°×2°-fliser (`docs/specs/vaerpakker.md` §7)
  * dekker en gitt rute. Rene funksjoner — ren geometri, ingen I/O.
  *
- * **Dokumentert forenkling (fase 3 bølge 2C):** krysser ruten flere fliser,
- * brukes kun den FØRSTE flisen som overlapper (etter pekerens rekkefølge).
- * Sammensying av flere fliser til én sammenhengende `WeatherField` er ikke
- * bygget her — Skjæløy→Skagen (§ eksempel-strekket, ~87 nm) faller innenfor
- * én flis på et 2°-rutenett i praksis (samme antagelse
- * `packages/weather/src/budget.test.ts`s bbox bygger på). Flere fliser
- * langs én rute er gjenstående arbeid, ikke stille utelatt.
+ * **Rettet review-funn (fase 3 bølge 2, funn 2):** en tidligere versjon
+ * brukte kun FØRSTE overlappende flis (etter pekerens rekkefølge) — en
+ * dokumentert forenkling som viste seg gal: den ekte Skjæløy→Skagen-pakken
+ * har TO fliser (5_28/5_29, delt ved 58°N-grensen,
+ * `tools/weather-pack/src/build-live-package.ts`s `TARGET_TILES`), og
+ * halve ruten mistet dermed vinddata stille. `tilesOverlapping` returnerer
+ * nå ALLE fliser som overlapper ruteboksen; kalleren (`pipeline.ts`) laster
+ * dem alle og syr dem sammen med `@morild/weather`s
+ * `compositeWeatherField`.
  */
 import type { LatLon } from "@morild/geo";
 import type { PointerTileEntry, WeatherPointer } from "./pointer-types.js";
@@ -43,11 +45,10 @@ export function tilesOverlapping(pointer: WeatherPointer, bbox: BBox): readonly 
 }
 
 /**
- * Den primære flisen for en rute — se forenklingen i toppkommentaren.
- * `undefined` når ingen flis i pekeren dekker ruten (N2: synlig, ikke
- * skjult — kalleren viser "ingen værdekning for dette området").
+ * ALLE fliser i pekeren som dekker en gitt rute (ruteboksens bbox). Tom
+ * liste når ingen flis dekker ruten (N2: synlig, ikke skjult — kalleren
+ * viser "ingen værdekning for dette området").
  */
-export function primaryTileFor(pointer: WeatherPointer, points: readonly LatLon[]): PointerTileEntry | undefined {
-  const overlapping = tilesOverlapping(pointer, boundingBoxOf(points));
-  return overlapping[0];
+export function tilesFor(pointer: WeatherPointer, points: readonly LatLon[]): readonly PointerTileEntry[] {
+  return tilesOverlapping(pointer, boundingBoxOf(points));
 }

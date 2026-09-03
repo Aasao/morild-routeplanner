@@ -24,7 +24,7 @@ describe("fieldPresenceStatuses — vind-only-pakken skal gi synlig strøm/bølg
       bbox: [10, 57, 12, 60],
       fields: [{ field: "wind", member: 0, key: "k", hash: "h", header: header() }],
     };
-    const statuses = fieldPresenceStatuses(tile, NOW_S);
+    const statuses = fieldPresenceStatuses([tile], NOW_S);
     const byField = Object.fromEntries(statuses.map((s) => [s.field, s]));
     expect(byField["wind"]?.present).toBe(true);
     expect(byField["current"]?.present).toBe(false);
@@ -40,7 +40,7 @@ describe("fieldPresenceStatuses — vind-only-pakken skal gi synlig strøm/bølg
         { field: "wind", member: 1, key: "k1", hash: "h1", header: header({ init: "2020-01-01T00:00:00Z" }) },
       ],
     };
-    const statuses = fieldPresenceStatuses(tile, NOW_S);
+    const statuses = fieldPresenceStatuses([tile], NOW_S);
     const wind = statuses.find((s) => s.field === "wind")!;
     expect(wind.present).toBe(true);
     expect(wind.ageS).toBeCloseTo(6 * 3600, 0);
@@ -60,12 +60,30 @@ describe("fieldPresenceStatuses — vind-only-pakken skal gi synlig strøm/bølg
         },
       ],
     };
-    const statuses = fieldPresenceStatuses(tile, NOW_S);
+    const statuses = fieldPresenceStatuses([tile], NOW_S);
     expect(statuses.find((s) => s.field === "wind")?.sourceStatus).toBe("06Z manglet — dette er 00Z");
   });
 
   it("uten noen flis (ingen dekning) markerer ALLE felt som manglende", () => {
-    const statuses = fieldPresenceStatuses(undefined, NOW_S);
+    const statuses = fieldPresenceStatuses([], NOW_S);
     expect(statuses.every((s) => !s.present)).toBe(true);
+  });
+
+  it("finner feltet selv om det bare finnes i den ANDRE av rutens fliser (flisgrense-scenario, review-funn funn 2)", () => {
+    const tileWithoutWaves: PointerTileEntry = {
+      tileId: "5_28",
+      bbox: [10, 56, 12, 58],
+      fields: [{ field: "wind", member: 0, key: "k-sor", hash: "h-sor", header: header() }],
+    };
+    const tileWithWaves: PointerTileEntry = {
+      tileId: "5_29",
+      bbox: [10, 58, 12, 60],
+      fields: [
+        { field: "wind", member: 0, key: "k-nord", hash: "h-nord", header: header() },
+        { field: "waves", member: 0, key: "k-nord-waves", hash: "h-nord-waves", header: header() },
+      ],
+    };
+    const statuses = fieldPresenceStatuses([tileWithoutWaves, tileWithWaves], NOW_S);
+    expect(statuses.find((s) => s.field === "waves")?.present).toBe(true);
   });
 });

@@ -64,11 +64,17 @@ function firstByteDifference(
 }
 
 describe("determinisme (ufravikelig)", () => {
+  // Review-funn fase 3 bølge 2: tre fulle `planRoute`-kjøringer over en
+  // variabel-vær-arena bestod isolert (vitests standard 5 s holdt), men
+  // tidsavbrøt under full-suite-parallellitet (mange vitest-workere om
+  // samme CPU samtidig) — tung, IKKE flaky. Eksplisitt 120 s gir god margin
+  // uten å skjule en reell regresjon (en frossen/uendelig søk ville
+  // fortsatt feile).
   it("gir byte-identisk resultat i tre kjøringer i samme prosess", () => {
     const first = JSON.stringify(planRoute(baseInput()));
     expect(JSON.stringify(planRoute(baseInput()))).toBe(first);
     expect(JSON.stringify(planRoute(baseInput()))).toBe(first);
-  });
+  }, 120_000);
 
   it("gir byte-identisk etikett-arena i to kjøringer", () => {
     const a = createSearchForTesting(baseInput());

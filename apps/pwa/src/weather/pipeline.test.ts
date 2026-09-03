@@ -41,6 +41,7 @@ import { planRoute } from "@morild/routing";
 import {
   buildLayer,
   buildLayerLookup,
+  compositeWeatherField,
   serializeLayer,
   toWeatherField,
   windMemberLayersFromBytes,
@@ -72,14 +73,14 @@ const NODE_STEP_DEG = 0.1;
 function nodeCount(min: number, max: number, step: number): number {
   return Math.round((max - min) / step) + 1;
 }
-function geometry(t0S: number, hours: number): LayerGeometry {
+function geometry(t0S: number, hours: number, bbox: typeof BBOX = BBOX): LayerGeometry {
   return {
-    latMin: BBOX.latMin,
-    lonMin: BBOX.lonMin,
+    latMin: bbox.latMin,
+    lonMin: bbox.lonMin,
     latStepDeg: NODE_STEP_DEG,
     lonStepDeg: NODE_STEP_DEG,
-    nodesLat: nodeCount(BBOX.latMin, BBOX.latMax, NODE_STEP_DEG),
-    nodesLon: nodeCount(BBOX.lonMin, BBOX.lonMax, NODE_STEP_DEG),
+    nodesLat: nodeCount(bbox.latMin, bbox.latMax, NODE_STEP_DEG),
+    nodesLon: nodeCount(bbox.lonMin, bbox.lonMax, NODE_STEP_DEG),
     tileNodes: 32,
     t0S,
     dtS: 3600,
@@ -87,9 +88,15 @@ function geometry(t0S: number, hours: number): LayerGeometry {
   };
 }
 
-/** Bygger én vind-medlems R2-blob (u+v konkatenert, `tools/weather-pack`s faktiske byte-layout) fra det ekte golden-feltet, for `hours` timer. */
-function buildWindMemberBytes(hours: number): Uint8Array {
-  const g = geometry(trueWind.validFromS, hours);
+/**
+ * Bygger én vind-medlems R2-blob (u+v konkatenert, `tools/weather-pack`s
+ * faktiske byte-layout) fra det ekte golden-feltet, for `hours` timer.
+ * `bbox` (default: hele `BBOX`) lar `describe("flere fliser …")` under
+ * bygge SNEVRERE, ikke-overlappende fliser som til sammen dekker samme
+ * areal — review-funn fase 3 bølge 2, funn 2.
+ */
+function buildWindMemberBytes(hours: number, bbox: typeof BBOX = BBOX): Uint8Array {
+  const g = geometry(trueWind.validFromS, hours, bbox);
   const uLayer = buildLayer({
     sample: (lat, lon, epochS) => {
       const w = trueWind.wind(lat, lon, epochS);
@@ -181,17 +188,23 @@ function realWorkFakeWorker(sharedFields?: { current?: CurrentLayers; waves?: Wa
     postMessage(message: PlanRouteMemberRequest) {
       queueMicrotask(() => {
         try {
-          const windMember = windMemberLayersFromBytes(new Uint8Array(message.windBuffer));
-          const pkg: WeatherPackage = {
-            windMembers: [windMember],
-            windHeader: message.windHeader,
-            ...(sharedFields?.current ? { current: sharedFields.current } : {}),
-            ...(sharedFields?.waves ? { waves: sharedFields.waves } : {}),
-          };
-          const field = toWeatherField(pkg, 0, {
-            departEpochS: message.departEpochS,
-            isControl: message.isControl,
+          // Én `WeatherFieldLike` PER FLIS, sydd sammen med `compositeWeatherField`
+          // — speiler den ekte `weather-routing.worker.ts` (review-funn fase 3
+          // bølge 2, funn 2).
+          const tileFields = message.tiles.map((tile) => {
+            const windMember = windMemberLayersFromBytes(new Uint8Array(tile.windBuffer));
+            const pkg: WeatherPackage = {
+              windMembers: [windMember],
+              windHeader: tile.windHeader,
+              ...(sharedFields?.current ? { current: sharedFields.current } : {}),
+              ...(sharedFields?.waves ? { waves: sharedFields.waves } : {}),
+            };
+            return toWeatherField(pkg, 0, {
+              departEpochS: message.departEpochS,
+              isControl: message.isControl,
+            });
           });
+          const field = compositeWeatherField(tileFields);
           const result = planRoute({ ...scenario.input, departEpochS: message.departEpochS, weather: field });
           const ok: FromWorker = {
             type: "plan-route-member-result",
@@ -221,6 +234,27 @@ function realWorkFakeWorker(sharedFields?: { current?: CurrentLayers; waves?: Wa
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+}
+
+/** Delt `fetch`-dobbel for pekeren/MetAlerts/blob-nøkler — brukt av alle harnesser i denne fila. */
+function makePointerFetch(pointer: WeatherPointer, blobs: ReadonlyMap<string, Uint8Array>): typeof fetch {
+  return (async (input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.includes("/pointer/")) {
+      return jsonResponse(pointer);
+    }
+    if (url.includes("/proxy/metalerts")) {
+      return new Response(JSON.stringify({ type: "FeatureCollection", features: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json", "fetched-at": "2026-09-03T06:00:00Z", "source-status": "ok" },
+      });
+    }
+    const key = decodeURIComponent(url.split("/blob/")[1] ?? "");
+    const bytes = blobs.get(key);
+    if (!bytes) return new Response(null, { status: 404 });
+    // Se tilsvarende cast/kommentar i blob-client.test.ts.
+    return new Response(bytes as BodyInit, { status: 200 });
+  }) as typeof fetch;
 }
 
 interface Harness {
@@ -262,23 +296,7 @@ function buildHarness(args: {
     ["weather/1/member1.bin", memberBytes],
   ]);
 
-  const fetchImpl = (async (input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    if (url.includes("/pointer/")) {
-      return jsonResponse(pointer);
-    }
-    if (url.includes("/proxy/metalerts")) {
-      return new Response(JSON.stringify({ type: "FeatureCollection", features: [] }), {
-        status: 200,
-        headers: { "content-type": "application/json", "fetched-at": "2026-09-03T06:00:00Z", "source-status": "ok" },
-      });
-    }
-    const key = decodeURIComponent(url.split("/blob/")[1] ?? "");
-    const bytes = blobs.get(key);
-    if (!bytes) return new Response(null, { status: 404 });
-    // Se tilsvarende cast/kommentar i blob-client.test.ts.
-    return new Response(bytes as BodyInit, { status: 200 });
-  }) as typeof fetch;
+  const fetchImpl = makePointerFetch(pointer, blobs);
 
   const captured: Harness["captured"] = { fieldStatuses: [], errors: [] };
 
@@ -357,7 +375,7 @@ describe("runWeatherPipeline — pointer→cache→dekode→planRoute, ende til 
     expect(summary.inconclusiveCount).toBe(2);
     expect(summary.feasibleCount).toBe(0);
     expect(summary.infeasibleCount).toBe(0);
-  }, 30_000);
+  }, 120_000); // hevet fra 30 s (review-funn): timeout observert under full-suite-parallellitet, bekreftet bestått isolert — reell arbeidsmengde (ekte kvantisering+dekoding+planRoute), ikke en hengende test.
 
   it("med strøm+bølger TIL STEDE (isolert scenario): et medlem med kortere vind-horisont enn seilasen telles INKONKLUSIVT, kontrollen (full horisont) GJENNOMFØRBAR — ADR-0005", async () => {
     const sharedFields = constantCurrentAndWaves(30); // dekker godt utover seilastiden for begge
@@ -378,5 +396,105 @@ describe("runWeatherPipeline — pointer→cache→dekode→planRoute, ende til 
     expect(summary.infeasibleCount).toBe(0); // ALDRI ugjennomførbar av ren datamangel
     expect(summary.inconclusiveFraction).toBeCloseTo(0.5, 5);
     expect(summary.horizonTooShortWarning).toBe(true); // > 20 % inkonklusive (ADR-0005 horisont-port)
-  }, 30_000);
+  }, 120_000); // hevet fra 30 s (review-funn): timeout observert under full-suite-parallellitet, bekreftet bestått isolert — reell arbeidsmengde (ekte kvantisering+dekoding+planRoute), ikke en hengende test.
+});
+
+/**
+ * Integrasjonstest for review-funn fase 3 bølge 2, funn 2: `tile-select.ts`
+ * brukte tidligere kun FØRSTE overlappende flis. Den ekte Skjæløy→Skagen-
+ * pakken har TO fliser (5_28/5_29, delt ved 58°N,
+ * `tools/weather-pack/src/build-live-package.ts`s `TARGET_TILES`) — ruten
+ * (start Skjæløy ~59,10°N, mål Skagen ~57,72°N) krysser midt gjennom den
+ * grensen.
+ *
+ * Fliser er her bygget med SAMME oppløsning/metode som resten av fila
+ * (`buildWindMemberBytes`/ekte kvantisering), bare med en SNEVRERE bbox
+ * hver — sør dekker 56,4–58,4°N, nord 58,4–60,4°N — slik at de til sammen
+ * dekker akkurat det samme arealet som `BBOX` i testene over.
+ *
+ * To scenarioer:
+ * 1. BEGGE fliser i pekeren → komposittfeltet dekker hele ruten → ruten
+ *    når målet (samme utfall som `BBOX`-testene over, nå sydd av to
+ *    fliser i stedet for én).
+ * 2. KUN nordflisen (regresjonstesten som gir denne bølgens fiks tenner):
+ *    ruten STARTER med vinddata (Skjæløy er i nordflisen), men søket går
+ *    tom for vind når det når sørhalvdelen av ruten — akkurat symptomet
+ *    review-funnet beskrev ("noder stoppes uten synlig årsak"). Med DEN
+ *    GAMLE "kun første flis"-logikken ville dette vært det ENESTE mulige
+ *    utfallet uansett hvilke fliser pekeren hadde — denne testen ville
+ *    IKKE fanget regresjonen om fiksen ble reversert til kun én flis totalt,
+ *    så den fanger nettopp mangelen på sammensying, ikke bare fravær av data.
+ */
+describe("runWeatherPipeline — flere fliser over en flisgrense (review-funn fase 3 bølge 2, funn 2)", () => {
+  const SPLIT_LAT = 58.4; // mellom Skagen (~57,72°N) og Skjæløy (~59,10°N)
+  const SOUTH_BBOX = { latMin: BBOX.latMin, latMax: SPLIT_LAT, lonMin: BBOX.lonMin, lonMax: BBOX.lonMax };
+  const NORTH_BBOX = { latMin: SPLIT_LAT, latMax: BBOX.latMax, lonMin: BBOX.lonMin, lonMax: BBOX.lonMax };
+
+  function tileEntry(
+    tileId: string,
+    bbox: typeof BBOX,
+    key: string,
+  ): WeatherPointer["tiles"][number] {
+    return {
+      tileId,
+      bbox: [bbox.lonMin, bbox.latMin, bbox.lonMax, bbox.latMax],
+      fields: [{ field: "wind", member: 0, key, hash: tileId, header: header() }],
+    };
+  }
+
+  function buildMultiTileHarness(include: readonly ("south" | "north")[]): Harness {
+    const southBytes = buildWindMemberBytes(24, SOUTH_BBOX);
+    const northBytes = buildWindMemberBytes(24, NORTH_BBOX);
+
+    const allTiles: Record<"south" | "north", WeatherPointer["tiles"][number]> = {
+      south: tileEntry("t-sor", SOUTH_BBOX, "weather/1/sor.bin"),
+      north: tileEntry("t-nord", NORTH_BBOX, "weather/1/nord.bin"),
+    };
+    const pointer: WeatherPointer = { formatVersion: "1.0.0", tiles: include.map((id) => allTiles[id]) };
+
+    const blobs = new Map<string, Uint8Array>([
+      ["weather/1/sor.bin", southBytes],
+      ["weather/1/nord.bin", northBytes],
+    ]);
+
+    const fetchImpl = makePointerFetch(pointer, blobs);
+    const captured: Harness["captured"] = { fieldStatuses: [], errors: [] };
+    const deps: PipelineDeps = {
+      config: CONFIG,
+      fetchImpl,
+      cacheStorage: new FakeCacheStorage(),
+      workerFactory: () => realWorkFakeWorker(),
+      poolSize: 1,
+      nowEpochS: trueWind.validFromS + 3600,
+    };
+    return { deps, captured };
+  }
+
+  it("BEGGE fliser (5_28 sør + 5_29 nord): komposittfeltet dekker hele ruten — ruten NÅR målet", async () => {
+    const harness = buildMultiTileHarness(["south", "north"]);
+    await runHarness(harness);
+    const { captured } = harness;
+
+    expect(captured.errors).toEqual([]);
+    expect(captured.pointerStatus).toBe("ok");
+    const control = captured.controlOutcome!;
+    expect(control.result!.reached).toBe(true);
+    expect(control.result!.safety.reachesDestination).toBe(true);
+  }, 120_000);
+
+  it("REGRESJON — kun nordflisen (én-flis-varianten): ruten starter (Skjæløy er i nordflisen) men når IKKE målet, sørhalvdelen mangler vind", async () => {
+    const harness = buildMultiTileHarness(["north"]);
+    await runHarness(harness);
+    const { captured } = harness;
+
+    expect(captured.errors).toEqual([]);
+    const control = captured.controlOutcome!;
+    // Ikke "noWeatherAtStart" — starten (Skjæløy) HAR vinddata her, i
+    // motsetning til om vi hadde kuttet nordflisen i stedet. Søket kommer i
+    // gang, men mister vind idet det krysser inn i sørhalvdelen og finner
+    // aldri veien til målet.
+    expect(control.result!.abortReason).not.toBe("noWeatherAtStart");
+    expect(control.result!.reached).toBe(false);
+    expect(control.result!.safety.reachesDestination).toBe(false);
+  }, 120_000);
 });

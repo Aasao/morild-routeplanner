@@ -214,8 +214,7 @@ function job(memberIndex: number, isControl: boolean): MemberJob {
   return {
     memberIndex,
     isControl,
-    windHeader: HEADER,
-    windBuffer: new ArrayBuffer(8),
+    tiles: [{ tileId: "t0", windHeader: HEADER, windBuffer: new ArrayBuffer(8) }],
     departEpochS: 0,
   };
 }

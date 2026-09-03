@@ -195,6 +195,12 @@ describe("golden-bro — konstant felt, maxDecodeErrorKn=0 (Float32-veien)", () 
 });
 
 describe("golden-bro — reelt syntetisk felt, 8-bit — forklarbar diff (K-ANB-KYST-forventning)", () => {
+  // Review-funn fase 3 bølge 2: denne golden-broen kjører hele
+  // encode→decode→planRoute-kjeden mot et ekte (ikke-konstant) syntetisk
+  // felt. 30 s holdt isolert, men tidsavbrøt under full-suite-
+  // parallellitet — tung, IKKE flaky (samme resonnement som
+  // `packages/routing/src/properties.test.ts`s determinisme-test).
+  // Eksplisitt 120 s.
   it("samme diskrete utfall, liten numerisk diff, etter encode→decode gjennom pakken", () => {
     const input = scenario("skjaeloy-skagen-apent");
     const baseline = planRoute(input);
@@ -223,7 +229,7 @@ describe("golden-bro — reelt syntetisk felt, 8-bit — forklarbar diff (K-ANB-
     expect(durationDiff).toBeLessThan(0.1);
     void SKJAELOY;
     void SKAGEN;
-  }, 30_000);
+  }, 120_000);
 });
 
 /**

@@ -370,6 +370,36 @@ export function deltaDecodeLayerPayload(layer: Layer): Layer {
 
 const HEADER_BYTES = 4 + 1 + 1 + 1 + 1 + 8 * 4 + 4 * 3 + 8 * 2 + 4;
 
+export interface LayerByteLayout {
+  /** Subflis-skala/offset-tabellen (f64 scale + f64 offset per subflis per tidssteg). */
+  readonly indexBytes: number;
+  /** De kvantiserte kodene selv. */
+  readonly payloadBytes: number;
+  /** Total byte-lengde ETT serialisert lag opptar (header + indeks + nyttelast). */
+  readonly totalBytes: number;
+}
+
+/**
+ * Total byte-lengde ett serialisert lag opptar, gitt subflis-layouten,
+ * antall tidssteg og bitbredden. **Delt hjelper** — review-funn fase 3
+ * bølge 2: denne formelen var duplisert i `serializeLayer` og
+ * `readLayerFrame`, med reell driftsrisiko (endres den ene og ikke den
+ * andre, blir rammededelingen feil uten at typene fanger det). Begge
+ * kallsteder har allerede `layout` (fra `computeSubtileLayout`) og
+ * `timeSteps` tilgjengelig, så denne tar dem som parametre i stedet for å
+ * regne `computeSubtileLayout` en gang til.
+ */
+export function layerByteLayout(
+  layout: SubtileLayout,
+  timeSteps: number,
+  bitsPerSample: 8 | 10,
+): LayerByteLayout {
+  const elementBytes = bitsPerSample <= 8 ? 1 : 2;
+  const indexBytes = layout.subtileRows * layout.subtileCols * timeSteps * 16; // f64 scale + f64 offset
+  const payloadBytes = layout.totalSamples * elementBytes;
+  return { indexBytes, payloadBytes, totalBytes: HEADER_BYTES + indexBytes + payloadBytes };
+}
+
 function roundingCode(mode: RoundingMode): number {
   return mode === "nearest" ? 0 : mode === "up" ? 1 : 2;
 }
@@ -396,9 +426,7 @@ export function serializeLayer(layer: Layer, options: SerializeLayerOptions = {}
   const g = layer.geometry;
   const layout = computeSubtileLayout(g);
   const elementBytes = layer.bitsPerSample <= 8 ? 1 : 2;
-  const indexBytes = layout.subtileRows * layout.subtileCols * g.timeSteps * 16; // f64 scale + f64 offset
-  const payloadBytes = layout.totalSamples * elementBytes;
-  const total = HEADER_BYTES + indexBytes + payloadBytes;
+  const { totalBytes: total } = layerByteLayout(layout, g.timeSteps, layer.bitsPerSample);
   const buf = new ArrayBuffer(total);
   const view = new DataView(buf);
   const bytes = new Uint8Array(buf);
@@ -641,10 +669,7 @@ export interface LayerFrame {
 export function readLayerFrame(bytes: Uint8Array, byteOffset = 0): LayerFrame {
   const { bitsPerSample, geometry } = peekLayerHeader(bytes, byteOffset);
   const layout = computeSubtileLayout(geometry);
-  const elementBytes = bitsPerSample <= 8 ? 1 : 2;
-  const indexBytes = layout.subtileRows * layout.subtileCols * geometry.timeSteps * 16; // f64 scale + f64 offset
-  const payloadBytes = layout.totalSamples * elementBytes;
-  const byteLength = HEADER_BYTES + indexBytes + payloadBytes;
+  const { totalBytes: byteLength } = layerByteLayout(layout, geometry.timeSteps, bitsPerSample);
   const frame = bytes.subarray(byteOffset, byteOffset + byteLength);
   const layer = deserializeLayer(frame);
   return { layer, byteLength };

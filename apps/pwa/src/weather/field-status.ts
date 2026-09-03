@@ -34,13 +34,20 @@ export interface FieldPresenceStatus {
  * UI-en — medlemmer har samme `init` som kontrollen for et gitt felt i
  * praksis (§5: én `PackageHeader` per FELT, ikke per medlem), og
  * kontrollen er alltid til stede når feltet er det.
+ *
+ * Tar nå (review-funn fase 3 bølge 2, funn 2) FLERE fliser — en rute kan
+ * krysse en flisgrense (§7) og dermed trenge felt fra mer enn én flis.
+ * "Til stede" betyr her at MINST ÉN av rutens fliser har feltet; finner
+ * flere fliser feltet, brukes den FØRSTE (samme representative-valg som
+ * `compositeWeatherField`s `header` i `@morild/weather`) — fliser fra
+ * samme pakkebygg deler modell/init for et gitt felt i praksis.
  */
 export function fieldPresenceStatuses(
-  tile: PointerTileEntry | undefined,
+  tiles: readonly PointerTileEntry[],
   nowEpochS: number,
 ): readonly FieldPresenceStatus[] {
   return KNOWN_FIELDS.map((field) => {
-    const entry = tile?.fields.find((f) => f.field === field && f.member === 0);
+    const entry = tiles.flatMap((t) => t.fields).find((f) => f.field === field && f.member === 0);
     if (entry === undefined) {
       return { field, present: false };
     }

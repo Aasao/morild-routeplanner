@@ -6,6 +6,7 @@ import {
   deltaDecodeLayerPayload,
   deltaEncodeLayerPayload,
   deserializeLayer,
+  layerByteLayout,
   layerMaxDecodeError,
   readLayerFrame,
   readLayerFrames,
@@ -13,6 +14,7 @@ import {
   serializeLayer,
   subtileIndexOfNode,
   WEATHER_LAYER_MAGIC,
+  type Layer,
   type LayerGeometry,
 } from "./package-format.js";
 
@@ -303,6 +305,52 @@ describe("delta-koding koblet inn i subflis-lagringen (§8, §19 — tidligere l
       Array.from(layer.payload as Uint8Array),
     );
   });
+});
+
+describe("layerByteLayout — delt bytelengde-formel (review-funn fase 3 bølge 2: tidligere duplisert i serializeLayer og readLayerFrame)", () => {
+  const forms: ReadonlyArray<{
+    readonly name: string;
+    readonly g: LayerGeometry;
+    readonly bitsPerSample: 8 | 10;
+    readonly channelKind: "linear" | "angle";
+    readonly deltaCoded?: boolean;
+  }> = [
+    { name: "8-bit, én subflis, lineær", g: testGeometry({ nodesLat: 6, nodesLon: 6, timeSteps: 2, tileNodes: 32 }), bitsPerSample: 8, channelKind: "linear" },
+    { name: "8-bit, flere subfliser, lineær", g: testGeometry(), bitsPerSample: 8, channelKind: "linear" },
+    { name: "8-bit, delta-kodet", g: testGeometry({ nodesLat: 40, nodesLon: 17, timeSteps: 6, tileNodes: 32 }), bitsPerSample: 8, channelKind: "linear", deltaCoded: true },
+    { name: "10-bit (u16-lagring), lineær", g: testGeometry({ nodesLat: 10, nodesLon: 10, timeSteps: 2 }), bitsPerSample: 10, channelKind: "linear" },
+    { name: "8-bit, vinkelkanal", g: testGeometry({ nodesLat: 8, nodesLon: 8, timeSteps: 1 }), bitsPerSample: 8, channelKind: "angle" },
+  ];
+
+  for (const form of forms) {
+    it(`${form.name}: serializeLayer sin faktiske lengde, layerByteLayout og readLayerFrame sin lengde er alle konsistente`, () => {
+      const layer: Layer = buildLayer({
+        sample: smoothSource,
+        geometryBase: form.g,
+        bitsPerSample: form.bitsPerSample,
+        roundingMode: "nearest",
+        channelKind: form.channelKind,
+      });
+      const bytes = serializeLayer(layer, { deltaCoded: form.deltaCoded ?? false });
+      const layout = computeSubtileLayout(form.g);
+      const predicted = layerByteLayout(layout, form.g.timeSteps, form.bitsPerSample);
+
+      // Formelen forutsier EKSAKT den bytelengden serializeLayer faktisk skrev.
+      expect(bytes.length).toBe(predicted.totalBytes);
+
+      // readLayerFrame (peekLayerHeader-veien) er enig, selv med søppel etterpå.
+      const padded = new Uint8Array(bytes.length + 7);
+      padded.set(bytes, 0);
+      padded.fill(0xaa, bytes.length);
+      const frame = readLayerFrame(padded, 0);
+      expect(frame.byteLength).toBe(predicted.totalBytes);
+
+      // Og roundturen er fortsatt bit-eksakt for et par prøvepunkter.
+      expect(decodeLayerNode(frame.layer, layout, 0, 0, 0)).toBe(
+        decodeLayerNode(layer, layout, 0, 0, 0),
+      );
+    });
+  }
 });
 
 describe("readLayerFrame/readLayerFrames — flerlags-rammededeling (klientgap, fase 3 bølge 2C)", () => {
