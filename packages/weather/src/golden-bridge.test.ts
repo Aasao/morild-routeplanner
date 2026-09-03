@@ -181,7 +181,21 @@ describe("golden-bro — konstant felt, maxDecodeErrorKn=0 (Float32-veien)", () 
       validToS: base.weather.validToS,
       header: TEST_HEADER,
     };
-    const input: RouteInput = { ...base, weather: constantField };
+    // Kursoppløsning 12° (ensemble-medlem-nivå, se `options.ts`) i stedet
+    // for scenariets 6°: denne testen beviser at den PAKKEDE veien gir
+    // bit-identiske oppslag langs alt ruteren spør om, og den egenskapen
+    // er uavhengig av hvor tett ruteren spør. Profilert 2026-09-03
+    // (fixture 1 ms, encode+decode ~0,1 s, ruteberegning alt det andre):
+    // 6° kostet 4,5–6,5 s per `planRoute` (×2 = 13 s isolert, 21,9 s med
+    // maskinlast, 30 s-timeout under full suite); 12° koster 2,4 s per
+    // kall og gir samme rute (når fram, 3 etapper, 47 937 s). Scenariets
+    // egen 6°-oppløsning er golden-regresjonens sak (`golden.test.ts`),
+    // ikke denne broens.
+    const input: RouteInput = {
+      ...base,
+      weather: constantField,
+      options: { ...base.options, headingStepDeg: 12 },
+    };
 
     const baseline = planRoute(input);
     expect(baseline.reached).toBe(true); // sanity — testen skal teste NOE
@@ -191,7 +205,10 @@ describe("golden-bro — konstant felt, maxDecodeErrorKn=0 (Float32-veien)", () 
 
     const packagedResult = planRoute({ ...input, weather: decodedField });
     assertNearlyIdentical(baseline, packagedResult);
-  }, 30_000);
+    // Målt etter 12°-grepet: 5,9 s isolert, 16,6 s under full `pnpm test`
+    // (mange vitest-workere om samme CPU). 60 s gir margin mot maskinlast
+    // fra parallelle sesjoner uten å skjule et frosset søk.
+  }, 60_000);
 });
 
 describe("golden-bro — reelt syntetisk felt, 8-bit — forklarbar diff (K-ANB-KYST-forventning)", () => {
