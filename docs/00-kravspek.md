@@ -292,6 +292,22 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-04 (D7.1–D7.5, Magnus, etter /panel — se
+  `docs/research/ekspertpanel-d7-vaerpakkeformat-2026-09-04.md`):**
+  bølge 3 kjører på dagens adaptive 8-bit-format med 1°-fliser (E);
+  fast LSB (B foran A), medlems-anomali, korridor-subfliser og companding
+  er 4b-kandidater avgjort av harness på EKTE fliser over 3–5 init; C/D
+  avvist. Vilkår vedtatt: (i) flisvalg-sikkerhetsregel — fliser fra
+  A*-feltets rekkevidde (fallback endepunkt-bbox + ≥ 0,5°), manglende
+  flis ⇒ flagg «rute begrenset av værdekning», aldri stille avvisning
+  (F2.2/F3.1); (ii) per-flis vaktbånd fra header i rutemotoren
+  (compositeWeatherField: aktuell flis' bånd) + klippe-assert; (iii)
+  rangeringskriteriet i kvantiseringsharnessen nedgradert til
+  deskriptivt m/uavgjort-bånd = søkets støygulv (flipp-frekvens → 4b);
+  (iv) byggetids-sertifisert maks dekodefeil per flis/felt i header,
+  klienten avviser fliser uten sertifikat; (v) subflis-adresserbar layout
+  m/offset-tabell; (vi) harness kjøres på ≥ 1 ekte flis i bølge 3.
+  E′ (tapsfri Paeth) utløses ved målt totalpakke > 25 MB.
 - **2026-09-03 (2) (D6-C, Magnus):** F2.2 interim tak 50 MB etter målt
   1,06× komprimering på ekte MEPS; kompresjonsspike (fast LSB,
   medlem−kontroll, romlig prediktor, 1°-fliser) avgjør endelig tall;

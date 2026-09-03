@@ -1266,3 +1266,19 @@ node tools/kvantisering/tabeller.mjs \
 Kjøretid på utviklingsmaskinen: P1 ≈ 12 min, P2a ≈ 6 min, P3 ≈ 10 min,
 P2b ≈ 45 min. Alle tall i rådataene er deterministiske; kun konsollens
 sekundangivelser er det ikke.
+
+
+## 13. Kriterierevisjon 2026-09-04 (D7.3, Magnus)
+
+Rangeringskriteriet (topp-avgang/Kendall-τ/ΔP50-bånd) er **nedgradert til
+deskriptivt** for formatbeslutninger: alle målte «flips» var én
+bifurkasjon i søket (S-5 +4 t: 13,83 ↔ 14,31 t) under motorens egen
+rutevalgsstøy (~6 %, §11.1), og kunne vippe begge veier på anker-valg.
+Beslutningsdyktige for format er heretter kun: P3-flips (felle-/
+gjennomførbarhet/tapte harde forkastelser), søkefrie feltprøver og
+vaktbåndsonden (P1e). Rangering rapporteres med uavgjort-bånd =
+støygulvet. Et flipp-frekvens-kriterium under dithering (§9.2, matematiker)
+tas i fase 4b på ekte-flis-fiksturer. Merk også: **harnessen har til nå
+kun kjørt på syntetiske/golden-fliser (spenn 21,7 kn)** — ekte fliser
+(spenn 55–65 kn) gir adaptiv 8-bit ≈ 0,21–0,26 kn; kjøring på ≥ 1 ekte
+flis er vedtatt for bølge 3 (D7.5 vilkår vi).
