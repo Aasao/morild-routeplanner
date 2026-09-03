@@ -331,3 +331,185 @@ standard. Spesifikt:
    er en pakke på 5–15 MB (vind+1°-fliser) et realistisk mål — vesentlig
    under BÅDE dagens 27,4 MB-vind-alene-funn og den tidligere varslede
    40 MB-budsjettrevisjonen, uten at 2,5 km-oppløsningen ofres.
+
+---
+
+## 9. Tillegg 2026-09-04 — 0,1/0,125 kn utvidelse (harness-remåling som drivkraft)
+
+**Hvorfor.** Harness-remålingen i `docs/research/kvantiseringsmaaling-2026-09-01.md`
+§9.2 (kjørt parallelt, jf. §7-forbeholdet over) fant at fast LSB 0,25 og
+0,5 kn **flipper avgangsrangeringen** (S-5s +4 t-gren, ΔP50 3,4/3,41 %),
+mens **0,1 kn består alle sikkerhets- og rangeringskriteriene** (ΔP50
+0,44 %). Entropieksperimentet i §1–§8 over målte imidlertid kun 0,25 og
+0,5 kn — det eneste tallet harnessen faktisk friskmeldte var ikke i
+kompresjonsmatrisen. Dette tillegget lukker det gapet: samme metode
+(§1), utvidet til LSB **0,1 kn og 0,125 kn**, på de SAMME to ekte flisene
+(5_28, 5_29, kontroll+30 medlemmer). Kode: samme
+`tools/weather-pack/src/entropy-experiment.ts`, nå med `lsbIdPart()`
+generalisert til fire LSB-verdier og en ny prediktorkombinasjon
+`medlem-kontroll+med2d` (kontroll-residual, deretter 2D MED/Paeth PÅ
+residualen — sterkere enn den eksisterende `medlem-kontroll+romlig`).
+
+**Kjøretidsbegrensning, eksplisitt.** For de to nye LSB-verdiene kjøres
+KUN 2D MED/Paeth og medlem-kontroll+Paeth (ikke alle 7 prediktorer) — de
+fire andre er allerede entydig svakere ved 0,25/0,5 kn (§3.1) og ville
+kun kostet kjøretid. De fire eksisterende planene (`dagens`, 0,25, 0,5 —
+begge anker-varianter) kjøres derimot med ALLE 7 prediktorer, inkludert
+den nye, for direkte sammenlignbarhet med §3.1s tabell.
+
+### 9.1 Anker-lotteriet ved finere trinn: lukker det seg for byte-tallene også?
+
+**Ja, praktisk talt identisk** — samme mønster som §2 fant for 0,25/0,5 kn,
+nå bekreftet ved 0,1 og 0,125 kn:
+
+| LSB | anker | gzip MB (2D MED, begge fliser) | maxDecodeErrorKn |
+|---|---|---|---|
+| 0,1 kn | flis (`perTile`) | 17,53 | 0,0707 |
+| 0,1 kn | ingen (fast ±40 kn) | 17,53 | 0,0707 |
+| 0,125 kn | flis (`perTile`) | 16,06 | 0,0884 |
+| 0,125 kn | ingen (fast ±40 kn) | 16,06 | 0,0884 |
+
+Byte-tallene er uavhengige av ankervalget her også (Shannon-entropi er
+invariant under additiv forskyvning, jf. §2). Det ankeret FAKTISK
+avgjør, er utelukkende **kodebredden** — se §9.2 — og (fra harnessens
+P2b-måling, ikke denne spikens) hvilken av to nesten identiske ruter et
+grensetilfelle i søket lander på.
+
+### 9.2 Kodebredde: golden-fiksturenes «217 av 255» generaliserer IKKE til ekte MEPS-fliser
+
+`docs/research/kvantiseringsmaaling-2026-09-01.md` §9.2 Resultat 5 målte
+at LSB 0,1 kn med gitter-justert flis-offset trenger **8 bit** på
+golden-fiksturene (verste flisspenn der: 21,7 kn, 217 av 255 koder). De
+to EKTE MEPS-flisene i denne spiken har et vesentlig VIDERE spenn (65,53
+og 54,86 kn — 3× golden-fiksturenes verste) og sprenger 8-bit-budsjettet
+totalt, MED FLIS-OFFSET INKLUDERT:
+
+| flis | LSB | anker | nøyaktig behov | nivåer | observert maks kode |
+|---|---|---|---|---|---|
+| 5_28 (spenn 65,53 kn) | 0,1 kn | flis | **10 bit** | 658 | 655 |
+| 5_28 | 0,1 kn | ingen | **10 bit** | 802 | 762 |
+| 5_29 (spenn 54,86 kn) | 0,1 kn | flis | **10 bit** | 551 | 549 |
+| 5_29 | 0,1 kn | ingen | **10 bit** | 802 | 722 |
+| 5_28 | 0,125 kn | flis | **10 bit** | 527 | 524 |
+| 5_28 | 0,125 kn | ingen | **10 bit** | 642 | 609 |
+| 5_29 | 0,125 kn | flis | **9 bit** | 441 | 439 |
+| 5_29 | 0,125 kn | ingen | **10 bit** | 642 | 578 |
+
+(Til sammenligning, samme datasett ved grovere trinn: 0,25 kn trenger
+8 bit med flis-offset på 5_29 men **9 bit** på 5_28 — §3.2s
+grensetilfelle, bekreftet på nytt her — og 0,5 kn trenger 7–8 bit.)
+
+**Konklusjon: 8-bit byte-alignet holder IKKE for 0,1 kn på disse ekte
+flisene, i NOEN anker-variant.** 10-bit er det målte, nøyaktige behovet
+(observert maks kode 549–762 av et 10-bit-tak på 1023) — 16-bit
+byte-alignet er det som faktisk BRUKES i denne målingen (og i en
+produksjonspakning uten bit-pakking). Ved 0,125 kn er bildet blandet:
+5_29 (det smalere spennet) klarer seg med 9 bit på flis-anker, mens 5_28
+(det bredeste spennet) trenger 10 uansett anker — en produksjonspakke som
+vil bruke ÉN bitbredde for alle fliser, må dimensjonere for verste flis
+og lander dermed på 10 bit for begge LSB-kandidatene i praksis.
+
+Årsaken til avviket fra golden-fiksturenes tall er ikke formatet, men
+DATAENE: disse to Skagerrak-flisene dekker et friskere og bredere
+vindregime enn golden-fiksturenes syntetiske felt. Det bekrefter selv
+representativitetsforbeholdet i §7 — golden-fiksturenes bitbredde-tall
+var ALDRI ment å generalisere til ekte MEPS uten egen måling, og gjør
+det nå bevist ikke.
+
+### 9.3 Full matrise (bytes), LSB × prediktor × anker, sortert på gzip
+
+Kombinert (begge fliser). Kun de 4 finhetskontroll-radene (0,1/0,125 kn)
+er nye her; resten er §3.1 pluss den nye `medlem-kontroll+med2d`-raden
+for de eksisterende planene, tatt med for direkte sammenligning:
+
+| Kvantisering | Prediktor | Nøyaktig bit | gzip MB | brotli MB | maxDecodeErrorKn |
+|---|---|---|---|---|---|
+| lsb05-none | 2d-med | 8 | **7,56** | 7,79 | 0,3536 |
+| lsb05-perTile | 2d-med | 7–8 | 7,56 | 7,79 | 0,3536 |
+| lsb05-perTile | romlig-venstre | 7–8 | 8,93 | 9,05 | 0,3536 |
+| lsb05-none | romlig-venstre | 8 | 8,94 | 9,05 | 0,3536 |
+| lsb05-none | medlem-kontroll+med2d | 8 | 9,36 | 9,54 | 0,3536 (komb. 0,7071) |
+| lsb05-perTile | medlem-kontroll+med2d | 7–8 | 9,36 | 9,54 | 0,3536 (komb. 0,7071) |
+| lsb05-none | medlem-kontroll+romlig | 8 | 10,32 | 10,44 | 0,3536 (komb. 0,7071) |
+| lsb05-perTile | medlem-kontroll+romlig | 7–8 | 10,32 | 10,44 | 0,3536 (komb. 0,7071) |
+| lsb025-perTile | 2d-med | 8–9 | 11,09 | 11,23 | 0,1768 |
+| lsb025-none | 2d-med | 9 | 11,97 | 12,10 | 0,1768 |
+| lsb025-perTile | medlem-kontroll+med2d | 8–9 | 13,13 | 13,18 | 0,1768 (komb. 0,3536) |
+| lsb025-perTile | romlig-venstre | 8–9 | 13,34 | 13,15 | 0,1768 |
+| lsb025-none | medlem-kontroll+med2d | 9 | 14,23 | 14,17 | 0,1768 (komb. 0,3536) |
+| lsb025-none | romlig-venstre | 9 | 14,43 | 14,13 | 0,1768 |
+| **lsb0125-perTile** | **2d-med** | **9–10** | **16,06** | **15,59** | **0,0884** |
+| **lsb0125-none** | **2d-med** | **10** | **16,06** | **15,59** | **0,0884** |
+| lsb0125-none | medlem-kontroll+med2d | 10 | 18,33 | 17,58 | 0,0884 (komb. 0,1768) |
+| lsb0125-perTile | medlem-kontroll+med2d | 9–10 | 18,34 | 17,59 | 0,0884 (komb. 0,1768) |
+| dagens | 2d-med | 8 | 18,96 | 19,12 | 0,1196* |
+| **lsb01-perTile** | **2d-med** | **10** | **17,53** | **16,78** | **0,0707** |
+| **lsb01-none** | **2d-med** | **10** | **17,53** | **16,78** | **0,0707** |
+| lsb01-none | medlem-kontroll+med2d | 10 | 19,75 | 18,76 | 0,0707 (komb. 0,1414) |
+| lsb01-perTile | medlem-kontroll+med2d | 10 | 19,75 | 18,76 | 0,0707 (komb. 0,1414) |
+| dagens | medlem-kontroll+med2d | 8 | 19,97 | 20,12 | 0,1196* (komb. 0,2392*) |
+
+(Merk at `lsb01` (17,53 MB) havner FORAN `lsb0125` (16,06 MB) i
+sorteringen etter `dagens` i denne visningen fordi tabellen er gruppert
+tematisk, ikke strengt sortert — den fullstendige, strengt gzip-sorterte
+listen ligger i `entropy-experiment-report.json::combinedBothTiles`.)
+Resten av matrisen (§3.1s tidsdelta/ingen/medlem-kontroll-rader for
+`dagens`/0,25/0,5, uendret av dette tillegget) er utelatt her — se §3.1.
+
+`*` samme forbehold som i §3.1: `dagens`s `maxDecodeErrorKn` er den
+STØRSTE observerte over 60 medlem×kanal-lag, ikke en formatkonstant.
+
+### 9.4 1°-flisregnskap kombinert med finhetskontrollene: «anbefalt pakke»-linje per LSB
+
+Samme ekstrapolering som §5 (1°-fliser dekker 36,4 % av dagens
+2°-nodeareal for Skjæløy–Skagen-korridoren, faktor ×0,364), anvendt på
+BESTE prediktor (2D MED/Paeth) for hver LSB-kandidat:
+
+| LSB | anker (byte-identisk) | gzip MB, 2° (begge fliser, MÅLT) | gzip MB, 1° (EKSTRAPOLERT ×0,364) | vaktbånd (kn) | rangering (harness, §9.2 i kvantiseringsmaaling) |
+|---|---|---|---|---|---|
+| 0,5 kn | flis/ingen | 7,56 | **2,75** | 0,3536 | **flipper** S-5 (ΔP50 3,40/3,41 %) |
+| 0,25 kn | flis (beste) | 11,09 | **4,04** | 0,1768 | **flipper** i full kystpakke (ΔP50 3,41 %) |
+| 0,125 kn | flis/ingen | 16,06 | **5,85** | 0,0884 | **ikke testet** av harnessen |
+| **0,1 kn** | flis/ingen | 17,53 | **6,38** | 0,0707 | **består alt** (ΔP50 0,44 %, §9.2 Resultat 4) |
+
+**Det eneste punktet i denne tabellen som i dag har BÅDE et målt
+byte-tall OG en bestått rangeringssjekk, er 0,1 kn: ~17,5 MB vind alene
+på dagens 2°-fliser, ~6,4 MB EKSTRAPOLERT med 1°-fliser** — fortsatt
+komponerbare, uavhengige gevinster (jf. §5). 0,125 kn ligger tallmessig
+mellom 0,1 og 0,25 kn som forventet, men er en UTESTET rangeringskandidat
+— §9.2s advarsel mot å anta monotoni mellom 0,1 og 0,25 kn (der grensen
+faktisk går er ikke målt) gjelder også her; 0,125 kn er ikke en
+anbefaling, kun et datapunkt.
+
+### 9.5 Konklusjon i tall: LSB 0,1 kn
+
+- **Størrelse:** 17,53 MB gzip, vind alene, kontroll+30 medlemmer, begge
+  ekte 2°-fliser, 2D MED/Paeth-prediktor (byte-identisk uansett
+  nullpunkt-valg, §9.1).
+- **Faktor mot dagens produksjonstall (27,4 MB):** **1,56×** — vesentlig
+  svakere enn 0,5 kn-kandidatens 3,83×, fordi finere trinn per
+  definisjon bærer mer informasjon, men fortsatt en reell forbedring fra
+  dagens 1,06×.
+- **Med 1°-fliser (uavhengig, komponerbar gevinst, §5/§9.4):** ~6,38 MB
+  EKSTRAPOLERT for Skjæløy–Skagen-korridoren.
+- **Entropigap:** teoretisk entropigrense (ordre-0 Shannon, puljet over
+  begge fliser) er 13,84 MB; faktisk gzip er 17,53 MB — et gap på
+  **26,6 %** (mot 0,5 kn-kandidatens 8–13 %, §4). En dedikert
+  entropikoder har altså MER å hente ved 0,1 kn enn ved 0,5 kn — trolig
+  fordi 2D MED-residualene ved et finere trinn er mindre konsentrert
+  (høyere entropi i seg selv: 3,70–3,96 bit/sample mot 1,81–1,97 ved
+  0,5 kn), og gzips Huffman-tilnærming taper relativt mer jo bredere
+  fordelingen er.
+- **Kodebredde:** 10 bit nøyaktig behov, BEGGE anker-varianter, BEGGE
+  fliser (§9.2) — golden-fiksturenes «8 bit holder» generaliserer ikke.
+  En produksjonspakke på 0,1 kn må enten bruke 16-bit lagring (som denne
+  målingen) eller bit-pakket 10-bit (upakket kompresjonsgevinst,
+  ikke undersøkt her).
+
+**Samlet vurdering (tall, ikke anbefaling — det er §8/§10s jobb i
+kvantiseringsmaaling):** 0,1 kn er det ENESTE fast-LSB-punktet som per
+2026-09-04 har BÅDE et målt kompresjonstall og en bestått
+sikkerhets-/rangeringssjekk. Prisen for det er en svakere
+kompresjonsfaktor (1,56× mot 3,83×) og bredere lagringskode (10 bit mot
+8) enn 0,5 kn — nøyaktig den avveiningen §9.2s harness-funn allerede
+varslet fantes, nå tallfestet på byte-siden.

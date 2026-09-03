@@ -168,6 +168,33 @@ interface QuantPlan {
   readonly lsb: number;
   readonly offset: number;
   readonly maxDecodeErrorKn: number;
+  /**
+   * Nøyaktig kodebredde-behov (`⌈log2(levels)⌉`), IKKE avrundet opp til
+   * nærmeste byte — jf. §9.2-tabellen «bit m/flis-offset»/«bit u/offset» i
+   * `docs/research/kvantiseringsmaaling-2026-09-01.md` (målt der: 8 bit
+   * m/flis-offset, 9/10 bit uten, PÅ GOLDEN-FIKSTURENES smalere spenn).
+   * `bits` over er lagringsbredden DENNE kjøringen faktisk bruker
+   * (byte-alignet, 8/16 — kan være videre enn dette tallet krever).
+   */
+  readonly requiredBitsExact: number;
+  readonly levels: number;
+  /**
+   * Prediktorene denne planen faktisk kjøres med. `undefined` = alle 6
+   * (`PREDICTOR_IDS`). Satt til et delmengde for D6-C-oppfølgingens nye
+   * finhetskontroller (0,1/0,125 kn) for å holde kjøretiden nede — jf.
+   * oppgavens punkt 1 («med 2D MED/Paeth-prediktor og med
+   * medlem−kontroll+Paeth»).
+   */
+  readonly predictorIds?: readonly PredictorId[];
+}
+
+/** `lsb`-verdiene denne spiken kjenner, i id-generatorens forventede form. */
+function lsbIdPart(lsb: number): string {
+  if (lsb === 0.1) return "01";
+  if (lsb === 0.125) return "0125";
+  if (lsb === 0.25) return "025";
+  if (lsb === 0.5) return "05";
+  throw new Error(`Ukjent LSB for id-generering: ${lsb} — legg til i lsbIdPart()`);
 }
 
 function planFixedQuant(
@@ -175,19 +202,24 @@ function planFixedQuant(
   offsetMode: OffsetMode,
   globalMin: number,
   globalMax: number,
+  predictorIds?: readonly PredictorId[],
 ): QuantPlan {
   const offset = offsetMode === "perTile" ? globalMin : -ASSUMED_MAX_ABS_WIND_KN;
   const span = offsetMode === "perTile" ? globalMax - globalMin : 2 * ASSUMED_MAX_ABS_WIND_KN;
   const levels = Math.ceil(span / lsb) + 2; // +1 inklusiv topp, +1 avrundingsmargin
+  const requiredBitsExact = Math.max(1, Math.ceil(Math.log2(levels)));
   const bits: 8 | 16 = levels <= 256 ? 8 : 16;
   const maxDecodeErrorKn = computeMaxDecodeErrorKn(lsb, lsb);
   return {
-    id: `lsb${lsb === 0.25 ? "025" : "05"}-${offsetMode}`,
+    id: `lsb${lsbIdPart(lsb)}-${offsetMode}`,
     label: `LSB ${lsb} kn, offset=${offsetMode === "perTile" ? "per flis" : "ingen (fast ±" + ASSUMED_MAX_ABS_WIND_KN + " kn)"}`,
     bits,
     lsb,
     offset,
     maxDecodeErrorKn,
+    requiredBitsExact,
+    levels,
+    ...(predictorIds !== undefined ? { predictorIds } : {}),
   };
 }
 
@@ -300,7 +332,14 @@ function predictMemberMinusControl(memberCodes: DenseGrid, controlCodes: DenseGr
   return out;
 }
 
-type PredictorId = "ingen" | "tidsdelta" | "romlig-venstre" | "2d-med" | "medlem-kontroll" | "medlem-kontroll+romlig";
+type PredictorId =
+  | "ingen"
+  | "tidsdelta"
+  | "romlig-venstre"
+  | "2d-med"
+  | "medlem-kontroll"
+  | "medlem-kontroll+romlig"
+  | "medlem-kontroll+med2d";
 
 const PREDICTOR_IDS: readonly PredictorId[] = [
   "ingen",
@@ -309,6 +348,7 @@ const PREDICTOR_IDS: readonly PredictorId[] = [
   "2d-med",
   "medlem-kontroll",
   "medlem-kontroll+romlig",
+  "medlem-kontroll+med2d",
 ];
 
 /**
@@ -342,6 +382,14 @@ function applyPredictor(
       if (isControl) return predictNone(memberCodes);
       const residual = predictMemberMinusControl(memberCodes, controlCodes, bits);
       return predictSpatialLeft(residual, geo, bits);
+    }
+    case "medlem-kontroll+med2d": {
+      // "medlem−kontroll+Paeth" (oppgavens punkt 1): kontroll-residual,
+      // deretter 2D MED/Paeth PÅ residualen — samme prinsipp som
+      // "medlem-kontroll+romlig" men med den sterkere romlige prediktoren.
+      if (isControl) return predictNone(memberCodes);
+      const residual = predictMemberMinusControl(memberCodes, controlCodes, bits);
+      return predictMed2D(residual, geo, bits);
     }
   }
 }
@@ -407,6 +455,20 @@ interface TileResult {
   readonly memberCount: number;
   readonly observedPhysicalRangeKn: { readonly min: number; readonly max: number };
   readonly dagensMaxDecodeErrorKnObserved: number;
+  /**
+   * Bitbredde-regnskap PER KVANTISERINGSPLAN (uavhengig av prediktor) — svarer
+   * på oppgavens punkt 2 («kodebredde-behovet ... om 8-bit byte-alignet
+   * holder eller om 10-bit/16-bit trengs»). `observedMaxCode` er det
+   * FAKTISK største tallet noen node/medlem/kanal fikk under denne planens
+   * kvantisering (før prediktor), jf. §9.2s «maks |kode|»-kolonne.
+   */
+  readonly quantInfo: readonly {
+    readonly quantId: string;
+    readonly requiredBitsExact: number;
+    readonly levels: number;
+    readonly storageBits: 8 | 16;
+    readonly observedMaxCode: number;
+  }[];
   readonly variants: readonly {
     readonly quantId: string;
     readonly quantLabel: string;
@@ -467,6 +529,12 @@ async function processTile(tile: PointerTileEntry): Promise<TileResult> {
   );
 
   // --- Kvantiseringsplaner
+  // Nye finhetskontroller (0,1/0,125 kn, D6-C-oppfølging 2026-09-03): kun
+  // 2D MED/Paeth og medlem-kontroll+Paeth kjøres (oppgavens punkt 1) — de
+  // fire andre prediktorene er allerede tapere på 0,25/0,5 kn (§2/§3 i
+  // `docs/research/kompresjonsmaaling-2026-09-03.md`) og ville kun kostet
+  // kjøretid uten ny informasjon.
+  const finePredictors: readonly PredictorId[] = ["2d-med", "medlem-kontroll+med2d"];
   const plans: QuantPlan[] = [
     {
       id: "dagens",
@@ -475,33 +543,60 @@ async function processTile(tile: PointerTileEntry): Promise<TileResult> {
       lsb: Number.NaN, // ikke en enkelt skala — informativ placeholder, brukes ikke til kvantisering (koder finnes allerede)
       offset: Number.NaN,
       maxDecodeErrorKn: dagensMaxErrKn,
+      requiredBitsExact: 8,
+      levels: 256,
     },
     planFixedQuant(0.25, "perTile", obsMin, obsMax),
     planFixedQuant(0.25, "none", obsMin, obsMax),
     planFixedQuant(0.5, "perTile", obsMin, obsMax),
     planFixedQuant(0.5, "none", obsMin, obsMax),
+    planFixedQuant(0.1, "perTile", obsMin, obsMax, finePredictors),
+    planFixedQuant(0.1, "none", obsMin, obsMax, finePredictors),
+    planFixedQuant(0.125, "perTile", obsMin, obsMax, finePredictors),
+    planFixedQuant(0.125, "none", obsMin, obsMax, finePredictors),
   ];
 
   type VariantResultItem = TileResult["variants"][number];
   const variantResults: VariantResultItem[] = [];
+  const quantInfoResults: TileResult["quantInfo"][number][] = [];
 
   for (const plan of plans) {
-    console.log(`  Kvantisering: ${plan.id} (${plan.label}) — ${plan.bits}-bit`);
+    console.log(`  Kvantisering: ${plan.id} (${plan.label}) — ${plan.bits}-bit (nøyaktig behov: ${plan.requiredBitsExact} bit, ${plan.levels} nivåer)`);
     // Kodegrid per medlem for DENNE kvantiseringen.
     const codesU: DenseGrid[] = [];
     const codesV: DenseGrid[] = [];
+    let observedMaxCode = 0;
     for (let m = 0; m < windFields.length; m++) {
       if (plan.id === "dagens") {
         codesU.push(dagensU[m]!);
         codesV.push(dagensV[m]!);
       } else {
-        codesU.push(quantizeDense(physU[m]!, plan));
-        codesV.push(quantizeDense(physV[m]!, plan));
+        const cu = quantizeDense(physU[m]!, plan);
+        const cv = quantizeDense(physV[m]!, plan);
+        codesU.push(cu);
+        codesV.push(cv);
+      }
+      for (const arr of [codesU[m]!, codesV[m]!]) {
+        for (let i = 0; i < arr.length; i++) {
+          const c = arr[i]!;
+          if (c > observedMaxCode) observedMaxCode = c;
+        }
       }
     }
+    quantInfoResults.push({
+      quantId: plan.id,
+      requiredBitsExact: plan.requiredBitsExact,
+      levels: plan.levels,
+      storageBits: plan.bits,
+      observedMaxCode,
+    });
 
-    for (const predictorId of PREDICTOR_IDS) {
-      const isResidualPredictor = predictorId === "medlem-kontroll" || predictorId === "medlem-kontroll+romlig";
+    const predictorIds = plan.predictorIds ?? PREDICTOR_IDS;
+    for (const predictorId of predictorIds) {
+      const isResidualPredictor =
+        predictorId === "medlem-kontroll" ||
+        predictorId === "medlem-kontroll+romlig" ||
+        predictorId === "medlem-kontroll+med2d";
       const mod = modOf(plan.bits);
       const hist = new RunningHistogram(mod);
       let rawBytes = 0;
@@ -556,6 +651,7 @@ async function processTile(tile: PointerTileEntry): Promise<TileResult> {
     memberCount: windFields.length,
     observedPhysicalRangeKn: { min: obsMin, max: obsMax },
     dagensMaxDecodeErrorKnObserved: dagensMaxErrKn,
+    quantInfo: quantInfoResults,
     variants: variantResults,
   };
 }
