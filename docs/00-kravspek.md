@@ -285,6 +285,14 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-03 (fase 3 bølge 1-beslutninger D1–D5, Magnus):** ADR-0006
+  tilgangsmodell vedtatt (to-lags: offentlig speil uten Access; personlige
+  data på egen binding bak service token; Worker under Pages-domene;
+  misbruksvern på proxyer — B6/F6.4 lukket). MetAlerts-proxy uten
+  klientstyrt cache-buster + rate-limit (D2). Mekanisk git-vern for
+  parallelle agenter i `.claude/settings.json` (D3). Bølge 2-scope:
+  vind-only ende-til-ende, Cache API + storage.persist, spec-drift
+  §14 rettes (D4). Øvrige app-skjelett-valg godkjent som spec (D5).
 - **2026-09-02 (værpakke-format, V1–V3 besluttet av Magnus etter
   fagagent-review):** F2.2 revidert — medlemmer 2,5 km (5 km strøket som
   rangeringsfarlig), horisont 48 t for medlemmer, harde felt alltid 1 t,

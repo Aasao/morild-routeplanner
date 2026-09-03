@@ -2,7 +2,7 @@
 
 > **Status: foreslått av plattform-agenten 2026-09-03, bygget på anbefalingen
 > (CLAUDE.md: «fortsett autonomt», reversible valg).** Punkter merket
-> **[FORESLÅTT]** er arkitekturvalg med varig konsekvens innenfor rammen
+> **[BESLUTTET 2026-09-03, se ADR-0006 og kravspek-endringslogg]** er arkitekturvalg med varig konsekvens innenfor rammen
 > ADR-0001/ADR-0002 allerede har satt (monorepo, TS strict, MapLibre +
 > PMTiles, Cloudflare Pages + Workers + R2, klienten beregner). De er ikke
 > nye ADR-er i seg selv — de er implementasjonsvalg *innenfor* de vedtatte
@@ -54,7 +54,7 @@ bølge 2/3 når `packages/weather` og pakke-peker-flyten faktisk finnes).
 
 ## 3. Byggverktøy — vurdering og valg
 
-**[FORESLÅTT] `apps/pwa`: Vite + vanilla TypeScript, ingen UI-rammeverk.**
+**[BESLUTTET 2026-09-03, se ADR-0006 og kravspek-endringslogg] `apps/pwa`: Vite + vanilla TypeScript, ingen UI-rammeverk.**
 
 | Alternativ | Vurdering |
 |---|---|
@@ -62,14 +62,14 @@ bølge 2/3 når `packages/weather` og pakke-peker-flyten faktisk finnes).
 | React/Vue/Svelte | Vraket for nå — ingen av dem løser et reelt problem her ennå (ingen komponent-gjenbruk av betydning, ingen store reaktive tilstandstrær). Kart-tunge apper (MapLibre) drar sjelden nytte av virtual-DOM-lag rundt selve kartcanvaset uansett. Revurderes hvis UI-kompleksiteten i fase 4 (robusthetsvisning, avgangstabell) faktisk krever komponentgjenbruk — det er en `apps/pwa`-intern refaktorering, ikke en re-arkitektur, siden domenelogikken allerede ligger i `packages/`. |
 | Create-React-App/annet | Ikke vurdert — Vite er de-facto standard nå, ingen grunn til eldre verktøy. |
 
-**[FORESLÅTT] `apps/worker`: Cloudflare Workers via `wrangler`, hånd-rullet
+**[BESLUTTET 2026-09-03, se ADR-0006 og kravspek-endringslogg] `apps/worker`: Cloudflare Workers via `wrangler`, hånd-rullet
 ruting (ingen `itty-router`/`hono`).** Tre-fire ruter er for lite til å
 begrunne en ny avhengighet (N4-ånden: minimer overflate); en `resolveRoute`-
 switch er lett å enhetsteste uten en ruter-avhengighet i det hele tatt
 (§6.4). Revurderes hvis rutetallet vokser vesentlig (batch-admin-ruter,
 D1-CRUD for F6.1) — da er `hono` et rimelig, lett valg.
 
-**Offline-lagring — [FORESLÅTT] hånd-rullet, ikke `idb-keyval`/`localForage`
+**Offline-lagring — [BESLUTTET 2026-09-03, se ADR-0006 og kravspek-endringslogg] hånd-rullet, ikke `idb-keyval`/`localForage`
 i skjelettet ennå.** Skjelettet trenger ingen faktisk pakkelagring i denne
 bølgen (§2); når bølge 2 kobler på ekte pakke-nedlasting, revurderes dette
 konkret mot IndexedDB-skjemaets faktiske form (nøkler, indekser) — å legge
@@ -371,7 +371,7 @@ brukeren) aldri kaller dem.
 
 - `apps/pwa`: `vite build` → statiske filer i `apps/pwa/dist/` → Cloudflare
   Pages (koblet mot repoet, bygg-kommando `pnpm --filter @morild/pwa build`,
-  output-mappe `apps/pwa/dist`). **[FORESLÅTT]** Pages-prosjektnavn og
+  output-mappe `apps/pwa/dist`). **[BESLUTTET 2026-09-03, se ADR-0006 og kravspek-endringslogg]** Pages-prosjektnavn og
   custom-domain er ikke satt opp i denne bølgen — første deploy bruker
   Pages' genererte `*.pages.dev`-URL.
 - `apps/worker`: `wrangler deploy` fra `apps/worker/`. R2-bucketen (§6.6) må
@@ -392,7 +392,7 @@ rutene (§7).
 
 ## 9. Ny rot-avhengighet: `concurrently`
 
-**[FORESLÅTT]** Eneste nye avhengighet denne bølgen legger til utover det
+**[BESLUTTET 2026-09-03, se ADR-0006 og kravspek-endringslogg]** Eneste nye avhengighet denne bølgen legger til utover det
 hver app selvsagt trenger (Vite, MapLibre, Wrangler, `@cloudflare/workers-types`):
 `concurrently` som rot-devDependency, brukt kun av `pnpm dev` til å starte
 `apps/pwa`s Vite-server og `apps/worker`s `wrangler dev` side om side med
