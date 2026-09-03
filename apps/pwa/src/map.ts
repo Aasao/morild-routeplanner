@@ -12,6 +12,7 @@ import {
   type LngLatLike,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import type { Feature, FeatureCollection } from "geojson";
 import {
   KARTVERKET_MAX_ZOOM,
   KVWMTS_TILE_TEMPLATE,
@@ -189,7 +190,7 @@ export function whenMapReady(map: MapLibreMap): Promise<void> {
 
 /** Duck-typing i stedet for `instanceof GeoJSONSource`: gjør funksjonen testbar med et lettvekts mocket kart uten en ekte MapLibre-instans (samme begrunnelse som `AddProtocolFn` i kartverket-wmts.ts). */
 interface SetDataCapable {
-  readonly setData: (data: GeoJSON.Feature | GeoJSON.FeatureCollection) => void;
+  readonly setData: (data: Feature | FeatureCollection) => void;
 }
 
 function isSetDataCapable(source: unknown): source is SetDataCapable {
@@ -208,9 +209,9 @@ export interface HelloRouteStep {
 /** Bygger GeoJSON-en for hello-route-kilden: selve linjen pluss start-/sluttpunkt som separate Point-features (matchet av `role`-filtrene på sirkel-lagene over). Ren funksjon — testbar uten MapLibre i det hele tatt. */
 export function buildHelloRouteFeatureCollection(
   steps: readonly HelloRouteStep[],
-): GeoJSON.FeatureCollection {
+): FeatureCollection {
   const coordinates = steps.map((step) => [step.lon, step.lat]);
-  const features: GeoJSON.Feature[] = [
+  const features: Feature[] = [
     {
       type: "Feature",
       properties: {},
