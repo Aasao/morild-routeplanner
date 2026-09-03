@@ -16,6 +16,9 @@ export default tseslint.config(
       // tools/spikes/ er en annen agents arbeidsområde (THREDDS-spike) —
       // røres ikke, heller ikke av lint-konfigurasjon her.
       "tools/spikes/**",
+      // .claude/hooks: Node-skript for Claude Code-hooks (ikke domenekode;
+      // egen test via `node .claude/hooks/vern.test.mjs`).
+      ".claude/**",
     ],
   },
   js.configs.recommended,

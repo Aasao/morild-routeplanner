@@ -49,6 +49,29 @@ ADR-utkast og spør Magnus.
 - Funn og beslutninger skrives tilbake til `docs/` — kontekstvinduet er
   flyktig, repoet er ikke.
 
+## Skills, hooks og innebygde verktøy
+
+Detaljer i `docs/03-modellruting.md` §Verktøy. Kortversjon:
+
+- `/qa` — `pnpm check` + `pnpm test` + `pnpm test:arch` i qa-runner. Kjør
+  før du melder noe ferdig og før commit.
+- `/commit` — eneste vei til commit, og bare Magnus kan starte den (skriv
+  `/commit [tittel]`; ordet «commit» i chatten er ikke nok, skillen er
+  sperret for modellen). Den kjører `/qa` først og nekter rødt.
+- `/panel` — hør fagagent-panelet før hvert beslutningspunkt legges frem
+  (råd → utfordring → tilsvar → votering GODKJENN/ENDRE/AVVIS).
+- `/code-review --fix` og `/simplify` på diffen før commit av en bølge.
+  De innebygde tar bugs og forenkling; `@agent-code-reviewer` tar
+  sikkerhetssemantikk og prosjektprinsipper. Begge, ikke enten/eller.
+- Review-bølger med mange funn: Magnus sier «bruk en workflow» → Workflow-
+  verktøyet kjører review-dimensjoner parallelt med verifisering per funn.
+  Claude kan ikke starte det på eget initiativ; foreslå det når det passer.
+- `/skill-doctor` ved fasestart: viser ubrukte skills og kontekstkost.
+- `.claude/hooks/vern.mjs` blokkerer skriving til v1 fra skallet og
+  git-skriving fra subagenter. Blokkert → ikke omgå, rapporter.
+- `implementer` kjører i eget git-worktree; hovedsesjonen reviewer,
+  committer der og fletter (se modellruting).
+
 ## Kodekonvensjoner
 
 - TypeScript strict. Ingen `any` uten begrunnende kommentar.

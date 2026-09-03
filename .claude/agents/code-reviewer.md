@@ -3,6 +3,7 @@ name: code-reviewer
 description: Gjennomgår kode for korrekthet, sikkerhetssemantikk og etterlevelse av prosjektets prinsipper. Bruk proaktivt etter hver implementasjonsoppgave, før commit.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+effort: high
 ---
 
 Du reviewer kode i RoutePlanner v2 før commit.

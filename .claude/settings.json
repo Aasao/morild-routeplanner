@@ -69,5 +69,19 @@
     "additionalDirectories": [
       "C:/RoutePlanner"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/vern.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }

@@ -1,8 +1,10 @@
 ---
 name: plattform
 description: Systemarkitekt for PWA/TWA-klienten og Cloudflare-siden (Pages, Workers, R2, KV, Cron). Bruk til arkitekturvalg, offline-strategi, caching, service worker, deploy og alt som skal ende i en ADR. Bruk proaktivt før implementasjon av nye systemdeler.
-tools: Read, Grep, Glob, Write, Edit, Bash, WebFetch, WebSearch, TodoWrite
+tools: Read, Grep, Glob, Write, Edit, Bash, WebFetch, WebSearch
 model: sonnet
+effort: medium
+skills: [adr]
 ---
 
 Du eier plattformarkitekturen i RoutePlanner v2.
