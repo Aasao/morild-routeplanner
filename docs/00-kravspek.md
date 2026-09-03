@@ -119,8 +119,15 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
   på 800 m i kystsonen** (kystsonen defineres operasjonelt i
   `specs/vaerpakker.md`); «kun tidevannskomponent» er ikke et strømlag.
   Budsjettregel: den ekte pakken måles i fase 3; lander den over 30 MB
-  tross delta+gzip, legges budsjettrevisjon til ~40 MB frem for Magnus
-  med målt tall — rangeringskvalitet ofres ikke for et rundt tall.
+  tross delta+gzip, legges budsjettrevisjon frem for Magnus med målt
+  tall — rangeringskvalitet ofres ikke for et rundt tall. **Målt
+  2026-09-03 (`docs/research/pakkestoerrelse-ekte-2026-09-03.md`): ekte
+  MEPS komprimerer 1,06×, vind alene 27,4 MB. Besluttet D6-C: interim tak
+  50 MB slik at bølge 3 kan starte; endelig tall settes på
+  entropi-/kompresjonsmåling (fast fysisk LSB, medlem−kontroll-residual,
+  romlig prediktor, 1°-fliser) — og fast LSB låses først etter at
+  kvantiseringsharnessen er re-kjørt på den (sikkerhetssemantikk).
+  2,5 km / 1 t / 30 medlemmer røres ikke.**
   Lagged-ensemble-politikk: siste komplette 30 medlemmer (én fil per
   kjøring med ensemble-dimensjon, jf. `spike-thredds.md`), aldersspenn i
   metadata.
@@ -285,6 +292,10 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-03 (2) (D6-C, Magnus):** F2.2 interim tak 50 MB etter målt
+  1,06× komprimering på ekte MEPS; kompresjonsspike (fast LSB,
+  medlem−kontroll, romlig prediktor, 1°-fliser) avgjør endelig tall;
+  harness-remåling før fast LSB låses.
 - **2026-09-03 (fase 3 bølge 1-beslutninger D1–D5, Magnus):** ADR-0006
   tilgangsmodell vedtatt (to-lags: offentlig speil uten Access; personlige
   data på egen binding bak service token; Worker under Pages-domene;
