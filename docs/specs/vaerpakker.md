@@ -481,6 +481,23 @@ budsjettgaranti, det er argumentet for at 30 MB er et realistisk mål å
 designe mot. Regnskapet oppdateres med reelle tall i endringsloggen (§19)
 når `tools/weather-pack` bygger sin første ekte pakke.
 
+**Første ekte måling (§19, 2026-09-03) — MÅLT PÅ SYNTETISK FELT, ikke ekte
+MEPS.** `tools/weather-pack measure-full-size` bygde en ekte, kvantisert,
+delta-kodet og gzippet vind-medlems-pakke for hele Skjæløy→Skagen-bboxen
+på denne seksjonens låste oppløsning (2,5 km, 48 t/49 tidssteg, 30
+medlemmer, 8-bit): **31,49 MB rått** (stemmer godt med tabellens
+`~32 MB rått` over — en god kryssjekk av selve node-/byte-regnskapet) og
+**4,32 MB etter delta+gzip** (faktor 7,29×, VESENTLIG bedre enn tabellens
+1,5–2,5×-anslag). Denne kompresjonsfaktoren er en egenskap ved det
+GLATTE, analytiske syntetiske testfeltet (`tools/weather-pack/src/dry-
+run-fixtures.ts`), ikke noe som kan overføres direkte til ekte MEPS-data
+— et ekte atmosfærisk felt har mer høyfrekvent, mindre korrelert
+romlig/tidsmessig struktur og komprimerer trolig dårligere, sannsynligvis
+nærmere (eller svakere enn) det opprinnelige 1,5–2,5×-anslaget. Målingen
+dekker KUN vind-medlemmene (denne tabellens tyngste post) — ikke kontroll,
+strøm, bølger, tidevann/MetAlerts eller metadata. Full detalj:
+`tools/weather-pack/README.md` "Første ekte pakkestørrelse".
+
 **Hard budsjettregel:** bygger en gitt rutepakke over 30 MB, skal
 batch-jobben **degradere** (grovere tidstynning, strengere NorKyst-
 nedtynning, eller — siste utvei — droppe ensemble-medlemmer fra den halen
@@ -1141,13 +1158,14 @@ et medlem er et **unntak for profilert ytelsesbehov**, ikke normalveien.
 
 ## 16. API-vilkår, User-Agent og backoff (N3, N4)
 
-**Denne spec-en stiller kravet; det formelle vilkårsdokumentet mangler
-foreløpig i `docs/legal/`** (eksisterende filer der dekker Kartverket/
-Kystverket/EMODnet/OpenSeaMap/DDM/Naturbase — **ingen MET Norway-fil
-ennå**). Før `tools/weather-pack` går i produksjon skal
-`docs/legal/met-norway-api-vilkaar.md` skrives (innhold under er allerede
-research-et i `vaerdata-ensemble.md` §1 og skal overføres dit, ikke
-gjentas fritt fra minnet ved implementasjon):
+**Skrevet 2026-09-03 — MET Norway- og Kartverket-vilkårene finnes nå i
+`docs/legal/`:** `docs/legal/met-norway-api.md` (api.met.no:
+Locationforecast, Oceanforecast, MetAlerts), `docs/legal/met-norway-thredds.md`
+(thredds.met.no: MEPS, NorKyst v3, WAM800/Oceanforecast-grid, inkl.
+arkivpolitikken §18 pkt. 4 bygger på) og `docs/legal/kartverket-tideapi.md`
+(vannstand.kartverket.no). Innholdet under er en kort oppsummering til
+implementasjonstidspunktet — **de tre filene er fasit ved konflikt**, ikke
+denne oppsummeringen:
 
 - **Maks 20 req/s per applikasjon totalt** (api.met.no) — gjelder
   aggregert over alle installasjoner, ikke per bruker. GitHub Actions
@@ -1165,17 +1183,25 @@ gjentas fritt fra minnet ved implementasjon):
   tilgjengelig. `apps/worker`s proxy-rute (§14) er selve
   mekanismen kravet peker på («mobilapper skal gå via egen backend/
   caching-proxy»), ikke en implementasjonsdetalj.
+- **THREDDS har ingen tallfestet rate-grense** (til forskjell fra
+  api.met.nos 20 req/s) — vilkåret der er i stedet et eksplisitt forbud
+  mot **parallelle OPeNDAP-sesjoner** pluss en generell rett for MET til
+  å blokkere IP-er ved overbelastning (`met-norway-thredds.md`). Alle
+  OPeNDAP-kall i `tools/weather-pack` skal derfor være **sekvensielle**,
+  samme disiplin som spiken allerede fulgte.
 - **Backoff ved 429/503:** eksponentiell backoff med tak, IKKE umiddelbar
   retry-løkke. THREDDS-spiken observerte 503 på NCSS gjennomgående — en
   pipeline som slår hardt tilbake mot en nede tjeneste er dårlig
-  medborgerskap selv om den til slutt lykkes. Konkret backoff-skjema
+  medborgerskap selv om den til slutt lykkes. Samme disiplin gjelder mot
+  Kartverkets tideapi, som selv dokumenterer at responspauser på flere
+  minutter forekommer (`kartverket-tideapi.md`). Konkret backoff-skjema
   (starttid, multiplikator, tak, antall forsøk før `sourceStatus:
   degraded` og fallback til forrige kjøring) er en implementasjonsdetalj,
   ikke en arkitekturbeslutning — men **skal finnes i kode, ikke bare i en
   kommentar om at man burde ha det**.
-- **Lisens CC BY 4.0** (MET) — attribusjon i UI, jf. kravspek N3. DMI-
-  deriverte data (hvis/når DMI tas i bruk, F2.1 «faset inn senere») skal
-  merkes som avledet, ikke MET-attribuert.
+- **Lisens CC BY 4.0** (MET og Kartverket) — attribusjon i UI, jf.
+  kravspek N3. DMI-deriverte data (hvis/når DMI tas i bruk, F2.1 «faset
+  inn senere») skal merkes som avledet, ikke MET-attribuert.
 
 ---
 
@@ -1416,3 +1442,169 @@ starte.
     (delt funksjon), ikke i `clearance.ts` — `clearance.ts` eier kystbufferen
     og ser aldri TWS. `docs/specs/rutemotor.md` §4.2/§5.3 og dens
     endringslogg oppdatert tilsvarende.
+- **2026-09-03 — `packages/weather` bygget (fase 3 bølge 1B): formatmodul,
+  feltmodell, adapter, konvensjonstester, golden-bro.** Implementerer §3,
+  §7, §9, §12, §15, §17 i kode for første gang (`packages/weather/src/`:
+  `quantize.ts`, `wind-codec.ts`, `delta.ts`, `tiles.ts`,
+  `package-format.ts`, `field.ts`, `weather-field-adapter.ts`, `age.ts`,
+  `budget.ts`, `samples.ts`). 68 nye tester + 2 arkitekturtester
+  (`tools/arch-tests` utvidet til `packages/weather/src`, §"Ufravikelige
+  prinsipper" 3/CLAUDE.md). Presiseringer/avvik gjort under implementasjon,
+  ingen av dem endrer LÅST logikk eller terskler:
+  - **Sentinel-hull ved 10-bit, generalisert (§9.6, §9.9).** §9.9 låser
+    `sentinelRawValue: 255` som TS-literal for BÅDE 8-bit og 10-bit, men
+    for 10-bit (2¹⁰ = 1024 koder) er `255` ikke toppkoden — en naiv «reserver
+    toppkoden»-implementasjon ville enten kollidert med en gyldig
+    midt-i-området-verdi (10-bit) eller sløst 768 koder. Implementert som
+    en «kompakt indeks» som hopper over rå byteverdi 255 (`quantize.ts`,
+    `compactToRaw`/`rawToCompact`): for 8-bit reduserer dette seg eksakt
+    til «koder 0..254, ingen hull» (uendret adferd på den dominerende,
+    testede stien); for 10-bit brukes 1023 av 1024 mulige koder, ikke bare
+    de 254 laveste. Dette var underspesifisert i §9.9 (som ikke sier HVORDAN
+    255 unngås ved 10-bit), ikke en endring av noe låst.
+  - **10-bit lagres som 2 byte (u16), ikke bit-pakket (§9.1 pkt. 1, pkt. 3,
+    `package-format.ts`).** §9.1 pkt. 1 avviser 10-bit for normaldrift
+    delvis fordi det «er bit-pakkingsoverhead (ingen byte-alignering) uten
+    en målt gevinst» — men sier ikke hvordan de to 10-bit-unntakene (§9.1
+    pkt. 3) faktisk skal lagres. Ekte bit-pakking (5 byte per 4 prøver) er
+    ikke implementert her — en dokumentert, budsjettmessig pessimistisk
+    forenkling (dobbelt så mange byte som teoretisk minimum for disse to
+    smale, sjeldne stiene) som `tools/weather-pack` kan erstatte med ekte
+    bit-pakking uten å røre dekodingskontrakten (`QuantizationParams` er
+    uendret uansett byte-layout).
+  - **Delta-koding (§8s "delta+gzip") levert som delt, testet primitiv
+    (`delta.ts`), ikke fullt innkoblet i `package-format.ts`s
+    subflis-lagring ennå.** §9.9s låste `QuantizationParams`-kontrakt
+    nevner ingen delta-modus — det bekrefter at delta-koding er et
+    transportlags-tiltak (byte-transform for gzip-vennlighet), ikke en del
+    av selve kvantiseringsskjemaet. `encodeTemporalDeltaU8`/
+    `decodeTemporalDeltaU8` er bit-eksakt rundtur-testet og klar for
+    `tools/weather-pack` å ta i bruk når den bestemmer per-subflis-
+    lagringen; å faktisk oppnå 1,5–2,5×-tallet mot ekte kvantiserte fliser
+    er den pipelinens jobb, ikke denne modulens.
+  - **Budsjett-tallet er en formel, ikke en bygget pakke (§8, §17 pkt. 7).**
+    `budget.ts::estimatePackageBudget` regner etter §8s tabellformler; en
+    syntetisk Skjæløy→Skagen-bbox (2,3°×2,5° margin, 2,5 km vind, 48 t,
+    30 medlemmer) gir **vind-medlemmer ≈ 31,5 MB rått** (samsvarer med §8s
+    «~32 MB rått») og **rå totalsum ≈ 39,8 MB**, dvs. allerede over den
+    opprinnelige 30 MB-grensen FØR delta+gzip — konsistent med §8s
+    observasjon om at regnskapet «ikke lenger er klart under budsjettet».
+    Estimert sum etter et 2×-delta/gzip-anslag (midtpunkt av 1,5–2,5×)
+    ≈ 19,9 MB. Dette er fortsatt IKKE en målt, ekte bygget pakke (§17
+    pkt. 7 gjenstår til `tools/weather-pack` finnes) — tallet er en
+    krysssjekket formel (verifisert mot faktisk `buildLayer`-byte-
+    forbruk i `budget.test.ts`), ikke en byggetids-måling.
+  - **`tools/weather-pack` funnet allerede under bygging, parallelt (annen
+    agent).** Der finnes en midlertidig lokal
+    `format-contract.ts`/`quantize.ts` («TODO: erstattes av
+    @morild/weather») med samme grensesnittnavn (`QuantizationParams`,
+    `WindSample`, `CurrentSample`, `WaveSample`,
+    `windComponentsToSample`/`windSampleToComponents`,
+    `computeScaleOffset`, `encodeValue`/`decodeValue`,
+    `computeMaxDecodeErrorKn`, `twsExceedsHardLimitWithGuardBand`).
+    `packages/weather/src/index.ts` eksporterer nå kompatibilitetsaliaser
+    under nøyaktig disse navnene, slik at overgangen som er forespeilet der
+    («samme funksjonsnavn... bytte er en importendring, ikke en
+    omskriving») faktisk blir det. **Ikke reconcilert:** deres
+    `quantize.ts::computeScaleOffset` bruker `maxRawValue = 2^bits − 2`
+    (reserverer TOPPKODEN) uavhengig av bit-bredde — for 10-bit betyr det
+    at rå byteverdi 255 IKKE unngås spesifikt (kolliderer i prinsippet med
+    en gyldig midt-i-området 10-bit-kode, se sentinel-hull-punktet over).
+    Deres egen `verifiesSentinelNeverCollides`-sjekk ville fanget dette ved
+    byggetid for en konkret flis, men formelen produserer det latente
+    problemet i utgangspunktet. Siden 10-bit er et smalt, ikke-blokkerende
+    unntak (§9.1 pkt. 3), flagges dette her for reconciliering når de to
+    bølgene møtes — ikke rettet i `tools/weather-pack` av denne agenten
+    (utenfor oppdraget, og filene der er under aktiv, samtidig endring).
+  - **Ingen ekte, frosset MEPS-testpakke levert (§3 punkt 6, §17 pkt. 6).**
+    Denne bølgen har ingen tilgang til å hente og manuelt verifisere et
+    ekte MEPS-uttrekk mot en uavhengig kilde (`ocean.met.no` e.l.) — spec-en
+    er eksplisitt om at dette ALDRI skal være en syntetisk generator.
+    `packages/weather/fixtures/` er derfor IKKE opprettet i denne bølgen;
+    alle konvensjons- og interpolasjonstester (§17 pkt. 1–2) kjører mot
+    syntetiske, analytiske felt (samme disiplin som
+    `packages/routing/test-fixtures`). Dette er en åpen leveranse, ikke en
+    stille utsettelse — F2.5s «ekte testpakke»-krav står ufullført til
+    noen (batch-jobben, eller Magnus manuelt) faktisk henter og verifiserer
+    et uttrekk.
+- **2026-09-03 (2) — `tools/weather-pack` byttet til `@morild/weather`
+  (fase 3 bølge 1D): sentinel-hull forent, delta-koding koblet inn, første
+  ekte pakkestørrelse målt.** Fullfører reconsilieringen forrige punkt
+  flagget.
+  - **Sentinel-hull ved 10-bit, forent.** `tools/weather-pack`s lokale
+    `format-contract.ts`/`quantize.ts` (`TODO: erstattes av
+    @morild/weather`) er slettet. `pipeline.ts`, `package-writer.ts`,
+    `source-status.ts` og `quantize.test.ts` importerer nå
+    `@morild/weather`/`@morild/protocol` direkte (workspace-avhengighet i
+    `tools/weather-pack/package.json`). `packages/weather`s
+    `compactToRaw`/`rawToCompact`-løsning (§9.6, forrige punkt) er nå
+    eneste implementasjon. Ny test
+    (`packages/weather/src/quantize.test.ts`) sveiper HELE det
+    representerbare kompakt-indeks-området for både 8- og 10-bit og
+    beviser at `encodeLinear` aldri produserer rå 255 for noen gyldig
+    verdi.
+  - **Ett til avvik reconsiliert, oppdaget under selve bytte-jobben (ikke
+    tidligere flagget):** weather-packs `computeScaleOffset` ga `scale=1`
+    for en degenerert subflis (`min===max`, f.eks. vindstille over hele
+    subflisen). `@morild/weather`s `computeLinearParams` gir bevisst
+    `scale=0` her: dekoding blir da EKSAKT kildeverdien for enhver gyldig
+    kompakt indeks (null kvantiseringsfeil), dokumentert i
+    `package-format.ts` og forutsatt av golden-bro-testens krav om
+    `maxDecodeErrorKn=0` for konstante felt. `scale=1` ville gitt et
+    (ubrukt, men semantisk feil) ett-trinns "spøkelses"-avvik ved
+    dekoding av en teoretisk raw≠0-verdi. `tools/weather-pack`s
+    tilsvarende test er oppdatert til å bevise `scale=0`, med forklarende
+    kommentar om hvorfor tallet endret seg.
+  - **Delta-koding koblet inn i subflis-lagringen (§8).** Forrige bølge
+    leverte `encodeTemporalDeltaU8`/`decodeTemporalDeltaU8` som en testet,
+    men ukoblet primitiv (payload var node-major/tid-innerst, primitiven
+    tid-major/node-innerst). `package-format.ts` har fått
+    `deltaEncodeLayerPayload`/`deltaDecodeLayerPayload` (transponerer
+    mellom de to layoutene, kaller SAMME `delta.ts`-primitiv — ingen ny
+    delta-matematikk) og `serializeLayer`/`deserializeLayer` har fått en
+    `deltaCoded`-opsjon som gjenbruker headerens tidligere reserverte
+    byte som flagg. En dekodet `Layer` er alltid i rå kvantiserte koder —
+    `deltaCoded` er usynlig for enhver forbruker, ren transportlags-
+    transform (bekrefter forrige bølges antakelse). Kun 8-bit støttes
+    (kaster eksplisitt for 10-bit, en sjelden, ikke-budsjett-dominerende
+    sti, §8). Bit-eksakt rundtur-testet
+    (`packages/weather/src/package-format.test.ts`), og
+    `tools/weather-pack::buildWindMemberPackage` bruker det nå som
+    standard (`deltaCoded: true`).
+  - **Pipeline-trinnene skriver nå ekte pakkelag.** Den forrige, ad-hoc
+    subflis-løkken (`encodeWindChannelForMember`, egen lokal
+    serialisering) er erstattet av `buildWindMemberLayers` (bygger
+    `Layer`-objekter via `@morild/weather::buildLayer`) og
+    `buildWindMemberPackage` (serialiserer via `serializeLayer`).
+    **Dokumentert forenkling, ikke løst:** `windLayerGeometry` behandler
+    det hentede OPeNDAP-indeksvinduet som om nodene er jevnt fordelt over
+    bboxen i lat/lon — MEPS' native rutenett er faktisk en
+    Lambert-projeksjon. Korrekt for byte-regnskapet (node-/byte-antall er
+    identisk uansett projeksjon), men IKKE geografisk nøyaktig. Ekte
+    reprojeksjon er gjenstående arbeid, samme kategori som
+    `grid.ts::classifyCoastalZone`s injiserte avstandsfunksjon.
+  - **Første ekte pakkestørrelse (§8, §17 pkt. 7).** Ny
+    `tools/weather-pack/src/measure-full-size.ts` (kjørt manuelt, IKKE en
+    del av `pnpm test` — for tung til å kjøre på hver kjøring) bygde en
+    ekte pakke for Skjæløy→Skagen (samme bbox som
+    `packages/weather/src/budget.test.ts`) på §9s låste oppløsning: **31,49
+    MB rått, 4,32 MB etter delta+gzip** (faktor 7,29×). Skrevet inn i §8
+    over og `tools/weather-pack/README.md`, merket «målt på syntetisk felt
+    (glatt — ekte MEPS komprimerer trolig dårligere)» — det rå tallet
+    krysssjekker node-/byte-regnskapet godt (31,49 MB mot estimatets
+    ~32 MB), men kompresjonsfaktoren er IKKE overførbar til ekte data.
+  - **Testtall:** `packages/weather` 72 tester (opp fra 68 forrige bølge —
+    sentinel-sveip, delta-payload-integrasjon, serialize/deserialize
+    med `deltaCoded`). `tools/weather-pack` 100 tester (samme scenarioer
+    som før, nå mot den delte modulen, pluss ekte-lag- og
+    delta/gzip-smoke-tester). Alle pakker: 654 tester grønt (`pnpm test`),
+    `pnpm check`/`tsc -b`/`pnpm test:arch` uendret grønt.
+  - **Drive-by-funn, ikke del av oppdraget men rettet i samme fil:** en
+    pre-eksisterende, `Math.random()`-basert flaketest i
+    `packages/weather/src/package-format.test.ts`
+    (`layerMaxDecodeError`-gruppen) feilet i ca. 1 av 3 kjøringer fordi
+    testens geometri (`nodesLat:40, tileNodes:32`) uventet ga TO
+    subflis-RADER (fire subfliser, ikke to som kommentaren antok) — begge
+    "brede" subflisene fikk uavhengig tilfeldig spredning, og testen leste
+    kun én av dem. Rettet ved å redusere til én subflis-rad
+    (`nodesLat:32`), verifisert stabil over 8+ gjentatte kjøringer.

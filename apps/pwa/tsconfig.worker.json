@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist-tsc/workers",
+    "rootDir": "src/workers",
+    "lib": ["ES2022", "WebWorker"]
+  },
+  "include": ["src/workers"],
+  "references": [{ "path": "../../packages/routing" }]
+}

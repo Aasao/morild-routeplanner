@@ -8,6 +8,10 @@
     { "path": "packages/polar" },
     { "path": "packages/routing" },
     { "path": "tools/arch-tests" },
-    { "path": "tools/chart-pack" }
+    { "path": "tools/chart-pack" },
+    { "path": "tools/weather-pack" },
+    { "path": "apps/pwa" },
+    { "path": "apps/pwa/tsconfig.worker.json" },
+    { "path": "apps/worker" }
   ]
 }

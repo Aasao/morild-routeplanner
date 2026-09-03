@@ -9,6 +9,9 @@ export default tseslint.config(
       "**/dist-tsc/**",
       "**/node_modules/**",
       "**/*.tsbuildinfo",
+      // apps/worker: wrangler dev sitt lokale build-/runtime-cache
+      // (generert kode, ikke noe vi skriver eller eier).
+      "**/.wrangler/**",
       "tools/arch-tests/fixtures/**",
       // tools/spikes/ er en annen agents arbeidsområde (THREDDS-spike) —
       // røres ikke, heller ikke av lint-konfigurasjon her.
@@ -22,6 +25,13 @@ export default tseslint.config(
       // Prosjektregel (CLAUDE.md): ingen `any` uten begrunnende kommentar.
       "@typescript-eslint/no-explicit-any": "error",
       "no-console": "warn",
+      // Slått av for hele repoet, ikke bare apps/: tsc fanger udefinerte
+      // identifikatorer langt mer presist enn eslints kjerneregel, som
+      // ikke kjenner ambiente globaler (DOM/WebWorker-libs,
+      // @cloudflare/workers-types) og gir falske positiver for dem —
+      // offisiell typescript-eslint-anbefaling. Ble aktuelt først med
+      // apps/pwa (nettleser-globaler) og apps/worker (Workers-globaler).
+      "no-undef": "off",
     },
   },
   {

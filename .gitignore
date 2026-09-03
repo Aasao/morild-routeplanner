@@ -11,3 +11,9 @@ coverage/
 # den frosne kopien i packages/charts/testdata/ sjekkes inn, se
 # tools/chart-pack/README.md.
 tools/chart-pack/testdata/pack/
+
+# tools/weather-pack: dry-run-demoens output (aldri ekte data, se README).
+tools/weather-pack/.dry-run-output/
+
+# apps/worker: wrangler dev sitt lokale build-/runtime-cache.
+.wrangler/

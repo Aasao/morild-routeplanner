@@ -2,3 +2,12 @@ packages:
   - "packages/*"
   - "apps/*"
   - "tools/*"
+allowBuilds:
+  # esbuild (Vite) og workerd (wrangler/miniflare) er begge kjente,
+  # nødvendige postinstall-byggescript for apps/pwa og apps/worker
+  # (docs/specs/app-skjelett.md) — ingen ukjente tredjeparts-scripts.
+  esbuild: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types@5.20260902.1'
+  - maplibre-gl@6.7.0

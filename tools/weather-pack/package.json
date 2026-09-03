@@ -1,0 +1,17 @@
+{
+  "name": "@morild/weather-pack",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/cli.js",
+  "scripts": {
+    "build": "tsc -b .",
+    "dry-run": "tsc -b . && node dist/cli.js",
+    "cli": "tsc -b . && node dist/cli.js",
+    "measure-full-size": "tsc -b . && node dist/measure-full-size.js"
+  },
+  "dependencies": {
+    "@morild/protocol": "workspace:*",
+    "@morild/weather": "workspace:*"
+  }
+}

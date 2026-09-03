@@ -1,0 +1,25 @@
+name = "morild-worker"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# Rent proxy/cache-lag (ADR-0002: "klienten beregner, skyen forbereder") —
+# ingen ruteberegning, ingen NetCDF-dekoding kjører her.
+# Se docs/specs/app-skjelett.md for ruteoversikt og begrunnelser.
+
+# [FORESLÅTT — se docs/specs/app-skjelett.md §6.6 og §11 punkt 1]
+# Bucketnavnet er ikke koordinert med tools/weather-pack (bølge 1C) sin
+# bruk av R2_BUCKET_NAME i .dev.vars.example ennå. Må rettes til samme
+# streng begge steder før første ekte deploy. `wrangler dev` bruker en
+# lokal R2-simulering og trenger ikke bucketen å eksistere på kontoen.
+[[r2_buckets]]
+binding = "DATA_BUCKET"
+bucket_name = "morild-data"
+preview_bucket_name = "morild-data-preview"
+
+# Ikke-hemmelig — MET-vilkårene (N3) krever en offentlig, identifiserende
+# User-Agent, så den skal jo kunne leses, ikke skjules. Committet fallback
+# i src/user-agent.ts gjør at proxyen fungerer korrekt selv om denne
+# verdien mistes ved en fremtidig redeploy (CLAUDE.md-lærdom fra
+# BeatTheBingo).
+[vars]
+MET_USER_AGENT = "morild-routeplanner/0.1.0 maasao@gmail.com"

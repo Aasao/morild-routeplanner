@@ -1,0 +1,20 @@
+{
+  "name": "Morild — RoutePlanner",
+  "short_name": "Morild",
+  "description": "Personlig maritim ruteplanlegger for seilbåten Dufour 41 «Morild». Planleggingsverktøy, ikke navigasjonsautoritet.",
+  "lang": "no",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b3d63",
+  "theme_color": "#0b3d63",
+  "icons": [
+    {
+      "src": "/icons/morild.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

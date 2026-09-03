@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b3d63" />
+    <title>Morild — RoutePlanner</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/morild.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <!--
+      F1.8 / docs/legal/kartverket-sjokart-raster-wmts.md: attribusjon +
+      "ikke for navigasjon"-disclaimer skal være synlig til enhver tid
+      raster-laget vises. Egen, alltid-synlig stripe — bevisst IKKE bare
+      inni MapLibres attribusjonskontroll, som kan skjules bak et ikon.
+    -->
+    <div id="chart-disclaimer" role="note">
+      © Kartverket — kun til planlegging, ikke for navigasjon. Kartdekning:
+      Kartverket (norsk farvann); utenfor = ingen kartdata.
+    </div>
+
+    <div id="hello-route-status" aria-live="polite">Kjører hello-route …</div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

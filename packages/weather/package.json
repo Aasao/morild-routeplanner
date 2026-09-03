@@ -10,5 +10,16 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "scripts": {
+    "test": "tsc -b ../geo ../protocol && vitest run",
+    "test:golden-bridge": "tsc -b ../geo ../protocol ../routing && vitest run golden-bridge"
+  },
+  "dependencies": {
+    "@morild/geo": "workspace:*",
+    "@morild/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@morild/routing": "workspace:*"
   }
 }

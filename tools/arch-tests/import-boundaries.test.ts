@@ -24,6 +24,21 @@ describe("arkitekturgrense: packages/routing importerer aldri I/O eller andre pa
   });
 });
 
+describe("arkitekturgrense: packages/weather importerer aldri I/O, routing eller andre pakker", () => {
+  // packages/weather skal bestå samme grense som geo/routing (kravet i
+  // denne bølgens oppdrag): ren, deterministisk, ingen fetch/fs/node:, og
+  // — like viktig — ALDRI `@morild/routing`, selv om `weather-field-
+  // adapter.ts` produserer et objekt strukturelt kompatibelt med routing sin
+  // `WeatherField`. Adapteren speiler kontrakten, den importerer den ikke
+  // (se `weather-field-adapter.ts`s toppkommentar). Testfiler er unntatt
+  // (samme regel som for routing over) — `golden-bridge.test.ts` importerer
+  // bevisst `@morild/routing` for å bevise broen ende-til-ende.
+  it("finner ingen brudd i packages/weather/src", () => {
+    const violations = checkPackageBoundary(join(REPO_ROOT, "packages/weather/src"));
+    expect(violations).toEqual([]);
+  });
+});
+
 describe("arkitekturgrense: test-fixtures følger samme grense som src", () => {
   // Fiksturene mater golden-/E1'-målinger og må være like rene som
   // motoren: deterministiske, uten I/O (review-funn 2026-08-31, lav).

@@ -1,0 +1,68 @@
+name: weather-pack
+
+# Skjelett (docs/specs/vaerpakker.md §7/§13, ADR-0003). Cron-tidspunktene
+# følger MEPS' kjøringsfrekvens (00/06/12/18Z + lagget publisering) —
+# eksakt cron-uttrykk justeres når batch-jobben faktisk kjører live (§16:
+# ingen ekte kall før docs/legal/met-norway-*.md er verifisert).
+#
+# `workflow_dispatch` finnes slik at Magnus kan trigge en dry-run manuelt
+# for å se at pipelinen fortsatt bygger uten å vente på cronen.
+
+on:
+  schedule:
+    # 04, 10, 16, 22 UTC — ca. 4t etter hver MEPS-kjøring (00/06/12/18Z),
+    # samme margin-tankegang som §11s lagged-ensemble-vindu.
+    - cron: "0 4,10,16,22 * * *"
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Kjør --live (krever verifisert docs/legal/met-norway-*.md)"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Aktiver pnpm via corepack
+        run: corepack enable
+
+      - name: Installer avhengigheter
+        run: pnpm install --frozen-lockfile
+
+      - name: Typesjekk + lint
+        run: pnpm check
+
+      - name: Enhets- og integrasjonstester
+        run: pnpm test
+
+      # DRY-RUN i CI inntil docs/legal/met-norway-*.md er skrevet og
+      # verifisert (§16) — se tools/weather-pack/README.md. `--live`
+      # nektes uansett av legal-gate.ts hvis filen mangler/ikke er
+      # verifisert, men vi kjører eksplisitt dry-run her for klarhet.
+      - name: Bygg dry-run-pakke (ingen ekte MET-kall)
+        run: pnpm --filter @morild/weather-pack dry-run
+
+      # TODO (når legal-fil finnes + secrets er koblet inn):
+      # - name: Bygg ekte pakke (--live)
+      #   if: github.event.inputs.live == 'true'
+      #   env:
+      #     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+      #     HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+      #   run: pnpm --filter @morild/weather-pack cli -- --live
+      #
+      # - name: Last opp til R2
+      #   if: github.event.inputs.live == 'true'
+      #   env:
+      #     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+      #   run: echo "R2-opplasting kommer når live-kjøring er wiret opp — se README 'Hva venter'"

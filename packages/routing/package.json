@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
+    },
+    "./test-fixtures/golden-scenarios": {
+      "types": "./dist/test-fixtures/golden-scenarios.d.ts",
+      "default": "./dist/test-fixtures/golden-scenarios.js"
     }
   },
   "scripts": {

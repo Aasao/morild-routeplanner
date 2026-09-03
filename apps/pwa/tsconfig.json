@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist-tsc",
+    "rootDir": "src",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "geojson"]
+  },
+  "include": ["src"],
+  "exclude": ["src/workers"],
+  "references": [{ "path": "../../packages/routing" }, { "path": "./tsconfig.worker.json" }]
+}

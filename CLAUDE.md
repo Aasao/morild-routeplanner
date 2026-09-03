@@ -74,7 +74,8 @@ ADR-utkast og spør Magnus.
   node:-moduler eller andre pakker enn `@morild/geo`/`@morild/protocol`.
 - `pnpm test:golden` — golden-route-regresjon med frosne værfelt (kommer i
   fase 2, ikke etablert enda).
-- `pnpm dev` — (kommer når `apps/pwa` finnes, fase 1).
+- `pnpm dev` — starter `apps/worker` (`wrangler dev`) og `apps/pwa`
+  (`vite`) side om side (`concurrently`); se `docs/specs/app-skjelett.md`.
 
 ## Når du skal stoppe og spørre Magnus
 

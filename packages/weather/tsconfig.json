@@ -3,7 +3,15 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "types": []
+    // "node" trengs kun av testfilene (budsjett-rapportering via console.log
+    // og golden-broens routing-import) — src/ importerer aldri node:-moduler
+    // (håndhevet av tools/arch-tests).
+    "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../geo" },
+    { "path": "../protocol" },
+    { "path": "../routing" }
+  ]
 }
