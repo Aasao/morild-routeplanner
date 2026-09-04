@@ -198,8 +198,19 @@ interface WeatherField {
 
   /** Maksimal dekodefeil på vindfart (knop) — kvantiseringens skranke, ikke
    *  grid-/tidsfeilens. 0 for ukvantiserte felt. Bærer TWS-vaktbåndet i §5.3
-   *  (vaerpakker.md §9.5). */
+   *  (vaerpakker.md §9.5). For et SAMMENSATT felt (flere fliser) er dette
+   *  maksimum over flisene — alltid gyldig, men unødig strengt der ruten går
+   *  i den best kvantiserte flisen. */
   readonly maxDecodeErrorKn: number;
+
+  /** VALGFRI (D7.3, 2026-09-04): den AKTUELLE flisens vaktbånd i
+   *  oppslagspunktet. Må resolveres i nøyaktig samme rekkefølge som
+   *  `wind(...)`, ellers sammenlignes én flis' vind med en annen flis'
+   *  dekodefeil. Fraværende/`undefined`/ugyldig (ikke endelig, eller < 0)
+   *  ⇒ motoren bruker `maxDecodeErrorKn`. Et bånd kan gjøre grensen
+   *  strengere, aldri videre. */
+  maxDecodeErrorKnAt?(lat: number, lon: number, epochS: number):
+    number | undefined;
 
   /** Gyldig tidsvindu (epoke-sekunder). Utenfor dette returnerer alt undefined. */
   readonly validFromS: number;
@@ -426,6 +437,13 @@ interface RouteOptions {
 ```ts
 interface RouteResult {
   readonly reached: boolean;
+  /** RUTE-nivå flagg (D7.2) — samme bit-vokabular som RouteStep.flags
+   *  (FLAG_NAMES i cost.ts), men om SØKET, ikke om et punkt på linjen.
+   *  `VAERDEKNING_BEGRENSET` er det første: etiketter ble forkastet fordi en
+   *  værflis manglet innenfor pakkens tidsvindu. En forkastet etikett finnes
+   *  per definisjon ikke i `steps`, og flagget kan derfor ikke bo der. */
+  readonly flags: number;
+  readonly flagNames: readonly string[];
   readonly abortReason?:
     | "stagnation" | "labelCap" | "iterationCap" | "noExpandableLabels"
     | "noWeatherAtStart" | "outsideDomain" | "callerStopped";
@@ -464,7 +482,8 @@ interface RouteResult {
   };
 
   readonly safety: {
-    /** Kan aldri være "trygt" når finalLeg.status er en avvist-*-status (§5.8). */
+    /** Kan aldri være "trygt" når finalLeg.status er en avvist-*-status (§5.8),
+     *  og heller ikke når `pruned.noWeatherInWindow > 0` (D7.2). */
     readonly verdict: "trygt" | "usikkert" | "usikker-rute";
     /** Ender ruten faktisk i målet? Sant kun for finalLeg.status
      *  ∈ {"lagt-til", "ikke-nodvendig"}. Dette — ikke `reached` — er
@@ -511,6 +530,11 @@ interface RouteResult {
       readonly hardConstraintTss: number;
       readonly hardConstraintDaylight: number;
       readonly capEvicted: number; readonly noWeather: number;
+      /** Delmengden av `noWeather` der tidspunktet lå INNENFOR feltets
+       *  gyldige tidsvindu — hull i flisdekningen, ikke horisont-slutt
+       *  (D7.2). > 0 ⇒ flagget `VAERDEKNING_BEGRENSET` og `safety.verdict`
+       *  gulvet til minst "usikkert". */
+      readonly noWeatherInWindow: number;
       readonly cone: number; readonly outsideDomain: number;
     };
   };
@@ -585,7 +609,11 @@ innsetting**, med én bevisst nyanse (se boksen under).
 **Per etikett `n` i frontier, én gang (før kursløkken):**
 
 - `w = weather.wind(n.lat, n.lon, departEpochS + n.tS)`.
-  `undefined` → `pruned.noWeather++`, hopp over etiketten (v1-adferd).
+  `undefined` → `pruned.noWeather++`, hopp over etiketten (v1-adferd). Var
+  tidspunktet **innenfor** `[validFromS, validToS]`, telles i tillegg
+  `pruned.noWeatherInWindow++` — det er signaturen til et hull i
+  flisdekningen, ikke horisont-slutt, og den utløser flagget
+  `VAERDEKNING_BEGRENSET` (§4.8/§6, D7.2).
 - **Hard:** `w.speedKn > boat.maxTwsKn − weather.maxDecodeErrorKn` → forkast
   etiketten (F3.2 — «ruten går rundt uvær»). **Vaktbåndet er ikke pynt**, se
   boksen under.
@@ -607,6 +635,18 @@ innsetting**, med én bevisst nyanse (se boksen under).
 > aldri-overestimer-krav i §4.1), og for ukvantiserte felt er
 > `maxDecodeErrorKn = 0`, altså bit-identisk med den nakne testen.
 >
+> **Per-flis vaktbånd (D7.3, 2026-09-04).** Med sammensatte fler-flis-felt er
+> «feltets dekodefeil» ikke lenger ett tall: hver flis kvantiseres for seg.
+> `environmentAt` slår derfor opp båndet som gjelder **i oppslagspunktet** —
+> flisens eget (`WeatherField.maxDecodeErrorKnAt`, §4.2) når adapteren kan
+> oppgi det, ellers feltets konservative maks over flisene — i **samme kall**
+> som vinden, og legger det på `NodeEnvironment.maxDecodeErrorKn`.
+> `twsExceedsHardLimit(env, boat)` og `checkHardNode(env, boat)` tar derfor
+> ikke lenger et `field`-argument: det er nå strukturelt umulig å sammenligne
+> én flis' vind med en annen flis' vaktbånd. Et per-flis-svar som ikke er et
+> endelig tall ≥ 0 forkastes og båndet faller tilbake på maks — den ene
+> retningen sikkerheten ikke tåler er et *utvidet* tak.
+>
 > **Én sannhet:** dette er det eneste stedet i motoren `maxTwsKn` sammenlignes
 > hardt. Regelen bor i `expand.ts::twsExceedsHardLimit`, kalles kun fra
 > `checkHardNode`, og `checkHardNode` er den samme funksjonen søket (§5.3 og
@@ -614,6 +654,15 @@ innsetting**, med én bevisst nyanse (se boksen under).
 > `maxCurrentKn` har ingen hard sammenligning i v2.0 (den brukes kun i
 > Vmax-skranken, §5.5); får den en, skal den inn i samme funksjon og få samme
 > vaktbånd.
+>
+> **Unntaket, funnet 2026-09-04:** nødhavn-vurderingen
+> (`bailout.ts::harbourApproachable`, E1′-målesporet) har en **egen** hard
+> TWS-sammenligning — pålandsvind mot havnens `maxOnshoreTwsKn` — og den
+> manglet vaktbåndet. En havn med sann pålandsvind over grensen kunne dermed
+> blitt erklært anløpbar fordi kvantiseringen pekte nedover; verste tenkelige
+> retning for nettopp en nødhavn. Den bruker nå samme `resolveGuardBandKn`
+> som resten (regresjonstest i `variants.test.ts`). Havnens Hs-grense trenger
+> ikke bånd: Hs avrundes alltid opp (§9.3).
 >
 > **Bounden svekkes ikke.** Vmax (§5.5) regnes fra `weather.maxTwsKn`, ikke fra
 > den vaktbåndsjusterte grensen. Vaktbåndet forkaster *flere* noder, aldri
@@ -858,6 +907,35 @@ Regel 10 sier «så nær rett vinkel som praktisk mulig», ikke en tallgrense.
   **av** for kjøringen (v1-adferd), `coverage.fieldUsed = false`, og både
   blindvei-pruning og Tub-bound bortfaller. Det er en ærlig degradering med
   ytelseskostnad, ikke en feil.
+
+#### 5.5.1 Flisvalg fra feltets rekkevidde (D7.2, sikkerhetssemantikk)
+
+Feltet er væruavhengig og bygges **før** søket. Det gjør det til den eneste
+geometrien som både (a) er kjent før noen værdata er lastet, og (b) faktisk
+avgrenser hvor søket kan bevege seg. Derfor er det feltet — ikke endepunkt-
+bboksen — som avgjør hvilke **værfliser** klienten skal laste (vedtatt
+2026-09-04, `docs/00-kravspek.md`-endringsloggen; begrunnelsen står i
+`packages/routing/src/weather-tiles.ts`).
+
+```ts
+weatherTilesForField(field, bound, tileSizeDeg): readonly WeatherTileRef[]
+weatherTilesForBounds(bounds, tileSizeDeg): readonly WeatherTileRef[]   // fallback
+padBounds(bounds, padDeg = 0,5)                                          // ≥ 0,5°
+```
+
+- En celle teller med når feltverdien er endelig og — når en Tub-bound er
+  oppgitt — innenfor `tubReachNm = boundSlack·Vmax·Tub·(1 + tubMarginFrac)/3600`.
+  Med `tS ≥ 0` er det en **nødvendig** betingelse for at en etikett i cellen
+  kan overleve §5.3 steg 10, så flissettet er en overmengde av det søket kan
+  trenge. Uten bound tas hele det nåbare feltet med.
+- Hver medregnet celle utvides med **én cellebredde** i alle retninger, fordi
+  søket aksepterer posisjoner som bare har en endelig verdi i `atNear`-
+  nabolaget (3×3).
+- Rent geometrisk og deterministisk: ingen kjennskap til pekere, blober eller
+  nedlasting. Flis-ID-konvensjonen (`floor(v/steg)`, `"lon_lat"`) er speilet
+  fra `vaerpakker.md` §7 — arkitekturgrensen forbyr å importere den.
+- Klientsiden (regelvalg, fallback, manglende fliser, sertifikat-assert) er
+  spesifisert i `app-skjelett.md` §5.4b.
 
 ### 5.6 Progressiv beregning (F3.5)
 
@@ -1145,6 +1223,7 @@ identitetstest mellom to kodeveier i samme prosess.
 | `mask === undefined` | Søket kjører uten farbarhetssjekk. `coverage.mask = "none"`, `safety.verdict = "usikker-rute"` **uansett resultat**. Motoren kan ikke returnere `"trygt"` uten maske. |
 | `mask.coverage === "partial"` | Søket kjører normalt. `coverage.mask = "partial"`; alle segmenter i udekket område får `tillit: "usikkert"` og flagges. |
 | Vind mangler i en node | Noden ekspanderes ikke (`pruned.noWeather++`). Mangler vind allerede i startpunktet: `abortReason: "noWeatherAtStart"`, tom rute, forklarende resultat. |
+| Vind mangler i rommet **innenfor** pakkens tidsvindu (manglende værflis) | `pruned.noWeatherInWindow++`, ruten får flagget `VAERDEKNING_BEGRENSET` og `safety.verdict` gulves til minst `"usikkert"` (D7.2). Ruten kan være formet av flisdekningen i stedet for av været — det skal aldri kunne skje stille. Klientens flisvalgregel (`app-skjelett.md` §5.4b) skal gjøre situasjonen usannsynlig; flagget gjør den umulig å skjule. |
 | Vind mangler et stykke ut i tid | Søket stopper naturlig der feltet slutter; `reached: false` med `abortReason` og `coverage.weather = "partial"`. Vi ekstrapolerer aldri utenfor `validToS`. |
 | Bølger/strøm mangler | Best effort: `waveFactor = 1`, strøm = 0. Segmentene flagges ikke som feil, men `coverage.weather = "partial"` og feltets header viser hva som manglet (F2.4). |
 | A\*-felt kan ikke bygges / start utilgjengelig | `fieldUsed: false`; ingen blindvei-pruning, ingen Tub-bound. Kjøringen blir tregere — det rapporteres, ikke skjules. |
@@ -1395,6 +1474,45 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- **2026-09-04 — D7.2/D7.3: per-flis vaktbånd, ærlig værdekning-flagg og
+  flisvalg fra feltets rekkevidde** (vedtatt av Magnus etter `/panel`, se
+  `docs/research/ekspertpanel-d7-vaerpakkeformat-2026-09-04.md` og
+  kravspek-endringsloggen 2026-09-04).
+  - **§4.2** — `WeatherField` har fått den valgfrie `maxDecodeErrorKnAt(lat,
+    lon, epochS)`. Bakgrunn: panelets matematiker fant at `expand.ts` brukte
+    ett **globalt** `maxDecodeErrorKn`, mens et sammensatt fler-flis-felt har
+    ett bånd per flis. Uten metoden brukes maks over flisene (konservativt),
+    som før.
+  - **§5.3** — vaktbåndet resolveres i `environmentAt` og bæres på
+    `NodeEnvironment.maxDecodeErrorKn`; `twsExceedsHardLimit(env, boat)` og
+    `checkHardNode(env, boat)` mistet `field`-argumentet. Dermed kan ingen
+    kaller lenger pare én flis' vind med en annen flis' bånd — samme
+    «én sannhet»-disiplin som før, nå strukturelt håndhevet.
+  - **§4.8/§5.3/§6** — nytt rute-nivå flagg `VAERDEKNING_BEGRENSET` og ny
+    teller `pruned.noWeatherInWindow`: forkastes etiketter fordi vinden
+    mangler i **rommet** innenfor pakkens tidsvindu, er ruten formet av
+    flisdekningen, og `safety.verdict` gulves til minst `"usikkert"`.
+    Horisont-slutt teller bevisst ikke — det er forventet og dekkes av
+    `coverage.weather = "partial"`.
+  - **Ny §5.5.1** — `weatherTilesForField`/`weatherTilesForBounds`/
+    `padBounds`: flisvalg fra A\*-feltets rekkevidde, med endepunkt-bbox
+    + ≥ 0,5° som fallback. Klientsiden i `app-skjelett.md` §5.4b.
+  - **Golden-diff (forklart, ikke uforklart):** `hull-i-vaerfeltet` endret
+    `safety.verdict` fra `"trygt"` til `"usikkert"`. Scenarioet har et
+    **romlig** hull (feltets bbox slutter ved 58,2°N) mens tiden fortsatt er
+    innenfor vinduet — nøyaktig situasjonen D7.2 forbyr å rapportere som
+    trygg. Ruten, totalene og sporet er bit-identiske; de seks andre
+    golden-rutene er uendret på alle felt.
+  - **Bug funnet og fikset i samme omgang:**
+    `bailout.ts::harbourApproachable` sammenlignet pålandsvind hardt mot
+    `harbour.maxOnshoreTwsKn` **uten** vaktbånd (endringsloggen 2026-09-02
+    påsto at `bailout.ts` ikke hadde noen hard TWS-sammenligning — det
+    stemte ikke). Fikset med `resolveGuardBandKn`; to regresjonstester i
+    `variants.test.ts`.
+  - **Tester:** `weather-tiles.test.ts` (flisvalg), `weather-coverage.test.ts`
+    (flagg + gulv + at horisont-slutt IKKE flagger), per-flis-bånd-tester i
+    `expand.test.ts` (to fliser med ulikt bånd ⇒ ulikt hardt svar i samme
+    vind), og klientens sertifikat-assert i `apps/pwa`.
 - **2026-09-02 — TWS-vaktbånd mot dekodefeil (sikkerhet).**
   `docs/specs/vaerpakker.md` §9.5 (vedtatt 2026-09-02) krever at den harde
   TWS-avvisningen regner `decodedTws > maxTwsKn − maxDecodeErrorKn`.

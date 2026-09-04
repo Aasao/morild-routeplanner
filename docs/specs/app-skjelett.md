@@ -234,6 +234,61 @@ referansepunkter (samme disiplin som golden-testene selv), og en presis
 eksport gjør det tydelig at dette IKKE er en generell invitasjon til å
 importere testverktøy fra `apps/`.
 
+### 5.4b Flisvalg og sertifikat-assert i værflyten (D7.2, 2026-09-04)
+
+**Vedtatt sikkerhetssemantikk** (`docs/00-kravspek.md`-endringsloggen
+2026-09-04, `docs/research/ekspertpanel-d7-vaerpakkeformat-2026-09-04.md`).
+
+**1. Flissettet kommer fra A\*-feltets rekkevidde, ikke fra endepunkt-bboksen.**
+Panelet påviste at ensemblets medlemsruter bulker 9,6–17,6 nm ut fra
+luftlinjen; med 1°-fliser (≈ 33 nm) kan en flis ruten trenger derfor ligge
+utenfor endepunkt-boksen. Mangler flisen, forkaster motoren etikettene der —
+og **søket styres stille av flisdekningen** i stedet for av været.
+
+- `packages/routing` eksponerer den rene funksjonen
+  `weatherTilesForField(field, bound, tileSizeDeg)` (og
+  `weatherTilesForBounds` + `padBounds` for fallback-veien). Feltet er
+  væruavhengig (`rutemotor.md` §5.5) og bygges derfor **før** noen værdata er
+  lastet — det er selve forutsetningen for at regelen kan styre nedlastingen.
+- `apps/pwa/src/weather/tile-select.ts::selectTilesForRoute` er klientens
+  inngang. `tileSizeDeg` leses ut av **pekeren selv** (`tileSizeDegOf` — 2° i
+  dagens ekte pakke, 1° etter D7.1), aldri hardkodet.
+- Rekkefølgen: (a) A\*-feltet når det finnes (`rule: "a-star-felt"`);
+  (b) endepunkt-bbox utvidet med ≥ 0,5° (`"endepunkt-bbox"`, ≈ panelets
+  «kontrollrute + ≥ 30 nm»); (c) ren bbox-overlapp når pekeren ikke har et
+  gjenkjennelig flisrutenett (`"bbox-overlapp"`) — og da sier resultatet
+  eksplisitt at regelen ikke kunne håndheves.
+- `pipeline.ts` bygger feltet med **samme maske og samme endepunkter** som
+  Workeren planlegger med (`skjaeloy-skagen-apent`) og med motorens egne
+  standardvalg for oppløsning. Velges fliser for én geometri og søkes i en
+  annen, er regelen verdiløs.
+- Fliser pekeren mangler kommer ut som `missingTileIds` og vises i UI
+  (`#weather-tile-selection`). **Forsvar i dybden:** motoren flagger dessuten
+  ruten `VAERDEKNING_BEGRENSET` og gulver `safety.verdict` til `usikkert`
+  hvis søket faktisk pruner etiketter i hullet (`rutemotor.md` §4.8/§6).
+
+**2. Klippe- og sertifikat-assert ved lasting av en flis.** Byggeren
+sertifiserer maks dekodefeil per flis/felt i lagheaderen
+(`header.certificate: { maxDecodeErrorKn, maxDirectionErrorDeg, maxHsErrorM?,
+referenceInit, verifiedAt }`). Klienten **avviser**:
+
+- fliser **uten** sertifikat («flis uten sertifikat») — uten det er
+  `maxDecodeErrorKn`, altså TWS-vaktbåndet motoren håndhever den harde
+  vindgrensen med, en uverifisert påstand;
+- fliser som **rapporterer klipping** — da er dekodefeilen ikke lenger
+  begrenset av et halvt kvantiseringstrinn, og vaktbånd-resonnementet faller.
+
+Asserten bor i `apps/pwa/src/weather/tile-certificate.ts` (rene funksjoner) og
+kjøres i `pipeline.ts::screenTiles` **før** blobene lastes ned — en avvist
+flis koster ikke båndbredde. Avvisningen er alltid **synlig** (årsakstekst ut
+til `#weather-tile-selection`), aldri en stille utelatelse.
+
+**Kjent avhengighet:** `certificate` finnes ikke i `PackageHeader`-typen i
+`@morild/protocol` ennå; klienten leser det strukturelt (`parseCertificate`).
+Klippefeltets navn (`clipped` / `clippedSamples`) er ennå ikke låst mot
+byggeren — parseren godtar begge, og en flis uten noen av dem regnes som
+uklippet. Byggeren MÅ derfor rapportere klipping eksplisitt.
+
 ### 5.5 PWA-manifest og service worker (F6.3, F1.9-forberedelse)
 
 `public/manifest.webmanifest`: norsk `name`/`short_name`, `display:
@@ -488,6 +543,17 @@ jf. miljøet) for noe en 400 kB, null-avhengighets npm-pakke løser robust.
    disclaimer synlig, og «hello route»-linjen tegnes etter at
    `routing.worker.ts` har svart.
 
+**Bølge 3B (D7.2) lagt til:**
+
+9. `apps/pwa/src/weather/tile-certificate.test.ts` — sertifikatparseren
+   (fullstendig/halvt/manglende sertifikat) og begge avvisningsgrunnene.
+10. `apps/pwa/src/weather/tile-select.test.ts` — `tileSizeDegOf`,
+    A\*-feltregelen (flere fliser enn ruteboksen), `missingTileIds` når en
+    flis mangler, fallback-regelen (bbox + 0,5°) og «ukjent rutenett»-veien.
+11. `apps/pwa/src/weather/pipeline.test.ts` — en usertifisert flis og en
+    flis med rapportert klipping avvises begge, med synlig årsak, mens
+    resten av flisene fortsatt brukes.
+
 **Bølge 2B (ADR-0006/D2/D4) lagt til:**
 
 6. `apps/worker/src/routes/blob.test.ts` — `handleBlob` (ikke bare den rene
@@ -538,6 +604,13 @@ jf. miljøet) for noe en 400 kB, null-avhengighets npm-pakke løser robust.
 
 ## 12. Endringslogg
 
+- 2026-09-04 — fase 3 bølge 3B (rutemotor-agenten), D7.2: ny **§5.4b** —
+  flisvalg fra A\*-feltets rekkevidde med bbox + ≥ 0,5° som fallback
+  (`weatherTilesForField` i `packages/routing`, `selectTilesForRoute` i
+  `apps/pwa`), og klippe-/sertifikat-assert ved lasting av en flis
+  (`tile-certificate.ts`, `screenTiles`). Nytt UI-felt
+  `#weather-tile-selection` viser valgt regel, manglende fliser og avviste
+  fliser. Testkrav 9–11 lagt til i §10.
 - 2026-09-03: Første versjon (plattform-agenten, fase 3 bølge 1D).
 - 2026-09-03 (2) — fase 3 bølge 2B (plattform-agenten): ADR-0006
   implementert. `apps/worker` fikk to bindinger (`MIRROR_BUCKET` R2,

@@ -16,6 +16,7 @@ import {
   domainAround,
   fastLsb,
   FLOAT32,
+  gridWindWeatherField,
   latStepDegFor,
   lonStepDegFor,
   packField,
@@ -24,10 +25,14 @@ import {
   REF_PACK,
   withPack,
 } from "../test-fixtures/pack-degradation.js";
-import type { FixedLsbOffset } from "../test-fixtures/pack-degradation.js";
+import type {
+  FixedLsbOffset,
+  WindGrid,
+} from "../test-fixtures/pack-degradation.js";
 import {
   constantWeather,
   syntheticField,
+  SYNTHETIC_HEADER,
 } from "../test-fixtures/synthetic-weather.js";
 import { SKAGEN, SKJAELOY } from "../test-fixtures/golden-scenarios.js";
 import { s8WindAgainstCurrentEnsemble } from "../test-fixtures/ensemble-s8-wind-current.js";
@@ -361,7 +366,7 @@ describe("pakkedegradering: TWS-vaktbånd mot nedrundet vind (§9.5)", () => {
           if (sant.wind.speedKn <= boat.maxTwsKn) continue;
           over++;
           if (dekodet.wind.speedKn <= boat.maxTwsKn) taptNakent++;
-          if (!twsExceedsHardLimit(dekodet, boat, kvantisert)) taptMedVaktband++;
+          if (!twsExceedsHardLimit(dekodet, boat)) taptMedVaktband++;
         }
       }
     }
@@ -388,7 +393,7 @@ describe("pakkedegradering: TWS-vaktbånd mot nedrundet vind (§9.5)", () => {
       const pos = { lat: 58.0 + a / 40, lon: 10.7 };
       const env = environmentAt(referanse, pos, T0 + 3 * 3600);
       if (env === undefined) continue;
-      expect(twsExceedsHardLimit(env, boat, referanse)).toBe(
+      expect(twsExceedsHardLimit(env, boat)).toBe(
         env.wind.speedKn > boat.maxTwsKn,
       );
       sjekket++;
@@ -550,7 +555,7 @@ describe("pakkedegradering: fast fysisk LSB (D6-C)", () => {
             if (sant.wind.speedKn <= boat.maxTwsKn) continue;
             over++;
             if (dekodet.wind.speedKn <= boat.maxTwsKn) taptNakent++;
-            if (!twsExceedsHardLimit(dekodet, boat, kvantisert)) taptMedVaktband++;
+            if (!twsExceedsHardLimit(dekodet, boat)) taptMedVaktband++;
           }
         }
       }
@@ -688,5 +693,225 @@ describe("pakkedegradering: lagringsformen for vind", () => {
       expect(w.speedKn).toBeCloseTo(13.7, 4);
       expect(w.fromDeg).toBeCloseTo(217.5, 3);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+/**
+ * **`gridWindWeatherField`** — fiksturveien som lar harnessen kjøre på et
+ * *ekte* dekodet værfelt i stedet for et analytisk (tillegg §14, D7.5
+ * vilkår vi). Testene her fastholder de egenskapene §14s tall hviler på:
+ * at gitteret gjengis eksakt i nodene, at interpolasjonen skjer i
+ * u/v-komponentrommet (ikke i fart/retning), at manglende naboer aldri
+ * ekstrapoleres, at sammensyingen av flere fliser er forutsigbar, og at
+ * `packField` oppå et slikt felt fortsatt gir et gyldig vaktbånd.
+ *
+ * Selve lesingen av `.bin`-filene testes ikke her — den er I/O og lever i
+ * `tools/kvantisering/ekte-flis.mjs`. Grensen er nettopp poenget: fiksturen
+ * tar nakne gitre, og er derfor like ren som resten av `packages/routing`.
+ */
+function windGrid(
+  u: readonly number[],
+  v: readonly number[],
+  over: Partial<Omit<WindGrid, "u" | "v">> = {},
+): WindGrid {
+  return {
+    latMin: 58,
+    lonMin: 10,
+    // Binært eksakte steg: 0,1 grader ville gjort (58,1 − 58)/0,1 til
+    // 1,0000000000000009 og lagt den øverste noden så vidt UTENFOR dekningen.
+    // Det er riktig oppførsel (vi ekstrapolerer aldri), men det er ikke det
+    // testen her handler om.
+    latStepDeg: 0.25,
+    lonStepDeg: 0.5,
+    nodesLat: 2,
+    nodesLon: 2,
+    t0S: T0,
+    dtS: 3600,
+    timeSteps: 2,
+    u: Float64Array.from(u),
+    v: Float64Array.from(v),
+    ...over,
+  };
+}
+
+/** 2x2 noder x 2 skiver, indeks `(i*nodesLon + j)*timeSteps + k`. */
+function konstantGitter(u: number, v: number): WindGrid {
+  return windGrid(new Array<number>(8).fill(u), new Array<number>(8).fill(v));
+}
+
+describe("pakkedegradering: ekte flis som referansefelt", () => {
+  it("gjengir en gridnode eksakt, og konverterer u/v til fart+retning sist", () => {
+    // u = 0, v = -10: vinden gaar mot soer, altsaa kommer den FRA nord (0 grader).
+    const felt = gridWindWeatherField([konstantGitter(0, -10)], {
+      header: SYNTHETIC_HEADER,
+    });
+    const w = felt.wind(58, 10, T0)!;
+    expect(w.speedKn).toBeCloseTo(10, 10);
+    expect(w.fromDeg).toBeCloseTo(0, 10);
+    expect(felt.maxTwsKn).toBeCloseTo(10, 10);
+    // Referansen er per konvensjon ukvantisert (se `GridWindFieldOptions`).
+    expect(felt.maxDecodeErrorKn).toBe(0);
+  });
+
+  it("interpolerer i u/v-rommet — ikke i fart/retning-rommet", () => {
+    /**
+     * To naboer med **samme fart** og motsatt retning: fra vest (u = −10) og
+     * fra øst (u = +10). I komponentrommet er midtpunktet vindstille; i et
+     * fart/retning-rom ville det vært 10 kn med en tilfeldig retning. At
+     * svaret er 0 kn er hele forskjellen, og den er den samme som
+     * `@morild/weather::decodeWindAt` gjør (§3 punkt 4–5).
+     */
+    const u = [10, 10, -10, -10].flatMap((x) => [x, x]);
+    const felt = gridWindWeatherField(
+      [windGrid(u, new Array<number>(8).fill(0))],
+      { header: SYNTHETIC_HEADER },
+    );
+    expect(felt.wind(58, 10, T0)!.speedKn).toBeCloseTo(10, 10);
+    expect(felt.wind(58.25, 10, T0)!.speedKn).toBeCloseTo(10, 10);
+    expect(felt.wind(58.125, 10, T0)!.speedKn).toBeCloseTo(0, 10);
+  });
+
+  it("mangler én nabo, mangler svaret — vi ekstrapolerer aldri", () => {
+    const g = konstantGitter(3, 4);
+    (g.u as Float64Array)[0] = Number.NaN;
+    const felt = gridWindWeatherField([g], { header: SYNTHETIC_HEADER });
+    // Noden selv og alle punkter som interpolerer fra den er borte …
+    expect(felt.wind(58, 10, T0)).toBeUndefined();
+    expect(felt.wind(58.125, 10.25, T0)).toBeUndefined();
+    // … men skive 1 (der noden har data) er upåvirket.
+    expect(felt.wind(58, 10, T0 + 3600)!.speedKn).toBeCloseTo(5, 10);
+    // Utenfor dekning i rom og i tid gir undefined, ikke en gjettet verdi.
+    expect(felt.wind(57.9, 10, T0 + 3600)).toBeUndefined();
+    expect(felt.wind(58, 10, T0 - 1)).toBeUndefined();
+    expect(felt.wind(58, 10, T0 + 2 * 3600)).toBeUndefined();
+  });
+
+  it("bølge og strøm er undefined — den ekte pakken bærer dem ikke", () => {
+    const felt = gridWindWeatherField([konstantGitter(5, 0)], {
+      header: SYNTHETIC_HEADER,
+    });
+    expect(felt.waves(58, 10, T0)).toBeUndefined();
+    expect(felt.current(58, 10, T0)).toBeUndefined();
+    expect(felt.maxCurrentKn).toBe(0);
+  });
+
+  it("syr sammen flere fliser: første flis med et definert svar vinner", () => {
+    const soer = konstantGitter(6, 0);
+    const nord = windGrid(
+      new Array<number>(8).fill(20),
+      new Array<number>(8).fill(0),
+      { latMin: 58.25 },
+    );
+    const felt = gridWindWeatherField([soer, nord], {
+      header: SYNTHETIC_HEADER,
+    });
+    // Kun sørflisen dekker 58,125 …
+    expect(felt.wind(58.125, 10, T0)!.speedKn).toBeCloseTo(6, 10);
+    // … kun nordflisen dekker 58,375 …
+    expect(felt.wind(58.375, 10, T0)!.speedKn).toBeCloseTo(20, 10);
+    // … og på den delte kanten (58,25) vinner den første i listen.
+    expect(felt.wind(58.25, 10, T0)!.speedKn).toBeCloseTo(6, 10);
+    // Skranken er observert maksimum over ALLE flisene (kontraktens krav).
+    expect(felt.maxTwsKn).toBeCloseTo(20, 10);
+  });
+
+  it("packField oppå et gitterfelt gir et vaktbånd som holder (mini-P1e)", () => {
+    /**
+     * Den samme konstruksjonen §14 måler med, i det små: et gitter med et
+     * bredt komponentspenn, pakket to ganger — én gang kvantisert og én gang
+     * med Float32 vind på *nøyaktig samme* grid og flisgeometri. Differansen
+     * er da ren kvantiseringsfeil, og den skal ligge innenfor
+     * `maxDecodeErrorKn`.
+     */
+    const n = 24;
+    const steps = 6;
+    const u = new Float64Array(n * n * steps);
+    const v = new Float64Array(n * n * steps);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        for (let k = 0; k < steps; k++) {
+          const idx = (i * n + j) * steps + k;
+          // Spenn ~±20 kn per komponent — ekte-flis-klassen, ikke fikstur.
+          u[idx] = 20 * Math.sin((i + k) / 3.1) + 3 * Math.cos(j / 2.3);
+          v[idx] = 18 * Math.cos((j + k) / 2.7) - 4 * Math.sin(i / 1.9);
+        }
+      }
+    }
+    const grid: WindGrid = {
+      latMin: 58,
+      lonMin: 10,
+      latStepDeg: 0.02,
+      lonStepDeg: 0.035,
+      nodesLat: n,
+      nodesLon: n,
+      t0S: T0,
+      dtS: 3600,
+      timeSteps: steps,
+      u,
+      v,
+    };
+    const base = gridWindWeatherField([grid], { header: SYNTHETIC_HEADER });
+    const domene = {
+      latMin: 58.05,
+      latMax: 58.4,
+      lonMin: 10.05,
+      lonMax: 10.75,
+    };
+    for (const spec of [
+      withPack("E", "adaptiv 8-bit per flis", { windQuant: quant(8) }),
+      withPack("L", "fast LSB 0,125 kn", { windQuant: fastLsb(0.125, "ingen") }),
+    ]) {
+      const pakke = packField(base, spec, domene);
+      const rein = packField(
+        base,
+        withPack(`${spec.id}-F32`, "samme grid, Float32 vind", {
+          ...spec,
+          windQuant: FLOAT32,
+        }),
+        domene,
+      );
+      const p = probePack(rein.field, pakke.field, domene, T0, [0, 1, 2], 15);
+      expect(p.samples).toBeGreaterThan(100);
+      expect(pakke.field.maxDecodeErrorKn).toBeGreaterThan(0);
+      // Vaktbåndet er en gyldig skranke på ren kvantiseringsfeil …
+      expect(p.maxTwsErrKn).toBeLessThanOrEqual(pakke.field.maxDecodeErrorKn);
+      // … og fanger også det som runder forbi feltets deklarerte maksvind.
+      expect(p.maxTwsOverKn).toBeLessThanOrEqual(pakke.field.maxDecodeErrorKn);
+      // Fast LSB: ingen klipping, ellers er skranken ugyldig.
+      expect(pakke.stats.fixedLsbClamped).toBe(0);
+    }
+  });
+
+  it("det adaptive spennet MÅLES — det er tallet som skiller ekte fra syntetisk", () => {
+    /**
+     * `adaptiveMaxSpan`/`adaptiveMaxStep` er lagt til for §14: med
+     * flis-skala er trinnet `(maks − min i flisen og skiven)/255`, altså en
+     * funksjon av data. Uten den målingen kan ingen si om en kjøring var
+     * på fikstur-spenn (21,7 kn) eller ekte spenn.
+     */
+    const base = field();
+    const flis = packField(
+      base,
+      withPack("A", "8-bit flis", { windQuant: quant(8) }),
+      DOMAIN,
+    );
+    flis.field.wind(58.3, 10.7, T0 + 1234);
+    expect(flis.stats.adaptiveMaxSpan).toBeGreaterThan(0);
+    expect(flis.stats.adaptiveMaxStep).toBeCloseTo(
+      flis.stats.adaptiveMaxSpan / 255,
+      12,
+    );
+
+    // Fast LSB utleder ikke trinnet av data — ingen adaptivt regnskap.
+    const fast = packField(
+      base,
+      withPack("B", "fast LSB", { windQuant: fastLsb(0.25, "ingen") }),
+      DOMAIN,
+    );
+    fast.field.wind(58.3, 10.7, T0 + 1234);
+    expect(fast.stats.adaptiveMaxSpan).toBe(0);
+    expect(fast.stats.adaptiveMaxStep).toBe(0);
   });
 });

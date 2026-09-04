@@ -44,3 +44,30 @@ export function maxDirectionErrorDeg(speedKn: number, maxDecodeErrorKn: number):
   if (speedKn <= maxDecodeErrorKn) return undefined;
   return (Math.asin(maxDecodeErrorKn / speedKn) * 180) / Math.PI;
 }
+
+/**
+ * **Sertifikatets `maxDirectionErrorDeg` (D7.4).** Maks retningsavvik
+ * over ET HELT FELT (alle noder × tidssteg et gitt medlem/flis faktisk
+ * bærer) — `maxDirectionErrorDeg` alene er punktvis (én fart), dette
+ * skanner den faktiske fartsfordelingen og tar maks over punktene der
+ * retning FAKTISK er definert (§9.5: punkter med `speedKn <=
+ * maxDecodeErrorKn` har en dårlig definert retning uansett kvantisering —
+ * de er ALDRI et brudd, og telles derfor ikke inn her heller, samme
+ * konvensjon som `build-live-package.ts::verifyRoundTrip`).
+ *
+ * Returnerer `0` hvis INGEN punkt har en definert retningsskranke (et felt
+ * der absolutt alt er nær vindstille — usannsynlig i praksis, men et
+ * gyldig, ikke-`NaN` svar er bedre enn `undefined` i et sertifikat som
+ * skal være maskinlesbart).
+ */
+export function fieldMaxDirectionErrorDeg(
+  speedsKn: Iterable<number>,
+  maxDecodeErrorKn: number,
+): number {
+  let max = 0;
+  for (const speedKn of speedsKn) {
+    const budget = maxDirectionErrorDeg(speedKn, maxDecodeErrorKn);
+    if (budget !== undefined && budget > max) max = budget;
+  }
+  return max;
+}

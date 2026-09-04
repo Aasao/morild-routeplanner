@@ -1030,6 +1030,12 @@ stedet *spennet i flisen*, og 8 bit dekker 255·lsb: 63,75 kn ved 0,25 kn og
 255 koder ved 0,1 kn — det holder her, men marginen er 3,8 kn og et stormfelt
 med større komponentspenn i én flis vil sprenge den.
 
+> **Erstattet av §14 (2026-09-04).** Nettopp den marginen forsvant da harnessen
+> ble kjørt på ekte fliser: verste målte spenn er **47,5 kn**, og 0,1 kn trenger
+> da **475 koder ⇒ 9 bit**. Byte-alignet fast LSB på ekte spenn er **kun**
+> 0,25 kn (190 koder). Bruk §14s tall, ikke tallene i denne tabellen, for
+> bitbredde.
+
 Derav kravet produsenten må kjøre, i nøyaktig samme form som §9.1s Hs-krav
 («spenn ≤ 12,75 m i én flis»): **kodespennet i én flis og skive skal aldri
 overstige feltbredden.** Gjør det det, klippes koder — og da er `√2·lsb/2` ikke
@@ -1080,6 +1086,7 @@ lenger en gyldig skranke. Modellen teller klipping nettopp derfor; her var den
 3. **Bitbredden er målt på syntetiske felt.** 87 koder i den verste flisen er en
    egenskap ved disse feltene. Kravet er derfor formulert som en kontroll
    produsenten kjører på ekte data, ikke som et tall å stole på.
+   **Kontrollen er nå kjørt (§14.6), og den avviste byte-alignet 0,1 kn.**
 4. **Kun vindkanalen.** Hs, Tp, strøm og retning er urørt av dette tillegget;
    §10s rader for dem står uendret.
 5. **0,1 kn-punktet er ikke forhåndsregistrert.** De tre `*010`-konfigurasjonene
@@ -1282,3 +1289,448 @@ tas i fase 4b på ekte-flis-fiksturer. Merk også: **harnessen har til nå
 kun kjørt på syntetiske/golden-fliser (spenn 21,7 kn)** — ekte fliser
 (spenn 55–65 kn) gir adaptiv 8-bit ≈ 0,21–0,26 kn; kjøring på ≥ 1 ekte
 flis er vedtatt for bølge 3 (D7.5 vilkår vi).
+
+> **Kjørt 2026-09-04 — se §14.** Anslaget «55–65 kn» var i riktig retning, men
+> for høyt: målt verste subflis-spenn på seks ekte Skagerrak-fliser er
+> **46,6–49,7 kn ⇒ adaptiv 8-bit 0,18–0,20 kn**. Erstatt anslaget med §14.2.
+
+---
+
+## 14. Tillegg 2026-09-04 — harnessen kjørt på EKTE fliser (D7.5 vilkår vi)
+
+> Kjørt 2026-09-04 av rutemotor-agenten. §13 slo fast at hele denne rapporten
+> til nå hviler på **syntetiske/golden-felt med verste flisspenn 21,7 kn**,
+> mens ekte Skagerrak-fliser er vesentlig bredere — og siden dagens format
+> utleder trinnet av spennet, er både kvantiseringsfeilen og vaktbåndet
+> funksjoner av data harnessen aldri hadde sett. Dette tillegget lukker
+> hullet.
+>
+> Rådata: `docs/research/kvantisering-raadata/tillegg-ekte-flis/`
+> (+ `stress-tws22/`). Kjørelogger:
+> `tools/kvantisering/kjorelogg-tillegg-ekte-flis-*.txt`.
+> Kode: `tools/kvantisering/ekte-flis.mjs` (I/O),
+> `tools/kvantisering/ekte-flis-maaling.mjs` (målingen),
+> `packages/routing/test-fixtures/pack-degradation.ts`
+> (`gridWindWeatherField`, `PackStats.adaptiveMaxSpan/Step`).
+
+### 14.1 Hva som er nytt i instrumentet
+
+Referansefeltet er ikke lenger analytisk. Det er den **ekte, bygde
+værpakken** — MEPS lagged 6 h, init **2026-09-03 21Z**, 30 medlemmer, 48 t
+horisont, seks 1°×1°-fliser (`10_57`, `11_57`, `10_58`, `11_58`, `10_59`,
+`11_59`) som dekker 57–60° N, 10–12° E — dekodet fra `.bin` og levert som et
+vanlig `WeatherField`:
+
+```
+  ekte .bin (MWL1, 8-bit, delta) → deserializeLayer → dekodede u/v-gitre
+     → gridWindWeatherField (fiksturen, ren)
+     → packField (re-kvantisering: E eller fast LSB)  → P1e / P3 / rangering
+```
+
+All I/O ligger i `tools/kvantisering/ekte-flis.mjs`; fiksturen tar bare nakne
+gitre (typede arrayer og tall) og bryter derfor ikke arkitekturgrensen —
+`packages/routing` importerer verken `@morild/weather` eller `node:fs`.
+Interpolasjonen i `gridWindWeatherField` er den samme som pakkemodellens
+(bilineær i rom, lineær i tid, i u/v-komponentrommet, `uvToWind` sist), slik at
+`packField` oppå den måler **re-kvantisering** og ikke en forskjell i
+interpolasjonssemantikk.
+
+**Ruten** er `SKJAELOY → SKAGEN` med `SKAGERRAK_LAND`-masken — det strekket
+pakken faktisk ble bygget for. **Ensemblet er ekte:** 30 MEPS-medlemmer, ikke
+perturberte fiksturfelt.
+
+**Båtens TWS-grense er en måleparameter her, ikke en båtegenskap.** Med
+standardgrensen (35 kn) forkaster ingen medlemmer noe i dette værbildet, og
+P3 måler da ingenting. Grensen er derfor lagt der den *biter*: **26 kn**
+(marginal — 1–6 av 30 medlemmer forkastes per avgang) i hovedkjøringen, og
+**22 kn** (metning — opptil 23 av 30) i en egen stresskjøring.
+
+**Tre nullkontroller uten et eneste kvantisert bit** er med i hver P3-kjøring,
+og de er det som gjør resultatene tolkbare: `ANALYTISK` (det ekte feltet
+urørt), `T-30M` (Float32, 30 min tidssteg) og `R-HALV` (Float32, 1,25 km).
+Skiller de seg fra `REF`, er den klassen av forskjell søkestøy — ikke
+degradering.
+
+**Pakken er frosset for kjøringen.** `tools/weather-pack/out/` er gitignorert
+ferskvare som en annen agent bygger om; den ble faktisk bygget om **to ganger**
+under dette arbeidet. Alle tall her er derfor målt mot én frossen kopi
+(`MORILD_VAERPAKKE`), og blob-hashene for alle 180 vindlagene ligger i
+`meta-*.json` (`kilde.fliser[].blobHasher`).
+
+### 14.2 Ekte spenn, målt
+
+Produsentens egen kvantisering av de seks flisene (8 bit per subflis og
+skive), som er *utgangspunktet* dette tillegget handler om:
+
+| flis | maks subflis-spenn | ⇒ 8-bit-trinn | flisens vaktbånd |
+|---|---|---|---|
+| `10_57` | 47,47 kn | 0,1861 kn | 0,1019 kn |
+| `11_57` | **51,46 kn** | **0,2018 kn** | 0,1266 kn |
+| `10_58` | 48,64 kn | 0,1907 kn | **0,1306 kn** |
+| `11_58` | 46,58 kn | 0,1827 kn | 0,1018 kn |
+| `10_59` | 31,64 kn | 0,1241 kn | 0,0759 kn |
+| `11_59` | 26,21 kn | 0,1028 kn | 0,0667 kn |
+
+Feltets deklarerte maksvind over de 30 medlemmene er **35,77 kn**. I
+harnessens egen pakkemodell (2,5 km, 32-node-fliser) blir verste målte spenn
+**49,51 kn** ⇒ adaptivt trinn **0,1942 kn**.
+
+**Det er 2,3× fiksturenes 21,7 kn** — og altså 2,3× grovere trinn: fiksturene
+gir 0,085 kn, de ekte flisene 0,10–0,20 kn avhengig av hvor mye vær som ligger
+i flisen. §13s anslag (55–65 kn spenn ⇒ 0,21–0,26 kn) pekte riktig vei, men
+var for høyt; det målte tallet er **26,2–51,5 kn ⇒ 0,10–0,20 kn**.
+**Anslaget skal erstattes med målingen.**
+
+### 14.3 Resultat 1 (beslutningsdyktig): P1e — vaktbåndet holder på ekte spenn
+
+105 840 sondepunkter per konfigurasjon (30 medlemmer × 8 skjeve sondetimer ×
+21×21-gitter), målt mot en pakke med *nøyaktig samme grid, flisgeometri og
+tidsnett, men Float32 vind* — differansen er derfor ren kvantiseringsfeil.
+
+| konfig | trinn | deklarert vaktbånd | maks målt kvant.feil | andel av båndet | RMS | margin | overskr. av deklarert maks | klippede koder |
+|---|---|---|---|---|---|---|---|---|
+| `W-UV8` (**E**, adaptiv 8-bit) | 0,1942 kn (målt) | **0,1984 kn** | **0,0744 kn** | 37 % | 0,0099 kn | 0,1102 kn | 0 | 0 |
+| `F-LSB010` | 0,1 kn | 0,0707 kn | 0,0626 kn | 89 % | 0,0155 kn | 0,0081 kn | 0 | 0 |
+| `F-LSB010O` | 0,1 kn | 0,0707 kn | 0,0595 kn | 84 % | 0,0155 kn | 0,0112 kn | 0 | 0 |
+| `F-LSB0125` | 0,125 kn | 0,0884 kn | 0,0764 kn | 86 % | 0,0194 kn | 0,0120 kn | 0 | 0 |
+| `F-LSB0125O` | 0,125 kn | 0,0884 kn | 0,0735 kn | 83 % | 0,0194 kn | 0,0149 kn | 0 | 0 |
+| `F-LSB025` | 0,25 kn | 0,1768 kn | 0,1497 kn | 85 % | 0,0386 kn | 0,0271 kn | 0 | 0 |
+| `F-LSB025O` | 0,25 kn | 0,1768 kn | 0,1586 kn | **90 %** | 0,0387 kn | 0,0182 kn | 0 | 0 |
+
+**Ingen konfigurasjon sprenger båndet, og ingen kode klippes.** Legg merke til
+forskjellen i *hvor stramt* båndet er: fast LSB bruker 83–90 % av sitt bånd,
+`E` bruker 37 % av sitt. Det er ikke fordi `E` er nøyaktigere — trinnet er
+0,194 kn mot 0,25 kn — men fordi `E`s *bevisbare* bånd regnes av feltets
+globale deklarerte område (2·35,77/255) og ikke av trinnet flisen faktisk fikk.
+`E`s bånd er altså **løst**; fast LSB sitt er **stramt**. At de fast-LSB-målte
+verdiene kryper opp mot 90 % uten å passere er bekreftelse på at `√2·lsb/2` er
+en skarp og korrekt skranke (den nås i hjørnetilfellet der begge komponenter
+runder et halvt trinn samme vei), ikke et faresignal.
+
+**Ett forbehold som er viktig og ærlig:** kolonnen «overskridelser av deklarert
+maks» er **0 for alle**, altså vakuøst oppfylt. Ingen sondepunkt kom innenfor
+et kvantiseringstrinn av feltets deklarerte maksvind på 35,77 kn (maksimum
+ligger i en node sondegitteret ikke treffer). Kriteriet er dermed *ikke* utøvd
+på ekte fliser; det bindende beviset for det er fortsatt §9.2s syntetiske
+kjøring (15 750 overskridelser, alle fanget). Merk samtidig at egenskapen
+følger av den skranken som *er* målt her: er `|dekodet − sann| ≤ bånd` og
+`sann ≤ maxTws`, så er `dekodet ≤ maxTws + bånd`.
+
+### 14.4 Resultat 2 (beslutningsdyktig): null tapte harde forkastelser
+
+Marginal kjøring, båtgrense 26 kn, fire avganger (+0/+6/+12/+18 t), 30 ekte
+medlemmer, 11 konfigurasjoner. Forkastelsene er **TWS-drevne** (pakken bærer
+ingen bølge — se 14.9 forbehold 2), som er den rette mekanismen når det er
+*vind*kvantiseringen som måles. `REF`s hardfeil-sett er `{m14}` / `{m12}` /
+`{m09,m12}` / `{m02,m06,m07,m12,m13,m19}`.
+
+**Hovedtallet, over begge regimer:**
+
+| kjøring | konfig-avganger | tapte harde forkastelser |
+|---|---|---|
+| marginal (26 kn, 4 avganger × 11 konfig.) | 44 | **0** |
+| stress (22 kn, 3 avganger × 11 konfig.) | 33 | **2 — begge i nullkontroller** |
+
+De to eneste tapte forkastelsene i hele studien er `ANALYTISK` og `R-HALV` som
+mister `m27` ved +12 t i stresskjøringen. Begge er **Float32 uten et eneste
+kvantisert bit**, og `REF`s forkastelse der er «TWS 22,0 kn over båtens grense
+22 kn» — en margin som forsvinner i avrundingen. Det er 2,5 km- mot
+1,25 km-gitteret som flytter den, ikke en kvantiserer.
+
+**Ingen av de sju kvantiserte konfigurasjonene mister én eneste hard
+forkastelse — i noen avgang, i noe regime.** Det er hovedkriteriet, og det er
+oppfylt uten unntak.
+
+| konfig | tapte | lagt til (konservativ retning), marginal | felle-sett vs. `REF`, marginal |
+|---|---|---|---|
+| `ANALYTISK` (nullkontroll) | 0 (marg.) / **1** (stress) | `m16` (+18 t) | likt i alle fire |
+| `T-30M` (nullkontroll) | 0 | ingen | likt |
+| `R-HALV` (nullkontroll) | 0 (marg.) / **1** (stress) | `m16` (+18 t) | likt |
+| `W-UV8` (**E**) | **0** | `m23` (+18 t) | mister `m09` (+12 t), legger til `m23` (+18 t) |
+| `F-LSB010` | **0** | `m23` | mister `m09` |
+| `F-LSB010O` | **0** | `m23` | likt |
+| `F-LSB0125` | **0** | `m23` | likt |
+| `F-LSB0125O` | **0** | `m23` | mister `m09` |
+| `F-LSB025` | **0** | `m23` | mister `m09` |
+| `F-LSB025O` | **0** | `m08`, `m23` | mister `m09`, legger til `m23` |
+
+Merk at nullkontrollene `ANALYTISK` og `R-HALV` også legger til en forkastelse
+(`m16`) ved +18 t uten å kvantisere noe: terskelen er generelt knivskarp der.
+
+#### Felle-flippen på `m09` (+12 t) er vaktbåndet som VIRKER, ikke som svikter
+
+Fem av sju kvantiserte varianter «mister» fella `m09` ved +12 t, mens alle tre
+nullkontrollene beholder den. Det ser ut som et sikkerhetstap. Rådataenes
+`felleDetalj` viser at det er det motsatte:
+
+| konfig | vaktbånd | hard feil fyrer ved | tilbaketrekking til | R2-utfall |
+|---|---|---|---|---|
+| `REF` / `T-30M` | 0 kn | 12,808 t | 12,308 t | ingen havn ⇒ **felle** |
+| `ANALYTISK` | 0 kn | 12,793 t | 12,293 t | ingen havn ⇒ **felle** |
+| `R-HALV` | 0 kn | 12,792 t | 12,292 t | ingen havn ⇒ **felle** |
+| `F-LSB0125` | 0,088 kn | 12,806 t | 12,306 t | ingen havn ⇒ **felle** |
+| `F-LSB010O` | 0,071 kn | 12,307 t | **12,296 t** | ingen havn ⇒ **felle** |
+| `W-UV8` | 0,196 kn | **12,295 t** | **11,795 t** | **Smögen nådd på 4,7 t** ⇒ ikke felle |
+| `F-LSB025` | 0,177 kn | **12,296 t** | **11,796 t** | Smögen nådd ⇒ ikke felle |
+| `F-LSB025O` | 0,177 kn | **12,296 t** | **11,796 t** | Smögen nådd ⇒ ikke felle |
+| `F-LSB010` | 0,071 kn | **12,298 t** | **11,798 t** | Smögen nådd ⇒ ikke felle |
+| `F-LSB0125O` | 0,088 kn | **12,299 t** | **11,799 t** | Smögen nådd ⇒ ikke felle |
+
+Mekanismen er hele forklaringen. Vaktbåndet flytter den harde grensen ned til
+`maxTws − bånd`. Da fyrer forkastelsen på **ett rutesteg tidligere** (12,30 t
+i stedet for 12,81 t), R2s tilbaketrekking på ett steg lander på **11,80 t** i
+stedet for 12,31 t — og derfra *er* Smögen innenfor 6-timersskranken. Uten
+båndet seiler planen en halvtime lenger inn i uværet, og da er ingen havn
+nåbar. «Mistet felle» er her et **tidligere varsel**, ikke et tapt varsel.
+
+To ting til, som hører med:
+
+- `F-LSB010O` fyrer tidlig (12,307 t) men får likevel felle, fordi det
+  foregående rutesteget lå så tett at tilbaketrekkingen bare kom til 12,296 t.
+  Det er rutestegets granularitet, ikke båndet.
+- Effekten er **ikke monoton i trinnstørrelse**: 0,25 kn (begge ankere),
+  0,1 kn (null-ankret) og 0,125 kn (flis-ankret) fyrer tidlig, mens 0,125 kn
+  (null-ankret) fyrer sent — som `REF`. Hvilken av to naboceller som tripper
+  først er anker-lotteriet fra §9.2 forbehold 2, nå med en identifisert
+  mekanisme.
+
+Ved +18 t går det motsatt vei, og også der konservativt: alle sju kvantiserte
+legger til `m23` som hard forkastelse, og de tre med bredest bånd
+(`W-UV8` 0,182 kn og 0,25 kn på begge ankere) klassifiserer den i tillegg som
+**felle** — de tre finere når Skagen og gjør det ikke. Et bredere bånd gir
+altså både flere forkastelser og flere felle-varsler. Begge deler er den
+retningen §10 krav 6 ber om.
+
+Kontinuerlige tall: maks \|Δt\| på egen rute er **4,33 %** (`F-LSB0125O`,
++0 t) — mot nullkontrollenes 2,65 % (`ANALYTISK`) og 2,75 % (`R-HALV`).
+Største korridoravvik er **7,34 nm**, satt av nullkontrollen `R-HALV`.
+Korridorkriteriet skiller altså fortsatt ingenting (§4).
+
+#### Stresskjøringen (22 kn): felle-flips finnes også helt uten kvantisering
+
+`REF`s hardfeil-sett er 12 / 5 / 14 av 30 medlemmer ved +0/+6/+12 t.
+
+| avgang | tapte harde forkastelser | felle-endringer |
+|---|---|---|
+| +0 t | **0** i alle | ingen |
+| +6 t | **0** i alle | flere kvantiserte legger til feller — **og nullkontrollen `R-HALV` gjør det samme** |
+| +12 t | 0 i alle kvantiserte; **`ANALYTISK` og `R-HALV` mister `m27`** | `REF` har 6 feller; både kvantiserte og nullkontroller flytter settet |
+
+I metningsregimet er felle-dommen ikke en stabil funksjon av feltverdiene, og
+det er de **kvantiseringsfrie** konfigurasjonene som demonstrerer det tydeligst:
+de er de eneste som mister en hard forkastelse i hele studien. Felle-flips i
+metning kan derfor ikke attribueres til kvantisering, og de skiller ikke
+kandidatene.
+
+### 14.5 Resultat 3 (beslutningsdyktig): den søkefrie feltprøven — omsamplingen dominerer
+
+Samme sonde, men målt mot det **ekte** feltet i stedet for mot en Float32-pakke
+på samme grid. Da bærer tallet grid-omsamplingen i tillegg til kvantiseringen:
+
+| konfig | maks totalfeil | RMS totalfeil |
+|---|---|---|
+| `ANALYTISK` (feltet mot seg selv) | 0 | 0 |
+| `REF` (Float32, 2,5 km) | 13,71 kn | **0,3313 kn** |
+| `T-30M` (Float32, 30 min) | 13,71 kn | 0,3313 kn |
+| `R-HALV` (Float32, 1,25 km) | 12,99 kn | **0,2673 kn** |
+| `W-UV8` (**E**) | 13,74 kn | 0,3315 kn |
+| `F-LSB010` | 13,71 kn | 0,3316 kn |
+| `F-LSB025` | 13,73 kn | 0,3335 kn |
+
+**Omsamplingen fra det ekte ~2,4 km-gitteret til pakkemodellens 2,5 km-gitter
+koster 0,33 kn RMS. Kvantiseringen koster 0,010–0,039 kn RMS — mellom 9 og 34
+ganger mindre.** `T-30M` er bit-identisk med `REF` (kilden er timesoppløst, så
+tidsaksen har ingenting å hente), mens `R-HALV` reduserer RMS-en til 0,267 kn:
+resten er ekte romlig oppløsning, ikke en artefakt.
+
+Konsekvensen er metodisk og gjelder hele rapporten: på ekte felt er
+**oppløsning, ikke bitbredde, den dominerende feilkilden** — og en
+vaktbåndsvurdering som måler mot det ekte feltet i stedet for mot en
+Float32-pakke på samme grid ville målt omsampling og kalt det kvantisering.
+P1e (§9.2) er derfor ikke bare et bedre instrument her; det er det eneste
+gyldige.
+
+### 14.6 Resultat 4: bitbredden på ekte spenn — §9.2s byte-argument faller
+
+Bitbredden er en *konsekvens* av fast LSB, ikke et valg, og den er målt:
+
+| trinn | maks kodespenn i én flis+skive | bit m/gitter-justert flis-offset | maks \|kode\| | bit uten offset | hva 8 bit dekker |
+|---|---|---|---|---|---|
+| 0,25 kn | **198 koder** (49,5 kn) | **8** | 140 | 9 | 63,75 kn |
+| 0,125 kn | **396 koder** (49,5 kn) | **9** | 279 | 10 | 31,88 kn |
+| 0,1 kn | **495 koder** (49,5 kn) | **9** | 349 | 10 | 25,50 kn |
+
+Sammenlign med §9.2 Resultat 5, målt på fiksturene: der ga 0,1 kn **217
+koder**, passet i 8 bit med 3,8 kn margin, og anbefalingen ble formulert som
+«0,1 kn med gitter-justert flis-offset er byte-alignet». **Det holder ikke på
+ekte fliser.** Det ekte spennet er 49,5 kn, og:
+
+- 0,1 kn trenger 495 koder ⇒ **9 bit** (8 bit dekker 25,5 kn — halvparten av
+  det målte spennet, altså garantert klipping).
+- 0,125 kn trenger 396 koder ⇒ **9 bit** (8 bit dekker 31,9 kn).
+- 0,25 kn trenger 198 koder ⇒ **8 bit holder**, med 57 koders margin
+  (14,25 kn) på det verste målte spennet.
+
+§9.2s eget forbehold 3 forutså akkurat dette («87 koder i den verste flisen er
+en egenskap ved disse feltene … kravet er formulert som en kontroll produsenten
+kjører på ekte data»). Nå er kontrollen kjørt, og den avviser byte-alignet
+0,1 kn. Klipping ble likevel målt til **0** i alle kjøringer her, fordi
+harnessen ikke tvinger bredden til 8 bit — den *måler* den. Låses formatet til
+8 bit med 0,1 kn, **vil** koder klippes, og da er `√2·lsb/2` ikke lenger en
+gyldig skranke.
+
+### 14.7 Rangering (deskriptiv, §13)
+
+Fullt Pareto-søk per medlem (P2b) på ekte felt, 30 medlemmer, båtgrense 26 kn.
+**Kun to avganger** (+0 t og +18 t): P2b på ekte felt koster ~80 s per
+konfigurasjon og avgang, og fire avganger × ni konfigurasjoner er ~5 t. `+18 t`
+er avgangen med flest harde forkastelser (6 av 30) — der ensemblet faktisk
+splittes — og `+0 t` er tatt med som kontrast (1 av 30).
+
+| konfig | P50 +0 t / +18 t (t) | P90 +0 t / +18 t | gj.førbare | topp | inv. P50 | maks ΔP50 | uavgjort-bånd 6 % |
+|---|---|---|---|---|---|---|---|
+| `REF` | 12,778 / **12,354** | 12,932 / 12,810 | 30 / 28 | +18 t | — | — | — |
+| `ANALYTISK` (nullkontroll) | 12,478 / **12,382** | 12,989 / 12,842 | 30 / 27 | +18 t | 0 | **2,35 %** | uavgjort |
+| `W-UV8` (**E**) | 12,434 / **12,303** | 13,290 / 12,896 | 30 / 27 | +18 t | 0 | **2,69 %** | uavgjort |
+| `F-LSB010` | 12,617 / **12,320** | 13,014 / 12,840 | 30 / 28 | +18 t | 0 | 1,26 % | uavgjort |
+| `F-LSB010O` | 12,772 / **12,372** | 12,938 / 12,814 | 30 / 28 | +18 t | 0 | 0,14 % | uavgjort |
+| `F-LSB0125` | 12,760 / **12,301** | 12,913 / 12,802 | 30 / 28 | +18 t | 0 | 0,43 % | uavgjort |
+| `F-LSB0125O` | 12,753 / **12,375** | 13,023 / 12,843 | 30 / 28 | +18 t | 0 | 0,19 % | uavgjort |
+| `F-LSB025` | 12,605 / **12,346** | 12,931 / 12,948 | 30 / 28 | +18 t | 0 | 1,35 % | uavgjort |
+| `F-LSB025O` | 12,771 / **12,315** | 12,964 / 12,784 | 30 / 27 | +18 t | 0 | 0,31 % | uavgjort |
+
+**Alle ni peker på samme toppavgang, med null inversjoner, og samtlige ΔP50 er
+innenfor uavgjort-båndet.** Den største avvikelsen er `W-UV8` med 2,69 % — men
+nullkontrollen `ANALYTISK`, som ikke kvantiserer noe, ligger på 2,35 % på
+samme instrument. Spredningen er altså i all hovedsak søkets egen grenvalgstøy,
+akkurat slik §13 forutsatte da kriteriet ble nedgradert.
+
+Ingenting av dette er beslutningsdyktig (§13), og med bare to avganger er
+«samme topp, null inversjoner» dessuten en svak observasjon. Det den *gjør*, er
+å vise at ingen variant produserer et rangeringsutslag som skiller seg fra
+nullkontrollens.
+
+### 14.8 Konklusjon i tall
+
+**Er `E` (adaptiv 8-bit per flis) trygg på ekte fliser, per de
+beslutningsdyktige kriteriene?**
+
+**Ja.** På ekte spenn (49,5 kn i verste flis i pakkemodellen, 51,5 kn i
+produsentens egen):
+
+- vaktbånd **0,1984 kn**, målt maks kvantiseringsfeil **0,0744 kn** — 37 % av
+  båndet, margin 0,1102 kn. Gyldig skranke.
+- **0** klippede koder (adaptiv skala kan per konstruksjon ikke klippe).
+- **0** tapte harde forkastelser i 7 avganger × 30 medlemmer, i begge regimer
+  (de eneste to tapene i hele studien tilhører Float32-nullkontrollene).
+- **0** felle-flips som ikke er forklart: den ene (`m09`, +12 t) er vaktbåndet
+  som fyrer ett rutesteg tidligere og dermed *åpner* en rømningsvei, ikke
+  lukker en; den andre (`m23`, +18 t) er et ekstra felle-*varsel*.
+- rangering innenfor uavgjort-båndet, på nivå med nullkontrollen.
+- Prisen: `E` legger til én hard forkastelse `REF` ikke har (`m23`, +18 t) —
+  men det gjør alle de andre kandidatene også, og to av nullkontrollene legger
+  til `m16` på samme avgang. Om den er «falsk» kan denne målingen ikke avgjøre:
+  `REF` er ikke sannheten, bare et Float32-punkt på samme grid.
+- Det uendrede argumentet **mot** `E`: båndet er ikke feltuavhengig. Det er
+  `√2/2 · 2·maksTWS/255`, altså 0,198 kn ved 35,8 kn deklarert maks og
+  **0,333 kn ved 60 kn**. Det er hele grunnlaget for D6-C, og denne kjøringen
+  endrer det ikke.
+
+**Hvilke fast-LSB-varianter er trygge?**
+
+| trinn | P1e (andel av bånd) | tapte forkastelser | uforklarte felle-flips | klipping | bitbredde på ekte spenn | dom |
+|---|---|---|---|---|---|---|
+| **0,25 kn** (begge ankere) | 0,150 / 0,159 kn av 0,177 (85 / 90 %) | **0** | **0** | 0 | **8 bit** m/gitter-justert flis-offset | **består alle beslutningsdyktige kriterier — og er den eneste som er byte-alignet på ekte spenn** |
+| **0,125 kn** (begge ankere) | 0,076 / 0,074 kn av 0,088 (86 / 83 %) | **0** | **0** | 0 | 9 bit | består kriteriene, koster et niende bit |
+| **0,1 kn** (begge ankere) | 0,063 / 0,060 kn av 0,071 (89 / 84 %) | **0** | **0** | 0 | 9 bit | består kriteriene, koster et niende bit |
+
+Alle tre trinn, på **begge** ankere, består samtlige beslutningsdyktige
+kriterier på ekte fliser. Det er en annen konklusjon enn §9.2s, og forskjellen
+er ikke bedre data — det er at §9.2s avvisning av 0,25 kn hvilte på
+**rangeringen**, som §13 har nedgradert til deskriptiv.
+
+Merk hva som snur helt: §9.2 anbefalte 0,1 kn og pekte på at det var
+byte-alignet med gitter-justert flis-offset. På ekte spenn er **0,25 kn** det
+eneste trinnet som er byte-alignet — og det er samtidig det trinnet som gir det
+strammeste *bevisbare* båndet blant de byte-alignede alternativene: `E` bruker
+8 bit og får 0,198 kn, fast 0,25 kn bruker 8 bit og får 0,177 kn, og det siste
+tallet er en formatkonstant mens det første vokser med feltets maksvind.
+
+**Anbefaling til §10 (anbefaling, ikke beslutning):** de to alternativene som
+består alt *og* er byte-alignede på ekte spenn er `E` (adaptiv 8-bit per flis)
+og **fast LSB 0,25 kn med gitter-justert flis-offset**. Argumentet for fast LSB
+er at skranken er en formatkonstant som ikke degraderer i uvær (0,177 kn
+uansett felt, mot `E`s 0,333 kn på en 60-knops stormpakke); argumentet for `E`
+er at realisert oppløsning følger dataene og blir finere i rolige fliser
+(0,103 kn i `11_59` mot 0,202 kn i `11_57`). 0,1 og 0,125 kn kan fortsatt
+låses, men da med **9 bit** — det er en båndbreddebeslutning, ikke lenger en
+sikkerhetsbeslutning. Velges fast LSB, må produsent-kontrollen fra §9.2
+(«kodespennet i én flis og skive skal aldri overstige feltbredden») kjøres på
+hver pakke; her ble den målt til 198 av 255 koder, altså 78 % av budsjettet
+brukt på en frisk kuling.
+
+### 14.9 Forbehold som gjelder spesielt dette tillegget
+
+1. **Referansen er selv 8-bit.** Den ekte pakken er allerede kvantisert av
+   produsenten (vaktbånd 0,067–0,131 kn per flis). Vi måler *re*-kvantisering
+   av et allerede kvantisert felt. Det er riktig for spørsmålet «hva gjør
+   trinnvalget med ruten på ekte spenn?», men «Float32-referansen» her er ikke
+   sannheten fra MEPS — den er sannheten slik klienten faktisk ser den i dag.
+2. **Pakken bærer kun vind.** Strøm (NorKyst) og bølge (WAM800) mangler helt
+   (`build-report.json` §`missingFields`). Harde forkastelser er derfor
+   TWS-drevne. §10s Hs-rader får ingen ny støtte herfra, og §8s «Hs rundes
+   OPP»-konklusjon er urørt og fortsatt kun målt syntetisk.
+3. **Ett værbilde.** Én modellkjøring (init 2026-09-03 21Z), ett strekk, én
+   maske. Maks TWS i domenet er 35,8 kn — en frisk kuling, ikke en storm.
+   Spennene generaliserer ikke til vinterstorm, og bitbredde-regnskapet i 14.6
+   skal derfor leses som «minst dette», ikke som verste tilfelle. 198 av 255
+   koder i kuling er ikke betryggende for en storm.
+4. **Båtens TWS-grense er valgt for å bite.** 26 kn (og 22 kn i stress) er
+   ikke en egenskap ved Morild — det er der grensen må ligge for at et halvt
+   kvantiseringstrinn i det hele tatt kan flytte en forkastelse i dette
+   værbildet. Antall forkastelser er derfor ikke et prognostisk tall.
+5. **Felle-dommen i metning er ikke et måleinstrument.** 14.4 viser at
+   nullkontrollene flipper den. Skal felle-flips brukes som kriterium, må de
+   måles i et marginalt regime og alltid med minst én Float32-nullkontroll ved
+   siden av — og de må leses sammen med `felleDetalj` i rådataene, ellers kan
+   «vaktbåndet virket» ikke skilles fra «vaktbåndet sviktet».
+6. **Pakken er ferskvare.** `tools/weather-pack/out/` er gitignorert og ble
+   bygget om to ganger under dette arbeidet (init 04Z → 20Z → 21Z, og
+   flisoppdelingen endret seg fra 2°×2° til 1°×1°). Kjøringen er derfor pinnet
+   til en frossen kopi via `MORILD_VAERPAKKE`, og blob-hashene ligger i
+   `meta-*.json`. En reproduksjon på en nyere pakke måler **et annet vær**,
+   ikke en annen algoritme. De tidligere kjøringene ga de samme kvalitative
+   svarene (0 tapte forkastelser, 0 klipping, gyldig bånd), men rådataene for
+   dem er ikke bevart — blobene er innholdsadresserte og ble erstattet.
+7. **Rangeringen er kjørt på to avganger, ikke fire.** Se 14.7.
+8. §11s forbehold 1, 3, 5, 6 og 7 gjelder uendret.
+
+### 14.10 Reproduksjon
+
+```
+npx tsc -b packages/routing                 # tools/ leser dist/
+
+# Frys pakken først (den er ferskvare og gitignorert):
+#   kopier pointer-vaer-skandinavia.json, build-report.json og alle blobene
+#   pekeren refererer, til <frossen>; sett så
+export MORILD_VAERPAKKE=<frossen>
+
+node --max-old-space-size=8000 tools/kvantisering/ekte-flis-maaling.mjs \
+  --del feltprove,p3 --medlemmer 30 --tws-grense 26 --avganger 0,6,12,18 \
+  --ut docs/research/kvantisering-raadata/tillegg-ekte-flis
+node --max-old-space-size=8000 tools/kvantisering/ekte-flis-maaling.mjs \
+  --del p3 --medlemmer 30 --tws-grense 22 --avganger 0,6,12 \
+  --ut docs/research/kvantisering-raadata/tillegg-ekte-flis/stress-tws22
+node --max-old-space-size=8000 tools/kvantisering/ekte-flis-maaling.mjs \
+  --del rangering --tws-grense 26 --avganger 0,18 \
+  --konfig ANALYTISK,REF,W-UV8,F-LSB010,F-LSB010O,F-LSB0125,F-LSB0125O,F-LSB025,F-LSB025O \
+  --ut docs/research/kvantisering-raadata/tillegg-ekte-flis
+```
+
+Kjøretid på utviklingsmaskinen: feltprøve ≈ 1 min, P3 (26 kn, 4 avganger,
+11 konfigurasjoner) ≈ 4 min, P3 stress (22 kn) ≈ 10 min, rangering
+(9 konfigurasjoner × 2 avganger) ≈ 24 min. Alle tall i rådataene er
+deterministiske: to kjøringer av feltprøven og to kjøringer av
+stress-P3-en på samme frosne pakke gir **bit-identiske** filer, og
+rangeringen reproduserte alle ΔP50-tallene. Kun konsollens sekundangivelser
+er ikke deterministiske.

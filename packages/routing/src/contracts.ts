@@ -141,6 +141,34 @@ export interface WeatherField {
    */
   readonly maxDecodeErrorKn: number;
 
+  /**
+   * **Per-flis vaktbånd** (D7.3, vedtatt 2026-09-04 — `docs/research/
+   * ekspertpanel-d7-vaerpakkeformat-2026-09-04.md`, syntesens punkt 2).
+   *
+   * Et sammensatt felt (flere værfliser sydd sammen, `packages/weather`s
+   * `compositeWeatherField`) har ikke ÉN dekodefeil: hver flis kvantiseres
+   * for seg og har sin egen skranke i lagheaderen. `maxDecodeErrorKn` over
+   * er da maksimum over flisene — alltid gyldig, men unødig strengt der
+   * ruten faktisk går i den best kvantiserte flisen.
+   *
+   * Er denne metoden implementert, skal den returnere **den aktuelle
+   * flisens** bånd i oppslagspunktet, resolvert i NØYAKTIG samme rekkefølge
+   * som `wind(lat, lon, epochS)` — ellers sammenlignes én flis' vind med en
+   * annen flis' dekodefeil, og vaktbåndet slutter å være et vaktbånd.
+   * `undefined` (eller metoden helt fraværende) ⇒ motoren bruker
+   * `maxDecodeErrorKn`, altså den konservative maks-over-fliser. Motoren
+   * faller også tilbake til maks hvis svaret ikke er et endelig tall ≥ 0:
+   * den ene retningen vi ikke kan tillate er et *utvidet* hardt tak.
+   *
+   * Valgfri med vilje: enkeltflis-felt, syntetiske fikstur-felt og
+   * Float32-felt har ingenting å tilføye utover `maxDecodeErrorKn`.
+   */
+  maxDecodeErrorKnAt?(
+    lat: number,
+    lon: number,
+    epochS: number,
+  ): number | undefined;
+
   readonly validFromS: number;
   readonly validToS: number;
 

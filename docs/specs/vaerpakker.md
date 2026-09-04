@@ -982,6 +982,95 @@ interface QuantizationParams {
 }
 ```
 
+### 9.10 LÅST (fase 3 bølge 3A, D7.4) — sertifikat i pakkeheaderen
+
+**Besluttet 2026-09-04** etter ekspertpanelets D7-runde
+(`docs/research/ekspertpanel-d7-vaerpakkeformat-2026-09-04.md` — syntesens
+vilkår (6), lateral tenker-forslaget «byggeren sertifiserer maks feil per
+flis i header»): hver `PointerFieldEntry.header` (§5, §6) er ALLTID en
+`CertifiedPackageHeader` (`packages/weather/src/certificate.ts`) — en
+`PackageHeader` utvidet med et påkrevd `certificate`-felt. **En flis uten
+sertifikat er en flis klienten aldri skal stole på og alltid skal avvise**
+— samme designfilosofi som §9.6s sentinelverdi: fravær av garanti er
+alltid eksplisitt, aldri stille.
+
+```ts
+// packages/weather/src/certificate.ts — låst kontrakt (§9.10)
+interface FieldCertificate {
+  readonly maxDecodeErrorKn?: number;
+  readonly maxDirectionErrorDeg?: number;
+  readonly maxHsErrorM?: number;
+  /** ALDRI valgfri — se punkt 4b under (låst navn, koordinert med rutemotor-/klientagenten 2026-09-04). */
+  readonly clippedSamples: number;
+  readonly referenceInit: string;   // ISO 8601 — samme verdi som PackageHeader.init
+  readonly verifiedAt: string;      // ISO 8601 — batch-jobbens klokke, IKKE modellens init
+}
+interface CertifiedPackageHeader extends PackageHeader {
+  readonly certificate: FieldCertificate;
+}
+```
+
+**Semantikk, ordrett:**
+
+1. `maxDecodeErrorKn`/`maxHsErrorM` er den **analytiske øvre skranken**
+   regnet fra subflisens/skivens faktiske skala/offset (§9.5s
+   `√2·skala/2`-utledning for u/v-lagret vind, `windLayerMaxDecodeErrorKn`;
+   `skala/2` (nearest) eller `skala` (opp/ned, énsidig — Hs) for
+   skalarfelt) — maks |dekodet − rå| over **alle** noder og tidssteg
+   flisen faktisk bærer, IKKE et sample-basert anslag. Denne skranken er
+   bevist matematisk fra parametrene alene (§9.9-kontraktens `scale`), ikke
+   målt ved å prøve noen punkter.
+2. `maxDirectionErrorDeg` skanner feltets FAKTISKE fartsfordeling
+   (`tools/weather-pack/src/direction-budget.ts::fieldMaxDirectionErrorDeg`)
+   og tar maks over punktene der retning faktisk er meningsfullt definert
+   (§9.5: punkter med fart ≤ `maxDecodeErrorKn` har en dårlig definert
+   retning UANSETT kvantisering — de er aldri et brudd og telles derfor
+   heller ikke inn i sertifikatet).
+3. `verifyRoundTrip` (`build-live-package.ts`) er en byggetids-**spotsjekk**
+   som bekrefter at den analytiske skranken faktisk holder mot noen kjente
+   noder etter faktisk serialisering — den UTVIDER ALDRI skranken
+   sertifikatet bærer, den kan kun (ved brudd) stoppe bygget (samme
+   hard-feil-prinsipp som §9.6/N2 — se `build-live-package.ts::verifyRoundTrip`s
+   dokumentasjon).
+4. **Klippe-assert:** encode-siden (`buildLayer`s `onClip`-hook,
+   `packages/weather`) hard-feiler bygget umiddelbart dersom en verdi
+   noensinne kvantiseres med et avvik vesentlig over ett kvantiseringstrinn
+   fra sitt eget skala/offset-budsjett — det eneste slik kan skje er at
+   `encodeLinear` klippet en verdi utenfor `[lo,hi]` (§9.6), noe
+   `buildLayer`s to-pass-struktur (skala/offset regnes fra NØYAKTIG de
+   samme verdiene som kodes) strukturelt umuliggjør i normal drift. Asserten
+   er defense-in-depth, ikke en forventet kode-sti.
+   1. **`clippedSamples` (låst navn, 2026-09-04-koordinering med
+      rutemotor-/klientagenten):** antall observerte klipp, ALLTID satt
+      (aldri valgfri) — `0` betyr eksplisitt «ingen klipping observert»,
+      ALDRI «ikke undersøkt». Klienten skal ALDRI tolke fravær av dette
+      feltet som «uklippet» — et sertifikat uten `clippedSamples` er
+      ugyldig (`hasCertificate` krever det eksplisitt). Telles i
+      `tools/weather-pack/src/pipeline.ts::buildWindMemberPackage`
+      UAVHENGIG av om kalleren i tillegg hard-feiler bygget (§9.10 punkt 4)
+      — telletallet er derfor ekte, ikke en konsekvens av at bygget
+      overlevde.
+5. Et felt uten en meningsfull fart-/retningsskranke (f.eks. et rent
+   retningsfelt) utelater det aktuelle valgfrie feltet — `referenceInit`/
+   `verifiedAt`/`clippedSamples` er ALLTID til stede.
+6. **Klienten avviser en `PointerFieldEntry` uten `certificate`** — se
+   `requireCertificate`/`hasCertificate` (`packages/weather`). Dette gjelder
+   fra og med formatversjon **1.1.0** (minor — additivt felt, samme major
+   som 1.0.0, se `checkCompatibility`, §5).
+7. **`WeatherField.maxDecodeErrorKnAt?(lat, lon, epochS)` (D7.3, 2026-09-04-
+   koordinering):** rutemotorens `WeatherField`-kontrakt (og
+   `packages/weather`s speiling, `WeatherFieldLike`) fikk en valgfri
+   per-flis-variant av vaktbåndet — `undefined` NÅR OG BARE NÅR
+   `wind(lat,lon,epochS)` selv er `undefined` (samme dekningslogikk).
+   Verdien er `max(beregnet √2·skala/2, header.certificate.maxDecodeErrorKn)`
+   — det sertifiserte tallet kan aldri SENKE det beregnede båndet, kun heve
+   det (§9.10 punkt 3: sertifikatet er en spotsjekk, ikke den autoritative
+   kilden). `compositeWeatherField` (flere fliser sydd sammen) henter
+   båndet fra NØYAKTIG samme flis som ga vindsvaret — aldri en uavhengig
+   skanning som kunne plukket en annen flis. Motoren faller tilbake til
+   det globale `maxDecodeErrorKn` når metoden mangler (eldre/syntetiske
+   `WeatherField`-implementasjoner) — ALDRI til 0.
+
 ---
 
 ## 10. Reservert felt: EOF/basis×koeffisient-encoding (valgfritt, ikke besluttet)
@@ -1398,6 +1487,53 @@ starte.
 ---
 
 ## 19. Endringslogg
+
+- **2026-09-04 (2) — koordinering med rutemotor-/klientagenten (bølge 3B):**
+  tre presiseringer på §9.10-sertifikatet etter tilbakemelding fra
+  klientsiden. **(a)** `FieldCertificate.clippedSamples: number` er nå ALDRI
+  valgfri — låst navn, `hasCertificate` krever det eksplisitt, `0` betyr
+  «ingen klipping», ikke «ikke undersøkt» (`pipeline.ts::buildWindMemberPackage`
+  teller det uavhengig av om kalleren i tillegg hard-feiler). **(b)**
+  `WeatherFieldLike.maxDecodeErrorKnAt?(lat,lon,epochS)` implementert i
+  `toWeatherField`/`compositeWeatherField` (`weather-field-adapter.ts`) —
+  per-flis-bånd, `max(beregnet, header.certificate.maxDecodeErrorKn)`,
+  identisk dekningslogikk/flisvalg som `wind()`. **(c)** Vurdert å flytte
+  `certificate` inn i `packages/protocol`s delte `PackageHeader` — bevisst
+  IKKE gjort ennå: `CertifiedPackageHeader` i `packages/weather` holder
+  charts/polar upåvirket av værpakkens sertifikatskjema mens det fortsatt
+  er ferskt; strukturell typing gjør at klientkode som forventer
+  `PackageHeader & {certificate}` fungerer uendret uansett hvilken pakke
+  som faktisk definerer typen. Revurderes når formatet er stabilt over
+  flere bølger. Live-bygget kjørt på nytt (§9.10s `clippedSamples` krevde
+  et nytt build siden feltet ikke fantes i første 3A-bygg) — ny MEPS-kjøring
+  fanget opp samtidig (21Z, ikke 20Z), se rapporten.
+
+- **2026-09-04 — fase 3 bølge 3A: format E i produksjon, 1°-fliser,
+  sertifikat, subflis-adressering (vær-analytikeren).** Implementerer
+  ekspertpanelets D7-syntese (`docs/research/ekspertpanel-d7-vaerpakkeformat-
+  2026-09-04.md`): **(1)** `WEATHER_TILE_DEG` 2→1 (`tools/weather-pack/src/
+  grid.ts`) — standarden var allerede en eksplisitt parameter (§19 (6)
+  under), nå faktisk byttet. `build-live-package.ts::TARGET_TILES` regnes
+  nå fra endepunkt-bbox (Skjæløy–Skagen) + ≥0,5°-sikkerhetsmargin på alle
+  kanter (D7.2 — "byggeren bygger raust", flisdekning er ALDRI stramt
+  tilpasset en antatt korridor). **(2)** §9.10 (nytt): `certificate` i
+  hver `PointerFieldEntry.header` (`CertifiedPackageHeader`,
+  `packages/weather/src/certificate.ts`) — analytisk `maxDecodeErrorKn`/
+  `maxDirectionErrorDeg` fra subflisens faktiske skala, IKKE et sample-
+  estimat; `verifyRoundTrip` er en spotsjekk, ikke skranke-kilden.
+  Formatversjon 1.0.0→1.1.0 (additivt felt, samme major). **(3)**
+  Klippe-assert: `buildLayer` (`packages/weather/src/package-format.ts`)
+  fikk en `onClip`-hook som hard-feiler bygget dersom en verdi kvantiseres
+  med et avvik utover ett kvantiseringstrinn — strukturelt umulig i normal
+  drift (§9.10 punkt 4), men koblet inn i `build-live-package.ts` som
+  defense-in-depth. **(4)** D7.5: `computeSubtileByteRanges`/
+  `readLayerSubtile` (`packages/weather/src/package-format.ts`) — offentlig,
+  testet kontrakt for å lese ÉN subflis' indeks-/nyttelast-bytes fra
+  headeren alene, uten å dekode resten av laget (forberedelse for
+  korridor-Range-henting, ikke bygget her). `WEATHER_PACKAGE_FORMAT_VERSION`
+  (laget-skjemaet, separat fra `PackageHeader.formatVersion`) 1.0.0→1.1.0 —
+  ingen byte på disk endret, ren API-formalisering. Live-bygg + R2-opplasting
+  for korridor-flissettet: se rapporten samme dato.
 
 - **2026-09-03 (6) — D6-C kompresjonsspike på den EKTE vindpakken
   (vær-analytikeren).** Magnus besluttet D6-C etter §19 (4)s 27,4 MB-funn:

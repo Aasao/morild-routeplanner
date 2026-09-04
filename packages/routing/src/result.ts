@@ -236,6 +236,15 @@ export interface RouteDiagnostics {
     readonly hardConstraintDaylight: number;
     readonly capEvicted: number;
     readonly noWeather: number;
+    /**
+     * Delmengden av `noWeather` der tidspunktet lå **innenfor** værfeltets
+     * gyldige tidsvindu, men feltet likevel ikke hadde vind i posisjonen
+     * (D7.2). Det er signaturen til et hull i **flisdekningen** — til
+     * forskjell fra at prognosehorisonten tok slutt, som er den forventede,
+     * ufarlige delen av `noWeather`. Er den > 0, bærer ruten flagget
+     * `VAERDEKNING_BEGRENSET` og `safety.verdict` kan ikke være `"trygt"`.
+     */
+    readonly noWeatherInWindow: number;
     readonly cone: number;
     readonly outsideDomain: number;
   };
@@ -249,6 +258,16 @@ export interface IsochroneSnapshot {
 export interface RouteResult {
   readonly reached: boolean;
   readonly abortReason: AbortReason | null;
+  /**
+   * **Rute-nivå flagg** (D7.2) — samme bit-vokabular som `RouteStep.flags`
+   * (`FLAG_NAMES` i `cost.ts`), men om ruten som helhet. Et rute-flagg
+   * beskriver noe som skjedde med *søket*, ikke med et punkt på linjen, og
+   * kan derfor ikke bo på et steg: `VAERDEKNING_BEGRENSET` handler nettopp om
+   * etiketter som ble forkastet og altså aldri ble til et steg.
+   */
+  readonly flags: number;
+  /** Flaggnavn i `FLAG_NAMES`-rekkefølge — determinisme også i rapporteringen. */
+  readonly flagNames: readonly string[];
   readonly legs: readonly RouteLeg[];
   readonly steps: readonly RouteStep[];
   readonly totals: RouteTotals;

@@ -1,0 +1,325 @@
+{
+ "metode": "fullt Pareto-søk per medlem (P2b)",
+ "uavgjortBand": 0.06,
+ "offsetH": [
+  0,
+  18
+ ],
+ "perKonfig": {
+  "ANALYTISK": {
+   "akse": "baseline",
+   "p50": [
+    12.47763888888889,
+    12.382222222222222
+   ],
+   "p90": [
+    12.98938888888889,
+    12.842166666666667
+   ],
+   "gjennomfoerbare": [
+    30,
+    27
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.023478516070826773,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     -1
+    ]
+   }
+  },
+  "REF": {
+   "akse": "baseline",
+   "p50": [
+    12.77763888888889,
+    12.354027777777778
+   ],
+   "p90": [
+    12.931888888888889,
+    12.809750000000001
+   ],
+   "gjennomfoerbare": [
+    30,
+    28
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0
+    ]
+   }
+  },
+  "W-UV8": {
+   "akse": "vind",
+   "p50": [
+    12.43388888888889,
+    12.303055555555556
+   ],
+   "p90": [
+    13.290194444444444,
+    12.896055555555556
+   ],
+   "gjennomfoerbare": [
+    30,
+    27
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.026902466331155773,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     -1
+    ]
+   }
+  },
+  "F-LSB025": {
+   "akse": "vind",
+   "p50": [
+    12.605416666666667,
+    12.345555555555556
+   ],
+   "p90": [
+    12.931472222222222,
+    12.94811111111111
+   ],
+   "gjennomfoerbare": [
+    30,
+    28
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    0,
+    1
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.013478407373993216,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0
+    ]
+   }
+  },
+  "F-LSB025O": {
+   "akse": "vind",
+   "p50": [
+    12.77111111111111,
+    12.315277777777778
+   ],
+   "p90": [
+    12.964416666666667,
+    12.783777777777779
+   ],
+   "gjennomfoerbare": [
+    30,
+    27
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.003136628854737007,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     -1
+    ]
+   }
+  },
+  "F-LSB010": {
+   "akse": "vind",
+   "p50": [
+    12.617222222222223,
+    12.320138888888888
+   ],
+   "p90": [
+    13.0145,
+    12.840361111111111
+   ],
+   "gjennomfoerbare": [
+    30,
+    28
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.012554484287872675,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0
+    ]
+   }
+  },
+  "F-LSB010O": {
+   "akse": "vind",
+   "p50": [
+    12.771805555555556,
+    12.371805555555556
+   ],
+   "p90": [
+    12.937777777777777,
+    12.814361111111111
+   ],
+   "gjennomfoerbare": [
+    30,
+    28
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.0014390268580871557,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0
+    ]
+   }
+  },
+  "F-LSB0125": {
+   "akse": "vind",
+   "p50": [
+    12.760277777777778,
+    12.30097222222222
+   ],
+   "p90": [
+    12.912694444444444,
+    12.802166666666666
+   ],
+   "gjennomfoerbare": [
+    30,
+    28
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.00429459577960421,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0
+    ]
+   }
+  },
+  "F-LSB0125O": {
+   "akse": "vind",
+   "p50": [
+    12.752777777777778,
+    12.375277777777779
+   ],
+   "p90": [
+    13.023166666666667,
+    12.843277777777779
+   ],
+   "gjennomfoerbare": [
+    30,
+    28
+   ],
+   "rangP50": [
+    1,
+    0
+   ],
+   "rangP90": [
+    1,
+    0
+   ],
+   "motRef": {
+    "toppAvgangH": 18,
+    "toppAvgangRefH": 18,
+    "sammeTopp": true,
+    "inversjonerP50": 0,
+    "maksDP50Rel": 0.0019456733225361059,
+    "innenforUavgjortBand": true,
+    "gjennomfoerbarhetsdiff": [
+     0,
+     0
+    ]
+   }
+  }
+ }
+}

@@ -7,6 +7,8 @@
  * se rapporten for hva som gjenstår.
  */
 import type { PointerLoadResult } from "./weather/pointer-client.js";
+import type { TileSelection } from "./weather/tile-select.js";
+import type { TileRejection } from "./weather/tile-certificate.js";
 import type { FieldPresenceStatus } from "./weather/field-status.js";
 import { FIELD_LABEL_NO } from "./weather/field-status.js";
 import type { EnsembleSummary, MemberOutcome } from "./weather/ensemble.js";
@@ -24,6 +26,46 @@ export function renderPointerStatus(el: HTMLElement, status: PointerLoadResult):
   } else {
     el.textContent = `Ingen værdata tilgjengelig: ${status.reason}`;
   }
+}
+
+/**
+ * Flisvalget (D7.2): hvilken regel som ble brukt, hvilke fliser pekeren
+ * manglet, og hvilke som ble avvist av sertifikat-asserten. Alt tre er
+ * ærlig degradering (N2) — de skal stå i UI-et, ikke bare i konsollen.
+ */
+export function renderTileSelection(
+  el: HTMLElement,
+  selection: TileSelection,
+  rejections: readonly TileRejection[],
+): void {
+  el.replaceChildren();
+  const rule =
+    selection.rule === "a-star-felt"
+      ? "A*-feltets rekkevidde"
+      : selection.rule === "endepunkt-bbox"
+        ? "endepunkt-bbox + 0,5° (fallback — A*-feltet manglet)"
+        : "bbox-overlapp (pekeren har ikke et gjenkjennelig flisrutenett)";
+  const head = document.createElement("div");
+  head.textContent =
+    `Flisvalg: ${rule}. ${selection.tiles.length} flis(er) i bruk` +
+    `${selection.tileSizeDeg === undefined ? "" : ` (${selection.tileSizeDeg}°-rutenett)`}.`;
+  el.appendChild(head);
+
+  if (selection.missingTileIds.length === 0 && rejections.length === 0) return;
+  const list = document.createElement("ul");
+  if (selection.missingTileIds.length > 0) {
+    const li = document.createElement("li");
+    li.textContent =
+      `⚠ Pekeren mangler ${selection.missingTileIds.length} flis(er) ruten kan trenge: ` +
+      selection.missingTileIds.join(", ");
+    list.appendChild(li);
+  }
+  for (const r of rejections) {
+    const li = document.createElement("li");
+    li.textContent = `⚠ Flis ${r.tileId} (${r.field}, medlem ${r.member}) avvist: ${r.reason}`;
+    list.appendChild(li);
+  }
+  el.appendChild(list);
 }
 
 export function renderFieldStatuses(el: HTMLElement, statuses: readonly FieldPresenceStatus[]): void {

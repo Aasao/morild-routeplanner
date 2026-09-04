@@ -1,0 +1,45 @@
+Laster ekte fliser: 10_57, 11_57, 10_58, 11_58, 10_59, 11_59 (30 medlemmer)
+Ekte felt: 30 medlemmer, maks TWS 35.77 kn, domene lat 57.05–59.95, lon 10.05–11.95
+  flis 10_57: maks subflis-spenn 47.47 kn ⇒ produsentens 8-bit-trinn 0.1861 kn, vaktbånd 0.1019 kn
+  flis 11_57: maks subflis-spenn 51.46 kn ⇒ produsentens 8-bit-trinn 0.2018 kn, vaktbånd 0.1266 kn
+  flis 10_58: maks subflis-spenn 48.64 kn ⇒ produsentens 8-bit-trinn 0.1907 kn, vaktbånd 0.1306 kn
+  flis 11_58: maks subflis-spenn 46.58 kn ⇒ produsentens 8-bit-trinn 0.1827 kn, vaktbånd 0.1018 kn
+  flis 10_59: maks subflis-spenn 31.64 kn ⇒ produsentens 8-bit-trinn 0.1241 kn, vaktbånd 0.0759 kn
+  flis 11_59: maks subflis-spenn 26.21 kn ⇒ produsentens 8-bit-trinn 0.1028 kn, vaktbånd 0.0667 kn
+P3 +0t ANALYTISK   fast 18/30 hard=[m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 18/30 feller=[m28]
+P3 +0t REF         fast 18/30 hard=[m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 18/30 feller=[m28]
+P3 +0t W-UV8       fast 17/30 hard=[m01,m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 16/30 feller=[m28]  (+m01)
+P3 +0t F-LSB025    fast 17/30 hard=[m01,m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 17/30 feller=[m28]  (+m01)
+P3 +0t F-LSB025O   fast 17/30 hard=[m01,m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 17/30 feller=[m28]  (+m01)
+P3 +0t F-LSB010    fast 17/30 hard=[m01,m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 16/30 feller=[m28]  (+m01)
+P3 +0t F-LSB010O   fast 17/30 hard=[m01,m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 17/30 feller=[m28]  (+m01)
+P3 +0t F-LSB0125   fast 17/30 hard=[m01,m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 17/30 feller=[m28]  (+m01)
+P3 +0t F-LSB0125O  fast 17/30 hard=[m01,m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 16/30 feller=[m28]  (+m01)
+P3 +0t T-30M       fast 18/30 hard=[m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 18/30 feller=[m28]
+P3 +0t R-HALV      fast 18/30 hard=[m05,m10,m11,m14,m17,m21,m22,m23,m24,m27,m28,m29] egen 17/30 feller=[m28]
+P3 +6t ANALYTISK   fast 25/30 hard=[m12,m14,m20,m26,m28] egen 26/30 feller=[m12,m28]
+P3 +6t REF         fast 25/30 hard=[m12,m14,m20,m26,m28] egen 25/30 feller=[m12,m28]
+P3 +6t W-UV8       fast 24/30 hard=[m12,m14,m20,m21,m26,m28] egen 26/30 feller=[m12,m28]  (+m21)
+P3 +6t F-LSB025    fast 24/30 hard=[m12,m14,m20,m21,m26,m28] egen 26/30 feller=[m12,m28]  (+m21)
+P3 +6t F-LSB025O   fast 24/30 hard=[m12,m14,m20,m21,m26,m28] egen 26/30 feller=[m12,m28]  (+m21)
+P3 +6t F-LSB010    fast 25/30 hard=[m12,m14,m20,m26,m28] egen 27/30 feller=[m12,m28]
+P3 +6t F-LSB010O   fast 24/30 hard=[m12,m14,m20,m21,m26,m28] egen 27/30 feller=[m12,m28]  (+m21)
+P3 +6t F-LSB0125   fast 24/30 hard=[m12,m14,m20,m21,m26,m28] egen 27/30 feller=[m12,m28]  (+m21)
+P3 +6t F-LSB0125O  fast 24/30 hard=[m12,m14,m20,m21,m26,m28] egen 26/30 feller=[m12,m28]  (+m21)
+P3 +6t T-30M       fast 25/30 hard=[m12,m14,m20,m26,m28] egen 25/30 feller=[m12,m28]
+P3 +6t R-HALV      fast 25/30 hard=[m12,m14,m20,m26,m28] egen 25/30 feller=[m12,m28]
+P3 +12t ANALYTISK   fast 16/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25] egen 16/30 feller=[m06,m07,m09,m12,m15,m17]  ← TAPTE m27  (+m00)
+P3 +12t REF         fast 16/30 hard=[m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 16/30 feller=[m06,m07,m09,m12,m15,m17]
+P3 +12t W-UV8       fast 15/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 18/30 feller=[m06,m07,m09,m12,m15,m17]  (+m00)
+P3 +12t F-LSB025    fast 15/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 18/30 feller=[m01,m06,m07,m09,m12,m15,m17]  (+m00)  ← FELLE-FLIPP
+P3 +12t F-LSB025O   fast 15/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 17/30 feller=[m06,m07,m09,m12,m15,m17]  (+m00)
+P3 +12t F-LSB010    fast 15/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 17/30 feller=[m06,m07,m09,m12,m15,m17]  (+m00)
+P3 +12t F-LSB010O   fast 15/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 18/30 feller=[m06,m07,m09,m12,m15,m17]  (+m00)
+P3 +12t F-LSB0125   fast 15/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 18/30 feller=[m06,m07,m09,m12,m15,m17]  (+m00)
+P3 +12t F-LSB0125O  fast 15/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 18/30 feller=[m06,m07,m09,m12,m15,m17]  (+m00)
+P3 +12t T-30M       fast 16/30 hard=[m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25,m27] egen 16/30 feller=[m06,m07,m09,m12,m15,m17]
+P3 +12t R-HALV      fast 16/30 hard=[m00,m01,m02,m03,m06,m07,m09,m11,m12,m13,m15,m17,m21,m25] egen 17/30 feller=[m06,m07,m09,m12,m15,m17]  ← TAPTE m27  (+m00)
+
+P3 ferdig på 393 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-ekte-flis\stress-tws22

@@ -1,0 +1,1603 @@
+{
+ "beskrivelse": "Kvantiseringsharnessen på EKTE fliser — §14 i docs/research/kvantiseringsmaaling-2026-09-01.md",
+ "deler": [
+  "feltprove",
+  "p3"
+ ],
+ "kilde": {
+  "pakke": "tools/weather-pack/out (kun lesing)",
+  "run": {
+   "runName": "meps_lagged_6_h_latest_2_5km_20260903T21Z.nc",
+   "init": "2026-09-03T21:00:00Z",
+   "memberCount": 30,
+   "sourceStatus": {
+    "status": "ok"
+   }
+  },
+  "manglendeFelt": [
+   "current (NorKyst)",
+   "waves (Oceanforecast/WAM800)"
+  ],
+  "fliser": [
+   {
+    "tileId": "10_57",
+    "bbox": [
+     10,
+     57,
+     11,
+     58
+    ],
+    "medlemmer": 30,
+    "produsentStats": {
+     "maksSubflisSpennKn": 47.467021243589606,
+     "maksSubflisTrinnKn": 0.18614518134741023,
+     "versteSubflis": {
+      "kanal": "u",
+      "sr": 1,
+      "sc": 0,
+      "k": 5
+     },
+     "produsentVaktbandKn": 0.10191994330131984,
+     "bitsPerSample": 8
+    },
+    "blobHasher": [
+     {
+      "member": 0,
+      "hash": "14c940a91ef55344f5f5cabf7326999b595822936feec9b00ca8f081f628609b"
+     },
+     {
+      "member": 1,
+      "hash": "5d8ccdcfa0cb3e857da0c1d3bc4ccb854ab2e53dc9d229c5c791043df8d83379"
+     },
+     {
+      "member": 2,
+      "hash": "0e2d2c06af386313a3e1ee1e2e78492df90f5988963da31d1f79daafaf3767fd"
+     },
+     {
+      "member": 3,
+      "hash": "e6b1e9517d6f585584e57ec136cefc2ebd5e02a682c8b278073e534ab1cc8ed5"
+     },
+     {
+      "member": 4,
+      "hash": "aa628e1f5f43206fbc129935a50f0fb0ca722a0cdaa84b1da9f7b669ffc1c6b5"
+     },
+     {
+      "member": 5,
+      "hash": "f485aa2ff9a71aac706dde5753c3dc36a85ec11dc08a7e81d89fe331dcd9d853"
+     },
+     {
+      "member": 6,
+      "hash": "da70f43e0d9bfd8ecc3b0b7f1bd1792fddc1e7b132c2fe7858de70c08a9fadde"
+     },
+     {
+      "member": 7,
+      "hash": "9baafd46afa03570e897ad47e7675dcf09788da7ad88bfabc05676d7081a595f"
+     },
+     {
+      "member": 8,
+      "hash": "7b8006e0af96b861a78e041cff4abf3b3338b776400d8a62bdb8544bd240432c"
+     },
+     {
+      "member": 9,
+      "hash": "25bfbea158936f40b28039ef735a93bce313d6920731cd25cbadfe358df1de87"
+     },
+     {
+      "member": 10,
+      "hash": "5f1a17e0588b383ce6de788aade5c788a4f33f5b02eb7b6f7100558496aa5a7a"
+     },
+     {
+      "member": 11,
+      "hash": "83f99a4bb1f916b7a12c1f82a740dc164fe80b01b3b52363392f217d8d444ce7"
+     },
+     {
+      "member": 12,
+      "hash": "2fce8bcc877bd2ef04c3de8939c2b06a4f9b992dd919c81b067ae569fa30941d"
+     },
+     {
+      "member": 13,
+      "hash": "c4fce04972ba1c3c4ccd4435e7cef590c2182adfdc8d3efcaf575dab68fc910c"
+     },
+     {
+      "member": 14,
+      "hash": "677dafd5b95877eab678190f16ebc15275de76063928bff71a1380817c42a0d2"
+     },
+     {
+      "member": 15,
+      "hash": "d477474208b506460275bf1a63f7ce5f64cb3e5ab715c1af33f73f91d8bbd508"
+     },
+     {
+      "member": 16,
+      "hash": "d5316d52a23fe6ad53f0cd58b59c9a70e893898749e595f427e3205384b32ede"
+     },
+     {
+      "member": 17,
+      "hash": "ea5e20ffb180daa895745feaccdbfae38c8c630d8a138b4e4e43ddfa3b32ddde"
+     },
+     {
+      "member": 18,
+      "hash": "dce57bedbf7383783fde103adcafc5f7f3e5c892d963772eebca54286a5c4a77"
+     },
+     {
+      "member": 19,
+      "hash": "b08bd08ff187c6e1442f8521297ccededf948644081ba43930be01cfb631d66f"
+     },
+     {
+      "member": 20,
+      "hash": "b935f064771c8b5063d6eca17d47b7a0617a5dfa3428a32dfac3671edd86c4e1"
+     },
+     {
+      "member": 21,
+      "hash": "dde98382a064b89c1ec4d13b23b928600d2ff52347e5dd8b4c4c5231112b0f8a"
+     },
+     {
+      "member": 22,
+      "hash": "8d9c25edf3717eccdc1ff522b7c7d7195af686bf909f1ae2bbaaf7469424f25d"
+     },
+     {
+      "member": 23,
+      "hash": "ae77c58e378ed3d13d9f2faaf26b077df0c1e19bd10dc86863d84e63497590e9"
+     },
+     {
+      "member": 24,
+      "hash": "003091b1ffc6e98f5f31c56d536bbc6da0275719db7b03937d87d7bf837f3335"
+     },
+     {
+      "member": 25,
+      "hash": "257acb971ba1ed6eda73aa0a1bf888da64ea163587db3f6825a25080b1276692"
+     },
+     {
+      "member": 26,
+      "hash": "095c1721f23e1309bb8b55a10d01813f8f9837eeb0f5c289e309c3926891bf13"
+     },
+     {
+      "member": 27,
+      "hash": "acc1822c4f03861a4d62e8bd1327929b69ed1e87250ee702daa14897cb349beb"
+     },
+     {
+      "member": 28,
+      "hash": "06ea033bb71ce9d335d1620077835112a51e7d9a5fe20f7db7ab2bff813f419f"
+     },
+     {
+      "member": 29,
+      "hash": "76f97b776167f9d30de914ab39a74520ff35b4275ae4f649560425b54ef2f506"
+     }
+    ]
+   },
+   {
+    "tileId": "11_57",
+    "bbox": [
+     11,
+     57,
+     12,
+     58
+    ],
+    "medlemmer": 30,
+    "produsentStats": {
+     "maksSubflisSpennKn": 51.45709417523134,
+     "maksSubflisTrinnKn": 0.2017925261773778,
+     "versteSubflis": {
+      "kanal": "u",
+      "sr": 1,
+      "sc": 0,
+      "k": 7
+     },
+     "produsentVaktbandKn": 0.12656193380807293,
+     "bitsPerSample": 8
+    },
+    "blobHasher": [
+     {
+      "member": 0,
+      "hash": "788e0598d8dc19ad154ecf874bec7df2184544b473569b4b6a858fdb03ab8a71"
+     },
+     {
+      "member": 1,
+      "hash": "d4c438141e7c2d8bbbc6d58f0ea571ecdccb3e947d04973e387a429de0e6a660"
+     },
+     {
+      "member": 2,
+      "hash": "be670e171d9ddb208be66908d06e42e26c58cf90da539b4272a470ae90d96ba3"
+     },
+     {
+      "member": 3,
+      "hash": "db803f9f479562d7a58e9a4fef94bb395ea3ddbffb3b87186d1183f7e40155bd"
+     },
+     {
+      "member": 4,
+      "hash": "f98b1fe7710f472280a1afefb29ca8c44fa70450289b7a648c75f02bd55c1122"
+     },
+     {
+      "member": 5,
+      "hash": "88af14dff32c56b2748cb6dee4adb751d1e02af918da255c7726a530a21cb933"
+     },
+     {
+      "member": 6,
+      "hash": "9e182fec8883714d7b5f2dce8cc8f372400cbe58fd345a0195f89bf94d94e0e8"
+     },
+     {
+      "member": 7,
+      "hash": "4dadac11bb72941a72a3e3c0214f880da70ccd48a2cda979ca8609d1898ff1e7"
+     },
+     {
+      "member": 8,
+      "hash": "190628051b43d67f2300828fbee3f2e834d8f8e0cfacffc27945273ad9a277d7"
+     },
+     {
+      "member": 9,
+      "hash": "d331c07366e1f72784322aa763424f1fdd0c3ca85defaf35248097c9c8a7b33e"
+     },
+     {
+      "member": 10,
+      "hash": "4aba765cc5716f0608773d2bdcec3087f3a05d6de1ca3c09a68a53be0dc9fcd7"
+     },
+     {
+      "member": 11,
+      "hash": "8d7b2dd30f836b20eeea33e2f18fd5d1c26005fafb7cc4c97a3f026d7a26e79f"
+     },
+     {
+      "member": 12,
+      "hash": "99c853077a64587b7d85c6ba3871c9016d8166ba07c1ee00074f8499a7f9e253"
+     },
+     {
+      "member": 13,
+      "hash": "1d7a8343817c5a46e1ebba404079207941c385e8f87e60820016662f459622f0"
+     },
+     {
+      "member": 14,
+      "hash": "bb72ef02aab4063125e1fcefb0c8900899f6979a01d797df0258c437aeba5ec7"
+     },
+     {
+      "member": 15,
+      "hash": "6a7939e4c4f742ff27fbf96f31fd568476b7b4eded990bd0dc5b6ed71ec50d42"
+     },
+     {
+      "member": 16,
+      "hash": "01f692d7aacdc08457ca1577c853acdeda63657a69fa6bf3fb08536412e98414"
+     },
+     {
+      "member": 17,
+      "hash": "7b8f100fa3702f3c09706ad808b090006a5da26f81d20353296df87cc8fe19e1"
+     },
+     {
+      "member": 18,
+      "hash": "de8fc01ca965ea4388c4f710f474b0e2fcd50821e99eb19ee392fd865dfe23a3"
+     },
+     {
+      "member": 19,
+      "hash": "f2f41f94527b850605902a1bc64e59907468566aada022449144627b8c1c8433"
+     },
+     {
+      "member": 20,
+      "hash": "c65db02b8a2ee03c743eb42ace7e8cb49c1a4074b0f51370702eda60e57688c2"
+     },
+     {
+      "member": 21,
+      "hash": "e68533989cb6d7f05df467449c4947e0443affa1d522071026693a4332889bf7"
+     },
+     {
+      "member": 22,
+      "hash": "d825f2db5cff0b5f834140da6c5eefd0634d20dab05c4f6f23e151f4d4f78f79"
+     },
+     {
+      "member": 23,
+      "hash": "49365e21cab390323252b4aaf9544d67255990dcd19c5796550fabb0888a5368"
+     },
+     {
+      "member": 24,
+      "hash": "59144e15f277c230fb3bcce4910eac6a286b9e4df555745b66f74b74e1e4f95b"
+     },
+     {
+      "member": 25,
+      "hash": "4a4ce111ec12573211c562e0da67331dbe2c5cd9205fce0b1dba979cf7689e41"
+     },
+     {
+      "member": 26,
+      "hash": "87d15772d3466df8c75eaba2fcb9e8ae7b3dccde4eeb74fbf6516b2eb0ccfcdf"
+     },
+     {
+      "member": 27,
+      "hash": "1fca1713b06afd5addd9f7c52e571775f95d0802256c610a6a3acf4f777fc651"
+     },
+     {
+      "member": 28,
+      "hash": "e66b959eed49d599df31c16b3cb06e1b70db048d8c15104a09bab5ce1176fd3a"
+     },
+     {
+      "member": 29,
+      "hash": "f5af0a6eafd0e576cf6d4f3b6e9342794dc1c5f245836e289f97e3703ab2454c"
+     }
+    ]
+   },
+   {
+    "tileId": "10_58",
+    "bbox": [
+     10,
+     58,
+     11,
+     59
+    ],
+    "medlemmer": 30,
+    "produsentStats": {
+     "maksSubflisSpennKn": 48.63641932941293,
+     "maksSubflisTrinnKn": 0.1907310561937762,
+     "versteSubflis": {
+      "kanal": "u",
+      "sr": 0,
+      "sc": 0,
+      "k": 25
+     },
+     "produsentVaktbandKn": 0.1306063654059431,
+     "bitsPerSample": 8
+    },
+    "blobHasher": [
+     {
+      "member": 0,
+      "hash": "2b30d63f630cef213727ed22fb2fed9ce769aa83814e6b327966ae3b66306fed"
+     },
+     {
+      "member": 1,
+      "hash": "06cc83646aaf446ddf1f219e8a01d9fa836ab16dbba653235a5a1f8ec161f9b4"
+     },
+     {
+      "member": 2,
+      "hash": "dfc709f80210eff0e6ef1fd3d58b7acd7870906c37c17f85b715cb17fb75c725"
+     },
+     {
+      "member": 3,
+      "hash": "8588d9a55e8eda43f2472e5f09e1326c28f22446406a0a1572d63fc02dca646b"
+     },
+     {
+      "member": 4,
+      "hash": "96b134fe742aee895b5c39a53c4ee2c607d98a82a0ba76ae26e038051bf54573"
+     },
+     {
+      "member": 5,
+      "hash": "86497002465c425944f162af03de76016e16af276c201e830db9c2d1165114bb"
+     },
+     {
+      "member": 6,
+      "hash": "4349323607bca3d4a0a626da34b2af9f7f616ce0b8b1fa371737d12249c4d9e5"
+     },
+     {
+      "member": 7,
+      "hash": "fae470574bdc2f1a6b16b57af53915b8da19d2fd6c4060d3aa0adf904dca7f09"
+     },
+     {
+      "member": 8,
+      "hash": "9ef5b30e9fbaf7066a947840f72fde8a867ebfd8d5f742cd02ae1a76a6bc61a9"
+     },
+     {
+      "member": 9,
+      "hash": "b1314371632d1fb3a7c0ac666ac596a2424d04f5eaf5b99efa16db563906d4da"
+     },
+     {
+      "member": 10,
+      "hash": "31eae6914a0c19b01da782ce92f394df4ed026994cd0f09f53b2580c226463e7"
+     },
+     {
+      "member": 11,
+      "hash": "e7b0e13082ec34981991633b6e6d876beefc6fe587a9ee7ca79fb1390ced93e9"
+     },
+     {
+      "member": 12,
+      "hash": "49c326ccf8f82b08f4f5fac94755a6ff8b2277f8f9697c3a375d8bc2e7cc728f"
+     },
+     {
+      "member": 13,
+      "hash": "271c4e0c1099b8e8a8c2773cafdfeb47680be969c977f951175197a75d8f4551"
+     },
+     {
+      "member": 14,
+      "hash": "eadacb2c4680761fc2f7d5b7c6055041b963ca6b0352f1cdb9a7a94ea418b722"
+     },
+     {
+      "member": 15,
+      "hash": "f180815a43bb013d92fe035a7a3edcf8352ae46cfcb5c3133866bf43b8c17e13"
+     },
+     {
+      "member": 16,
+      "hash": "64e6d6cf8003d683646fcb28172f30263d379c87d053f339fae512706c7af2c1"
+     },
+     {
+      "member": 17,
+      "hash": "84cbb7c375b74791af7bff8b656dec7d24c7df76e535bda4341491447b469866"
+     },
+     {
+      "member": 18,
+      "hash": "18c5b4b4b85269a6f2cb6c6d41fc61033e24464196df13d74458f64843c6adb0"
+     },
+     {
+      "member": 19,
+      "hash": "59d143d4f508edaba3e47deaa6436fe21aa39a3a71b8676b46e6deedb5fcb0a4"
+     },
+     {
+      "member": 20,
+      "hash": "0617a107b23dd232162f8eb00214a87c48e6dfd562f09c407ab292974e3be582"
+     },
+     {
+      "member": 21,
+      "hash": "2eab468633084af988f4854ce2872116cad96d725b94d799d2089b233e73127e"
+     },
+     {
+      "member": 22,
+      "hash": "b4d24d86d576bbe37e145699a3a9fe241fa41cf2a479f339e869489617ae49ff"
+     },
+     {
+      "member": 23,
+      "hash": "097c0b21cc371c70075034a4c4cc9088ef026919282fbbaaa2bba1791a94d3be"
+     },
+     {
+      "member": 24,
+      "hash": "cd6c173a03d402b4f4f30cf79395960e1556ba73ddd38c09f6e91d50a9ded48d"
+     },
+     {
+      "member": 25,
+      "hash": "e75aadbc6eea6783c4a09bbc1fcdfa3ffed3ffebf05997b32a3ba3a6946bb366"
+     },
+     {
+      "member": 26,
+      "hash": "ddf6c8dd41caefc6a55179d12d8566c533df2e79bdbcedce66b6ddc8f254d2ea"
+     },
+     {
+      "member": 27,
+      "hash": "6685f293bd4610dde5c99e39f34751000221b008ba478cbe8a893655a5f9501f"
+     },
+     {
+      "member": 28,
+      "hash": "e252ead87337b27daad21c60930bc09a3d1f6451329fed3afcc1e4117e3c57dd"
+     },
+     {
+      "member": 29,
+      "hash": "546eed3e8471366de268736d5b1e15874b91de3034736b588298f76cf1ae3de4"
+     }
+    ]
+   },
+   {
+    "tileId": "11_58",
+    "bbox": [
+     11,
+     58,
+     12,
+     59
+    ],
+    "medlemmer": 30,
+    "produsentStats": {
+     "maksSubflisSpennKn": 46.58464485681231,
+     "maksSubflisTrinnKn": 0.18268488179142084,
+     "versteSubflis": {
+      "kanal": "u",
+      "sr": 0,
+      "sc": 0,
+      "k": 7
+     },
+     "produsentVaktbandKn": 0.10183840727352053,
+     "bitsPerSample": 8
+    },
+    "blobHasher": [
+     {
+      "member": 0,
+      "hash": "c2f3c3617a9e5f7c687a428db70ce3bdcf4a35ec24342a38dfae03687ed21383"
+     },
+     {
+      "member": 1,
+      "hash": "c7b4c42c134eace22a0b36fa0f496cd45f98b8348f9a311e0145f46f97bf1f1e"
+     },
+     {
+      "member": 2,
+      "hash": "63c9c575b45dac277e3078c292a154891144a4ca8f41a3d55dbdc03915729471"
+     },
+     {
+      "member": 3,
+      "hash": "0af2139148ec8e1686fcac9808d7c37b7eaba479eddeefdfd0dfc361e2e07fe8"
+     },
+     {
+      "member": 4,
+      "hash": "0fcf2bf8d6d4ad404009f9db30dd29b07818058b36fbbdb9b316d85c340160d8"
+     },
+     {
+      "member": 5,
+      "hash": "8f8b3f1e306ae475c1fe1722b018342157ee80a0b46a34ab456f386969953de8"
+     },
+     {
+      "member": 6,
+      "hash": "0dd2eafb74331a2da2e490d7db30592d72fff56b1549d5c1467bcea8eb4d2864"
+     },
+     {
+      "member": 7,
+      "hash": "1eff2f0d83b0dcf63b41657040689b74156e98b9cf834bdb810e46aa353d66a7"
+     },
+     {
+      "member": 8,
+      "hash": "4f50e6cbbcd0710cc20c58f44b77990a93fc1c460deb3c2ea2cc6bc0b6f59bd5"
+     },
+     {
+      "member": 9,
+      "hash": "638db337b630764378a1b630ebc736f6bfd9b4b273af94cef78dcf780d88753b"
+     },
+     {
+      "member": 10,
+      "hash": "1da2901bf4e1b5642779f561a6ac7995b8131a44be10b82b1502e4588df4706f"
+     },
+     {
+      "member": 11,
+      "hash": "15d020bd2a3de600364dad0d6787d60000f6107fbc951ba2a717fd017553a41b"
+     },
+     {
+      "member": 12,
+      "hash": "a83bffc229223e1ea95fd362281a4d1e987133e708b8029e3bae8780c4aec66a"
+     },
+     {
+      "member": 13,
+      "hash": "c53782f276109b3d89ab0ed5f9b7e362730f32c265239c7c84f0059d92684409"
+     },
+     {
+      "member": 14,
+      "hash": "f0201cafc3e3091eebe52d6fa64f195cd9b732940ef46483ab06ac6a2232cd95"
+     },
+     {
+      "member": 15,
+      "hash": "aae25e592313d0eba883bff9522d4df1047974a45c4eb1861d94ec2f4d2d90d5"
+     },
+     {
+      "member": 16,
+      "hash": "691e03efbe222b74c18870d97ac8c8a5e1e922b248dbab70fed6739aefbc2ec6"
+     },
+     {
+      "member": 17,
+      "hash": "6082fb80d2c684015d6e050157088260532b7eab21a6362577f73849b1f7fd4b"
+     },
+     {
+      "member": 18,
+      "hash": "c55bcb15251ce471ccbd4adc0144644b1023cd2fb9741009e1a6f74bca538196"
+     },
+     {
+      "member": 19,
+      "hash": "40d001526144cfe250b8e59706259533eda7a45521917a518ededf528f795a5f"
+     },
+     {
+      "member": 20,
+      "hash": "abb5a705d92c5429c0c377beb401852bde029c0b0d027e2509458339690c90c1"
+     },
+     {
+      "member": 21,
+      "hash": "02feed25234f875fc0cab32cacccde5b1d726088476617a130898a34a44543f6"
+     },
+     {
+      "member": 22,
+      "hash": "9c98ade9d556a6fce881507f42a566d3bef086a9149941db28c88eb9db394672"
+     },
+     {
+      "member": 23,
+      "hash": "e48548f542479698088160368c4ae5af231bedf601efd7aafd911a3b14c42605"
+     },
+     {
+      "member": 24,
+      "hash": "62de869d2c73f726bf4a7928bd78e06244c3bfb94c7fe0c1d1b961a13dfbd36b"
+     },
+     {
+      "member": 25,
+      "hash": "d0cbcdd6e97c2365b92c2c25281f80beb1c59cd6e788424de9c1f4aa41e2f3c7"
+     },
+     {
+      "member": 26,
+      "hash": "e0a62ba274ff0dd12b21fc70e97f94e6b413f5c15b3a8ddf262830c700b21031"
+     },
+     {
+      "member": 27,
+      "hash": "29c04c719b3d502a7430296d0bef96e06853e3505b14b7922862d2affe29c1d2"
+     },
+     {
+      "member": 28,
+      "hash": "70d164254c5e0a343cfb5f6bd49ef97d2b7ef7f5862e5a6a7fcbd3277de6b57f"
+     },
+     {
+      "member": 29,
+      "hash": "42c4c75c53baa59dfecd5169c183eb8b749c3f947b1d3acebff0d7b05b68a435"
+     }
+    ]
+   },
+   {
+    "tileId": "10_59",
+    "bbox": [
+     10,
+     59,
+     11,
+     60
+    ],
+    "medlemmer": 30,
+    "produsentStats": {
+     "maksSubflisSpennKn": 31.63951035657285,
+     "maksSubflisTrinnKn": 0.12407651120224647,
+     "versteSubflis": {
+      "kanal": "u",
+      "sr": 0,
+      "sc": 0,
+      "k": 42
+     },
+     "produsentVaktbandKn": 0.07588528138219007,
+     "bitsPerSample": 8
+    },
+    "blobHasher": [
+     {
+      "member": 0,
+      "hash": "304ec02913fa0d00fd107840ffe3f3590679e5bc7e4f8b08df9826403ec5fb7a"
+     },
+     {
+      "member": 1,
+      "hash": "29c74bfd08c563c8a2a46d7d857b5ab09228cd2dc4f83c3481b52b262a0a1409"
+     },
+     {
+      "member": 2,
+      "hash": "7aca20af0d8b85ea9c7f15feccec64ca2d7d9c07ff934051b2e143debfd3d70b"
+     },
+     {
+      "member": 3,
+      "hash": "bcb10d49fd53e1ea32a08deb9c295ff30e40dccb64a87dffa23122518441d149"
+     },
+     {
+      "member": 4,
+      "hash": "1c6cc1a4d2c7f579a53d73753e815276d5c71690ae3b9a41a5978ee8c512f4cd"
+     },
+     {
+      "member": 5,
+      "hash": "534c3f49cdc05694cdc7260e8f63e63fed769577da38a9fa854d912707c0ab1a"
+     },
+     {
+      "member": 6,
+      "hash": "79f04ca91d753755fed33b19c4bad77bd27701a689c553de9d17f4c93acb2847"
+     },
+     {
+      "member": 7,
+      "hash": "a6d9d7d93ded9b6a3d0b4dca9dd8d3d18013c444927bb35e859956d712c25a2c"
+     },
+     {
+      "member": 8,
+      "hash": "31120a4ab0f8e644de1d6a70d9fcb9c24643e81025891b108fe922cee957aa18"
+     },
+     {
+      "member": 9,
+      "hash": "66dff0bf24f52f46d602501c8e044ea8970a39534312160c687df23d41a7ed34"
+     },
+     {
+      "member": 10,
+      "hash": "d6f9ce13a106cad44247d29b0f81e4514af7bf197e6c0cf825510c17ed9c9bb4"
+     },
+     {
+      "member": 11,
+      "hash": "e4297b01c68760a6fba508040f213dff40abee88024014927090b0fbe3530d17"
+     },
+     {
+      "member": 12,
+      "hash": "c3aad91a81906777dd39d28a8e4f71ac1b9825bf28bb5fa80775707e54f429cf"
+     },
+     {
+      "member": 13,
+      "hash": "c0f51f7bd39ebc4dc23560cf01ba373b32e58fcc3565d04d471bed7c035e7fd9"
+     },
+     {
+      "member": 14,
+      "hash": "6999b07e7d656ecbcba1eef652754a29d1cd6c996bfafd35e4cb5f49abd71a35"
+     },
+     {
+      "member": 15,
+      "hash": "3088ccba8a310063f0903c0ac7686f84d454781c2e49dcf7b85bee43a9db5a24"
+     },
+     {
+      "member": 16,
+      "hash": "ece5ff89dc052c64e375313350403f6d0767ecd549a63064c867b7c402cbdebe"
+     },
+     {
+      "member": 17,
+      "hash": "a9f8a001314b858db6ebbbca0a4540086afdf6f7e82376e442c2541469022213"
+     },
+     {
+      "member": 18,
+      "hash": "b125a0b907ab1105277d68dda5a9ded9a90fae413f0124244ba3772c5ce9de8b"
+     },
+     {
+      "member": 19,
+      "hash": "a8e29340b15ce0b8c452e8a3c2f8b23032f0062877ceb7884dc7eea400bb67b0"
+     },
+     {
+      "member": 20,
+      "hash": "4b7ad7f7cfe63141ed0db99053139e7599cc6707034933c81eeb40836f535244"
+     },
+     {
+      "member": 21,
+      "hash": "10fff5989ed8c409602487540af74526c8a4994a86b90310087f2828b9d38f10"
+     },
+     {
+      "member": 22,
+      "hash": "b2debde832fa689f3b2da2d51319607b3d653f153ef998312f861ae4c3eae6b2"
+     },
+     {
+      "member": 23,
+      "hash": "51ac46332a8682e4aeef2dc40ad416466a57b9d57866935ae1e18e1100efdfef"
+     },
+     {
+      "member": 24,
+      "hash": "40d266df92ab00e56892465a94b60899e86ad6443d6daa970017f7ebfd6f7e1f"
+     },
+     {
+      "member": 25,
+      "hash": "3ab23c2b5615268148b32baa6b147be451d79497b0473dde86a6be433edc72d4"
+     },
+     {
+      "member": 26,
+      "hash": "86fad263c8caef9134f395a39ba2077c7a2aeb7e13826dff1427bde2ffbb31e9"
+     },
+     {
+      "member": 27,
+      "hash": "84e1e3a3a8f98fec64ba80ed316d0dd455dd80065b1cd15eea35bfbfd3f44f41"
+     },
+     {
+      "member": 28,
+      "hash": "f9e822413d76630c221c9ce261d2e2c46541f433f8beb44c41e2c10fad29dc8d"
+     },
+     {
+      "member": 29,
+      "hash": "c6ed8eb28720157d415a5d3d54e53b58fa1b1b977a42f951106a9e40a814e93c"
+     }
+    ]
+   },
+   {
+    "tileId": "11_59",
+    "bbox": [
+     11,
+     59,
+     12,
+     60
+    ],
+    "medlemmer": 30,
+    "produsentStats": {
+     "maksSubflisSpennKn": 26.21000846435441,
+     "maksSubflisTrinnKn": 0.1027843469190369,
+     "versteSubflis": {
+      "kanal": "u",
+      "sr": 0,
+      "sc": 0,
+      "k": 44
+     },
+     "produsentVaktbandKn": 0.06666197083562006,
+     "bitsPerSample": 8
+    },
+    "blobHasher": [
+     {
+      "member": 0,
+      "hash": "bf4d75200940e18a7f188696f6c73fefa8d80130959780385006efff03cf0227"
+     },
+     {
+      "member": 1,
+      "hash": "e6270ad4567cb98e19173c3a7be6bfccbdb1fe7d77fbb6c81c4c7dd583443c33"
+     },
+     {
+      "member": 2,
+      "hash": "faac68182a63f5cfa34f4eef2f5c77edadd490d75bfe44bce7abc2e85a28865d"
+     },
+     {
+      "member": 3,
+      "hash": "57a398f8fdf1823a878f7279a3feb1304cac7e4024a60e3a7aaeed7ef52f829f"
+     },
+     {
+      "member": 4,
+      "hash": "1241b0d0da3612965be0a409994b7341e4127206ac7f8f5bdb0d4041e8fa7565"
+     },
+     {
+      "member": 5,
+      "hash": "30e8a8cda929bc81f016214cf4cf1dc7c1daede3aa35981dc8c478ff8c9b730c"
+     },
+     {
+      "member": 6,
+      "hash": "e4a94c204e32f4229f4edea6ef5151d7c2c818bd832e110271da52c201ea66dc"
+     },
+     {
+      "member": 7,
+      "hash": "7465ed14144319309d5583b056c4a80577e49b4ea585b41d9554bd02cafebb5f"
+     },
+     {
+      "member": 8,
+      "hash": "5c780341604de566b704f9c81fea040b71f7726bb57d96bc22028cd90daada94"
+     },
+     {
+      "member": 9,
+      "hash": "00eae482f2274d3d8c7c108cb9834add2b9069b9ab9aff6ea0b05dd0b4a64cdb"
+     },
+     {
+      "member": 10,
+      "hash": "afe3a7ff5a79c6ffbf0935b91110d002db4aa2d2fad4b57a9d747bd4541d1272"
+     },
+     {
+      "member": 11,
+      "hash": "3709adbe3a0cc15f5a4e423c84dca71c9bf0dc8229c12c0126eed3b962995a0b"
+     },
+     {
+      "member": 12,
+      "hash": "11f6e6756f01534c64bb5ad5a8425468d1cfc240451852e57b22d0e8fc515305"
+     },
+     {
+      "member": 13,
+      "hash": "8d6df59bdcde58bf266262a4afab20e6de19c5aa24ecf2d66553178f3a4a0214"
+     },
+     {
+      "member": 14,
+      "hash": "68cdc143f651429aba15977b9bcaa3b4d3eed433a42fdd5d1144baabff82ffbb"
+     },
+     {
+      "member": 15,
+      "hash": "61c0a9e53508057bb78f616f73d7e955a382228d9d323d85fea4b105928b9e00"
+     },
+     {
+      "member": 16,
+      "hash": "f14b749bb0dbe2ae0d25c3ac5a7ea301d71d54cbe6ce3caaf33f87fe4cb33ee7"
+     },
+     {
+      "member": 17,
+      "hash": "c2562bf33275ed3ff1b56c1c838bae7f92c9fbe467396f4bb0b26b1ea202da23"
+     },
+     {
+      "member": 18,
+      "hash": "2496ff57af2689167b5171985a42f98a2b24336c9379e9f5f409a52df2dd5896"
+     },
+     {
+      "member": 19,
+      "hash": "4e25c9644100f87252727dfc99411518ec794be36fe7f7294e8ccc84a10d48be"
+     },
+     {
+      "member": 20,
+      "hash": "5bbbdd42595d88e273f3e08a7c90ea51be1a9213978f5d986183c99717809195"
+     },
+     {
+      "member": 21,
+      "hash": "02b8f36f36f5354cea8b57e029f254b0592016cb80029f1d2e5229d9a5181621"
+     },
+     {
+      "member": 22,
+      "hash": "65c1bbb6512fcc1220810e660d99508ff39d94c5182857fd48d5a299d6087d8d"
+     },
+     {
+      "member": 23,
+      "hash": "0c2ae7b537c37d057fc1e1a256e43cdea457291edc6636245458d5a87309aa15"
+     },
+     {
+      "member": 24,
+      "hash": "0740df652cb85621eb8e28d1662cce4977c0560c6f8b879800d2d59f06d3ae20"
+     },
+     {
+      "member": 25,
+      "hash": "83d8ad0ed296a37c8162c97cc1de82d2d1651856451c96ed391f835737f9c739"
+     },
+     {
+      "member": 26,
+      "hash": "1b006b7eb58840ea6dc58476623a23bc322fc954444bff01cdfd380f766ab868"
+     },
+     {
+      "member": 27,
+      "hash": "4ca6e2d8777d3056feedcc7d98a080d579098cd15f62591821c0c09889735401"
+     },
+     {
+      "member": 28,
+      "hash": "a6a0af8ebcf9ad4f45237785aa8104b31abafe067a5f5fc386d2cdc430989dd2"
+     },
+     {
+      "member": 29,
+      "hash": "958313a6da1837f07190947572ad4a116ca391d8f91adf40dcd10a6d039cd820"
+     }
+    ]
+   }
+  ]
+ },
+ "domene": {
+  "latMin": 57.05,
+  "latMax": 59.95,
+  "lonMin": 10.05,
+  "lonMax": 11.95
+ },
+ "departEpochS": 1788472800,
+ "twsGrenseKn": 26,
+ "avgangerH": [
+  0,
+  6,
+  12,
+  18
+ ],
+ "uavgjortBand": 0.06,
+ "feltPerMedlem": [
+  {
+   "medlem": 0,
+   "maxTwsKn": 33.92692430353264,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 1,
+   "maxTwsKn": 35.767884767892326,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 2,
+   "maxTwsKn": 33.099757392438875,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 3,
+   "maxTwsKn": 30.79171427224334,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 4,
+   "maxTwsKn": 33.69482524866991,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 5,
+   "maxTwsKn": 33.73492528978599,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 6,
+   "maxTwsKn": 32.2942650003706,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 7,
+   "maxTwsKn": 33.08629917806217,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 8,
+   "maxTwsKn": 31.533543879608224,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 9,
+   "maxTwsKn": 35.4240305670449,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 10,
+   "maxTwsKn": 31.437039684975858,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 11,
+   "maxTwsKn": 31.460856892386087,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 12,
+   "maxTwsKn": 32.63024212365791,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 13,
+   "maxTwsKn": 30.40993713069448,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 14,
+   "maxTwsKn": 34.097017698760595,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 15,
+   "maxTwsKn": 33.56330627230561,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 16,
+   "maxTwsKn": 34.798491507786785,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 17,
+   "maxTwsKn": 29.229649588168922,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 18,
+   "maxTwsKn": 30.620933138174937,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 19,
+   "maxTwsKn": 33.7934073071747,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 20,
+   "maxTwsKn": 31.834613391515376,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 21,
+   "maxTwsKn": 35.26653211127351,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 22,
+   "maxTwsKn": 32.94484534776183,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 23,
+   "maxTwsKn": 32.887341950725826,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 24,
+   "maxTwsKn": 31.286888735718204,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 25,
+   "maxTwsKn": 31.038929173755918,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 26,
+   "maxTwsKn": 32.349829912764434,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 27,
+   "maxTwsKn": 31.93690895761739,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 28,
+   "maxTwsKn": 34.81290873466155,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  },
+  {
+   "medlem": 29,
+   "maxTwsKn": 32.60520596600196,
+   "validFromS": 1788469200,
+   "validToS": 1788642000
+  }
+ ],
+ "konfigurasjoner": [
+  {
+   "id": "ANALYTISK",
+   "akse": "baseline",
+   "note": "Fiksturfeltet urørt — måler referansepakkens egen gridfeil.",
+   "spec": null
+  },
+  {
+   "id": "REF",
+   "akse": "baseline",
+   "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+   "spec": {
+    "id": "REF",
+    "note": "Float32, 2,5 km vind/bølge, 0,8 km strøm, 1 t. Referanse for alle akser.",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "W-UV8",
+   "akse": "vind",
+   "note": "u/v 8-bit, skala/offset per flis",
+   "spec": {
+    "id": "W-UV8",
+    "note": "u/v 8-bit, skala/offset per flis",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": 8,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB025",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,25 kn, ankret i fysisk null (ingen offset)",
+   "spec": {
+    "id": "F-LSB025",
+    "note": "u/v fast LSB 0,25 kn, ankret i fysisk null (ingen offset)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.25,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB025O",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,25 kn, offset = eksakt flis-minimum",
+   "spec": {
+    "id": "F-LSB025O",
+    "note": "u/v fast LSB 0,25 kn, offset = eksakt flis-minimum",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.25,
+     "lsbOffset": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB010",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,1 kn, ingen offset (finhetskontroll)",
+   "spec": {
+    "id": "F-LSB010",
+    "note": "u/v fast LSB 0,1 kn, ingen offset (finhetskontroll)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.1,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB010O",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,1 kn, offset per flis (finhetskontroll)",
+   "spec": {
+    "id": "F-LSB010O",
+    "note": "u/v fast LSB 0,1 kn, offset per flis (finhetskontroll)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.1,
+     "lsbOffset": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB0125",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,125 kn, ankret i fysisk null (ingen offset)",
+   "spec": {
+    "id": "F-LSB0125",
+    "note": "u/v fast LSB 0,125 kn, ankret i fysisk null (ingen offset)",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.125,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "F-LSB0125O",
+   "akse": "vind",
+   "note": "u/v fast LSB 0,125 kn, offset = eksakt flis-minimum",
+   "spec": {
+    "id": "F-LSB0125O",
+    "note": "u/v fast LSB 0,125 kn, offset = eksakt flis-minimum",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "fast-lsb",
+     "lsb": 0.125,
+     "lsbOffset": "flis"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "T-30M",
+   "akse": "konvergens",
+   "note": "30 min tidssteg",
+   "spec": {
+    "id": "T-30M",
+    "note": "30 min tidssteg",
+    "windKm": 2.5,
+    "waveKm": 2.5,
+    "currentKm": 0.8,
+    "timeStepS": 1800,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  },
+  {
+   "id": "R-HALV",
+   "akse": "konvergens",
+   "note": "1,25 km vind/bølge",
+   "spec": {
+    "id": "R-HALV",
+    "note": "1,25 km vind/bølge",
+    "windKm": 1.25,
+    "waveKm": 1.25,
+    "currentKm": 0.8,
+    "timeStepS": 3600,
+    "windStorage": "uv",
+    "windQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "dirQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "hsQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "tpQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentQuant": {
+     "bits": null,
+     "rounding": "nearest",
+     "scale": "flis",
+     "lsb": null,
+     "lsbOffset": "ingen"
+    },
+    "currentMode": "grid",
+    "tileNodes": 32
+   }
+  }
+ ]
+}

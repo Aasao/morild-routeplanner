@@ -7,48 +7,10 @@ import {
   tilesOverlapping,
 } from "./grid.js";
 
-describe("tileIdForLonLat / tileBounds — delt origo med kartflisene", () => {
+describe("tileIdForLonLat / tileBounds — delt origo med kartflisene (D7.1: standard er nå 1°, fase 3 bølge 3A)", () => {
   it("gir heltallsgrense-fliser forankret i (0,0)", () => {
-    expect(tileIdForLonLat(10.5, 59.1)).toEqual({ lonIndex: 5, latIndex: 29 });
-    expect(tileBounds({ lonIndex: 5, latIndex: 29 })).toEqual({
-      west: 10,
-      south: 58,
-      east: 12,
-      north: 60,
-    });
-  });
-
-  it("negative koordinater floorer riktig (ikke mot null)", () => {
-    expect(tileIdForLonLat(-0.5, 59)).toEqual({ lonIndex: -1, latIndex: 29 });
-  });
-
-  it("et punkt på selve flisgrensen tilhører flisen øst/nord for grensen", () => {
-    // lon=10 er selve grenselinjen mellom flis 4 og flis 5.
-    expect(tileIdForLonLat(10, 58)).toEqual({ lonIndex: 5, latIndex: 29 });
-  });
-});
-
-describe("tilesOverlapping", () => {
-  it("Skjæløy–Skagen-bboxen (spike-thredds.md) krysser flere 2°-fliser", () => {
-    const tiles = tilesOverlapping({ west: 9.0, south: 57.3, east: 11.5, north: 59.6 });
-    // 9-11.5E -> lonIndex 4 (8-10) og 5 (10-12); 57.3-59.6N -> latIndex 28 (56-58) og 29 (58-60).
-    expect(tiles).toHaveLength(4);
-    expect(tiles).toEqual(
-      expect.arrayContaining([
-        { lonIndex: 4, latIndex: 28 },
-        { lonIndex: 5, latIndex: 28 },
-        { lonIndex: 4, latIndex: 29 },
-        { lonIndex: 5, latIndex: 29 },
-      ]),
-    );
-  });
-});
-
-describe("tileSizeDeg-parameter (D6-C, 2026-09-03 — flisstørrelse er nå eksplisitt, standard uendret)", () => {
-  it("tileIdForLonLat/tileBounds tar en valgfri tileSizeDeg uten å endre 2°-standarden", () => {
-    expect(tileIdForLonLat(10.5, 59.1)).toEqual(tileIdForLonLat(10.5, 59.1, 2));
-    expect(tileIdForLonLat(10.5, 59.1, 1)).toEqual({ lonIndex: 10, latIndex: 59 });
-    expect(tileBounds({ lonIndex: 10, latIndex: 59 }, 1)).toEqual({
+    expect(tileIdForLonLat(10.5, 59.1)).toEqual({ lonIndex: 10, latIndex: 59 });
+    expect(tileBounds({ lonIndex: 10, latIndex: 59 })).toEqual({
       west: 10,
       south: 59,
       east: 11,
@@ -56,7 +18,43 @@ describe("tileSizeDeg-parameter (D6-C, 2026-09-03 — flisstørrelse er nå eksp
     });
   });
 
-  it("tilesOverlapping med tileSizeDeg=1 gir flere, mindre fliser enn standard 2°", () => {
+  it("negative koordinater floorer riktig (ikke mot null)", () => {
+    expect(tileIdForLonLat(-0.5, 59)).toEqual({ lonIndex: -1, latIndex: 59 });
+  });
+
+  it("et punkt på selve flisgrensen tilhører flisen øst/nord for grensen", () => {
+    // lon=10 er selve grenselinjen mellom flis 9 og flis 10.
+    expect(tileIdForLonLat(10, 58)).toEqual({ lonIndex: 10, latIndex: 58 });
+  });
+});
+
+describe("tilesOverlapping", () => {
+  it("Skjæløy–Skagen-bboxen (spike-thredds.md) krysser flere 1°-fliser", () => {
+    const tiles = tilesOverlapping({ west: 9.0, south: 57.3, east: 11.5, north: 59.6 });
+    // 9-11.5E -> lonIndex 9,10,11; 57.3-59.6N -> latIndex 57,58,59 -> 3x3 = 9 fliser.
+    expect(tiles).toHaveLength(9);
+    expect(tiles).toEqual(
+      expect.arrayContaining([
+        { lonIndex: 9, latIndex: 57 },
+        { lonIndex: 11, latIndex: 59 },
+      ]),
+    );
+  });
+});
+
+describe("tileSizeDeg-parameter (D6-C 2026-09-03 / D7.1 2026-09-04 — flisstørrelse er en eksplisitt parameter, standard er nå 1°)", () => {
+  it("tileIdForLonLat/tileBounds tar en valgfri tileSizeDeg uten å endre 1°-standarden", () => {
+    expect(tileIdForLonLat(10.5, 59.1)).toEqual(tileIdForLonLat(10.5, 59.1, 1));
+    expect(tileIdForLonLat(10.5, 59.1, 2)).toEqual({ lonIndex: 5, latIndex: 29 });
+    expect(tileBounds({ lonIndex: 5, latIndex: 29 }, 2)).toEqual({
+      west: 10,
+      south: 58,
+      east: 12,
+      north: 60,
+    });
+  });
+
+  it("tilesOverlapping med tileSizeDeg=1 gir flere, mindre fliser enn 2°", () => {
     const bbox = { west: 9.0, south: 57.3, east: 11.5, north: 59.6 };
     const tiles1 = tilesOverlapping(bbox, 1);
     const tiles2 = tilesOverlapping(bbox, 2);

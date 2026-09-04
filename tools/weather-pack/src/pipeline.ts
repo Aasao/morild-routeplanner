@@ -34,6 +34,9 @@ import {
   MAX_SUBTILE_NODES,
   serializeLayer,
   windLayerMaxDecodeErrorKn,
+  type ClippedSample,
+  type CertifiedPackageHeader,
+  type FieldCertificate,
   type Layer,
   type LayerGeometry,
   type RoundingMode,
@@ -41,6 +44,7 @@ import {
 import { contentHash, r2Key, type PointerFieldEntry } from "./package-writer.js";
 import { combineSourceStatuses, ensembleFellBackToOlderRun, noUsableEnsemble, STATUS_OK } from "./source-status.js";
 import { MEPS_LCC_PARAMS, rotateGridRelativeWindToTrueNorth, type LccProjectionParams } from "./lambert-rotation.js";
+import { fieldMaxDirectionErrorDeg } from "./direction-budget.js";
 import type { PackageHeader } from "@morild/protocol";
 
 export interface WindGridDims {
@@ -274,6 +278,8 @@ export function buildWindMemberLayers(args: {
   readonly dtS: number;
   readonly bitsPerSample?: 8 | 10;
   readonly roundingMode?: RoundingMode;
+  /** D7.4 klippe-assert (§9.6) — se `ClippedSample`s dokumentasjon i `@morild/weather`. Kalt separat for u- og v-kanalen, se `channel`-feltet på `info`. */
+  readonly onClip?: (channel: "u" | "v", info: ClippedSample) => void;
 }): WindMemberLayerBuild {
   const bitsPerSample = args.bitsPerSample ?? 8;
   const roundingMode = args.roundingMode ?? "nearest";
@@ -289,6 +295,7 @@ export function buildWindMemberLayers(args: {
     bitsPerSample,
     roundingMode,
     channelKind: "linear",
+    ...(args.onClip ? { onClip: (info: ClippedSample) => args.onClip!("u", info) } : {}),
   });
   const vLayer = buildLayer({
     sample: sampleFromFetchedGrid(args.components.v, args.components.dims, args.memberIndex, geometry),
@@ -296,12 +303,29 @@ export function buildWindMemberLayers(args: {
     bitsPerSample,
     roundingMode,
     channelKind: "linear",
+    ...(args.onClip ? { onClip: (info: ClippedSample) => args.onClip!("v", info) } : {}),
   });
   return { geometry, uLayer, vLayer };
 }
 
+/** Fart (knop) for ETT medlem, alle noder × tidssteg — kilden til sertifikatets `maxDirectionErrorDeg` (D7.4). `components.u/v` skal allerede være konvertert til knop og rotert til sann nord (kallerens ansvar, samme forutsetning som `buildWindMemberLayers`). */
+function* windMemberSpeedsKn(components: FetchedWindComponents, memberIndex: number): Generator<number> {
+  const { timeCount, yCount, xCount } = components.dims;
+  for (let t = 0; t < timeCount; t++) {
+    for (let y = 0; y < yCount; y++) {
+      for (let x = 0; x < xCount; x++) {
+        const idx = flatIndex(components.dims, t, memberIndex, y, x);
+        const u = components.u[idx];
+        const v = components.v[idx];
+        if (u === undefined || v === undefined) continue;
+        yield Math.hypot(u, v);
+      }
+    }
+  }
+}
+
 export interface WindTilePackageResult {
-  readonly header: PackageHeader;
+  readonly header: CertifiedPackageHeader;
   readonly payload: Uint8Array;
   readonly hash: string;
   readonly key: string;
@@ -338,10 +362,22 @@ export function buildWindMemberPackage(args: {
   readonly bitsPerSample?: 8 | 10;
   readonly deltaCoded?: boolean;
   readonly sourceStatusOverride?: PackageHeader["sourceStatus"];
+  /** D7.4 klippe-assert — se `buildWindMemberLayers`. Kalleren (`build-live-package.ts`) kaster umiddelbart ved brudd (§9.10). */
+  readonly onClip?: (channel: "u" | "v", info: ClippedSample) => void;
 }): WindTilePackageResult {
   const t0S = args.t0S ?? 0;
   const dtS = args.dtS ?? 3600; // §9.2: 1 t for harde felt (TWS er hardt), også for vind for øvrig i normaldrift
   const deltaCoded = args.deltaCoded ?? true; // §8: budsjettregnskapet forutsetter delta+gzip
+
+  // D7.4/koordinering bølge 3B: `clippedSamples` i sertifikatet er ALDRI
+  // valgfri (§9.10) — telles her UANSETT om kalleren ga en `onClip`
+  // (kallerens variant kan hard-feile bygget, men skal ikke være
+  // FORUTSETNINGEN for at telletallet finnes).
+  let clippedSamples = 0;
+  const countingOnClip = (channel: "u" | "v", info: ClippedSample): void => {
+    clippedSamples++;
+    args.onClip?.(channel, info);
+  };
 
   const { uLayer, vLayer } = buildWindMemberLayers({
     components: args.components,
@@ -350,6 +386,7 @@ export function buildWindMemberPackage(args: {
     t0S,
     dtS,
     ...(args.bitsPerSample !== undefined ? { bitsPerSample: args.bitsPerSample } : {}),
+    onClip: countingOnClip,
   });
 
   const maxDecodeErrorKn = windLayerMaxDecodeErrorKn({
@@ -368,13 +405,32 @@ export function buildWindMemberPackage(args: {
   payload.set(uBytes, 0);
   payload.set(vBytes, uBytes.length);
 
-  const header: PackageHeader = {
+  // D7.4 — sertifikat (§9.10): `maxDecodeErrorKn` er den analytiske
+  // vaktbånd-skranken (§9.5, regnet fra NØYAKTIG denne serialiserte
+  // flisens skala/offset, ikke et globalt/antatt tall — se
+  // `windLayerMaxDecodeErrorKn`s dokumentasjon). `maxDirectionErrorDeg`
+  // skanner denne KONKRETE medlemmets faktiske fartsfordeling (samme
+  // kilde som ble matet inn i `buildLayer` over), IKKE et verste-fall som
+  // ignorerer at lav-fart-punkter ikke har en meningsfull retning (§9.5).
+  const certificate: FieldCertificate = {
+    maxDecodeErrorKn,
+    maxDirectionErrorDeg: fieldMaxDirectionErrorDeg(
+      windMemberSpeedsKn(args.components, args.memberIndex),
+      maxDecodeErrorKn,
+    ),
+    clippedSamples,
+    referenceInit: args.init,
+    verifiedAt: args.producedAt,
+  };
+
+  const header: CertifiedPackageHeader = {
     formatVersion: args.formatVersion,
     producedAt: args.producedAt,
     model: "MEPS",
     init: args.init,
     resolution: args.resolution,
     sourceStatus: args.sourceStatusOverride ?? STATUS_OK,
+    certificate,
   };
   const hash = contentHash(payload);
   const key = r2Key(args.formatVersion, hash);

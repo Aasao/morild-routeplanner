@@ -1,0 +1,70 @@
+Laster ekte fliser: 10_57, 11_57, 10_58, 11_58, 10_59, 11_59 (30 medlemmer)
+Ekte felt: 30 medlemmer, maks TWS 35.77 kn, domene lat 57.05–59.95, lon 10.05–11.95
+  flis 10_57: maks subflis-spenn 47.47 kn ⇒ produsentens 8-bit-trinn 0.1861 kn, vaktbånd 0.1019 kn
+  flis 11_57: maks subflis-spenn 51.46 kn ⇒ produsentens 8-bit-trinn 0.2018 kn, vaktbånd 0.1266 kn
+  flis 10_58: maks subflis-spenn 48.64 kn ⇒ produsentens 8-bit-trinn 0.1907 kn, vaktbånd 0.1306 kn
+  flis 11_58: maks subflis-spenn 46.58 kn ⇒ produsentens 8-bit-trinn 0.1827 kn, vaktbånd 0.1018 kn
+  flis 10_59: maks subflis-spenn 31.64 kn ⇒ produsentens 8-bit-trinn 0.1241 kn, vaktbånd 0.0759 kn
+  flis 11_59: maks subflis-spenn 26.21 kn ⇒ produsentens 8-bit-trinn 0.1028 kn, vaktbånd 0.0667 kn
+FELT ANALYTISK   bånd=0.0000 kn  maks kvant=0.0000  margin=-  over-dekl=0.0000 (0)  klippet=0  total=0.0000  ok
+FELT REF         bånd=0.0000 kn  maks kvant=0.0000  margin=-  over-dekl=0.0000 (0)  klippet=0  total=13.7073  ok
+FELT W-UV8       bånd=0.1984 kn  maks kvant=0.0744  margin=0.1102  over-dekl=0.0000 (0)  klippet=0  total=13.7440  ok
+FELT F-LSB025    bånd=0.1768 kn  maks kvant=0.1497  margin=0.0271  over-dekl=0.0000 (0)  klippet=0  total=13.7275  ok
+FELT F-LSB025O   bånd=0.1768 kn  maks kvant=0.1586  margin=0.0182  over-dekl=0.0000 (0)  klippet=0  total=13.7145  ok
+FELT F-LSB010    bånd=0.0707 kn  maks kvant=0.0626  margin=0.0081  over-dekl=0.0000 (0)  klippet=0  total=13.7104  ok
+FELT F-LSB010O   bånd=0.0707 kn  maks kvant=0.0595  margin=0.0112  over-dekl=0.0000 (0)  klippet=0  total=13.7074  ok
+FELT F-LSB0125   bånd=0.0884 kn  maks kvant=0.0764  margin=0.0119  over-dekl=0.0000 (0)  klippet=0  total=13.7160  ok
+FELT F-LSB0125O  bånd=0.0884 kn  maks kvant=0.0735  margin=0.0149  over-dekl=0.0000 (0)  klippet=0  total=13.7380  ok
+FELT T-30M       bånd=0.0000 kn  maks kvant=0.0000  margin=-  over-dekl=0.0000 (0)  klippet=0  total=13.7073  ok
+FELT R-HALV      bånd=0.0000 kn  maks kvant=0.0000  margin=-  over-dekl=0.0000 (0)  klippet=0  total=12.9859  ok
+
+Feltprøve ferdig på 61 s
+
+P3 +0t ANALYTISK   fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t REF         fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t W-UV8       fast 29/30 hard=[m14] egen 28/30 feller=[]
+P3 +0t F-LSB025    fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t F-LSB025O   fast 29/30 hard=[m14] egen 30/30 feller=[]
+P3 +0t F-LSB010    fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t F-LSB010O   fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t F-LSB0125   fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t F-LSB0125O  fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t T-30M       fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +0t R-HALV      fast 29/30 hard=[m14] egen 29/30 feller=[]
+P3 +6t ANALYTISK   fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t REF         fast 29/30 hard=[m12] egen 29/30 feller=[]
+P3 +6t W-UV8       fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t F-LSB025    fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t F-LSB025O   fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t F-LSB010    fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t F-LSB010O   fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t F-LSB0125   fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t F-LSB0125O  fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +6t T-30M       fast 29/30 hard=[m12] egen 29/30 feller=[]
+P3 +6t R-HALV      fast 29/30 hard=[m12] egen 30/30 feller=[]
+P3 +12t ANALYTISK   fast 28/30 hard=[m09,m12] egen 28/30 feller=[m09]
+P3 +12t REF         fast 28/30 hard=[m09,m12] egen 28/30 feller=[m09]
+P3 +12t W-UV8       fast 28/30 hard=[m09,m12] egen 28/30 feller=[]  ← FELLE-FLIPP
+P3 +12t F-LSB025    fast 28/30 hard=[m09,m12] egen 28/30 feller=[]  ← FELLE-FLIPP
+P3 +12t F-LSB025O   fast 28/30 hard=[m09,m12] egen 28/30 feller=[]  ← FELLE-FLIPP
+P3 +12t F-LSB010    fast 28/30 hard=[m09,m12] egen 28/30 feller=[]  ← FELLE-FLIPP
+P3 +12t F-LSB010O   fast 28/30 hard=[m09,m12] egen 28/30 feller=[m09]
+P3 +12t F-LSB0125   fast 28/30 hard=[m09,m12] egen 28/30 feller=[m09]
+P3 +12t F-LSB0125O  fast 28/30 hard=[m09,m12] egen 28/30 feller=[]  ← FELLE-FLIPP
+P3 +12t T-30M       fast 28/30 hard=[m09,m12] egen 28/30 feller=[m09]
+P3 +12t R-HALV      fast 28/30 hard=[m09,m12] egen 28/30 feller=[m09]
+P3 +18t ANALYTISK   fast 23/30 hard=[m02,m06,m07,m12,m13,m16,m19] egen 23/30 feller=[m07]  (+m16)
+P3 +18t REF         fast 24/30 hard=[m02,m06,m07,m12,m13,m19] egen 24/30 feller=[m07]
+P3 +18t W-UV8       fast 23/30 hard=[m02,m06,m07,m12,m13,m19,m23] egen 22/30 feller=[m07,m23]  (+m23)  ← FELLE-FLIPP
+P3 +18t F-LSB025    fast 23/30 hard=[m02,m06,m07,m12,m13,m19,m23] egen 22/30 feller=[m07,m23]  (+m23)  ← FELLE-FLIPP
+P3 +18t F-LSB025O   fast 22/30 hard=[m02,m06,m07,m08,m12,m13,m19,m23] egen 22/30 feller=[m07,m23]  (+m08,m23)  ← FELLE-FLIPP
+P3 +18t F-LSB010    fast 23/30 hard=[m02,m06,m07,m12,m13,m19,m23] egen 23/30 feller=[m07]  (+m23)
+P3 +18t F-LSB010O   fast 23/30 hard=[m02,m06,m07,m12,m13,m19,m23] egen 23/30 feller=[m07]  (+m23)
+P3 +18t F-LSB0125   fast 23/30 hard=[m02,m06,m07,m12,m13,m19,m23] egen 22/30 feller=[m07]  (+m23)
+P3 +18t F-LSB0125O  fast 23/30 hard=[m02,m06,m07,m12,m13,m19,m23] egen 22/30 feller=[m07]  (+m23)
+P3 +18t T-30M       fast 24/30 hard=[m02,m06,m07,m12,m13,m19] egen 24/30 feller=[m07]
+P3 +18t R-HALV      fast 23/30 hard=[m02,m06,m07,m12,m13,m16,m19] egen 23/30 feller=[m07]  (+m16)
+
+P3 ferdig på 219 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-ekte-flis

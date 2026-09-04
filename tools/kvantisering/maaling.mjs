@@ -111,6 +111,10 @@ const TOM_TELLING = () => ({
   lsbSpennKoder: 0,
   lsbAbsKode: 0,
   lsbKlippet: 0,
+  // Det adaptive regnskapet (tillegg §14): trinnet er utledet av flisspennet,
+  // og på ekte fliser er spennet et helt annet enn på fiksturene.
+  adaptivtSpenn: 0,
+  adaptivtTrinn: 0,
 });
 
 let telling = TOM_TELLING();
@@ -132,6 +136,14 @@ function tellPakke(pakke) {
     pakke.stats.fixedLsbMaxAbsCode ?? 0,
   );
   telling.lsbKlippet += pakke.stats.fixedLsbClamped ?? 0;
+  telling.adaptivtSpenn = Math.max(
+    telling.adaptivtSpenn,
+    pakke.stats.adaptiveMaxSpan ?? 0,
+  );
+  telling.adaptivtTrinn = Math.max(
+    telling.adaptivtTrinn,
+    pakke.stats.adaptiveMaxStep ?? 0,
+  );
 }
 
 const INGEN_STATS = {
@@ -142,6 +154,8 @@ const INGEN_STATS = {
     fixedLsbMaxSpanCodes: 0,
     fixedLsbMaxAbsCode: 0,
     fixedLsbClamped: 0,
+    adaptiveMaxSpan: 0,
+    adaptiveMaxStep: 0,
   },
 };
 

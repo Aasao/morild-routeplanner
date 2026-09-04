@@ -42,6 +42,8 @@ function envOf(
     current,
     isNight: false,
     epochS: DEPART_S,
+    // Ukvantisert testfelt: vaktbåndet er 0 (D7.3 — båndet bor på miljøet).
+    maxDecodeErrorKn: 0,
     windAgainstCurrent: isWindAgainstCurrent(wind, current),
   };
 }

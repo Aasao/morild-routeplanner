@@ -5,7 +5,8 @@
  * `pipeline.ts`/`cli.ts` bak en injisert `PackageSink`.
  */
 import { createHash } from "node:crypto";
-import type { PackageHeader, SourceStatus } from "@morild/protocol";
+import type { SourceStatus } from "@morild/protocol";
+import type { CertifiedPackageHeader } from "@morild/weather";
 
 /** SHA-256 av den ferdig kvantiserte byte-payloaden (§5 — FØR evt. gzip). */
 export function contentHash(payload: Uint8Array): string {
@@ -26,7 +27,16 @@ export interface PointerFieldEntry {
   readonly member: number; // 0 for kontroll/felt uten ensemble
   readonly key: string;
   readonly hash: string;
-  readonly header: PackageHeader;
+  /**
+   * **D7.4 (fase 3 bølge 3A):** ALLTID en `CertifiedPackageHeader`, aldri
+   * en naken `PackageHeader` — se `@morild/weather::FieldCertificate`s
+   * toppkommentar (§9.10: "flis uten sertifikat skal klienten avvise").
+   * Enhver `PointerFieldEntry` denne pakken skriver skal ha kommet fra
+   * `buildWindMemberPackage` (eller et fremtidig felts tilsvarende
+   * konstruktør) — en felt-oppføring uten sertifikat er en type-feil her,
+   * ikke bare et runtime-avvisningsscenario for klienten.
+   */
+  readonly header: CertifiedPackageHeader;
 }
 
 /**

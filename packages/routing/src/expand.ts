@@ -55,6 +55,40 @@ export interface NodeEnvironment {
    * kursen — derfor regnet én gang per node, ikke per kurs.
    */
   readonly windAgainstCurrent: boolean;
+  /**
+   * **TWS-vaktbåndet som gjelder NØYAKTIG her** (D7.3): flisens eget bånd når
+   * feltet kan oppgi det (`WeatherField.maxDecodeErrorKnAt`), ellers feltets
+   * konservative `maxDecodeErrorKn` (maks over fliser).
+   *
+   * Båndet bor på miljøet og ikke på feltet fordi det da hentes i **samme
+   * oppslag** som vinden det skal verne: `twsExceedsHardLimit` kan ikke
+   * lenger få én flis' vind og en annen flis' — eller en annen pakkes —
+   * dekodefeil, uansett hvem som kaller den. Se `resolveGuardBandKn`.
+   */
+  readonly maxDecodeErrorKn: number;
+}
+
+/**
+ * Vaktbåndet som gjelder i ett punkt til ett tidspunkt (§5.3-boksen, D7.3).
+ *
+ * Rekkefølgen er: flisens eget bånd hvis feltet oppgir det, ellers feltets
+ * maks-over-fliser. **Alt som ikke er et endelig tall ≥ 0 forkastes** og
+ * faller tilbake på maks — et `NaN`, et negativt tall eller en `undefined`
+ * fra en halvimplementert adapter ville ellers kunne *utvide* det harde
+ * taket (`maxTwsKn − bånd`), og det er den ene retningen sikkerheten ikke
+ * tåler. Ærlig degradering betyr her: bli konservativ, ikke bli stille.
+ */
+export function resolveGuardBandKn(
+  field: WeatherField,
+  lat: number,
+  lon: number,
+  epochS: number,
+): number {
+  const local = field.maxDecodeErrorKnAt?.(lat, lon, epochS);
+  if (local === undefined || !Number.isFinite(local) || local < 0) {
+    return field.maxDecodeErrorKn;
+  }
+  return local;
 }
 
 /**
@@ -89,6 +123,7 @@ export function environmentAt(
     isNight: isNightAt(pos.lat, pos.lon, epochS),
     epochS,
     windAgainstCurrent: isWindAgainstCurrent(wind, current),
+    maxDecodeErrorKn: resolveGuardBandKn(weather, pos.lat, pos.lon, epochS),
   };
 }
 
@@ -103,12 +138,20 @@ export function environmentAt(
  * nedover. Grensen flyttes derfor ned med feltets dokumenterte maksimale
  * dekodefeil:
  *
- *     dekodetTws > boat.maxTwsKn − field.maxDecodeErrorKn
+ *     dekodetTws > boat.maxTwsKn − env.maxDecodeErrorKn
  *
  * Retningen er konservativ (heller en forkastelse for mye enn en for lite),
  * og for felt uten kvantisering (`maxDecodeErrorKn === 0`) er testen
  * bit-identisk med den nakne sammenligningen — golden-rutene er derfor
  * uendret.
+ *
+ * **Båndet kommer fra miljøet, ikke fra et felt-argument** (D7.3, endret
+ * 2026-09-04). Med sammensatte fler-flis-felt er «feltets dekodefeil» ikke
+ * lenger ett tall: `environmentAt` slår opp båndet som gjelder i *dette*
+ * punktet (flisens eget når adapteren kan si det, ellers maks over flisene)
+ * i samme kall som vinden. At funksjonen ikke lenger tar et `field`-argument
+ * er hele poenget: det er nå strukturelt umulig å sammenligne én flis' vind
+ * med en annen flis' vaktbånd.
  *
  * **Én sannhet:** dette er det eneste stedet i motoren `maxTwsKn`
  * sammenlignes hardt. `checkHardNode` under er eneste kaller, og søket,
@@ -117,9 +160,8 @@ export function environmentAt(
 export function twsExceedsHardLimit(
   env: NodeEnvironment,
   boat: BoatModel,
-  field: WeatherField,
 ): boolean {
-  return env.wind.speedKn > boat.maxTwsKn - field.maxDecodeErrorKn;
+  return env.wind.speedKn > boat.maxTwsKn - env.maxDecodeErrorKn;
 }
 
 /**
@@ -127,19 +169,17 @@ export function twsExceedsHardLimit(
  * det er slik «ruten går rundt uvær» oppstår, uten at det er en kostnad noen
  * kan vekte seg forbi.
  *
- * `field` er med utelukkende for vaktbåndet over — miljøet (`env`) skal alltid
- * være hentet fra det *samme* feltet, ellers sammenlignes én pakkes vind med
- * en annen pakkes dekodefeil.
+ * Vaktbåndet ligger på `env` (D7.3) — hentet i samme oppslag som vinden, fra
+ * samme flis. Ingen felt-parameter kan lenger komme i utakt med miljøet.
  */
 export function checkHardNode(
   env: NodeEnvironment,
   boat: BoatModel,
-  field: WeatherField,
 ): HardCheck {
-  if (twsExceedsHardLimit(env, boat, field)) {
+  if (twsExceedsHardLimit(env, boat)) {
     const band =
-      field.maxDecodeErrorKn > 0
-        ? ` (vaktbånd ${field.maxDecodeErrorKn.toFixed(2)} kn for dekodefeil)`
+      env.maxDecodeErrorKn > 0
+        ? ` (vaktbånd ${env.maxDecodeErrorKn.toFixed(2)} kn for dekodefeil)`
         : "";
     return reject(
       `TWS ${env.wind.speedKn.toFixed(1)} kn over båtens grense ${boat.maxTwsKn} kn${band}`,

@@ -388,7 +388,7 @@ export function evaluateRoute(input: EvaluateRouteInput): RouteEvaluation {
       }
 
       // Hard: båtens ytelsesgrenser gjelder noden som helhet.
-      const nodeCheck = checkHardNode(env, boat, weather);
+      const nodeCheck = checkHardNode(env, boat);
       if (!nodeCheck.ok) {
         return stop({ ...here, kind: "boatLimits", reason: nodeCheck.reason });
       }

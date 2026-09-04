@@ -182,3 +182,40 @@ export function emptyWeather(validFromS = 0, validToS = YEAR_S): WeatherField {
     header: SYNTHETIC_HEADER,
   };
 }
+
+/** Rektangulær lon/lat-boks — brukt av `withMissingTile`. */
+export interface MissingTileBox {
+  readonly latMin: number;
+  readonly latMax: number;
+  readonly lonMin: number;
+  readonly lonMax: number;
+}
+
+/**
+ * Et felt der ÉN flis mangler (D7.2-fiksturen).
+ *
+ * Innenfor boksen svarer feltet `undefined` på alt, mens `validFromS`/
+ * `validToS` er uendret — altså nøyaktig signaturen til «en værflis ble ikke
+ * lastet ned», til forskjell fra «prognosen tok slutt». Det er den
+ * situasjonen `pruned.noWeatherInWindow` teller og flagget
+ * `VAERDEKNING_BEGRENSET` rapporterer.
+ */
+export function withMissingTile(
+  base: WeatherField,
+  box: MissingTileBox,
+): WeatherField {
+  const inHole = (lat: number, lon: number): boolean =>
+    lat >= box.latMin &&
+    lat <= box.latMax &&
+    lon >= box.lonMin &&
+    lon <= box.lonMax;
+  return {
+    ...base,
+    wind: (lat, lon, epochS) =>
+      inHole(lat, lon) ? undefined : base.wind(lat, lon, epochS),
+    waves: (lat, lon, epochS) =>
+      inHole(lat, lon) ? undefined : base.waves(lat, lon, epochS),
+    current: (lat, lon, epochS) =>
+      inHole(lat, lon) ? undefined : base.current(lat, lon, epochS),
+  };
+}

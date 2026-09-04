@@ -97,6 +97,8 @@ interface PrunedCounters {
   hardConstraintDaylight: number;
   capEvicted: number;
   noWeather: number;
+  /** Delmengden av `noWeather` med hull i FLISDEKNINGEN, ikke horisont-slutt (D7.2). */
+  noWeatherInWindow: number;
   cone: number;
   outsideDomain: number;
 }
@@ -173,6 +175,7 @@ class RouteSearch implements Search {
     hardConstraintDaylight: 0,
     capEvicted: 0,
     noWeather: 0,
+    noWeatherInWindow: 0,
     cone: 0,
     outsideDomain: 0,
   };
@@ -384,7 +387,7 @@ class RouteSearch implements Search {
     const field = this.field;
     if (field === undefined) return;
 
-    const { start, dest, boat, departEpochS, mask, weather } = this.input;
+    const { start, dest, boat, departEpochS, mask } = this.input;
     let pos: LatLon = { lat: start.lat, lon: start.lon };
     let tS = 0;
     let headingDeg: number | null = null;
@@ -393,7 +396,7 @@ class RouteSearch implements Search {
       const epochS = departEpochS + tS;
       const env = this.environmentAt(pos, epochS);
       if (env === undefined) return;
-      if (!checkHardNode(env, boat, weather).ok) return;
+      if (!checkHardNode(env, boat).ok) return;
       const dHere = field.atOrNear(pos.lat, pos.lon);
       if (dHere === undefined) return;
 
@@ -593,13 +596,21 @@ class RouteSearch implements Search {
 
     const env = this.environmentAt(pos, epochS);
     if (env === undefined) {
+      // Tidspunktet er innenfor feltets vindu (sjekket over) — mangler
+      // vinden likevel, er det et hull i ROMLIG dekning: en flis som ikke
+      // ble lastet, eller et område pakken aldri dekket. Det er den
+      // situasjonen ekspertpanelets flisvalg-regel forbyr å skje stille
+      // (D7.2), og den telles derfor for seg. Merk at også et tidspunkt
+      // FØR `validFromS` teller som «utenfor vinduet» over: det er en
+      // tidsdekningsmangel, ikke en manglende flis.
       this.pruned.noWeather++;
+      this.pruned.noWeatherInWindow++;
       this.weatherPartial = true;
       return;
     }
 
     // Harde ytelsesgrenser gjelder noden som helhet, før kursløkken.
-    if (!checkHardNode(env, this.input.boat, this.input.weather).ok) {
+    if (!checkHardNode(env, this.input.boat).ok) {
       bumpHardConstraint(this.pruned, "hardConstraintBoatLimits");
       return;
     }

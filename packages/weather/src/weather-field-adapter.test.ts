@@ -194,3 +194,67 @@ describe("compositeWeatherField", () => {
     expect(() => compositeWeatherField([])).toThrow();
   });
 });
+
+describe("maxDecodeErrorKnAt (D7.3/D7.4, koordinering fase 3 bølge 3B)", () => {
+  const CERTIFIED_HEADER = Object.freeze({
+    ...HEADER,
+    certificate: {
+      maxDecodeErrorKn: 999, // bevisst mye høyere enn det beregnede — beviser at sertifikatet ALDRI kan senke båndet, kun heve det
+      referenceInit: HEADER.init,
+      verifiedAt: HEADER.producedAt,
+      clippedSamples: 0,
+    },
+  });
+
+  it("er undefined nøyaktig der wind() er undefined (samme dekningslogikk)", () => {
+    const g = geometry();
+    const pkg: WeatherPackage = { windMembers: [buildUV(g)], windHeader: HEADER };
+    const field = toWeatherField(pkg, 0, { departEpochS: 0 });
+    expect(field.wind(58, 10, 0)).toBeDefined();
+    expect(field.maxDecodeErrorKnAt?.(58, 10, 0)).toBeDefined();
+    expect(field.wind(58, 10, 1_000_000)).toBeUndefined(); // utenfor tidsvinduet
+    expect(field.maxDecodeErrorKnAt?.(58, 10, 1_000_000)).toBeUndefined();
+  });
+
+  it("uten sertifikat: lik det beregnede maxDecodeErrorKn", () => {
+    const g = geometry();
+    const pkg: WeatherPackage = { windMembers: [buildUV(g)], windHeader: HEADER };
+    const field = toWeatherField(pkg, 0, { departEpochS: 0 });
+    expect(field.maxDecodeErrorKnAt?.(58, 10, 0)).toBe(field.maxDecodeErrorKn);
+  });
+
+  it("med sertifikat: maks(beregnet, sertifisert) — sertifikatet kan ALDRI undergrave det beregnede", () => {
+    const g = geometry();
+    const pkg: WeatherPackage = { windMembers: [buildUV(g)], windHeader: CERTIFIED_HEADER };
+    const field = toWeatherField(pkg, 0, { departEpochS: 0 });
+    expect(field.maxDecodeErrorKnAt?.(58, 10, 0)).toBe(
+      Math.max(field.maxDecodeErrorKn, CERTIFIED_HEADER.certificate.maxDecodeErrorKn),
+    );
+    expect(field.maxDecodeErrorKnAt?.(58, 10, 0)).toBe(999);
+  });
+
+  it("compositeWeatherField: båndet kommer fra SAMME flis som vindsvaret, ikke en uavhengig skanning", () => {
+    const southGeometry = geometry({ latMin: 56, nodesLat: 21, timeSteps: 25 });
+    const northGeometry = geometry({ latMin: 58, nodesLat: 21, timeSteps: 49 });
+    const southPkg: WeatherPackage = {
+      windMembers: [buildUVWithSpeed(southGeometry, 3, 0)],
+      windHeader: HEADER, // ubeskyttet — beregnet bånd
+    };
+    const northPkg: WeatherPackage = {
+      windMembers: [buildUVWithSpeed(northGeometry, 8, 0)],
+      windHeader: CERTIFIED_HEADER, // sertifisert — 999
+    };
+    const south = toWeatherField(southPkg, 0, { departEpochS: 0 });
+    const north = toWeatherField(northPkg, 0, { departEpochS: 0 });
+    const composite = compositeWeatherField([south, north]);
+
+    // Et punkt kun sørflisen dekker: båndet skal være sørflisens (ikke 999).
+    expect(composite.wind(57, 10, 0)).toBeDefined();
+    expect(composite.maxDecodeErrorKnAt?.(57, 10, 0)).toBe(south.maxDecodeErrorKnAt?.(57, 10, 0));
+    expect(composite.maxDecodeErrorKnAt?.(57, 10, 0)).not.toBe(999);
+
+    // Et punkt KUN nordflisen dekker (utenfor sørflisens tidsvindu på t=48h, innenfor nordflisens): sertifisert bånd.
+    expect(composite.wind(59, 10, 48 * 3600)).toBeDefined();
+    expect(composite.maxDecodeErrorKnAt?.(59, 10, 48 * 3600)).toBe(999);
+  });
+});

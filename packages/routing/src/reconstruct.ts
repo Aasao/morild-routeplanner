@@ -31,6 +31,7 @@ import {
   FLAG_MOTOR,
   FLAG_NATT,
   FLAG_USIKKER_TILLIT,
+  FLAG_VAERDEKNING_BEGRENSET,
   flagNames,
   scaledRankingWeights,
 } from "./cost.js";
@@ -103,6 +104,8 @@ export interface ResultContext {
     readonly hardConstraintDaylight: number;
     readonly capEvicted: number;
     readonly noWeather: number;
+    /** Hull i flisdekningen innenfor pakkens tidsvindu (D7.2) — se `result.ts`. */
+    readonly noWeatherInWindow: number;
     readonly cone: number;
     readonly outsideDomain: number;
   };
@@ -549,10 +552,35 @@ export function buildResult(ctx: ResultContext): RouteResult {
    * er farlig, og å blande sammen «farlig linje» med «kom ikke fram» ville
    * gjort begge signalene mindre nyttige.
    */
-  const verdict: RouteResult["safety"]["verdict"] =
+  const finalLegVerdict: RouteResult["safety"]["verdict"] =
     finalLegWasRejected(withEnd.finalLeg.status) && segmentVerdict === "trygt"
       ? "usikkert"
       : segmentVerdict;
+
+  /**
+   * **Rute-nivå flagg** (D7.2, vedtatt 2026-09-04). Forkastet søket
+   * etiketter fordi vinden manglet i posisjonen INNENFOR pakkens gyldige
+   * tidsvindu, er ruten formet av hvilke værfliser klienten tilfeldigvis
+   * hadde — ikke av været. Det er nøyaktig den «stille styringen av søket ved
+   * flisdekning» ekspertpanelets djevelens advokat pekte på, og den skal
+   * være synlig i resultatet.
+   *
+   * Merk at horisont-slutt (`epochS > validToS`) bevisst IKKE utløser
+   * flagget: at prognosen tar slutt er forventet og allerede dekket av
+   * `coverage.weather === "partial"` og ADR-0005s inkonklusiv-regel.
+   */
+  const weatherCoverageLimited = ctx.pruned.noWeatherInWindow > 0;
+  const routeFlags = weatherCoverageLimited ? FLAG_VAERDEKNING_BEGRENSET : 0;
+  /**
+   * Gulvet: en rute som er beskåret av manglende værdekning kan aldri stå
+   * som `"trygt"` (CLAUDE.md §1 «sikkerhet foran optimalitet», N2). Vi hever
+   * ikke til `"usikker-rute"` — linjen som faktisk tegnes er sjekket mot
+   * masken som ellers; det er *fullstendigheten* av søket som er usikker.
+   */
+  const verdict: RouteResult["safety"]["verdict"] =
+    weatherCoverageLimited && finalLegVerdict === "trygt"
+      ? "usikkert"
+      : finalLegVerdict;
 
   const alternatives = buildAlternatives(
     ctx,
@@ -565,6 +593,8 @@ export function buildResult(ctx: ResultContext): RouteResult {
   return {
     reached: ctx.reached,
     abortReason: ctx.abortReason,
+    flags: routeFlags,
+    flagNames: flagNames(routeFlags),
     legs,
     steps,
     totals: {
@@ -714,7 +744,7 @@ function appendDirectFinalStep(
       remainingNm,
     );
   }
-  const nodeCheck = checkHardNode(env, boat, weather);
+  const nodeCheck = checkHardNode(env, boat);
   if (!nodeCheck.ok) {
     return rejectedFinalLeg(
       out,

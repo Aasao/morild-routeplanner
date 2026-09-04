@@ -4,7 +4,7 @@
   "exact": {
     "reached": false,
     "abortReason": "noExpandableLabels",
-    "safetyVerdict": "trygt",
+    "safetyVerdict": "usikkert",
     "reachesDestination": false,
     "recheckPassed": true,
     "failingSegmentCount": 0,

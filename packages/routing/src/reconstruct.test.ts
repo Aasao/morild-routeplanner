@@ -473,6 +473,7 @@ describe("dagslysomvalg krever at ruten faktisk når målet (funn 1)", () => {
         hardConstraintDaylight: 0,
         capEvicted: 0,
         noWeather: 0,
+        noWeatherInWindow: 0,
         cone: 0,
         outsideDomain: 0,
       },

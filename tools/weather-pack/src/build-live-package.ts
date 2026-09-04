@@ -40,7 +40,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { join } from "node:path";
 import { checkLegalGate } from "./legal-gate.js";
-import { tileBounds, tileIdToString, type WeatherTileId } from "./grid.js";
+import { tileBounds, tileIdToString, tilesOverlapping, WEATHER_TILE_DEG, type WeatherTileId } from "./grid.js";
 import {
   DEFAULT_BACKOFF,
   buildUserAgent,
@@ -73,7 +73,7 @@ import {
   type LccDasVerificationResult,
 } from "./das-verification.js";
 import { angularDiffDeg, maxDirectionErrorDeg } from "./direction-budget.js";
-import { decodeWindAt, windMemberLayersFromBytes } from "@morild/weather";
+import { decodeWindAt, windMemberLayersFromBytes, type ClippedSample, type FieldCertificate } from "@morild/weather";
 import type { EnsembleRun } from "./lagged-ensemble.js";
 import type { PackageHeader } from "@morild/protocol";
 
@@ -85,8 +85,12 @@ const GRID_CACHE_PATH = join(import.meta.dirname, "..", ".grid-index-cache.json"
 const THREDDS_MEPSLATEST = "https://thredds.met.no/thredds/dodsC/mepslatest";
 const CATALOG_URL = "https://thredds.met.no/thredds/catalog/mepslatest/catalog.xml";
 
-const FORMAT_VERSION = "1.0.0";
-const TOOL_VERSION = "0.1.0-live-2026-09-03";
+// D7.4 (fase 3 bølge 3A): PackageHeader bærer nå ALLTID et sertifikat
+// (`CertifiedPackageHeader`) — additiv (en eldre klient som ikke kjenner
+// `header.certificate` leser resten av headeren uendret), derfor minor,
+// ikke major (§5s `checkCompatibility` avviser kun ulik MAJOR).
+const FORMAT_VERSION = "1.1.0";
+const TOOL_VERSION = "0.2.0-live-2026-09-04";
 const CONTACT_EMAIL = "maasao@gmail.com";
 
 const MEMBER_COUNT = 30; // §9.1 pkt. 4 — kontroll (medlem 0) + 29 øvrige, alle i ensemble_member-dimensjonen
@@ -95,15 +99,52 @@ const TIME_STEP_H = 1; // §9.2: harde felt (TWS) er 1 t
 const TIME_COUNT = HORIZON_H / TIME_STEP_H + 1; // 49
 
 /**
- * Mål-fliser (§7, 2°×2°-rutenett, delt origo): de to flisene som til
- * sammen dekker BÅDE Skjæløy (~59,2°N, 10,9°Ø) og Skagen (~57,7°N, 10,6°Ø)
- * — ingen enkelt 2°-flis dekker begge (grensen ved 58°N går midt i ruten,
- * et forventet, korrekt utfall av det faste flisrutenettet, ikke en bug).
+ * Endepunkt-bbox (§7, `WEATHER_TILE_DEG`=1°-rutenett, delt origo):
+ * Skjæløy (~59,2°N, 10,9°Ø) og Skagen (~57,7°N, 10,6°Ø).
+ *
+ * **D7.2 (fase 3 bølge 3A, ekspertpanelets D7-syntese, «djevelens
+ * advokat»-funn):** «flisvalg fra endepunkt-bbox er utrygt — medlemsruter
+ * 9,6–17,6 nm utenfor luftlinjen». Byggeren har INGEN sikker viten om
+ * A*-feltets faktiske rekkevidde (det er klientens/rutemotorens ansvar,
+ * ikke byggerens) — regelen her er derfor bevisst RAUS, ikke presis:
+ * endepunkt-bbox utvidet med ≥ 0,5° på ALLE kanter (≈ 30 nm ved denne
+ * bredden, godt over den observerte medlemsspredningen), ALDRI stram inn
+ * mot et antatt korridorbehov. Manglende dekning her ville stille styrt
+ * søket via en usynlig flisgrense (§9.10/N2 — «manglende data vises,
+ * aldri skjules») — bygg heller for mye enn for lite.
  */
-const TARGET_TILES: readonly WeatherTileId[] = [
-  { lonIndex: 5, latIndex: 28 }, // 10-12°Ø, 56-58°N — dekker Skagen-enden
-  { lonIndex: 5, latIndex: 29 }, // 10-12°Ø, 58-60°N — dekker Skjæløy-enden
-];
+const ROUTE_ENDPOINT_BBOX = { west: 10.6, south: 57.7, east: 10.9, north: 59.2 } as const;
+const SAFETY_MARGIN_DEG = 0.5; // D7.2 — minimum, ikke et forsøk på et "nok"-tall utover minimum
+
+const TARGET_BBOX_WITH_MARGIN = {
+  west: ROUTE_ENDPOINT_BBOX.west - SAFETY_MARGIN_DEG,
+  south: ROUTE_ENDPOINT_BBOX.south - SAFETY_MARGIN_DEG,
+  east: ROUTE_ENDPOINT_BBOX.east + SAFETY_MARGIN_DEG,
+  north: ROUTE_ENDPOINT_BBOX.north + SAFETY_MARGIN_DEG,
+};
+
+/** Alle 1°-fliser (`WEATHER_TILE_DEG`) som overlapper `TARGET_BBOX_WITH_MARGIN` — beregnet, ikke hardkodet, slik at en endring i marginen eller flisstørrelsen aldri kan komme i utakt med denne listen. */
+const TARGET_TILES: readonly WeatherTileId[] = tilesOverlapping(TARGET_BBOX_WITH_MARGIN, WEATHER_TILE_DEG);
+
+/**
+ * D7.4 klippe-assert: en `onClip`-callback som kaster UMIDDELBART (§9.10 —
+ * ærlig degradering betyr her «bygg ingenting», ikke «bygg og logg en
+ * advarsel ingen leser»). Se `buildLayer`s `onClip`-dokumentasjon
+ * (`@morild/weather`) for hvorfor dette strukturelt aldri skal inntreffe —
+ * denne funksjonen finnes for at det IKKE skal kunne inntreffe stille
+ * dersom den garantien noensinne brytes (refaktorering, ny kildesti, e.l.).
+ */
+function hardFailOnClip(tileKey: string, memberIndex: number): (channel: "u" | "v", info: ClippedSample) => void {
+  return (channel, info) => {
+    throw new Error(
+      `Klippe-assert utløst for flis ${tileKey}, medlem ${memberIndex}, kanal ${channel} ` +
+        `(subflis sr=${info.sr},sc=${info.sc}, t=${info.k}, ${info.lat.toFixed(3)}°N,${info.lon.toFixed(3)}°Ø): ` +
+        `verdi=${info.value} dekodet=${info.decoded} avvik=${info.errorAbs.toFixed(4)} (skala=${info.scale}). ` +
+        `Dette skal være STRUKTURELT umulig (lo/hi regnes fra nøyaktig de kodede verdiene, §7) — ` +
+        `nekter å skrive en pakke som ikke kan sertifiseres (§9.10).`,
+    );
+  };
+}
 
 function realFetch(): FetchLike {
   return async (url, init) => {
@@ -375,6 +416,8 @@ interface TileBuildSummary {
   readonly maxDecodeErrorKnObserved: number;
   readonly verification: VerificationSample[];
   readonly fields: PointerFieldEntry[];
+  /** Sertifikatet skrevet for medlem 0 (D7.4) — representativt (alle medlemmer på samme flis sertifiseres, se `pipeline.ts::buildWindMemberPackage`). */
+  readonly certificateSample: FieldCertificate;
 }
 
 async function buildTile(
@@ -424,6 +467,7 @@ async function buildTile(
   let maxDecodeErrorKnObserved = 0;
   const fields: PointerFieldEntry[] = [];
   let firstMemberVerification: VerificationSample[] = [];
+  let certificateSample: FieldCertificate | undefined;
 
   for (let memberIndex = 0; memberIndex < MEMBER_COUNT; memberIndex++) {
     const result = buildWindMemberPackage({
@@ -437,6 +481,7 @@ async function buildTile(
       tileId: tileKey,
       t0S,
       dtS,
+      onClip: hardFailOnClip(tileKey, memberIndex),
     });
     const plainU = result.payload; // deltaCoded=true already (default) — see rawPayloadBytes note below
     rawBytesTotal += result.rawPayloadBytes;
@@ -474,6 +519,12 @@ async function buildTile(
         result.maxDecodeErrorKn,
       );
       firstMemberVerification = verification.samples;
+      certificateSample = result.header.certificate;
+      console.log(
+        `  [D7.4] Sertifikat (medlem 0): maxDecodeErrorKn=${result.header.certificate.maxDecodeErrorKn?.toFixed(4)}, ` +
+          `maxDirectionErrorDeg=${result.header.certificate.maxDirectionErrorDeg?.toFixed(1)}°, ` +
+          `referenceInit=${result.header.certificate.referenceInit}, verifiedAt=${result.header.certificate.verifiedAt}`,
+      );
       console.log(
         `  [5/6] Rundtur-verifisering (dekker IKKE selve rotasjonsvinkelen — se steg 3) (medlem 0): maxDecodeErrorKn=${result.maxDecodeErrorKn.toFixed(4)}, ` +
           `observert maks fart=${verification.maxObservedErrorKn.toFixed(4)} kn, observert maks retning=${verification.maxObservedDirErrorDeg.toFixed(1)}° (kun der budsjettet er definert), ` +
@@ -526,6 +577,7 @@ async function buildTile(
     maxDecodeErrorKnObserved,
     verification: firstMemberVerification,
     fields,
+    certificateSample: certificateSample!, // satt i medlem-0-grenen over, som ALLTID kjører (memberIndex===0 er alltid første iterasjon)
   };
 }
 
@@ -610,6 +662,7 @@ async function main(): Promise<void> {
       gzipDeltaTotal: s.gzipDeltaTotal,
       maxDecodeErrorKnObserved: s.maxDecodeErrorKnObserved,
       verification: s.verification,
+      certificateSample: s.certificateSample,
     })),
     totals: {
       rawBytesTotal: totalRaw,

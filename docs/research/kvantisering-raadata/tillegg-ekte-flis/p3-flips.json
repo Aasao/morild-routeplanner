@@ -1,0 +1,3555 @@
+[
+ {
+  "offsetH": 0,
+  "departEpochS": 1788472800,
+  "twsGrenseKn": 26,
+  "medlemmer": 30,
+  "refRuteSteg": 27,
+  "perKonfig": {
+   "ANALYTISK": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.014722222222222,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 13.268888888888888,
+     "distanceNm": 85.82941407015927,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 5.837530982869354
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.014722222222222,
+      "tilbaketrekkingTH": 10.514722222222222,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.02649618566670243
+    }
+   },
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.017222222222221,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 12.926388888888889,
+     "distanceNm": 86.81714530207577,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.017222222222221,
+      "tilbaketrekkingTH": 10.517222222222221,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "W-UV8": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.8 kn over båtens grense 26 kn (vaktbånd 0.19 kn for dekodefeil)",
+       "tH": 10.516388888888889,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m14",
+      "m21"
+     ],
+     "timer": 13.282222222222222,
+     "distanceNm": 85.84964746171558,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 5.859694241105256
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 25.8 kn over båtens grense 26 kn (vaktbånd 0.19 kn for dekodefeil)",
+      "feilTH": 10.516388888888889,
+      "tilbaketrekkingTH": 10.443888888888889,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1890998622198537
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": -1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.027527667347158027
+    }
+   },
+   "F-LSB025": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.008333333333333,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 12.901388888888889,
+     "distanceNm": 87.18805727587228,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.1094216170306808
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.008333333333333,
+      "tilbaketrekkingTH": 10.508333333333333,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.0019340281508542232
+    }
+   },
+   "F-LSB025O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 10.524166666666666,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 12.981666666666667,
+     "distanceNm": 90.90209452945436,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 5.745302451138231
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 25.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 10.524166666666666,
+      "tilbaketrekkingTH": 10.45111111111111,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.004276351133555439
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.016944444444444,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 13.29,
+     "distanceNm": 85.35313830566139,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 5.342634362591931
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.016944444444444,
+      "tilbaketrekkingTH": 10.516944444444444,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.0281293649940904
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.016111111111112,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 12.924722222222222,
+     "distanceNm": 86.81803354311143,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0.004547549730876324
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.016111111111112,
+      "tilbaketrekkingTH": 10.516111111111112,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.00012893521005696653
+    }
+   },
+   "F-LSB0125": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.014722222222222,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 12.931944444444444,
+     "distanceNm": 86.85428725323193,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0.3936567417736981
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.014722222222222,
+      "tilbaketrekkingTH": 10.514722222222222,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.0004297840335230844
+    }
+   },
+   "F-LSB0125O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.018333333333333,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 13.485555555555555,
+     "distanceNm": 85.2868883298263,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 5.343322230182548
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.018333333333333,
+      "tilbaketrekkingTH": 10.518333333333333,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.04325776297410547
+    }
+   },
+   "T-30M": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.017222222222221,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 12.926388888888889,
+     "distanceNm": 86.81714530634972,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.3852422362651875e-8
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.017222222222221,
+      "tilbaketrekkingTH": 10.517222222222221,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "R-HALV": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "avvisning": {
+      "m14": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.016666666666667,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m14"
+     ],
+     "timer": 13.281944444444445,
+     "distanceNm": 85.7238314064373,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 5.8604475328966235
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m14": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.016666666666667,
+      "tilbaketrekkingTH": 10.516666666666667,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.027506178145481935
+    }
+   }
+  }
+ },
+ {
+  "offsetH": 6,
+  "departEpochS": 1788494400,
+  "twsGrenseKn": 26,
+  "medlemmer": 30,
+  "refRuteSteg": 28,
+  "perKonfig": {
+   "ANALYTISK": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn",
+       "tH": 15.078611111111112,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.283888888888889,
+     "distanceNm": 85.67510063003498,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.4078975884121756
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn",
+      "feilTH": 15.078611111111112,
+      "tilbaketrekkingTH": 14.876388888888888,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.010162896114917375
+    }
+   },
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn",
+       "tH": 15.08611111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "timer": 13.420277777777779,
+     "distanceNm": 86.13561848125573,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn",
+      "feilTH": 15.08611111111111,
+      "tilbaketrekkingTH": 14.889166666666666,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "W-UV8": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 15.085277777777778,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.28111111111111,
+     "distanceNm": 87.03786186195597,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.8953085034212225
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 15.085277777777778,
+      "tilbaketrekkingTH": 14.8875,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.18096521943056815
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.010369879742512465
+    }
+   },
+   "F-LSB025": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 15.088888888888889,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.259722222222223,
+     "distanceNm": 85.4666767869413,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.4771200986908957
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 15.088888888888889,
+      "tilbaketrekkingTH": 14.893333333333333,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.011963653674994324
+    }
+   },
+   "F-LSB025O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 15.090277777777779,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.233333333333333,
+     "distanceNm": 86.09242581518473,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.459053691543124
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 15.090277777777779,
+      "tilbaketrekkingTH": 14.895833333333334,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.013929998137147476
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 15.085,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.29,
+     "distanceNm": 85.36075432566463,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 6.081884325412611
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 15.085,
+      "tilbaketrekkingTH": 14.8875,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.00970753213420831
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 15.08388888888889,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.297777777777778,
+     "distanceNm": 85.39565752541715,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 6.080821646650269
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 15.08388888888889,
+      "tilbaketrekkingTH": 14.885555555555555,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.009127977976942061
+    }
+   },
+   "F-LSB0125": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 15.086944444444445,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.290833333333333,
+     "distanceNm": 84.75175466225714,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 6.0812595931417714
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 15.086944444444445,
+      "tilbaketrekkingTH": 14.889444444444445,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.009645437045929718
+    }
+   },
+   "F-LSB0125O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 15.087777777777777,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.286388888888888,
+     "distanceNm": 85.35193392662424,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.38936168648704
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 15.087777777777777,
+      "tilbaketrekkingTH": 14.8925,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.009976610850081861
+    }
+   },
+   "T-30M": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn",
+       "tH": 15.08611111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "timer": 13.420277777777779,
+     "distanceNm": 86.1356184849862,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.9106118589981894e-8
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn",
+      "feilTH": 15.08611111111111,
+      "tilbaketrekkingTH": 14.889166666666666,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "R-HALV": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 29,
+     "hardFeil": [
+      "m12"
+     ],
+     "avvisning": {
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn",
+       "tH": 15.08361111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 30,
+     "hardFeil": [],
+     "timer": 13.37111111111111,
+     "distanceNm": 86.17125400034831,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.399182085745722
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn",
+      "feilTH": 15.08361111111111,
+      "tilbaketrekkingTH": 14.885,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.003663610208432622
+    }
+   }
+  }
+ },
+ {
+  "offsetH": 12,
+  "departEpochS": 1788516000,
+  "twsGrenseKn": 26,
+  "medlemmer": 30,
+  "refRuteSteg": 27,
+  "perKonfig": {
+   "ANALYTISK": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.6 kn over båtens grense 26 kn",
+       "tH": 12.793055555555556,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 10.899722222222222,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.790555555555555,
+     "distanceNm": 88.89615597461774,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 3.9674048777913047
+    },
+    "felleSett": [
+     "m09"
+    ],
+    "felleDetalj": {
+     "m09": {
+      "felle": true,
+      "grunn": "TWS 26.6 kn over båtens grense 26 kn",
+      "feilTH": 12.793055555555556,
+      "tilbaketrekkingTH": 12.293055555555556,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 10.899722222222222,
+      "tilbaketrekkingTH": 10.4275,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.0002824060999717341
+    }
+   },
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 12.808055555555555,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 10.903333333333334,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.786944444444444,
+     "distanceNm": 88.7115386059086,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0
+    },
+    "felleSett": [
+     "m09"
+    ],
+    "felleDetalj": {
+     "m09": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 12.808055555555555,
+      "tilbaketrekkingTH": 12.308055555555555,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 10.903333333333334,
+      "tilbaketrekkingTH": 10.430833333333334,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "W-UV8": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.20 kn for dekodefeil)",
+       "tH": 12.295277777777779,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 10.431666666666667,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.858055555555556,
+     "distanceNm": 88.941943978459,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.446532988792183
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m09": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.20 kn for dekodefeil)",
+      "feilTH": 12.295277777777779,
+      "tilbaketrekkingTH": 11.795277777777779,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.19645939004640778
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 10.431666666666667,
+      "tilbaketrekkingTH": 9.966111111111111,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.18096521943056815
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": false,
+     "tapteFeller": [
+      "m09"
+     ],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.005561227814828529
+    }
+   },
+   "F-LSB025": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 12.295833333333333,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 10.43361111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.801666666666666,
+     "distanceNm": 89.67894075482438,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 5.935604347903029
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m09": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 12.295833333333333,
+      "tilbaketrekkingTH": 11.795833333333333,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 10.43361111111111,
+      "tilbaketrekkingTH": 9.967777777777778,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": false,
+     "tapteFeller": [
+      "m09"
+     ],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.001151347946038683
+    }
+   },
+   "F-LSB025O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 12.296388888888888,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 10.430277777777778,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.856111111111112,
+     "distanceNm": 88.91006773102514,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0.8034119310975498
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m09": {
+      "felle": false,
+      "grunn": "TWS 25.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 12.296388888888888,
+      "tilbaketrekkingTH": 11.796388888888888,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 10.430277777777778,
+      "tilbaketrekkingTH": 9.964166666666667,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": false,
+     "tapteFeller": [
+      "m09"
+     ],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.005409162991766857
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 12.298055555555555,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 10.902777777777779,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.9225,
+     "distanceNm": 89.15987338866879,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.1104006760018366
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m09": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 12.298055555555555,
+      "tilbaketrekkingTH": 11.798055555555555,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 10.902777777777779,
+      "tilbaketrekkingTH": 10.430277777777778,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": false,
+     "tapteFeller": [
+      "m09"
+     ],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.010601090522016805
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 12.307222222222222,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 10.904166666666667,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.776388888888889,
+     "distanceNm": 88.5954671366412,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.0679035758508737
+    },
+    "felleSett": [
+     "m09"
+    ],
+    "felleDetalj": {
+     "m09": {
+      "felle": true,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 12.307222222222222,
+      "tilbaketrekkingTH": 12.296111111111111,
+      "naaddHavn": null,
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 10.904166666666667,
+      "tilbaketrekkingTH": 10.431666666666667,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.0008254947537635945
+    }
+   },
+   "F-LSB0125": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 12.806111111111111,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 10.902777777777779,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.811388888888889,
+     "distanceNm": 88.78907374961905,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.446532988792183
+    },
+    "felleSett": [
+     "m09"
+    ],
+    "felleDetalj": {
+     "m09": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 12.806111111111111,
+      "tilbaketrekkingTH": 12.306111111111111,
+      "naaddHavn": null,
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 10.902777777777779,
+      "tilbaketrekkingTH": 10.430277777777778,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.0019116720613473154
+    }
+   },
+   "F-LSB0125O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 12.299166666666666,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 10.903888888888888,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.9,
+     "distanceNm": 88.87394698289883,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 6.817362371616577
+    },
+    "felleSett": [],
+    "felleDetalj": {
+     "m09": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 12.299166666666666,
+      "tilbaketrekkingTH": 11.799166666666666,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 10.903888888888888,
+      "tilbaketrekkingTH": 10.43138888888889,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": false,
+     "tapteFeller": [
+      "m09"
+     ],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.0088414832837313
+    }
+   },
+   "T-30M": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 12.808055555555555,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 10.903333333333334,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.786944444444444,
+     "distanceNm": 88.71153861220529,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.1972406927669167e-8
+    },
+    "felleSett": [
+     "m09"
+    ],
+    "felleDetalj": {
+     "m09": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 12.808055555555555,
+      "tilbaketrekkingTH": 12.308055555555555,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 10.903333333333334,
+      "tilbaketrekkingTH": 10.430833333333334,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "R-HALV": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "avvisning": {
+      "m09": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.6 kn over båtens grense 26 kn",
+       "tH": 12.792222222222222,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 10.900833333333333,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 28,
+     "hardFeil": [
+      "m09",
+      "m12"
+     ],
+     "timer": 12.915277777777778,
+     "distanceNm": 87.78312032551612,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 7.341775944388374
+    },
+    "felleSett": [
+     "m09"
+    ],
+    "felleDetalj": {
+     "m09": {
+      "felle": true,
+      "grunn": "TWS 26.6 kn over båtens grense 26 kn",
+      "feilTH": 12.792222222222222,
+      "tilbaketrekkingTH": 12.292222222222222,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 10.900833333333333,
+      "tilbaketrekkingTH": 10.428611111111111,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0.010036278322073336
+    }
+   }
+  }
+ },
+ {
+  "offsetH": 18,
+  "departEpochS": 1788537600,
+  "twsGrenseKn": 26,
+  "medlemmer": 30,
+  "refRuteSteg": 26,
+  "perKonfig": {
+   "ANALYTISK": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m16",
+      "m19"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn",
+       "tH": 11.8325,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.287222222222223,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 11.744722222222222,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn",
+       "tH": 11.578888888888889,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn",
+       "tH": 11.099166666666667,
+       "hard": true
+      },
+      "m16": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.9 kn over båtens grense 26 kn",
+       "tH": 12.132777777777777,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn",
+       "tH": 11.993055555555555,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.283611111111112,
+     "distanceNm": 86.39712612641286,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.094330910373344
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn",
+      "feilTH": 11.8325,
+      "tilbaketrekkingTH": 11.3325,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.287222222222223,
+      "tilbaketrekkingTH": 10.787222222222223,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 11.744722222222222,
+      "tilbaketrekkingTH": 11.244722222222222,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn",
+      "feilTH": 11.578888888888889,
+      "tilbaketrekkingTH": 11.078888888888889,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn",
+      "feilTH": 11.099166666666667,
+      "tilbaketrekkingTH": 10.599166666666667,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m16": {
+      "felle": false,
+      "grunn": "TWS 26.9 kn over båtens grense 26 kn",
+      "feilTH": 12.132777777777777,
+      "tilbaketrekkingTH": 11.632777777777777,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn",
+      "feilTH": 11.993055555555555,
+      "tilbaketrekkingTH": 11.493055555555555,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m16"
+     ],
+     "egenGjennomfoerbarhetsdiff": -1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.001963528031055286
+    }
+   },
+   "REF": {
+    "akse": "baseline",
+    "fast": {
+     "gjennomfoerbare": 24,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn",
+       "tH": 11.825277777777778,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.287222222222223,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 11.745555555555555,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn",
+       "tH": 11.578055555555556,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn",
+       "tH": 11.092777777777778,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn",
+       "tH": 11.993611111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 24,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19"
+     ],
+     "timer": 12.307777777777778,
+     "distanceNm": 84.45963503270292,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn",
+      "feilTH": 11.825277777777778,
+      "tilbaketrekkingTH": 11.325277777777778,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.287222222222223,
+      "tilbaketrekkingTH": 10.787222222222223,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 11.745555555555555,
+      "tilbaketrekkingTH": 11.245555555555555,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn",
+      "feilTH": 11.578055555555556,
+      "tilbaketrekkingTH": 11.078055555555556,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn",
+      "feilTH": 11.092777777777778,
+      "tilbaketrekkingTH": 10.592777777777778,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn",
+      "feilTH": 11.993611111111111,
+      "tilbaketrekkingTH": 11.493611111111111,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "W-UV8": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.823333333333334,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.286666666666667,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.745833333333334,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.579444444444444,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.17 kn for dekodefeil)",
+       "tH": 11.093333333333334,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.19 kn for dekodefeil)",
+       "tH": 11.993611111111111,
+       "hard": true
+      },
+      "m23": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 12.468333333333334,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 22,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m16",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.289166666666667,
+     "distanceNm": 84.43957049075384,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.1096084793478553
+    },
+    "felleSett": [
+     "m07",
+     "m23"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.823333333333334,
+      "tilbaketrekkingTH": 11.323333333333334,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.18356912084567129
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.286666666666667,
+      "tilbaketrekkingTH": 10.786666666666667,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.17910191196233283
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.745833333333334,
+      "tilbaketrekkingTH": 11.245833333333334,
+      "naaddHavn": null,
+      "vaktbandKn": 0.1834944824562718
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.579444444444444,
+      "tilbaketrekkingTH": 11.079444444444444,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.18096521943056815
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.17 kn for dekodefeil)",
+      "feilTH": 11.093333333333334,
+      "tilbaketrekkingTH": 10.593333333333334,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1686515510632992
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.19 kn for dekodefeil)",
+      "feilTH": 11.993611111111111,
+      "tilbaketrekkingTH": 11.493611111111111,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1874160585592334
+     },
+     "m23": {
+      "felle": true,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 12.468333333333334,
+      "tilbaketrekkingTH": 11.968333333333334,
+      "naaddHavn": null,
+      "vaktbandKn": 0.1823910784985024
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m23"
+     ],
+     "egenGjennomfoerbarhetsdiff": -2,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": false,
+     "tapteFeller": [],
+     "lagtTilFeller": [
+      "m23"
+     ],
+     "dTidEgenRel": -0.0015121422767897645
+    }
+   },
+   "F-LSB025": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.2 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.82638888888889,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.286944444444444,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.745,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.57638888888889,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.093055555555555,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.993333333333334,
+       "hard": true
+      },
+      "m23": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.0 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 12.4725,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 22,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m16",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.258888888888889,
+     "distanceNm": 86.62977566199402,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.4953060767207365
+    },
+    "felleSett": [
+     "m07",
+     "m23"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.2 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.82638888888889,
+      "tilbaketrekkingTH": 11.32638888888889,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.286944444444444,
+      "tilbaketrekkingTH": 10.786944444444444,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.745,
+      "tilbaketrekkingTH": 11.245,
+      "naaddHavn": null,
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.57638888888889,
+      "tilbaketrekkingTH": 11.07638888888889,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.093055555555555,
+      "tilbaketrekkingTH": 10.593055555555555,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.993333333333334,
+      "tilbaketrekkingTH": 11.493333333333334,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m23": {
+      "felle": true,
+      "grunn": "TWS 26.0 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 12.4725,
+      "tilbaketrekkingTH": 11.9725,
+      "naaddHavn": null,
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m23"
+     ],
+     "egenGjennomfoerbarhetsdiff": -2,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": false,
+     "tapteFeller": [],
+     "lagtTilFeller": [
+      "m23"
+     ],
+     "dTidEgenRel": -0.003972194637537283
+    }
+   },
+   "F-LSB025O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 22,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m08",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.8225,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.290277777777778,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.749722222222223,
+       "hard": true
+      },
+      "m08": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.9875,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.581666666666667,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.0875,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 11.993055555555555,
+       "hard": true
+      },
+      "m23": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+       "tH": 12.4575,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 22,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m08",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.251944444444444,
+     "distanceNm": 86.34985772149135,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.468147462913123
+    },
+    "felleSett": [
+     "m07",
+     "m23"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.8225,
+      "tilbaketrekkingTH": 11.3225,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.290277777777778,
+      "tilbaketrekkingTH": 10.790277777777778,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.749722222222223,
+      "tilbaketrekkingTH": 11.249722222222223,
+      "naaddHavn": null,
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m08": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.9875,
+      "tilbaketrekkingTH": 11.488055555555556,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.4 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.581666666666667,
+      "tilbaketrekkingTH": 11.081666666666667,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.0875,
+      "tilbaketrekkingTH": 10.5875,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 11.993055555555555,
+      "tilbaketrekkingTH": 11.493055555555555,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.1767766952966369
+     },
+     "m23": {
+      "felle": true,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.18 kn for dekodefeil)",
+      "feilTH": 12.4575,
+      "tilbaketrekkingTH": 11.9575,
+      "naaddHavn": null,
+      "vaktbandKn": 0.1767766952966369
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -2,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m08",
+      "m23"
+     ],
+     "egenGjennomfoerbarhetsdiff": -2,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": false,
+     "tapteFeller": [],
+     "lagtTilFeller": [
+      "m23"
+     ],
+     "dTidEgenRel": -0.004536426830369293
+    }
+   },
+   "F-LSB010": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.823888888888888,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.288333333333334,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.745277777777778,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.579444444444444,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.091666666666667,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.992777777777778,
+       "hard": true
+      },
+      "m23": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 12.46861111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.2975,
+     "distanceNm": 84.46450104005022,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0.39680746470123474
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.823888888888888,
+      "tilbaketrekkingTH": 11.323888888888888,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.288333333333334,
+      "tilbaketrekkingTH": 10.788333333333334,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.745277777777778,
+      "tilbaketrekkingTH": 11.245277777777778,
+      "naaddHavn": null,
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.579444444444444,
+      "tilbaketrekkingTH": 11.079444444444444,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.091666666666667,
+      "tilbaketrekkingTH": 10.591666666666667,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.992777777777778,
+      "tilbaketrekkingTH": 11.492777777777778,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m23": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 12.46861111111111,
+      "tilbaketrekkingTH": 11.96861111111111,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m23"
+     ],
+     "egenGjennomfoerbarhetsdiff": -1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.0008350636453914098
+    }
+   },
+   "F-LSB010O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.824444444444444,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.28888888888889,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.745555555555555,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.578055555555556,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.094444444444445,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 11.992222222222223,
+       "hard": true
+      },
+      "m23": {
+       "kind": "boatLimits",
+       "reason": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+       "tH": 12.4675,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.293333333333333,
+     "distanceNm": 84.45652410634953,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0.4189642320938369
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.824444444444444,
+      "tilbaketrekkingTH": 11.324444444444444,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.28888888888889,
+      "tilbaketrekkingTH": 10.78888888888889,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.745555555555555,
+      "tilbaketrekkingTH": 11.245555555555555,
+      "naaddHavn": null,
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.578055555555556,
+      "tilbaketrekkingTH": 11.078055555555556,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.094444444444445,
+      "tilbaketrekkingTH": 10.594444444444445,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 11.992222222222223,
+      "tilbaketrekkingTH": 11.492222222222223,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.07071067811865477
+     },
+     "m23": {
+      "felle": false,
+      "grunn": "TWS 25.9 kn over båtens grense 26 kn (vaktbånd 0.07 kn for dekodefeil)",
+      "feilTH": 12.4675,
+      "tilbaketrekkingTH": 11.9675,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.07071067811865477
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m23"
+     ],
+     "egenGjennomfoerbarhetsdiff": -1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.001173602961090587
+    }
+   },
+   "F-LSB0125": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.825277777777778,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.288611111111111,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.745277777777778,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.57638888888889,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.093055555555555,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.991388888888888,
+       "hard": true
+      },
+      "m23": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.0 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 12.527222222222223,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 22,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m16",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.292777777777777,
+     "distanceNm": 84.80085365813105,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 1.5594995365024715
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.825277777777778,
+      "tilbaketrekkingTH": 11.325277777777778,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.288611111111111,
+      "tilbaketrekkingTH": 10.788611111111111,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.745277777777778,
+      "tilbaketrekkingTH": 11.245277777777778,
+      "naaddHavn": null,
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.57638888888889,
+      "tilbaketrekkingTH": 11.07638888888889,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.093055555555555,
+      "tilbaketrekkingTH": 10.593055555555555,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.991388888888888,
+      "tilbaketrekkingTH": 11.491388888888888,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m23": {
+      "felle": false,
+      "grunn": "TWS 26.0 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 12.527222222222223,
+      "tilbaketrekkingTH": 12.465555555555556,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m23"
+     ],
+     "egenGjennomfoerbarhetsdiff": -2,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.0012187415365171536
+    }
+   },
+   "F-LSB0125O": {
+    "akse": "vind",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.824722222222222,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.287222222222223,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.745833333333334,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.57638888888889,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.093333333333334,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 11.994444444444444,
+       "hard": true
+      },
+      "m23": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.0 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+       "tH": 12.528611111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 22,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m16",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.289444444444445,
+     "distanceNm": 84.39741072355301,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 0.3877564623863167
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.824722222222222,
+      "tilbaketrekkingTH": 11.324722222222222,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.287222222222223,
+      "tilbaketrekkingTH": 10.787222222222223,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.745833333333334,
+      "tilbaketrekkingTH": 11.245833333333334,
+      "naaddHavn": null,
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.57638888888889,
+      "tilbaketrekkingTH": 11.07638888888889,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.093333333333334,
+      "tilbaketrekkingTH": 10.593333333333334,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 11.994444444444444,
+      "tilbaketrekkingTH": 11.494444444444444,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0.08838834764831845
+     },
+     "m23": {
+      "felle": false,
+      "grunn": "TWS 26.0 kn over båtens grense 26 kn (vaktbånd 0.09 kn for dekodefeil)",
+      "feilTH": 12.528611111111111,
+      "tilbaketrekkingTH": 12.466944444444444,
+      "naaddHavn": "Skagen",
+      "vaktbandKn": 0.08838834764831845
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m23"
+     ],
+     "egenGjennomfoerbarhetsdiff": -2,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.0014895729890764089
+    }
+   },
+   "T-30M": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 24,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn",
+       "tH": 11.825277777777778,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.287222222222223,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 11.745555555555555,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn",
+       "tH": 11.578055555555556,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn",
+       "tH": 11.092777777777778,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn",
+       "tH": 11.993611111111111,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 24,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19"
+     ],
+     "timer": 12.307777777777778,
+     "distanceNm": 84.45963503181045,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 9.242343710308816e-9
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn",
+      "feilTH": 11.825277777777778,
+      "tilbaketrekkingTH": 11.325277777777778,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.287222222222223,
+      "tilbaketrekkingTH": 10.787222222222223,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 11.745555555555555,
+      "tilbaketrekkingTH": 11.245555555555555,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn",
+      "feilTH": 11.578055555555556,
+      "tilbaketrekkingTH": 11.078055555555556,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn",
+      "feilTH": 11.092777777777778,
+      "tilbaketrekkingTH": 10.592777777777778,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn",
+      "feilTH": 11.993611111111111,
+      "tilbaketrekkingTH": 11.493611111111111,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": 0,
+     "fastSammeHardFeil": true,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [],
+     "egenGjennomfoerbarhetsdiff": 0,
+     "egenSammeHardFeil": true,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": 0
+    }
+   },
+   "R-HALV": {
+    "akse": "konvergens",
+    "fast": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m16",
+      "m19"
+     ],
+     "avvisning": {
+      "m02": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn",
+       "tH": 11.830555555555556,
+       "hard": true
+      },
+      "m06": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.1 kn over båtens grense 26 kn",
+       "tH": 11.286388888888888,
+       "hard": true
+      },
+      "m07": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.7 kn over båtens grense 26 kn",
+       "tH": 11.7425,
+       "hard": true
+      },
+      "m12": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.3 kn over båtens grense 26 kn",
+       "tH": 11.579166666666667,
+       "hard": true
+      },
+      "m13": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.8 kn over båtens grense 26 kn",
+       "tH": 11.096388888888889,
+       "hard": true
+      },
+      "m16": {
+       "kind": "boatLimits",
+       "reason": "TWS 26.2 kn over båtens grense 26 kn",
+       "tH": 12.131388888888889,
+       "hard": true
+      },
+      "m19": {
+       "kind": "boatLimits",
+       "reason": "TWS 27.2 kn over båtens grense 26 kn",
+       "tH": 11.993333333333334,
+       "hard": true
+      }
+     }
+    },
+    "egen": {
+     "gjennomfoerbare": 23,
+     "hardFeil": [
+      "m02",
+      "m06",
+      "m07",
+      "m12",
+      "m13",
+      "m19",
+      "m23"
+     ],
+     "timer": 12.2825,
+     "distanceNm": 86.41159395892737,
+     "reachesDestination": true,
+     "safetyVerdict": "trygt",
+     "korridorMotRefNm": 2.0939105874863913
+    },
+    "felleSett": [
+     "m07"
+    ],
+    "felleDetalj": {
+     "m02": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn",
+      "feilTH": 11.830555555555556,
+      "tilbaketrekkingTH": 11.330555555555556,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m06": {
+      "felle": false,
+      "grunn": "TWS 26.1 kn over båtens grense 26 kn",
+      "feilTH": 11.286388888888888,
+      "tilbaketrekkingTH": 10.786388888888888,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m07": {
+      "felle": true,
+      "grunn": "TWS 26.7 kn over båtens grense 26 kn",
+      "feilTH": 11.7425,
+      "tilbaketrekkingTH": 11.2425,
+      "naaddHavn": null,
+      "vaktbandKn": 0
+     },
+     "m12": {
+      "felle": false,
+      "grunn": "TWS 26.3 kn over båtens grense 26 kn",
+      "feilTH": 11.579166666666667,
+      "tilbaketrekkingTH": 11.079166666666667,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m13": {
+      "felle": false,
+      "grunn": "TWS 26.8 kn over båtens grense 26 kn",
+      "feilTH": 11.096388888888889,
+      "tilbaketrekkingTH": 10.596388888888889,
+      "naaddHavn": "Fjällbacka",
+      "vaktbandKn": 0
+     },
+     "m16": {
+      "felle": false,
+      "grunn": "TWS 26.2 kn over båtens grense 26 kn",
+      "feilTH": 12.131388888888889,
+      "tilbaketrekkingTH": 11.631388888888889,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     },
+     "m19": {
+      "felle": false,
+      "grunn": "TWS 27.2 kn over båtens grense 26 kn",
+      "feilTH": 11.993333333333334,
+      "tilbaketrekkingTH": 11.493333333333334,
+      "naaddHavn": "Smögen",
+      "vaktbandKn": 0
+     }
+    },
+    "motRef": {
+     "fastGjennomfoerbarhetsdiff": -1,
+     "fastSammeHardFeil": false,
+     "tapteHardeForkastelser": [],
+     "lagtTilHardeForkastelser": [
+      "m16"
+     ],
+     "egenGjennomfoerbarhetsdiff": -1,
+     "egenSammeHardFeil": false,
+     "sammeFelleSett": true,
+     "tapteFeller": [],
+     "lagtTilFeller": [],
+     "dTidEgenRel": -0.002053805181908419
+    }
+   }
+  }
+ }
+]

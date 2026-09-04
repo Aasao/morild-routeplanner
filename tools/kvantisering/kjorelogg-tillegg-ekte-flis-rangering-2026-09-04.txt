@@ -1,0 +1,38 @@
+Laster ekte fliser: 10_57, 11_57, 10_58, 11_58, 10_59, 11_59 (30 medlemmer)
+Ekte felt: 30 medlemmer, maks TWS 35.77 kn, domene lat 57.05–59.95, lon 10.05–11.95
+  flis 10_57: maks subflis-spenn 47.47 kn ⇒ produsentens 8-bit-trinn 0.1861 kn, vaktbånd 0.1019 kn
+  flis 11_57: maks subflis-spenn 51.46 kn ⇒ produsentens 8-bit-trinn 0.2018 kn, vaktbånd 0.1266 kn
+  flis 10_58: maks subflis-spenn 48.64 kn ⇒ produsentens 8-bit-trinn 0.1907 kn, vaktbånd 0.1306 kn
+  flis 11_58: maks subflis-spenn 46.58 kn ⇒ produsentens 8-bit-trinn 0.1827 kn, vaktbånd 0.1018 kn
+  flis 10_59: maks subflis-spenn 31.64 kn ⇒ produsentens 8-bit-trinn 0.1241 kn, vaktbånd 0.0759 kn
+  flis 11_59: maks subflis-spenn 26.21 kn ⇒ produsentens 8-bit-trinn 0.1028 kn, vaktbånd 0.0667 kn
+RANG ANALYTISK   +0t  30/30  P50=12.478
+RANG ANALYTISK   +18t  27/30  P50=12.382
+RANG REF         +0t  30/30  P50=12.778
+RANG REF         +18t  28/30  P50=12.354
+RANG W-UV8       +0t  30/30  P50=12.434
+RANG W-UV8       +18t  27/30  P50=12.303
+RANG F-LSB025    +0t  30/30  P50=12.605
+RANG F-LSB025    +18t  28/30  P50=12.346
+RANG F-LSB025O   +0t  30/30  P50=12.771
+RANG F-LSB025O   +18t  27/30  P50=12.315
+RANG F-LSB010    +0t  30/30  P50=12.617
+RANG F-LSB010    +18t  28/30  P50=12.320
+RANG F-LSB010O   +0t  30/30  P50=12.772
+RANG F-LSB010O   +18t  28/30  P50=12.372
+RANG F-LSB0125   +0t  30/30  P50=12.760
+RANG F-LSB0125   +18t  28/30  P50=12.301
+RANG F-LSB0125O  +0t  30/30  P50=12.753
+RANG F-LSB0125O  +18t  28/30  P50=12.375
+  ↳ ANALYTISK   topp=18 t (REF 18 t) inv=0 maksΔP50=2.35 % (uavgjort)
+  ↳ W-UV8       topp=18 t (REF 18 t) inv=0 maksΔP50=2.69 % (uavgjort)
+  ↳ F-LSB025    topp=18 t (REF 18 t) inv=0 maksΔP50=1.35 % (uavgjort)
+  ↳ F-LSB025O   topp=18 t (REF 18 t) inv=0 maksΔP50=0.31 % (uavgjort)
+  ↳ F-LSB010    topp=18 t (REF 18 t) inv=0 maksΔP50=1.26 % (uavgjort)
+  ↳ F-LSB010O   topp=18 t (REF 18 t) inv=0 maksΔP50=0.14 % (uavgjort)
+  ↳ F-LSB0125   topp=18 t (REF 18 t) inv=0 maksΔP50=0.43 % (uavgjort)
+  ↳ F-LSB0125O  topp=18 t (REF 18 t) inv=0 maksΔP50=0.19 % (uavgjort)
+
+Rangering ferdig på 1383 s
+
+Rådata skrevet til C:\Utvikling\routeplanner-v2\docs\research\kvantisering-raadata\tillegg-ekte-flis

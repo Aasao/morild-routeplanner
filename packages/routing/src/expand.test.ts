@@ -8,7 +8,9 @@ import {
   accumulateSoft,
   checkHardNode,
   checkSegment,
+  environmentAt,
   isWindAgainstCurrent,
+  resolveGuardBandKn,
   softContribution,
   stepKinematics,
   twsExceedsHardLimit,
@@ -29,6 +31,9 @@ function env(overrides: Partial<NodeEnvironment> = {}): NodeEnvironment {
     current: undefined,
     isNight: false,
     epochS: 1_800_000_000,
+    // Vaktbåndet bor på miljøet etter D7.3 — `environmentAt` henter det i
+    // samme oppslag som vinden. 0 = ukvantisert felt.
+    maxDecodeErrorKn: 0,
     ...overrides,
   };
   return {
@@ -39,36 +44,30 @@ function env(overrides: Partial<NodeEnvironment> = {}): NodeEnvironment {
   };
 }
 
-/** Analytisk felt (dekodefeil 0), eventuelt med et vaktbånd påsatt. */
-const EXACT_FIELD = constantWeather({ speedKn: 12, fromDeg: 0 });
-
-function fieldWithDecodeError(kn: number): WeatherField {
-  return { ...EXACT_FIELD, maxDecodeErrorKn: kn };
+/** Miljø med et vaktbånd påsatt — som om oppslaget traff en kvantisert flis. */
+function envWithBand(kn: number, wind: NodeEnvironment["wind"]): NodeEnvironment {
+  return env({ wind, maxDecodeErrorKn: kn });
 }
 
 describe("checkHardNode — harde ytelsesgrenser (F3.2)", () => {
   it("godtar vind og sjø innenfor grensene", () => {
-    expect(checkHardNode(env(), BOAT, EXACT_FIELD).ok).toBe(true);
+    expect(checkHardNode(env(), BOAT).ok).toBe(true);
   });
 
   it("avviser noden når TWS er over båtens grense", () => {
-    const result = checkHardNode(
-      env({ wind: { speedKn: 40, fromDeg: 0 } }),
-      BOAT,
-      EXACT_FIELD,
-    );
+    const result = checkHardNode(env({ wind: { speedKn: 40, fromDeg: 0 } }), BOAT);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(/TWS/);
   });
 
   it("avviser noden når Hs er over båtens grense", () => {
-    const result = checkHardNode(env({ waves: { hsM: 5 } }), BOAT, EXACT_FIELD);
+    const result = checkHardNode(env({ waves: { hsM: 5 } }), BOAT);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(/Hs/);
   });
 
   it("returnerer aldri et tall — harde sjekker er ja/nei", () => {
-    const result = checkHardNode(env(), BOAT, EXACT_FIELD);
+    const result = checkHardNode(env(), BOAT);
     expect(typeof result.ok).toBe("boolean");
     expect(Object.keys(result)).toEqual(["ok"]);
   });
@@ -84,11 +83,10 @@ describe("checkHardNode — harde ytelsesgrenser (F3.2)", () => {
  */
 describe("TWS-vaktbånd mot dekodefeil (vaerpakker §9.5)", () => {
   it("avviser en vind rett under grensen når den ligger innenfor dekodefeilen", () => {
-    const band = fieldWithDecodeError(0.5);
     // 34,8 kn dekodet: under 35, men den sanne vinden kan være 35,3.
-    const e = env({ wind: { speedKn: 34.8, fromDeg: 0 } });
-    expect(twsExceedsHardLimit(e, BOAT, band)).toBe(true);
-    const result = checkHardNode(e, BOAT, band);
+    const e = envWithBand(0.5, { speedKn: 34.8, fromDeg: 0 });
+    expect(twsExceedsHardLimit(e, BOAT)).toBe(true);
+    const result = checkHardNode(e, BOAT);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason).toMatch(/TWS/);
@@ -97,24 +95,21 @@ describe("TWS-vaktbånd mot dekodefeil (vaerpakker §9.5)", () => {
   });
 
   it("slipper gjennom en vind som er under grensen med mer enn dekodefeilen", () => {
-    const band = fieldWithDecodeError(0.5);
-    const e = env({ wind: { speedKn: 34.4, fromDeg: 0 } });
-    expect(twsExceedsHardLimit(e, BOAT, band)).toBe(false);
-    expect(checkHardNode(e, BOAT, band).ok).toBe(true);
+    const e = envWithBand(0.5, { speedKn: 34.4, fromDeg: 0 });
+    expect(twsExceedsHardLimit(e, BOAT)).toBe(false);
+    expect(checkHardNode(e, BOAT).ok).toBe(true);
   });
 
   it("er skarp på grensen: >-test mot maxTws − dekodefeil, ikke ≥", () => {
-    const band = fieldWithDecodeError(1);
     // Nøyaktig på det flyttede grensepunktet (34 kn) skal IKKE avvises …
     expect(
-      twsExceedsHardLimit(env({ wind: { speedKn: 34, fromDeg: 0 } }), BOAT, band),
+      twsExceedsHardLimit(envWithBand(1, { speedKn: 34, fromDeg: 0 }), BOAT),
     ).toBe(false);
     // … ett hakk over skal.
     expect(
       twsExceedsHardLimit(
-        env({ wind: { speedKn: 34.000001, fromDeg: 0 } }),
+        envWithBand(1, { speedKn: 34.000001, fromDeg: 0 }),
         BOAT,
-        band,
       ),
     ).toBe(true);
   });
@@ -124,19 +119,11 @@ describe("TWS-vaktbånd mot dekodefeil (vaerpakker §9.5)", () => {
     // vaktbåndet identisk med den nakne sammenligningen, i begge retninger.
     for (const speedKn of [34.9, 34.999999, 35, 35.000001, 40]) {
       const e = env({ wind: { speedKn, fromDeg: 0 } });
-      expect(twsExceedsHardLimit(e, BOAT, EXACT_FIELD)).toBe(
-        speedKn > BOAT.maxTwsKn,
-      );
-      expect(checkHardNode(e, BOAT, EXACT_FIELD).ok).toBe(
-        speedKn <= BOAT.maxTwsKn,
-      );
+      expect(twsExceedsHardLimit(e, BOAT)).toBe(speedKn > BOAT.maxTwsKn);
+      expect(checkHardNode(e, BOAT).ok).toBe(speedKn <= BOAT.maxTwsKn);
     }
     // Og avvisningsteksten er uendret — ingen vaktbånd-parentes å diffe på.
-    const rejected = checkHardNode(
-      env({ wind: { speedKn: 40, fromDeg: 0 } }),
-      BOAT,
-      EXACT_FIELD,
-    );
+    const rejected = checkHardNode(env({ wind: { speedKn: 40, fromDeg: 0 } }), BOAT);
     expect(rejected.ok).toBe(false);
     if (!rejected.ok) {
       expect(rejected.reason).toBe("TWS 40.0 kn over båtens grense 35 kn");
@@ -144,13 +131,111 @@ describe("TWS-vaktbånd mot dekodefeil (vaerpakker §9.5)", () => {
   });
 
   it("vaktbåndet gjelder bare TWS — Hs har sitt eget vern (opp-avrunding, §9.3)", () => {
-    const band = fieldWithDecodeError(2);
     const result = checkHardNode(
-      env({ wind: { speedKn: 10, fromDeg: 0 }, waves: { hsM: 3.9 } }),
+      env({
+        wind: { speedKn: 10, fromDeg: 0 },
+        waves: { hsM: 3.9 },
+        maxDecodeErrorKn: 2,
+      }),
       BOAT,
-      band,
     );
     expect(result.ok).toBe(true);
+  });
+});
+
+/**
+ * **Per-flis vaktbånd** (D7.3, vedtatt 2026-09-04 — ekspertpanelets
+ * matematiker-kodefunn: `expand.ts` brukte ett GLOBALT `maxDecodeErrorKn`,
+ * mens et sammensatt fler-flis-felt har ett bånd per flis).
+ *
+ * Regelen som testes: den harde TWS-grensen bruker **den aktuelle flisens**
+ * bånd i oppslagspunktet når feltet kan oppgi det, ellers konservativt maks
+ * over flisene — og aldri et bånd hentet fra et annet oppslag enn vinden.
+ */
+describe("per-flis vaktbånd (D7.3)", () => {
+  const NORD = { lat: 59, lon: 10.5 };
+  const SOER = { lat: 57, lon: 10.5 };
+  const T = 1_800_000_000;
+
+  /**
+   * To fliser med ULIKT bånd, delt ved 58°N — geometrien til den ekte
+   * Skjæløy–Skagen-pakken (5_28/5_29). Grovt kvantisert flis i sør (0,8 kn),
+   * fint kvantisert i nord (0,1 kn). `maxDecodeErrorKn` er maks over flisene,
+   * slik `compositeWeatherField` regner den.
+   */
+  function toTileField(withPerTile: boolean): WeatherField {
+    const base = constantWeather({
+      speedKn: 34.5,
+      fromDeg: 0,
+      validFromS: T - 3600,
+      validToS: T + 3600,
+    });
+    const perTile = {
+      maxDecodeErrorKnAt(lat: number) {
+        return lat >= 58 ? 0.1 : 0.8;
+      },
+    };
+    return {
+      ...base,
+      maxDecodeErrorKn: 0.8,
+      ...(withPerTile ? perTile : {}),
+    };
+  }
+
+  it("bruker flisens EGET bånd i punktet når feltet kan oppgi det", () => {
+    const field = toTileField(true);
+    expect(resolveGuardBandKn(field, NORD.lat, NORD.lon, T)).toBe(0.1);
+    expect(resolveGuardBandKn(field, SOER.lat, SOER.lon, T)).toBe(0.8);
+
+    // 34,5 kn dekodet mot maxTws 35: den grovt kvantiserte sørflisen
+    // forkaster (35 − 0,8 = 34,2), den fine nordflisen slipper gjennom
+    // (35 − 0,1 = 34,9). Samme vind, ulik flis, ulikt svar — og det er
+    // nøyaktig poenget med per-flis-båndet.
+    const nord = environmentAt(field, NORD, T)!;
+    const soer = environmentAt(field, SOER, T)!;
+    expect(nord.maxDecodeErrorKn).toBe(0.1);
+    expect(soer.maxDecodeErrorKn).toBe(0.8);
+    expect(checkHardNode(nord, BOAT).ok).toBe(true);
+    expect(checkHardNode(soer, BOAT).ok).toBe(false);
+  });
+
+  it("faller tilbake på konservativt maks-over-fliser når feltet ikke kan oppgi per-flis-bånd", () => {
+    const field = toTileField(false);
+    // Uten per-flis-API-et gjelder maks (0,8) overalt — begge posisjonene
+    // forkastes. Konservativt, aldri optimistisk.
+    for (const pos of [NORD, SOER]) {
+      const e = environmentAt(field, pos, T)!;
+      expect(e.maxDecodeErrorKn).toBe(0.8);
+      expect(checkHardNode(e, BOAT).ok).toBe(false);
+    }
+  });
+
+  it("forkaster ugyldige per-flis-svar og bruker maks (et bånd kan aldri UTVIDE taket)", () => {
+    const base = constantWeather({
+      speedKn: 34.5,
+      fromDeg: 0,
+      validFromS: T - 3600,
+      validToS: T + 3600,
+    });
+    for (const bad of [Number.NaN, -1, Number.POSITIVE_INFINITY, undefined]) {
+      const field: WeatherField = {
+        ...base,
+        maxDecodeErrorKn: 0.8,
+        maxDecodeErrorKnAt: () => bad,
+      };
+      expect(resolveGuardBandKn(field, NORD.lat, NORD.lon, T)).toBe(0.8);
+      expect(checkHardNode(environmentAt(field, NORD, T)!, BOAT).ok).toBe(false);
+    }
+  });
+
+  it("sluttetappens og evaluatorens miljø bærer samme bånd som søkets — én sannhet", () => {
+    // `environmentAt` er den ENESTE veien inn til et `NodeEnvironment`, og
+    // søket (§5.3 + Tub-forhåndsruten), evaluatoren (§5.11) og sluttetappen
+    // (§5.8) bruker alle den. Testen låser at båndet følger med derfra.
+    const field = toTileField(true);
+    const e = environmentAt(field, SOER, T);
+    expect(e?.maxDecodeErrorKn).toBe(0.8);
+    expect(twsExceedsHardLimit(e!, BOAT)).toBe(true);
   });
 });
 

@@ -30,6 +30,9 @@ function fakeResult(overrides: {
   return {
     reached: overrides.reachesDestination ?? true,
     abortReason: null,
+    // Rute-nivå flagg (D7.2) — tomt i den minimale fiksturen.
+    flags: 0,
+    flagNames: [],
     legs: [],
     steps: [],
     totals: {
@@ -102,6 +105,7 @@ function fakeResult(overrides: {
         hardConstraintDaylight: 0,
         capEvicted: 0,
         noWeather: 0,
+        noWeatherInWindow: 0,
         cone: 0,
         outsideDomain: 0,
       },

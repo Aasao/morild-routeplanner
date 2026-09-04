@@ -14,6 +14,8 @@ const SAFETY_FLAGS = [
   "SJOEGANGS_MARGIN_OVERSKREDET",
   "NEGATIV_VANNSTAND_RISIKO",
   "SJOEGANG_DATA_MANGLER",
+  // Rute-nivå (D7.2): søket ble begrenset av manglende flisdekning.
+  "VAERDEKNING_BEGRENSET",
 ] as const;
 
 const CONTEXT_FLAGS = ["MOTOR", "NATT", "KRYSS", "VIND_MOT_STROM", "TSS_LANGS"] as const;

@@ -15,6 +15,7 @@
  * farbarhetsmaske-adapteren).
  */
 import type { PackageHeader } from "@morild/protocol";
+import { hasCertificate } from "./certificate.js";
 import {
   computeObservedMaxSpeedKn,
   decodeCurrentAt,
@@ -35,6 +36,16 @@ export interface WeatherFieldLike {
   readonly maxTwsKn: number;
   readonly maxCurrentKn: number;
   readonly maxDecodeErrorKn: number;
+  /**
+   * **Koordinering fase 3 bølge 3B (rutemotor-/klientagenten).** Per-flis
+   * vaktbånd (D7.3) — `undefined` NÅR OG BARE NÅR `wind(lat,lon,epochS)`
+   * selv er `undefined` (samme dekningslogikk, se `toWeatherField`).
+   * Valgfri (`?`) fordi eldre/syntetiske `WeatherFieldLike`-implementasjoner
+   * (test-fixtures, `packages/routing/test-fixtures/pack-degradation.ts`)
+   * ikke nødvendigvis har den ennå — motoren skal derfor falle tilbake til
+   * det globale `maxDecodeErrorKn` når denne mangler, ALDRI anta 0.
+   */
+  maxDecodeErrorKnAt?(lat: number, lon: number, epochS: number): number | undefined;
   readonly validFromS: number;
   readonly validToS: number;
   readonly header: PackageHeader;
@@ -105,6 +116,17 @@ export function toWeatherField(
       ? 0
       : computeObservedMaxSpeedKn(pkg.current.u.layer, pkg.current.v.layer);
   const maxDecodeErrorKn = windLayerMaxDecodeErrorKn(member);
+  // Koordinering fase 3 bølge 3B (D7.3/D7.4): sertifikatets tall skal
+  // ALDRI kunne undergrave det selv-beregnede vaktbåndet — kun heve det,
+  // aldri senke det (§9.10: sertifikatet er en byggetids-SPOTSJEKK, ikke
+  // den autoritative kilden for skranken selv).
+  const certifiedMaxDecodeErrorKn = hasCertificate(pkg.windHeader)
+    ? pkg.windHeader.certificate.maxDecodeErrorKn
+    : undefined;
+  const maxDecodeErrorKnBand =
+    certifiedMaxDecodeErrorKn === undefined
+      ? maxDecodeErrorKn
+      : Math.max(maxDecodeErrorKn, certifiedMaxDecodeErrorKn);
 
   const current = pkg.current;
   const waves = pkg.waves;
@@ -113,6 +135,15 @@ export function toWeatherField(
     wind(lat, lon, epochS) {
       if (epochS < validFromS || epochS > validToS) return undefined;
       return decodeWindAt(member, lat, lon, epochS);
+    },
+    maxDecodeErrorKnAt(lat, lon, epochS) {
+      // Samme dekningslogikk som `wind()` over — bevisst dupli­sert
+      // fremfor delt, slik at en fremtidig endring av `wind()`s
+      // gyldighetssjekk ALDRI kan drifte fra denne uten at begge stedene
+      // endres eksplisitt (ingen skjult avhengighet mellom de to).
+      if (epochS < validFromS || epochS > validToS) return undefined;
+      if (decodeWindAt(member, lat, lon, epochS) === undefined) return undefined;
+      return maxDecodeErrorKnBand;
     },
     waves(lat, lon, epochS) {
       // Bevisst IKKE avhengig av vindens validToS — bølgelaget kan ha sin
@@ -204,6 +235,25 @@ export function compositeWeatherField(fields: readonly WeatherFieldLike[]): Weat
   return {
     wind(lat, lon, epochS) {
       return firstDefined((f) => f.wind(lat, lon, epochS));
+    },
+    /**
+     * **Koordinering fase 3 bølge 3B (D7.3):** IDENTISK iterasjonsrekkefølge
+     * som `wind()` over — båndet skal komme fra NØYAKTIG samme flis som
+     * vindsvaret, aldri fra en annen flis som tilfeldigvis også dekker
+     * punktet. Kaller derfor `f.wind(...)` på nytt her (samme sjekk som
+     * `firstDefined` gjør inni `wind()`) i stedet for en uavhengig
+     * `firstDefined`-skanning etter `maxDecodeErrorKnAt` alene — to
+     * uavhengige skanninger kunne i prinsippet plukket ulike fliser dersom
+     * fliser noensinne fikk overlappende (ikke bare grensetilstøtende)
+     * dekning.
+     */
+    maxDecodeErrorKnAt(lat, lon, epochS) {
+      for (const f of fields) {
+        if (f.wind(lat, lon, epochS) !== undefined) {
+          return f.maxDecodeErrorKnAt?.(lat, lon, epochS) ?? f.maxDecodeErrorKn;
+        }
+      }
+      return undefined;
     },
     waves(lat, lon, epochS) {
       return firstDefined((f) => f.waves(lat, lon, epochS));

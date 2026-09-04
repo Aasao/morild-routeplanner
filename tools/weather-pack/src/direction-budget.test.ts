@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { angularDiffDeg, maxDirectionErrorDeg } from "./direction-budget.js";
+import { angularDiffDeg, fieldMaxDirectionErrorDeg, maxDirectionErrorDeg } from "./direction-budget.js";
 
 describe("angularDiffDeg", () => {
   it("er 0 for identiske retninger", () => {
@@ -52,5 +52,22 @@ describe("maxDirectionErrorDeg", () => {
     const result = maxDirectionErrorDeg(1 + 1e-9, 1);
     expect(result).toBeDefined();
     expect(Number.isNaN(result)).toBe(false);
+  });
+});
+
+describe("fieldMaxDirectionErrorDeg — sertifikatets feltskanning (D7.4)", () => {
+  it("tar maks over punktene der retning er definert, ekskluderer udefinerte (lav fart) punkter", () => {
+    // e=1: speed=2 ⇒ 30°, speed=10 ⇒ ~5,74°, speed<=1 ⇒ udefinert (ekskluderes).
+    const result = fieldMaxDirectionErrorDeg([2, 10, 0.5, 1, 0], 1);
+    expect(result).toBeCloseTo(30, 6);
+  });
+
+  it("returnerer 0 (ikke undefined/NaN) når INGEN punkt har en definert retningsskranke", () => {
+    expect(fieldMaxDirectionErrorDeg([0, 0.2, 0.9], 1)).toBe(0);
+    expect(fieldMaxDirectionErrorDeg([], 1)).toBe(0);
+  });
+
+  it("maxDecodeErrorKn<=0 ⇒ 0 for ethvert felt (ingen feil å oversette til retningsusikkerhet)", () => {
+    expect(fieldMaxDirectionErrorDeg([2, 10, 50], 0)).toBe(0);
   });
 });

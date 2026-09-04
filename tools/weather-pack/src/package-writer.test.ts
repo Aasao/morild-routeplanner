@@ -6,7 +6,7 @@ import {
   objectsOlderThanArchiveWindow,
   r2Key,
 } from "./package-writer.js";
-import type { PackageHeader } from "@morild/protocol";
+import type { CertifiedPackageHeader } from "@morild/weather";
 
 describe("contentHash (§5 — innholdsadressering)", () => {
   it("er deterministisk: samme payload gir samme hash", () => {
@@ -42,13 +42,20 @@ describe("r2Key (§5)", () => {
 
 describe("buildPointer", () => {
   it("bygger pekerdokumentet fra flis/felt-oppføringer", () => {
-    const header: PackageHeader = {
+    const header: CertifiedPackageHeader = {
       formatVersion: "1.0.0",
       producedAt: "2026-09-02T00:00:00Z",
       model: "MEPS",
       init: "2026-09-02T00:00:00Z",
       resolution: "2.5km",
       sourceStatus: { status: "ok" },
+      certificate: {
+        maxDecodeErrorKn: 0.5,
+        maxDirectionErrorDeg: 12,
+        clippedSamples: 0,
+        referenceInit: "2026-09-02T00:00:00Z",
+        verifiedAt: "2026-09-02T00:05:00Z",
+      },
     };
     const pointer = buildPointer("1.0.0", [
       {

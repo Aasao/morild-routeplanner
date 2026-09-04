@@ -140,6 +140,21 @@ export const FLAG_NEGATIV_VANNSTAND_RISIKO = 1 << 7;
  * statiske `minOffingNm`. Vi later ikke som marginen er dekket (N2).
  */
 export const FLAG_SJOEGANG_DATA_MANGLER = 1 << 8;
+/**
+ * **Rute-nivå, ikke punktvis** (D7.2, vedtatt 2026-09-04): søket forkastet
+ * minst én etikett fordi værfeltet manglet data i posisjonen **innenfor
+ * pakkens gyldige tidsvindu** — altså et hull i flisdekningen, ikke at
+ * prognosen tok slutt. Ruten er da formet av hvilke fliser klienten tilfeldigvis
+ * hadde, og det skal aldri skje stille (ekspertpanelets flisvalg-
+ * sikkerhetsregel: «manglende flis ⇒ ærlig flagg, aldri stille avvisning»).
+ *
+ * Bit-vokabularet deles med `RouteStep.flags` slik at UI-et har ÉN tabell å
+ * slå opp i, men denne biten settes **kun** på `RouteResult.flags` — en
+ * etikett som ble forkastet finnes per definisjon ikke i noe steg.
+ * `search.ts` teller den (`pruned.noWeatherInWindow`), `reconstruct.ts`
+ * setter den, og den gulver `safety.verdict` til minst `"usikkert"`.
+ */
+export const FLAG_VAERDEKNING_BEGRENSET = 1 << 9;
 
 export const FLAG_NAMES: readonly (readonly [number, string])[] = Object.freeze(
   [
@@ -152,6 +167,7 @@ export const FLAG_NAMES: readonly (readonly [number, string])[] = Object.freeze(
     [FLAG_SJOEGANGS_MARGIN_OVERSKREDET, "SJOEGANGS_MARGIN_OVERSKREDET"],
     [FLAG_NEGATIV_VANNSTAND_RISIKO, "NEGATIV_VANNSTAND_RISIKO"],
     [FLAG_SJOEGANG_DATA_MANGLER, "SJOEGANG_DATA_MANGLER"],
+    [FLAG_VAERDEKNING_BEGRENSET, "VAERDEKNING_BEGRENSET"],
   ] as const,
 );
 

@@ -12,7 +12,18 @@
  *   to bruksområder, aldri to rutenett som kan komme i utakt.
  */
 
-export const WEATHER_TILE_DEG = 2;
+/**
+ * **1° (fase 3 bølge 3A, D7.1 — endret fra 2°).** Ekspertpanelets D7-syntese
+ * (`docs/research/ekspertpanel-d7-vaerpakkeformat-2026-09-04.md`) vedtok
+ * dagens adaptive 8-bit-kvantisering ("format E") for bølge 3, men med
+ * MINDRE fliser enn de opprinnelige 2° — halverer per-flis overhead ved
+ * flisgrense (relevant for korridor-ruter som krysser 1-3 fliser) uten å
+ * endre selve kvantiseringen. Fortsatt EN parameter (ingen kode andre
+ * steder antar 2° hardkodet — `tileIdForLonLat`/`tilesOverlapping` tar
+ * `tileSizeDeg` som eksplisitt parameter nettopp for at dette skulle være
+ * én linje å endre, se historikken i `docs/specs/vaerpakker.md` §19).
+ */
+export const WEATHER_TILE_DEG = 1;
 export const SUBTILE_MAX_NODES = 32;
 /** §9.4: subflis klassifiseres kystsone hvis senterpunktet er <= 20 nm fra land. */
 export const COASTAL_ZONE_THRESHOLD_NM = 20;

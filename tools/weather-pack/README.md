@@ -11,6 +11,17 @@ wirer VIND-feltet fullt ut ende-til-ende i dry-run — nå via `@morild/weather`
 delte encode/pakke-implementasjon (`buildLayer`/`serializeLayer`/delta-koding),
 ikke en lokal kopi. IKKE produksjonsklar — se "Hva venter" nederst.
 
+**Fase 3, bølge 3A (2026-09-04, D7-syntesen — «format E»).** Første EKTE
+værpakke bygget for nettbrett-røyktesten: **1°-fliser** (`WEATHER_TILE_DEG`,
+D7.1), flisvalg fra endepunkt-bbox + ≥0,5° sikkerhetsmargin (D7.2, ALDRI en
+stram korridor-antakelse), **sertifikat i hver felt-header**
+(`CertifiedPackageHeader`, D7.4, `docs/specs/vaerpakker.md` §9.10),
+**klippe-assert** i `buildLayer` (D7.4, hard-feil, defense-in-depth) og
+**subflis-adresserbar lesing** (`computeSubtileByteRanges`/
+`readLayerSubtile`, D7.5 — forberedelse for korridor-Range-henting, ikke
+bygget her). Se "Første EKTE MEPS-måling, bølge 3A" under for tall fra det
+faktiske bygget.
+
 ## Kjøreinstruks
 
 ```bash
@@ -68,7 +79,9 @@ flisene er 27,4 MB, nær hele det opprinnelige 30 MB-budsjettet.
 
 | Fil | Ansvar |
 |---|---|
-| `src/grid.ts` | 2°×2°-fliser (delt origo med kartflisene), ≤32×32-nodes subfliser for FETCH-vinduet (§7), kystsone-klassifisering (§9.4). |
+| `src/grid.ts` | Værfliser (`WEATHER_TILE_DEG` — **1° siden bølge 3A/D7.1**, delt origo med kartflisene), ≤32×32-nodes subfliser for FETCH-vinduet (§7), kystsone-klassifisering (§9.4). |
+| `src/direction-budget.ts` | Retningsbudsjett fra en kjent fart-dekodefeil (`maxDirectionErrorDeg`) + feltskanning (`fieldMaxDirectionErrorDeg`, D7.4-sertifikatets `maxDirectionErrorDeg`). |
+| `src/das-verification.ts` | Verifiserer MEPS' faktiske LCC-projeksjonsparametre (fra `.das`) mot `lambert-rotation.ts`s hardkodede konstanter — hard-feil ved avvik. |
 | `src/dap2.ts` | Dependency-fri DAP2-binærdekoder (`.dods`-responser) — spike-thredds.md funn 9 ("gjenstående arbeid"), nå skrevet. |
 | `src/opendap-client.ts` | Grid-indeks-cache (permanent, §7 punkt 1), URL-bygging for "alle 30 medlemmer i ett kall" (§7 punkt 2), eksponentiell backoff (§16). |
 | `src/lagged-ensemble.ts` | §11/§18 pkt. 2: siste komplette kjøring, fallback maks 2 kjøringer tilbake, ellers "ingen brukbart ensemble". |
@@ -83,7 +96,7 @@ flisene er 27,4 MB, nær hele det opprinnelige 30 MB-budsjettet.
 | `src/quantize.test.ts` | **Ikke lenger en lokal implementasjon.** Testet opprinnelig weather-packs egen (nå slettede) `quantize.ts`/`format-contract.ts`; tester nå `@morild/weather`s tilsvarende produsent-side-API (samme navn, samme scenarioer) — weather-packs egen regresjonsdekning av den delte modulen. |
 | `src/lambert-rotation.ts` | **Nytt, bølge 2A.** MEPS' u/v er griddrelative (Lambert-projeksjonens egne x/y-akser), ikke sann øst/nord — roterer til sann nord FØR kvantisering (§19 2026-09-03-funn, se `docs/research/pakkestoerrelse-ekte-2026-09-03.md` §5). |
 | `src/live-source.ts` | **Nytt, bølge 2A.** Ekte katalog-/DDS-parsing (§11 mot en EKTE `mepslatest`-katalog) og bbox→indeksvindu-probing (to-pass, samme strategi som spiken) — rene funksjoner skilt fra de tynne `fetchImpl`-nettverkskallene. |
-| `src/build-live-package.ts` | **Nytt, bølge 2A.** Hoved-orkestrator for EKTE THREDDS-bygging — se "Live-bygging" under. IKKE en del av `pnpm test` (gjør ekte nettverkskall). |
+| `src/build-live-package.ts` | Hoved-orkestrator for EKTE THREDDS-bygging — se "Live-bygging" under. IKKE en del av `pnpm test` (gjør ekte nettverkskall). **Bølge 3A:** 1°-fliser fra endepunkt-bbox+margin (D7.2), sertifikat per medlem (D7.4), klippe-assert (`onClip`, hard-feil). |
 
 ## `@morild/weather`-integrasjonen (fullført, 2026-09-03)
 
@@ -176,6 +189,43 @@ gjør nå ekte THREDDS-kall bak denne porten — se "Live-bygging" over.
   datapunktet (kun vind-medlemmer, syntetisk felt, se under), men strøm,
   bølge, tidevann/MetAlerts og metadata er ikke lagt til i samme måling
   ennå, og ekte MEPS-data (post-legal-gate) er ikke brukt.
+
+## Første EKTE MEPS-måling, bølge 3A — 1°-fliser, sertifikat, R2-opplasting (2026-09-04)
+
+`pnpm --filter @morild/weather-pack build-live` bygde en EKTE, kvantisert,
+delta-kodet vindpakke (kontroll+30 medlemmer, 2,5 km, 48 t, 1 t) for
+**seks 1°-fliser** (D7.1/D7.2 — endepunkt-bbox Skjæløy–Skagen + 0,5°
+sikkerhetsmargin: `10_57`,`11_57`,`10_58`,`11_58`,`10_59`,`11_59`), mot
+kjøring `meps_lagged_6_h_latest_2_5km_20260903T21Z.nc`.
+
+| Flis | Noder | Rått (30 medl., u+v) | `maxDecodeErrorKn` (sertifikat, medlem 0) | `maxDirectionErrorDeg` |
+|---|---|---|---|---|
+| 10_57 | 46×27 | 3,65 MB | 0,0785 kn | 1,6° |
+| 11_57 | 45×27 | 3,57 MB | 0,0764 kn | 4,0° |
+| 10_58 | 46×27 | 3,65 MB | 0,0986 kn | 28,8° |
+| 11_58 | 46×26 | 3,52 MB | 0,0891 kn | 73,1° |
+| 10_59 | 46×25 | 3,38 MB | 0,0668 kn | 75,9° |
+| 11_59 | 45×25 | 3,31 MB | 0,0361 kn | 71,1° |
+| **Sum** | — | **21,08 MB rått / 20,17 MB delta+gzip (faktor 1,05×)** | — | — |
+
+`clippedSamples: 0` for alle 180 (6×30) medlemspakker — klippe-assertet
+(§9.10 punkt 4) løste seg aldri ut. `maxDirectionErrorDeg` varierer mye
+mellom fliser fordi det avhenger av feltets FAKTISKE fartsfordeling
+(lavere fart ⇒ større retningsusikkerhet, §9.5) — flisene lengst nord/øst
+(10_59/11_59) har mer stille vær i denne kjøringen. Rundtur-verifisering
+(medlem 0, alle fliser) besto — se konsollutskriften/`out/build-report.json`
+(git-ignorert) for fullstendige tall.
+
+**~21 MB for 6× 1°-fliser vs. ~27,4 MB for 2× 2°-fliser (bølge 2A, samme
+korridor)** — 1°-flisene gir en mindre, men ikke dramatisk mindre, pakke
+(den forventede ~36 %-noderaksjonen fra `kompresjonsmaaling-2026-09-03.md`
+gjelder KORRIDORENS faktiske dekningsbehov, ikke den rause D7.2-margin-
+bboxen bygget her — seks 1°-fliser med 0,5° margin på alle kanter dekker
+mer areal enn to 2°-fliser dekket brukbart av korridoren i praksis).
+
+**R2:** lastet opp til `morild-mirror` (`weather/1/<hash>.bin` × 180 +
+`pointer/vaer-skandinavia.json`), verifisert med stikkprøver
+(`wrangler r2 object get`) — se PR/commit-rapporten for full liste.
 
 ## Første EKTE MEPS-måling (bølge 2A, `build-live-package.ts`, 2026-09-03)
 

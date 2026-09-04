@@ -58,6 +58,7 @@
  * eneste returnert tall, bare hvor mange ganger kildefeltet spørres.
  */
 import { norm360 } from "@morild/geo";
+import type { PackageHeader } from "@morild/protocol";
 import type {
   CurrentSample,
   WaveSample,
@@ -309,6 +310,22 @@ export interface PackStats {
    * `lsb/2` — så dette tallet skal være 0, og målingen sjekker det.
    */
   fixedLsbClamped: number;
+  /**
+   * **Det adaptive regnskapet** (lagt til 2026-09-04, tillegg §14): for
+   * `scale: "flis"`/`"global"` er trinnet ikke oppgitt, men utledet —
+   * `(maks − min i flisen og skiven)/(2^bits − 1)`. Her måles det som faktisk
+   * ble brukt: største spenn i én flis og skive (`adaptiveMaxSpan`) og
+   * største trinn (`adaptiveMaxStep`), i kanalens egen enhet, som maksimum
+   * over **alle lineære kanaler** i pakken.
+   *
+   * Tallet er det som skiller et syntetisk felt fra et ekte: fiksturenes
+   * verste flisspenn er 21,7 kn, en ekte Skagerrak-flis' er over det dobbelte
+   * — og siden trinnet er en funksjon av spennet, er også kvantiseringsfeilen
+   * det. For fliser som kun bærer vind (den ekte pakken) er «alle lineære
+   * kanaler» nøyaktig u og v. Nuller for `fast-lsb` og Float32.
+   */
+  adaptiveMaxSpan: number;
+  adaptiveMaxStep: number;
 }
 
 /** Bit som trengs for å representere heltallene `0 … codes`. */
@@ -422,6 +439,8 @@ class TiledGrid {
         if (lo === Infinity) continue; // hele flisen mangler data
       }
       const step = (hi - lo) / levels;
+      if (hi - lo > this.stats.adaptiveMaxSpan) this.stats.adaptiveMaxSpan = hi - lo;
+      if (step > this.stats.adaptiveMaxStep) this.stats.adaptiveMaxStep = step;
       if (!(step > 0)) {
         for (let idx = ch; idx < raw.length; idx += c) {
           const x = raw[idx]!;
@@ -676,6 +695,8 @@ export function packField(
     fixedLsbMaxSpanCodes: 0,
     fixedLsbMaxAbsCode: 0,
     fixedLsbClamped: 0,
+    adaptiveMaxSpan: 0,
+    adaptiveMaxStep: 0,
   };
   const dt = spec.timeStepS;
   const t0 = base.validFromS;
@@ -1017,5 +1038,167 @@ export function domainAround(
     latMax: Math.max(...lats) + marginDeg,
     lonMin: Math.min(...lons) - marginDeg,
     lonMax: Math.max(...lons) + marginDeg,
+  };
+}
+
+// ------------------------------------------------- ekte flis som referansefelt
+
+/**
+ * **Ett dekodet, regelmessig vindgitter** — inngangen til `gridWindWeatherField`.
+ *
+ * Dette er formen en *ekte* værflis har etter at klienten har dekodet den:
+ * u/v i knop på et lat/lon/tid-gitter. Typen er bevisst **naken** (tall og
+ * typede arrayer, ingen `@morild/weather`-typer): arkitekturgrensen
+ * (`tools/arch-tests`) tillater ikke at `packages/routing` importerer
+ * `@morild/weather`, og fiksturen skal dessuten kunne mates fra hva som helst
+ * som kan produsere et gitter. Selve lesingen av `.bin`-blobene — den eneste
+ * I/O-en i kjeden — lever i `tools/kvantisering/ekte-flis.mjs`.
+ *
+ * Indeksering: `(i · nodesLon + j) · timeSteps + k`, `i` langs lat fra
+ * `latMin`, `j` langs lon fra `lonMin`, `k` langs tid fra `t0S`. `NaN` =
+ * manglende node (sentinel), og en manglende nabo gjør hele oppslaget
+ * `undefined` — vi ekstrapolerer aldri (N2).
+ */
+export interface WindGrid {
+  readonly latMin: number;
+  readonly lonMin: number;
+  readonly latStepDeg: number;
+  readonly lonStepDeg: number;
+  readonly nodesLat: number;
+  readonly nodesLon: number;
+  readonly t0S: number;
+  readonly dtS: number;
+  readonly timeSteps: number;
+  /** u mot øst, knop. */
+  readonly u: Float32Array | Float64Array;
+  /** v mot nord, knop. */
+  readonly v: Float32Array | Float64Array;
+}
+
+export interface GridWindFieldOptions {
+  readonly header: PackageHeader;
+  /**
+   * Feltets egen dekodefeil. **Standard 0**, og det er et bevisst valg: dette
+   * feltet spiller rollen som *sannheten* i målingen (`ANALYTISK`/`REF`-
+   * kolonnen), på nøyaktig samme måte som de analytiske fiksturfeltene, og de
+   * oppgir 0. At kilden i virkeligheten selv er 8-bit kvantisert av
+   * produsenten er et forbehold som hører hjemme i rapporten, ikke et tall
+   * som skal blandes inn i vaktbåndsregnskapet for *re*-kvantiseringen.
+   */
+  readonly maxDecodeErrorKn?: number;
+  /** Overstyrer det utledede gyldighetsvinduet (snittet av gitrene). */
+  readonly validFromS?: number;
+  readonly validToS?: number;
+}
+
+function gridWindAt(
+  g: WindGrid,
+  lat: number,
+  lon: number,
+  epochS: number,
+): readonly [number, number] | undefined {
+  const fi = (lat - g.latMin) / g.latStepDeg;
+  const fj = (lon - g.lonMin) / g.lonStepDeg;
+  const fk = (epochS - g.t0S) / g.dtS;
+  if (!(fi >= 0) || fi > g.nodesLat - 1) return undefined;
+  if (!(fj >= 0) || fj > g.nodesLon - 1) return undefined;
+  if (!(fk >= 0) || fk > g.timeSteps - 1) return undefined;
+  const i0 = Math.floor(fi);
+  const j0 = Math.floor(fj);
+  const k0 = Math.floor(fk);
+  const wi = fi - i0;
+  const wj = fj - j0;
+  const wk = fk - k0;
+
+  let u = 0;
+  let v = 0;
+  for (let dk = 0; dk <= 1; dk++) {
+    const tw = dk === 0 ? 1 - wk : wk;
+    if (tw === 0) continue;
+    for (let di = 0; di <= 1; di++) {
+      const iw = di === 0 ? 1 - wi : wi;
+      if (iw === 0) continue;
+      for (let dj = 0; dj <= 1; dj++) {
+        const jw = dj === 0 ? 1 - wj : wj;
+        if (jw === 0) continue;
+        const idx = ((i0 + di) * g.nodesLon + (j0 + dj)) * g.timeSteps + (k0 + dk);
+        const w = tw * iw * jw;
+        u += w * (g.u[idx] ?? Number.NaN);
+        v += w * (g.v[idx] ?? Number.NaN);
+      }
+    }
+  }
+  if (Number.isNaN(u) || Number.isNaN(v)) return undefined;
+  return [u, v];
+}
+
+/**
+ * **Referansefelt bygget av ekte, dekodede værfliser.**
+ *
+ * Interpolasjonen er *identisk* med pakkemodellens egen (bilineær i rom,
+ * lineær i tid, i u/v-komponentrommet, `uvToWind` som aller siste steg) — det
+ * er en forutsetning for at `packField(gridWindWeatherField(...))` skal måle
+ * **re-kvantiseringen** og ikke en forskjell i interpolasjonssemantikk.
+ *
+ * Flere gitre sys sammen som i `@morild/weather::compositeWeatherField`:
+ * første gitter med et definert svar vinner. Pekerens fliser er 2°×2° og
+ * berører hverandre bare langs kanten, så rekkefølgen avgjør aldri et reelt
+ * valg mellom to ulike svar — kun hvilken av to kantnoder som brukes på
+ * grensen.
+ *
+ * `maxTwsKn` regnes på **de dekodede verdiene** (kontraktens krav i
+ * `contracts.ts`), altså som observert maksimum over alle noder i alle gitre —
+ * ikke fra en kilde vi ikke kan verifisere.
+ *
+ * Bølger og strøm er `undefined`: den ekte pakken bærer dem ikke ennå
+ * (`tools/weather-pack/out/build-report.json` §`missingFields`), og å dikte
+ * dem opp ville gjort feltet syntetisk igjen. Ærlig degradering, ikke gjettede
+ * verdier (N2).
+ */
+export function gridWindWeatherField(
+  grids: readonly WindGrid[],
+  opts: GridWindFieldOptions,
+): WeatherField {
+  if (grids.length === 0) {
+    throw new Error("gridWindWeatherField: minst ett gitter kreves");
+  }
+  let maxTwsKn = 0;
+  for (const g of grids) {
+    const n = g.u.length;
+    for (let idx = 0; idx < n; idx++) {
+      const u = g.u[idx]!;
+      const v = g.v[idx]!;
+      if (Number.isNaN(u) || Number.isNaN(v)) continue;
+      const s = Math.hypot(u, v);
+      if (s > maxTwsKn) maxTwsKn = s;
+    }
+  }
+  const validFromS =
+    opts.validFromS ?? Math.max(...grids.map((g) => g.t0S));
+  const validToS =
+    opts.validToS ??
+    Math.min(...grids.map((g) => g.t0S + (g.timeSteps - 1) * g.dtS));
+
+  return {
+    wind(lat, lon, epochS) {
+      if (epochS < validFromS || epochS > validToS) return undefined;
+      for (const g of grids) {
+        const uv = gridWindAt(g, lat, lon, epochS);
+        if (uv !== undefined) return uvToWind(uv[0], uv[1]);
+      }
+      return undefined;
+    },
+    waves() {
+      return undefined;
+    },
+    current() {
+      return undefined;
+    },
+    maxTwsKn,
+    maxCurrentKn: 0,
+    maxDecodeErrorKn: opts.maxDecodeErrorKn ?? 0,
+    validFromS,
+    validToS,
+    header: opts.header,
   };
 }

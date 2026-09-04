@@ -13,6 +13,11 @@
  * 3. Rute-nivå dekningsflagg (`RouteResult.coverage` — vær tok slutt
  *    (partial, ADR-0005s inkonklusiv-regel) eller kartdekning er
  *    ufullstendig).
+ * 4. Rute-nivå MOTOR-flagg (`RouteResult.flagNames`, D7.2) — flagg om selve
+ *    SØKET, ikke om et punkt på linjen. `VAERDEKNING_BEGRENSET` er det
+ *    første: søket forkastet etiketter fordi en værflis manglet innenfor
+ *    pakkens tidsvindu. Kilde 1 og 4 deler bit-vokabular (`FLAG_NAMES`) og
+ *    dermed også merkelapp-/alvorlighetstabellen under.
  */
 import type { RouteResult } from "@morild/routing";
 import type { FieldPresenceStatus, KnownField } from "./field-status.js";
@@ -22,6 +27,11 @@ export interface DisplayFlag {
   readonly code: string;
   readonly label: string;
   readonly severity: "info" | "warning";
+}
+
+/** Rute-nivå flagg fra motoren (`RouteResult.flagNames`, D7.2). */
+export function collectRouteFlagNames(result: RouteResult): readonly string[] {
+  return result.flagNames;
 }
 
 /** Union av alle `RouteStep.flagNames` som opptrer NOE STED langs ruten. */
@@ -81,6 +91,8 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
   SJOEGANGS_MARGIN_OVERSKREDET: "Sjøgangsmargin overskredet et sted langs ruten",
   NEGATIV_VANNSTAND_RISIKO: "Risiko for negativ vannstand et sted langs ruten",
   SJOEGANG_DATA_MANGLER: "Bølgedata manglet i minst ett punkt — klaringskravet falt tilbake til standardmarginen der",
+  VAERDEKNING_BEGRENSET:
+    "Ruten er BEGRENSET AV VÆRDEKNING: søket måtte forkaste alternativer fordi en værflis manglet innenfor pakkens tidsvindu — ruten kan være formet av hvilke fliser som var lastet, ikke av været (D7.2)",
 };
 
 /**
@@ -103,6 +115,7 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
  * | `SJOEGANGS_MARGIN_OVERSKREDET`   | warning | Sjøgangstillegget overskrider maskens statiske klaringsmargin i punktet (`rutemotor.md` §12) — direkte klaring. |
  * | `NEGATIV_VANNSTAND_RISIKO`       | warning | Risiko for negativ vannstand — direkte farbarhet (tørrfall-/grunnstøtingsrisiko). |
  * | `SJOEGANG_DATA_MANGLER`          | warning | Bølgedata manglet i punktet, klaringskravet falt tilbake til statisk margin — eksplisitt datamangel som IKKE later som marginen er dekket (N2). |
+ * | `VAERDEKNING_BEGRENSET`          | warning | **Rute-nivå** (D7.2, `reconstruct.ts`): søket forkastet etiketter fordi værfeltet manglet data i posisjonen INNENFOR pakkens tidsvindu — altså et hull i flisdekningen. Ruten kan være styrt av dekningen i stedet for av været, og `safety.verdict` gulves derfor til minst `"usikkert"`. Datamangel med direkte konsekvens for om ruten kan garanteres — warning. |
  *
  * Ukjente/fremtidige flaggnavn (ikke i tabellen) klassifiseres `"warning"`
  * som konservativt standardvalg — ærlig degradering (N2) betyr at et flagg
@@ -118,6 +131,7 @@ const STEP_FLAG_SEVERITY: Record<string, "info" | "warning"> = {
   SJOEGANGS_MARGIN_OVERSKREDET: "warning",
   NEGATIV_VANNSTAND_RISIKO: "warning",
   SJOEGANG_DATA_MANGLER: "warning",
+  VAERDEKNING_BEGRENSET: "warning",
 };
 
 export function displayFlagsForStepFlag(name: string): DisplayFlag {
@@ -134,6 +148,7 @@ export function allDisplayFlags(
   fieldStatuses: readonly FieldPresenceStatus[],
 ): readonly DisplayFlag[] {
   return [
+    ...collectRouteFlagNames(result).map(displayFlagsForStepFlag),
     ...collectRouteStepFlagNames(result).map(displayFlagsForStepFlag),
     ...missingFieldFlags(fieldStatuses),
     ...coverageFlags(result),

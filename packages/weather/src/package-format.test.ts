@@ -1,19 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   buildLayer,
+  computeSubtileByteRanges,
   computeSubtileLayout,
   decodeLayerNode,
   deltaDecodeLayerPayload,
   deltaEncodeLayerPayload,
   deserializeLayer,
+  detectQuantizationClip,
   layerByteLayout,
   layerMaxDecodeError,
   readLayerFrame,
   readLayerFrames,
+  readLayerSubtile,
   sampleIndex,
   serializeLayer,
   subtileIndexOfNode,
   WEATHER_LAYER_MAGIC,
+  type ClippedSample,
   type Layer,
   type LayerGeometry,
 } from "./package-format.js";
@@ -419,5 +423,122 @@ describe("readLayerFrame/readLayerFrames — flerlags-rammededeling (klientgap, 
   it("kastet på ukjent magic ved offset > 0 (korrupt/feil-adressert fortsettelse)", () => {
     const bogus = new Uint8Array(80);
     expect(() => readLayerFrame(bogus, 4)).toThrow();
+  });
+});
+
+describe("D7.4 — klippe-assert (BuildLayerOptions.onClip)", () => {
+  it("kalles ALDRI for et normalt, deterministisk kildefelt (regresjon)", () => {
+    const g = testGeometry({ nodesLat: 40, nodesLon: 40, timeSteps: 2 });
+    const clips: ClippedSample[] = [];
+    buildLayer({
+      sample: smoothSource,
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+      onClip: (c) => clips.push(c),
+    });
+    expect(clips).toEqual([]);
+  });
+
+  it("detectQuantizationClip: fanger et avvik større enn ett kvantiseringstrinn (direkte test av deteksjonsformelen — buildLayers to-pass-struktur gjør den strukturelt umulig å trigge via den offentlige API-en, se onClip-dokumentasjonen)", () => {
+    // Innenfor budsjett — ingen klipping.
+    expect(detectQuantizationClip("linear", 10, 10.05, 0.1)).toBeUndefined();
+    // Utenfor [lo,hi] (dekodet klippet til kanten, langt fra kilden) — klipping.
+    const clip = detectQuantizationClip("linear", 500, 254 * 0.1, 0.1);
+    expect(clip).toBeDefined();
+    expect(clip!.errorAbs).toBeGreaterThan(0.1);
+    // Vinkelkanal — aldri klipping (alltid representerbar modulo 360).
+    expect(detectQuantizationClip("angle", 725, 5, 1)).toBeUndefined();
+    // Sentinel (verdi/dekodet mangler) — ikke en klipping.
+    expect(detectQuantizationClip("linear", undefined, undefined, 0.1)).toBeUndefined();
+    expect(detectQuantizationClip("linear", 10, undefined, 0.1)).toBeUndefined();
+  });
+
+  it("kalles aldri for vinkelkanaler (alltid representerbare modulo 360)", () => {
+    const g = testGeometry({ nodesLat: 8, nodesLon: 8, timeSteps: 1, tileNodes: 32 });
+    const clips: ClippedSample[] = [];
+    buildLayer({
+      sample: () => 725, // langt utenfor [0,360), men gyldig modulo
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "angle",
+      onClip: (c) => clips.push(c),
+    });
+    expect(clips).toEqual([]);
+  });
+});
+
+describe("D7.5 — subflis-adresserbar lesing (computeSubtileByteRanges / readLayerSubtile)", () => {
+  it("byte-vinduene til ulike subfliser er ikke-overlappende og dekker nøyaktig index-/nyttelast-seksjonene", () => {
+    const g = testGeometry(); // 3×2 subfliser
+    const ranges = computeSubtileByteRanges(g, 8);
+    const layout = computeSubtileLayout(g);
+    const { indexBytes, totalBytes } = layerByteLayout(layout, g.timeSteps, 8);
+    const HEADER_BYTES = totalBytes - indexBytes - layout.totalSamples; // 8-bit ⇒ 1 byte/prøve
+
+    const indexWindows: Array<[number, number]> = [];
+    const payloadWindows: Array<[number, number]> = [];
+    for (let sr = 0; sr < ranges.length; sr++) {
+      for (let sc = 0; sc < ranges[sr]!.length; sc++) {
+        const r = ranges[sr]![sc]!;
+        indexWindows.push([r.indexByteOffset, r.indexByteOffset + r.indexByteLength]);
+        payloadWindows.push([r.payloadByteOffset, r.payloadByteOffset + r.payloadByteLength]);
+        expect(r.indexByteOffset).toBeGreaterThanOrEqual(HEADER_BYTES);
+        expect(r.payloadByteOffset).toBeGreaterThanOrEqual(HEADER_BYTES + indexBytes);
+      }
+    }
+    // Sortert etter offset, ingen overlapp, sammenhengende (subflis-major layout).
+    for (const windows of [indexWindows, payloadWindows]) {
+      windows.sort((a, b) => a[0] - b[0]);
+      for (let i = 1; i < windows.length; i++) {
+        expect(windows[i]![0]).toBe(windows[i - 1]![1]); // sammenhengende, ingen hull/overlapp
+      }
+    }
+    expect(payloadWindows[payloadWindows.length - 1]![1]).toBe(totalBytes);
+  });
+
+  it("bit-eksakt rundtur: readLayerSubtile matcher deserializeLayer på nøyaktig samme noder", () => {
+    const g = testGeometry(); // 70×40, 3×2 subfliser, siste rad 6 noder
+    const layer = buildLayer({
+      sample: smoothSource,
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+    });
+    const bytes = serializeLayer(layer, { deltaCoded: false });
+    const fullLayout = computeSubtileLayout(g);
+
+    for (let sr = 0; sr < fullLayout.subtileRows; sr++) {
+      for (let sc = 0; sc < fullLayout.subtileCols; sc++) {
+        const sub = readLayerSubtile(bytes, 0, sr, sc);
+        const subLayout = computeSubtileLayout(sub.geometry);
+        const bounds = fullLayout.bounds[sr]![sc]!;
+        for (let a = 0; a < bounds.rowCount; a++) {
+          for (let c = 0; c < bounds.colCount; c++) {
+            for (let k = 0; k < g.timeSteps; k++) {
+              const fromFull = decodeLayerNode(layer, fullLayout, bounds.rowStart + a, bounds.colStart + c, k);
+              const fromSub = decodeLayerNode(sub, subLayout, a, c, k);
+              expect(fromSub).toBe(fromFull);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it("nekter å adressere en subflis i et delta-kodet lag (§8 krever hele tidsserien per node)", () => {
+    const g = testGeometry({ nodesLat: 8, nodesLon: 8, timeSteps: 3, tileNodes: 32 });
+    const layer = buildLayer({
+      sample: smoothSource,
+      geometryBase: g,
+      bitsPerSample: 8,
+      roundingMode: "nearest",
+      channelKind: "linear",
+    });
+    const bytes = serializeLayer(layer, { deltaCoded: true });
+    expect(() => readLayerSubtile(bytes, 0, 0, 0)).toThrow();
   });
 });

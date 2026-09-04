@@ -26,7 +26,7 @@ import { evaluateRoute } from "./evaluate.js";
 import { DEFAULT_ROUTE_OPTIONS, withDefaults } from "./options.js";
 import { planRoute } from "./search.js";
 import { corridorMemberOutcome, planRouteScalar } from "./variants.js";
-import type { LatLon } from "./contracts.js";
+import type { LatLon, WeatherField } from "./contracts.js";
 
 // ------------------------------------------------------- variant A: skalar
 
@@ -261,6 +261,38 @@ describe("R2 — felle-definisjonen", () => {
     // Samme styrke fra motsatt kant er fralandsvind — havnen er brukbar.
     const offshoreGale = constantWeather({ speedKn: 30, fromDeg: 355 });
     expect(harbourApproachable(harbour, offshoreGale, 0).approachable).toBe(true);
+  });
+
+  /**
+   * **Regresjonstest for funnet 2026-09-04** (D7.3-gjennomgangen):
+   * pålandsvind-testen er en hard TWS-sammenligning og manglet vaktbåndet
+   * fra `vaerpakker.md` §9.5. Med et kvantisert felt kan dekodet TWS ligge
+   * under den sanne, og havnen ble da erklært anløpbar selv om den sanne
+   * pålandsvinden lå over grensen — den farligste retningen feilen kan ha.
+   */
+  it("vaktbånd på pålandsvinden: dekodet 24,8 kn med 0,5 kn bånd forkaster en 25-kn-grense", () => {
+    const kvantisert: WeatherField = {
+      ...constantWeather({ speedKn: 24.8, fromDeg: 180 }),
+      maxDecodeErrorKn: 0.5,
+    };
+    const verdict = harbourApproachable(harbour, kvantisert, 0);
+    expect(verdict.approachable).toBe(false);
+    expect(verdict.reason).toContain("vaktbånd");
+
+    // Uten kvantisering (bånd 0) er adferden bit-identisk med før.
+    const eksakt = constantWeather({ speedKn: 24.8, fromDeg: 180 });
+    expect(harbourApproachable(harbour, eksakt, 0).approachable).toBe(true);
+  });
+
+  it("vaktbåndet på pålandsvinden er per flis når feltet kan oppgi det (D7.3)", () => {
+    // Havnen ligger på 58,5°N. Nordflisen er fint kvantisert (0,1 kn),
+    // sørflisen grovt (0,8) — det er NORDflisens bånd som skal gjelde her.
+    const felt: WeatherField = {
+      ...constantWeather({ speedKn: 24.8, fromDeg: 180 }),
+      maxDecodeErrorKn: 0.8,
+      maxDecodeErrorKnAt: (lat: number) => (lat >= 58 ? 0.1 : 0.8),
+    };
+    expect(harbourApproachable(harbour, felt, 0).approachable).toBe(true);
   });
 
   it("diskvalifiserer havnen ved for høy sjø, uansett retning", () => {

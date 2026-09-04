@@ -41,8 +41,21 @@ import {
 import { decodeTemporalDeltaU8, encodeTemporalDeltaU8 } from "./delta.js";
 
 export const WEATHER_LAYER_MAGIC = "MWL1";
-/** Semver for selve lag-skjemaet (§5 — separat fra modellkjøringens `PackageHeader.formatVersion`). */
-export const WEATHER_PACKAGE_FORMAT_VERSION = "1.0.0";
+/**
+ * Semver for selve lag-skjemaet (§5 — separat fra modellkjøringens
+ * `PackageHeader.formatVersion`).
+ *
+ * **1.1.0 (fase 3 bølge 3A, D7.5):** ingen byte på disk endret — layouten
+ * var ALLEREDE subflis-major i både indeks og payload (se `SubtileLayout`
+ * over). Det som er nytt er en FORMALISERT, testet, eksportert kontrakt
+ * (`computeSubtileByteRanges`/`readLayerSubtile` under) for å lese ÉN
+ * subflis' bytes uten å dekode/laste hele laget — en klient kan nå bygge
+ * en HTTP Range-forespørsel direkte fra headeren alene. Ren tilleggs-
+ * funksjonalitet (minor, ikke major): en 1.0.0-leser kan fortsatt lese en
+ * 1.1.0-serialisert fil uendret, den kjenner bare ikke den nye
+ * bekvemmelighetsfunksjonen.
+ */
+export const WEATHER_PACKAGE_FORMAT_VERSION = "1.1.0";
 
 export type ChannelKind = "linear" | "angle";
 
@@ -149,12 +162,83 @@ export function sampleIndex(
 
 // ------------------------------------------------------------------ bygging
 
+/**
+ * Én verdi som ble kvantisert med en STØRRE feil enn skala/offset-paret
+ * for sin subflis/tidssteg skulle tillate — dvs. `encodeLinear` klippet
+ * verdien til kanten av det representerbare området fordi den falt
+ * UTENFOR `[lo,hi]` (§9.6s klippekommentar). Siden `lo`/`hi` regnes fra
+ * NØYAKTIG de samme verdiene som kodes (samme `sample`-kall, §7 "flis"-
+ * modus), skal dette ALDRI inntreffe for et korrekt bygg — se
+ * `BuildLayerOptions.onClip`.
+ */
+export interface ClippedSample {
+  readonly sr: number;
+  readonly sc: number;
+  readonly k: number;
+  readonly lat: number;
+  readonly lon: number;
+  readonly value: number;
+  readonly decoded: number;
+  readonly errorAbs: number;
+  readonly scale: number;
+}
+
 export interface BuildLayerOptions {
   readonly sample: (lat: number, lon: number, epochS: number) => number | undefined;
   readonly geometryBase: Omit<LayerGeometry, "timeSteps"> & { readonly timeSteps: number };
   readonly bitsPerSample: 8 | 10;
   readonly roundingMode: RoundingMode;
   readonly channelKind: ChannelKind;
+  /**
+   * **Klippe-assert (D7.4, fase 3 bølge 3A).** Kalt for HVER verdi som
+   * ble kvantisert med et avvik markert vesentlig over ETT kvantiserings-
+   * trinn fra skala/offset-parets eget budsjett — den eneste måten
+   * `encodeLinear` produserer et slikt avvik på er å ha klippet en verdi
+   * utenfor `[lo,hi]` (§9.6). Siden `lo/hi` regnes fra nøyaktig de samme
+   * verdiene som kodes, er ethvert kall hit et tegn på en reell feil
+   * (ikke-deterministisk `sample`, feil geometri, e.l.) — kalleren
+   * (`tools/weather-pack/src/build-live-package.ts`) kaster umiddelbart
+   * i stedet for å skrive en pakke med en usertifiserbar flis (§9.10).
+   * Kalles ALDRI for vinkelkanaler (`channelKind: "angle"`) — de er
+   * alltid representerbare modulo 360, klipping er meningsløst der.
+   */
+  readonly onClip?: (info: ClippedSample) => void;
+}
+
+/** Terskel for "vesentlig over ett kvantiseringstrinn" — se `ClippedSample`. Liten margin for flyttallsstøy, ikke et forsøk på å tolerere ekte klipping. */
+const CLIP_DETECTION_EPS = 1e-9;
+
+/**
+ * Eksportert for direkte enhetstesting (`package-format.test.ts`) — selve
+ * klippedeteksjonen (`decoded` avviker fra `value` med mer enn ett
+ * kvantiseringstrinn). `buildLayer`s to-pass-struktur GARANTERER
+ * strukturelt at dette aldri inntreffer i praksis (samme `raw`-array
+ * brukes til både lo/hi-scanning og koding, så `v` er alltid et medlem av
+ * settet lo/hi ble regnet fra — kan aldri ligge utenfor) — funksjonen
+ * eksporteres likevel slik at selve deteksjonslogikken er testbar uendret
+ * av at den heldige invarianten gjør den umulig å trigge via den offentlige
+ * `buildLayer`-inngangen.
+ */
+export function detectQuantizationClip(
+  channelKind: ChannelKind,
+  value: number | undefined,
+  decoded: number | undefined,
+  scale: number,
+): { readonly errorAbs: number } | undefined {
+  return detectClip(channelKind, value, decoded, scale);
+}
+
+function detectClip(
+  channelKind: ChannelKind,
+  value: number | undefined,
+  decoded: number | undefined,
+  scale: number,
+): { readonly errorAbs: number } | undefined {
+  if (channelKind === "angle") return undefined; // alltid representerbart, se BuildLayerOptions.onClip
+  if (value === undefined || Number.isNaN(value) || decoded === undefined) return undefined; // sentinel — ikke en klipping
+  const errorAbs = Math.abs(decoded - value);
+  const threshold = scale > 0 ? scale + CLIP_DETECTION_EPS : CLIP_DETECTION_EPS;
+  return errorAbs > threshold ? { errorAbs } : undefined;
 }
 
 /**
@@ -220,6 +304,24 @@ export function buildLayer(opts: BuildLayerOptions): Layer {
                 : encodeLinear(v, params);
             const idx = sampleIndex(geometry, layout, b.rowStart + a, b.colStart + c, k);
             payload[idx] = code;
+            if (opts.onClip) {
+              const decoded =
+                opts.channelKind === "angle" ? decodeAngleDeg(code, params) : decodeLinear(code, params);
+              const clip = detectClip(opts.channelKind, v, decoded, params.scale);
+              if (clip) {
+                opts.onClip({
+                  sr,
+                  sc,
+                  k,
+                  lat: geometry.latMin + (b.rowStart + a) * geometry.latStepDeg,
+                  lon: geometry.lonMin + (b.colStart + c) * geometry.lonStepDeg,
+                  value: v as number,
+                  decoded: decoded as number,
+                  errorAbs: clip.errorAbs,
+                  scale: params.scale,
+                });
+              }
+            }
           }
         }
       }
@@ -652,6 +754,155 @@ function peekLayerHeader(bytes: Uint8Array, byteOffset: number): LayerHeaderPeek
     timeSteps: view.getUint32(68, true),
   };
   return { bitsPerSample, geometry };
+}
+
+/** Offentlig variant av `peekLayerHeader` — samme lesing, eksportert navn (D7.5). */
+export function peekLayerHeaderInfo(bytes: Uint8Array, byteOffset = 0): LayerHeaderPeek {
+  return peekLayerHeader(bytes, byteOffset);
+}
+
+// ------------------------------------- subflis-adresserbar lesing (D7.5)
+
+/**
+ * **D7.5 (fase 3 bølge 3A):** nøyaktig hvilke byte-vinduer (relativt til
+ * LAGETS egen start, altså `byteOffset` i `readLayerFrame`-forstand) én
+ * subflis (sr,sc) opptar — BÅDE dens skala/offset-indekspost og dens
+ * kvantiserte nyttelast. Regnet ut FRA HEADEREN ALENE (44 byte,
+ * `peekLayerHeaderInfo`) — ingen nyttelast-byte trenger å være lest for å
+ * få disse tallene. Dette er kontrakten en klient bruker til å bygge en
+ * HTTP Range-forespørsel mot R2 for én subflis (ytelsesingeniørens
+ * "korridor-Range-henting", forberedt her, IKKE bygget — se
+ * `docs/specs/vaerpakker.md` §9.10).
+ *
+ * Layout-invarianten dette hviler på (uendret siden bølge 2, se
+ * `serializeLayer`/`SubtileLayout`): BÅDE indeksen og nyttelasten skrives
+ * subflis-major (ytre løkke `sr`, så `sc`), så hver subflis' byte er
+ * SAMMENHENGENDE i begge seksjoner — ingen "hull" å hoppe over midt i en
+ * subflis' eget vindu.
+ */
+export interface SubtileByteRange {
+  /** Byte-offset for subflisens skala/offset-poster, relativt til lagets egen start. */
+  readonly indexByteOffset: number;
+  readonly indexByteLength: number;
+  /** Byte-offset for subflisens kvantiserte koder, relativt til lagets egen start. */
+  readonly payloadByteOffset: number;
+  readonly payloadByteLength: number;
+  readonly bounds: SubtileBounds;
+}
+
+/** `[subtileRow][subtileCol]` — se `SubtileByteRange`. */
+export function computeSubtileByteRanges(
+  geometry: LayerGeometry,
+  bitsPerSample: 8 | 10,
+): readonly (readonly SubtileByteRange[])[] {
+  const layout = computeSubtileLayout(geometry);
+  const elementBytes = bitsPerSample <= 8 ? 1 : 2;
+  const { indexBytes } = layerByteLayout(layout, geometry.timeSteps, bitsPerSample);
+  const perSubtileIndexBytes = geometry.timeSteps * 16; // f64 scale + f64 offset, per tidssteg (§9.9)
+  const out: SubtileByteRange[][] = [];
+  for (let sr = 0; sr < layout.subtileRows; sr++) {
+    const row: SubtileByteRange[] = [];
+    for (let sc = 0; sc < layout.subtileCols; sc++) {
+      const bounds = layout.bounds[sr]![sc]!;
+      const subtileLinearIndex = sr * layout.subtileCols + sc; // samme rekkefølge som serializeLayer/deserializeLayer sin nøstede sr/sc-løkke
+      const indexByteOffset = HEADER_BYTES + subtileLinearIndex * perSubtileIndexBytes;
+      const payloadByteOffset = HEADER_BYTES + indexBytes + layout.sampleOffset[sr]![sc]! * elementBytes;
+      const payloadByteLength = bounds.rowCount * bounds.colCount * geometry.timeSteps * elementBytes;
+      row.push({
+        indexByteOffset,
+        indexByteLength: perSubtileIndexBytes,
+        payloadByteOffset,
+        payloadByteLength,
+        bounds,
+      });
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+/**
+ * Leser ÉN subflis (sr,sc) fra et serialisert lag som starter ved
+ * `byteOffset` — kun subflisens EGNE indeks-/nyttelast-vindu materialiseres
+ * (`computeSubtileByteRanges`), resten av laget rører vi aldri. Returnerer
+ * et `Layer` hvis geometri er BEGRENSET til subflisens eget nodeområde
+ * (`nodesLat=bounds.rowCount`, `nodesLon=bounds.colCount`,
+ * `latMin`/`lonMin` flyttet til subflisens hjørne) — `decodeLayerNode`/
+ * `decodeLayerAt` fungerer uendret på resultatet med LOKALE indekser
+ * (node (0,0) her ER node (bounds.rowStart,bounds.colStart) i det
+ * fullstendige laget).
+ */
+export function readLayerSubtile(
+  bytes: Uint8Array,
+  byteOffset: number,
+  sr: number,
+  sc: number,
+): Layer {
+  const { bitsPerSample, geometry: fullGeometry } = peekLayerHeader(bytes, byteOffset);
+  const view = new DataView(bytes.buffer, bytes.byteOffset + byteOffset, bytes.byteLength - byteOffset);
+  const roundingMode = roundingFromCode(view.getUint8(5));
+  const channelKind: ChannelKind = view.getUint8(6) === 0 ? "linear" : "angle";
+  const deltaCoded = view.getUint8(7) === 1;
+  if (deltaCoded) {
+    throw new Error(
+      "readLayerSubtile: delta-kodede lag krever hele tidsserien for hver node (§8) — " +
+        "subflis-adressering forutsetter deltaCoded=false. Server-siden må enten skrive " +
+        "en ikke-delta-kodet variant for Range-henting, eller klienten må hente hele laget.",
+    );
+  }
+  const ranges = computeSubtileByteRanges(fullGeometry, bitsPerSample);
+  const range = ranges[sr]?.[sc];
+  if (!range) throw new Error(`readLayerSubtile: subflis (${sr},${sc}) finnes ikke i dette laget`);
+
+  const elementBytes = bitsPerSample <= 8 ? 1 : 2;
+  const subGeometry: LayerGeometry = {
+    ...fullGeometry,
+    latMin: fullGeometry.latMin + range.bounds.rowStart * fullGeometry.latStepDeg,
+    lonMin: fullGeometry.lonMin + range.bounds.colStart * fullGeometry.lonStepDeg,
+    nodesLat: range.bounds.rowCount,
+    nodesLon: range.bounds.colCount,
+  };
+  // Én subflis ⇒ subGeometrys egen subflis-layout har nøyaktig én (sr,sc) = (0,0).
+  const subtileParams: QuantizationParams[][][] = [[[]]];
+  const indexView = new DataView(
+    bytes.buffer,
+    bytes.byteOffset + byteOffset + range.indexByteOffset,
+    range.indexByteLength,
+  );
+  let ioff = 0;
+  const perTime: QuantizationParams[] = [];
+  for (let k = 0; k < fullGeometry.timeSteps; k++) {
+    const scale = indexView.getFloat64(ioff, true);
+    ioff += 8;
+    const offset = indexView.getFloat64(ioff, true);
+    ioff += 8;
+    perTime.push({ bitsPerSample, scale, offset, roundingMode, sentinelRawValue: 255 });
+  }
+  subtileParams[0]![0] = perTime;
+
+  const payloadBytes = bytes.subarray(
+    byteOffset + range.payloadByteOffset,
+    byteOffset + range.payloadByteOffset + range.payloadByteLength,
+  );
+  const payload: Uint8Array | Uint16Array =
+    elementBytes === 1
+      ? Uint8Array.from(payloadBytes)
+      : (() => {
+          const totalSamples = range.bounds.rowCount * range.bounds.colCount * fullGeometry.timeSteps;
+          const u16 = new Uint16Array(totalSamples);
+          const pv = new DataView(payloadBytes.buffer, payloadBytes.byteOffset, payloadBytes.byteLength);
+          for (let idx = 0; idx < totalSamples; idx++) u16[idx] = pv.getUint16(idx * 2, true);
+          return u16;
+        })();
+
+  return {
+    geometry: subGeometry,
+    bitsPerSample,
+    roundingMode,
+    channelKind,
+    subtileParams,
+    payload,
+  };
 }
 
 export interface LayerFrame {

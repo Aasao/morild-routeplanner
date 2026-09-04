@@ -18,6 +18,7 @@ export * from "./arena.js";
 export * from "./label-store.js";
 export * from "./heap.js";
 export * from "./distance-field.js";
+export * from "./weather-tiles.js";
 export * from "./tack.js";
 export * from "./tss.js";
 export * from "./daylight.js";

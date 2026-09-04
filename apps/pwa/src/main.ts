@@ -21,6 +21,7 @@ import {
   renderFlags,
   renderMetAlerts,
   renderPointerStatus,
+  renderTileSelection,
 } from "./weather-ui.js";
 
 function registerServiceWorker(): void {
@@ -49,6 +50,7 @@ function formatStatus(result: Awaited<ReturnType<typeof runHelloRoute>>): string
 
 function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMap>): void {
   const pointerStatusEl = document.querySelector<HTMLDivElement>("#weather-pointer-status");
+  const tileSelectionEl = document.querySelector<HTMLDivElement>("#weather-tile-selection");
   const fieldStatusEl = document.querySelector<HTMLDivElement>("#weather-field-status");
   const controlResultEl = document.querySelector<HTMLDivElement>("#weather-control-result");
   const flagsEl = document.querySelector<HTMLDivElement>("#weather-flags");
@@ -77,6 +79,9 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
     {
       onPointerStatus: (status) => {
         if (pointerStatusEl) renderPointerStatus(pointerStatusEl, status);
+      },
+      onTileSelection: (selection, rejections) => {
+        if (tileSelectionEl) renderTileSelection(tileSelectionEl, selection, rejections);
       },
       onFieldStatuses: (statuses) => {
         lastFieldStatuses = statuses;

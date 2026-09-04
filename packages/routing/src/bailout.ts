@@ -31,6 +31,7 @@ import type {
 } from "./contracts.js";
 import type { EvalRejection, EvalRejectionKind } from "./evaluate.js";
 import { evaluateRoute } from "./evaluate.js";
+import { resolveGuardBandKn } from "./expand.js";
 import type { RouteOptions } from "./options.js";
 import { withDefaults } from "./options.js";
 import type { AbortReason, RouteStep } from "./result.js";
@@ -77,6 +78,20 @@ export type HarbourVerdict =
  *
  * Mangler værdata i havnen, er svaret **nei** — vi later aldri som om en
  * udekket havn er en trygg havn (N2 «ærlig degradering»).
+ *
+ * **Vaktbånd på pålandsvinden (funn 2026-09-04, D7.3-gjennomgangen).**
+ * Pålandsvind-testen er en *hard* TWS-sammenligning, akkurat som
+ * `checkHardNode`s — og den manglet vaktbåndet fra `vaerpakker.md` §9.5.
+ * Vind lagres som u/v og kan dekodes for **lavt**; en havn med sann
+ * pålandsvind over grensen kunne dermed blitt erklært anløpbar fordi
+ * kvantiseringen tilfeldigvis pekte nedover. Det er den farligste retningen
+ * feilen kan ha: en nødhavn man ikke kan gå inn i, presentert som en man kan.
+ * Grensen som håndheves er derfor `maxOnshoreTwsKn − bånd`, der båndet er
+ * flisens eget når feltet kan oppgi det (`resolveGuardBandKn`, D7.3).
+ *
+ * Hs trenger ikke samme behandling: bølgehøyde avrundes alltid **opp** i
+ * pakkeformatet (§9.3), så en kvantisert Hs kan aldri skjule en
+ * overskridelse.
  */
 export function harbourApproachable(
   harbour: BailoutHarbour,
@@ -108,12 +123,21 @@ export function harbourApproachable(
   const onshore =
     angDiff(wind.fromDeg, harbour.exposedFromDeg) <=
     harbour.exposedHalfWidthDeg;
-  if (onshore && wind.speedKn > harbour.maxOnshoreTwsKn) {
+  const guardBandKn = resolveGuardBandKn(
+    weather,
+    harbour.position.lat,
+    harbour.position.lon,
+    epochS,
+  );
+  if (onshore && wind.speedKn > harbour.maxOnshoreTwsKn - guardBandKn) {
     return {
       approachable: false,
       reason:
         `pålandsvind ${wind.speedKn.toFixed(0)} kn fra ${wind.fromDeg.toFixed(0)}° ` +
-        `over ${harbour.name}s grense ${harbour.maxOnshoreTwsKn} kn`,
+        `over ${harbour.name}s grense ${harbour.maxOnshoreTwsKn} kn` +
+        (guardBandKn > 0
+          ? ` (vaktbånd ${guardBandKn.toFixed(2)} kn for dekodefeil)`
+          : ""),
     };
   }
   return { approachable: true, reason: "anløpbar" };

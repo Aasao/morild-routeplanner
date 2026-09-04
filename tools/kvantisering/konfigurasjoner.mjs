@@ -141,6 +141,28 @@ export const KONFIGURASJONER = [
     }),
   },
   /**
+   * **0,125 kn** — punktet §9.2 forbehold 5 etterlyste og som ingen kjøring
+   * hadde målt: byte-vennlig i binær forstand (2⁻³), og det eneste målte
+   * punktet MELLOM 0,1 kn (består alt) og 0,25 kn (mister S-5s +4 t-gren i
+   * helheten). Lagt til 2026-09-04 for ekte-flis-kjøringen (§14), der begge
+   * ankere måles fordi §9.2 forbehold 2 viste at ett anker ikke er nok bevis.
+   */
+  {
+    id: "F-LSB0125",
+    akse: "vind",
+    spec: withPack("F-LSB0125", "u/v fast LSB 0,125 kn, ankret i fysisk null (ingen offset)", {
+      windQuant: fastLsb(0.125, "ingen"),
+    }),
+  },
+  {
+    id: "F-LSB0125O",
+    akse: "vind",
+    spec: withPack("F-LSB0125O", "u/v fast LSB 0,125 kn, offset = eksakt flis-minimum", {
+      windQuant: fastLsb(0.125, "flis"),
+    }),
+  },
+
+  /**
    * Finhetskontrollen **i helheten**. P2b viste at `K-KYST-F025` mister S-5s
    * +4 t-gren (13,84 t → 14,31 t) der `K-ANB-KYST` med 8-bit flis-skala
    * beholder den, mens `F-LSB025` *alene* på Float32-bunn ikke gjør det. Er
@@ -480,4 +502,31 @@ export const FULLE_SOK_KONFIG = [
   "K-KYST-F050",
   "K-KYST-F010",
   "F-LSB010",
+];
+
+/**
+ * **Ekte-flis-kjøringen** (§14, D7.5 vilkår vi, 2026-09-04). Ett anker er
+ * ikke nok bevis (§9.2 forbehold 2), så begge måles for hvert trinn.
+ * `W-UV8` er «E» — dagens adaptive 8-bit per flis, den konfigurasjonen
+ * §10 faktisk anbefaler for vind.
+ */
+export const EKTE_FLIS_KONFIG = [
+  // --- nullkontroller: INGEN kvantisering i noen av dem.
+  // `ANALYTISK` er det ekte dekodede feltet urørt (måler REF-pakkens egen
+  // omsamplingsfeil), `T-30M` og `R-HALV` er strengt FINERE Float32-pakker.
+  // Skiller de seg fra `REF` på felle-sett eller gjennomførbarhet, er den
+  // klassen av forskjell søkestøy — ikke degradering. Det er den eneste
+  // måten å tolke en felle-flipp i en kvantisert variant på.
+  "ANALYTISK",
+  "REF",
+  "T-30M",
+  "R-HALV",
+  // --- kandidatene
+  "W-UV8",
+  "F-LSB010",
+  "F-LSB010O",
+  "F-LSB0125",
+  "F-LSB0125O",
+  "F-LSB025",
+  "F-LSB025O",
 ];

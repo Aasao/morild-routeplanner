@@ -61,6 +61,8 @@ import type { EnsembleSummary, FromWorker, MemberOutcome, PlanRouteMemberRequest
 import type { FieldPresenceStatus } from "./field-status.js";
 import type { MetAlertsLoadResult } from "./metalerts-client.js";
 import type { RelevantAlert } from "./metalerts.js";
+import type { TileSelection } from "./tile-select.js";
+import type { TileRejection } from "./tile-certificate.js";
 
 const CONFIG = { ...DEFAULT_APP_CONFIG, apiBase: "http://localhost" };
 
@@ -162,7 +164,23 @@ function constantCurrentAndWaves(hours: number): { current: CurrentLayers; waves
   };
 }
 
-function header(overrides: Partial<PackageHeader> = {}): PackageHeader {
+/**
+ * **Sertifikatet D7.2 krever** (`tile-certificate.ts`). Feltet bor ikke i
+ * `PackageHeader`-typen i `@morild/protocol` ennå — værpakke-siden legger det
+ * på i samme bølge — så testen setter det strukturelt, nøyaktig slik klienten
+ * leser det. Uten sertifikat avviser klienten flisen, og det er hele poenget
+ * med asserten: en ikke-verifisert flis skal ikke kunne brukes i stillhet.
+ */
+const DEFAULT_CERTIFICATE = {
+  maxDecodeErrorKn: 0.09,
+  maxDirectionErrorDeg: 0.6,
+  referenceInit: "2026-09-03T00:00:00Z",
+  verifiedAt: "2026-09-03T01:00:00Z",
+};
+
+function header(
+  overrides: Partial<PackageHeader> & { readonly certificate?: unknown } = {},
+): PackageHeader {
   return {
     formatVersion: "1.0.0",
     producedAt: "2026-09-03T00:00:00Z",
@@ -170,8 +188,16 @@ function header(overrides: Partial<PackageHeader> = {}): PackageHeader {
     init: new Date(trueWind.validFromS * 1000).toISOString(),
     resolution: "2.5km",
     sourceStatus: { status: "ok" },
+    certificate: DEFAULT_CERTIFICATE,
     ...overrides,
-  };
+  } as PackageHeader;
+}
+
+/** Header uten sertifikat — slik pakkene så ut før D7.2. */
+function uncertifiedHeader(): PackageHeader {
+  const rest = { ...header() } as PackageHeader & { certificate?: unknown };
+  delete rest.certificate;
+  return rest;
 }
 
 /**
@@ -265,6 +291,8 @@ interface Harness {
     controlOutcome?: MemberOutcome;
     lastSummary?: EnsembleSummary;
     metalerts?: { result: MetAlertsLoadResult; relevant: readonly RelevantAlert[] };
+    tileSelection?: TileSelection;
+    tileRejections: TileRejection[];
     errors: string[];
   };
 }
@@ -298,7 +326,7 @@ function buildHarness(args: {
 
   const fetchImpl = makePointerFetch(pointer, blobs);
 
-  const captured: Harness["captured"] = { fieldStatuses: [], errors: [] };
+  const captured: Harness["captured"] = { fieldStatuses: [], tileRejections: [], errors: [] };
 
   const deps: PipelineDeps = {
     config: CONFIG,
@@ -318,6 +346,10 @@ async function runHarness(
   await runWeatherPipeline(harness.deps, {
     onPointerStatus: (s) => {
       harness.captured.pointerStatus = s.status;
+    },
+    onTileSelection: (selection, rejections) => {
+      harness.captured.tileSelection = selection;
+      harness.captured.tileRejections = [...rejections];
     },
     onFieldStatuses: (statuses) => {
       harness.captured.fieldStatuses = statuses;
@@ -434,21 +466,25 @@ describe("runWeatherPipeline — flere fliser over en flisgrense (review-funn fa
     tileId: string,
     bbox: typeof BBOX,
     key: string,
+    tileHeader: PackageHeader = header(),
   ): WeatherPointer["tiles"][number] {
     return {
       tileId,
       bbox: [bbox.lonMin, bbox.latMin, bbox.lonMax, bbox.latMax],
-      fields: [{ field: "wind", member: 0, key, hash: tileId, header: header() }],
+      fields: [{ field: "wind", member: 0, key, hash: tileId, header: tileHeader }],
     };
   }
 
-  function buildMultiTileHarness(include: readonly ("south" | "north")[]): Harness {
+  function buildMultiTileHarness(
+    include: readonly ("south" | "north")[],
+    headers: Partial<Record<"south" | "north", PackageHeader>> = {},
+  ): Harness {
     const southBytes = buildWindMemberBytes(24, SOUTH_BBOX);
     const northBytes = buildWindMemberBytes(24, NORTH_BBOX);
 
     const allTiles: Record<"south" | "north", WeatherPointer["tiles"][number]> = {
-      south: tileEntry("t-sor", SOUTH_BBOX, "weather/1/sor.bin"),
-      north: tileEntry("t-nord", NORTH_BBOX, "weather/1/nord.bin"),
+      south: tileEntry("t-sor", SOUTH_BBOX, "weather/1/sor.bin", headers.south ?? header()),
+      north: tileEntry("t-nord", NORTH_BBOX, "weather/1/nord.bin", headers.north ?? header()),
     };
     const pointer: WeatherPointer = { formatVersion: "1.0.0", tiles: include.map((id) => allTiles[id]) };
 
@@ -458,7 +494,7 @@ describe("runWeatherPipeline — flere fliser over en flisgrense (review-funn fa
     ]);
 
     const fetchImpl = makePointerFetch(pointer, blobs);
-    const captured: Harness["captured"] = { fieldStatuses: [], errors: [] };
+    const captured: Harness["captured"] = { fieldStatuses: [], tileRejections: [], errors: [] };
     const deps: PipelineDeps = {
       config: CONFIG,
       fetchImpl,
@@ -496,5 +532,50 @@ describe("runWeatherPipeline — flere fliser over en flisgrense (review-funn fa
     expect(control.result!.abortReason).not.toBe("noWeatherAtStart");
     expect(control.result!.reached).toBe(false);
     expect(control.result!.safety.reachesDestination).toBe(false);
+  }, 120_000);
+
+  /**
+   * **Klippe- og sertifikat-asserten** (D7.2 vilkår (iv)). Flisen skal
+   * avvises FØR den brukes, med en synlig årsak — ikke stille utelates og
+   * ikke stille brukes. Se `tile-certificate.ts`.
+   */
+  it("avviser en flis UTEN sertifikat, med synlig årsak (D7.2)", async () => {
+    const harness = buildMultiTileHarness(["south", "north"], {
+      south: uncertifiedHeader(),
+    });
+    await runHarness(harness);
+    const { captured } = harness;
+
+    expect(captured.tileRejections.map((r) => r.tileId)).toEqual(["t-sor"]);
+    expect(captured.tileRejections[0]!.reason).toMatch(/uten sertifikat/);
+    // Nordflisen er sertifisert og brukes videre — asserten er per flis.
+    expect(captured.tileSelection!.tiles.map((t) => t.tileId)).toEqual([
+      "t-sor",
+      "t-nord",
+    ]);
+    expect(captured.fieldStatuses.length).toBeGreaterThan(0);
+    // Uten sørflisen mister ruten vind i sørhalvdelen — den når ikke målet,
+    // og det er den ærlige konsekvensen (aldri et stille «trygt»).
+    expect(captured.controlOutcome!.result!.safety.reachesDestination).toBe(false);
+  }, 120_000);
+
+  it("avviser en flis som RAPPORTERER KLIPPING (vaktbåndet er da ugyldig)", async () => {
+    const harness = buildMultiTileHarness(["south", "north"], {
+      south: header({
+        certificate: { ...DEFAULT_CERTIFICATE, clippedSamples: 17 },
+      }),
+    });
+    await runHarness(harness);
+    const { captured } = harness;
+
+    expect(captured.tileRejections.map((r) => r.tileId)).toEqual(["t-sor"]);
+    expect(captured.tileRejections[0]!.reason).toMatch(/klipping/);
+  }, 120_000);
+
+  it("begge fliser sertifisert: ingen avvisning, ingen manglende fliser", async () => {
+    const harness = buildMultiTileHarness(["south", "north"]);
+    await runHarness(harness);
+    expect(harness.captured.tileRejections).toEqual([]);
+    expect(harness.captured.tileSelection!.missingTileIds).toEqual([]);
   }, 120_000);
 });
