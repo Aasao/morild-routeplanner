@@ -17,7 +17,9 @@ compatibility_date = "2026-09-01"
 [[r2_buckets]]
 binding = "MIRROR_BUCKET"
 bucket_name = "morild-mirror"
-preview_bucket_name = "morild-mirror-preview"
+# Speilet er lesekun for Workeren; preview deler bøtte (ingen egen
+# preview-bøtte å holde i synk).
+preview_bucket_name = "morild-mirror"
 
 # ADR-0006 pkt. 2: personlige data (ruter, analyser, innstillinger,
 # havnebok, F6.1-synk). Bevisst D1, ikke enda en R2-bøtte, slik at
