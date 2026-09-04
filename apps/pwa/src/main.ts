@@ -9,7 +9,7 @@ import "./style.css";
 import { createMap, drawHelloRoute, drawWeatherRoute, whenMapReady } from "./map.js";
 import { runHelloRoute } from "./hello-route.js";
 import { DEFAULT_APP_CONFIG } from "./weather/config.js";
-import { browserCacheStorage, requestPersistentStorage } from "./weather/pack-cache.js";
+import { browserCacheStorage, memoryCacheStorage, requestPersistentStorage } from "./weather/pack-cache.js";
 import { createRealWeatherWorker } from "./weather/ensemble.js";
 import { runWeatherPipeline } from "./weather/pipeline.js";
 import { allDisplayFlags } from "./weather/route-flags.js";
@@ -57,12 +57,19 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   const ensembleEl = document.querySelector<HTMLDivElement>("#weather-ensemble-summary");
   const metalertsEl = document.querySelector<HTMLDivElement>("#weather-metalerts");
 
-  const cacheStorage = browserCacheStorage();
-  if (cacheStorage === undefined) {
-    if (pointerStatusEl) {
-      pointerStatusEl.textContent = "Cache API er ikke tilgjengelig i denne nettleseren — værpakke kan ikke lastes.";
-    }
-    return;
+  // Cache API finnes kun i secure context (https/localhost). Fra en
+  // LAN-IP over http (nettbrett-røyktest) faller vi ærlig tilbake til
+  // minne-cache: ruting virker, men ingen offline-lagring (N2-flagg).
+  const persistent = browserCacheStorage();
+  const cacheStorage = persistent ?? memoryCacheStorage();
+  if (persistent === undefined && pointerStatusEl) {
+    // Egen, varig stripe — pekerstatusen under overskrives av pipelinen.
+    const warn = document.createElement("div");
+    warn.className = "weather-warning";
+    warn.textContent =
+      "⚠ Offline-lager utilgjengelig (usikker kontekst — http uten localhost/https): " +
+      "værpakken lastes uten cache og overlever ikke sideinnlasting.";
+    pointerStatusEl.insertAdjacentElement("beforebegin", warn);
   }
 
   let lastFieldStatuses: readonly FieldPresenceStatus[] = [];

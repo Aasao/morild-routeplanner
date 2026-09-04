@@ -36,6 +36,40 @@ export function browserCacheStorage(): CacheStorageLike | undefined {
   return typeof caches === "undefined" ? undefined : (caches as unknown as CacheStorageLike);
 }
 
+/**
+ * Minne-basert erstatning når Cache API mangler — typisk fordi siden
+ * serveres fra en USIKKER kontekst (http://<LAN-IP>, ikke localhost/https):
+ * `caches` finnes kun i secure contexts. Pakken kan da fortsatt lastes og
+ * ruten beregnes, men ingenting overlever en sideinnlasting og offline-
+ * løftet (F1.9/F2.2) gjelder ikke — det SKAL vises som degradering (N2),
+ * ikke stoppe appen. Nøkkel = URL-streng; kropper klones ved match så en
+ * `Response` aldri leses to ganger.
+ */
+export function memoryCacheStorage(): CacheStorageLike {
+  const stores = new Map<string, Map<string, Response>>();
+  const keyOf = (request: RequestInfo | URL): string =>
+    typeof request === "string" ? request : request instanceof URL ? request.href : request.url;
+  return {
+    async open(name: string): Promise<CacheLike> {
+      const store = stores.get(name) ?? new Map<string, Response>();
+      stores.set(name, store);
+      return {
+        async match(request) {
+          return store.get(keyOf(request))?.clone();
+        },
+        async put(request, response) {
+          store.set(keyOf(request), response.clone());
+        },
+      };
+    },
+  };
+}
+
+/** Sant når siden kjører i secure context (Cache API/SW tilgjengelig). */
+export function hasPersistentCache(): boolean {
+  return browserCacheStorage() !== undefined;
+}
+
 export async function openWeatherCache(
   cacheStorage: CacheStorageLike | undefined = browserCacheStorage(),
 ): Promise<CacheLike> {

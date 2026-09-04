@@ -182,6 +182,13 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
   read-only-cacher for væruavhengige oppslag. Minnemodell: **per-medlem
   transferable ArrayBuffers** (unngår COOP/COEP-fellen); dekoding
   kvantisert→Float32 i worker on demand.
+  **Revidert 2026-09-04 (D8.13, D8.2):** «< 60 s for valgt/topp-avgang»
+  er en **hypotese under ADR-0005 port 1/2** til PC-remåling av én avgang
+  og nettbrett-målingen er kjørt (målt grunnlag: 67–99 s per avgang på PC
+  på full oppløsning); progressiv semantikk er kontrakten uansett utfall,
+  og UI lover ikke 60 s før tallet finnes. Delt Tub-bound kun som *soft*
+  bound med redningsvei (et medlem beskåret av bound telles aldri
+  ugjennomførbart), aldri i R2-søk. Se `docs/specs/robusthet.md` §4.1/§6.
 
 ### F4 Robusthet (kjerne 3: appens signatur)
 
@@ -191,7 +198,12 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
   **Fase 4b (forskningsdel, etter 4a):** geometrisk korridor-stabilitet og
   automatisk følsomste-faktor-attribusjon.
 - **F4.3** Sensitivitet utover vær: perturber avgangstid, cruising-faktor
-  (±0,05), strøm.
+  og strøm. **Revidert 2026-09-04 (D8.4):** cruising-faktor {0,85; 0,90;
+  0,95} og strøm ×{0,8; 1,2} på kontrollen, pluss cruising 0,85 på verste
+  gjennomførbare medlem for valgt avgang; opprinnelig ±0,05 var for smalt
+  mot v1-loggenes 0,86–1,21 (regimeavhengig — noteres som kjent
+  forenkling). Perturbasjoner påvirker aldri trafikklyset og merkes
+  «basert på kontrollvær».
 - **F4.4** **Presentasjon (etter seiler-review):** trafikklys + én setning
   klartekst; P90 som *plantid* («regn med inntil 31 t»), ikke statistikk;
   følsomste faktor som **beslutningsregel med klokkeslett** («sjekk 05:30:
@@ -277,7 +289,7 @@ dekkes av derating + kryssandel).
 |---|---|---|
 | B1 | Dypgang | **BESLUTTET 2026-08-30: 2,10 m (standardkjøl)**; margin 0,5 m + sjøgangstillegg |
 | B2 | Batch-jobbens hjem | **BESLUTTET 2026-08-30: GitHub Actions cron, offentlig repo**, lokal PC som fallback (→ ADR-0003) |
-| B3 | Robusthets-UI | **BESLUTTET 2026-08-30: trafikklys + P90-plantid + beslutningsregel**; statistikk bak trykk |
+| B3 | Robusthets-UI | **BESLUTTET 2026-08-30: trafikklys + P90-plantid + beslutningsregel**; statistikk bak trykk. **Revidert 2026-09-04 (D8.11):** format låst, men «P90-plantid» erstattes av *verste gjennomførbare + typisk* (og terskeltelling «framme før mørket i k av n» der terskel finnes), og fire vedheng er obligatoriske på førstesiden: dekningslinje (MEPS; bølge/strøm ikke usikkerhetsberegnet), `coverage.bailout` ved bail-out-tallet, kontrollvær-merke, betinget varsellinje. Se `docs/specs/robusthet.md` §4.7 |
 | B4 | Cloudflare Workers-plan | **Delvis lukket 2026-08-30:** wrangler-innlogging verifisert; plannivå bekreftes ved første deploy. B2 (batch i GitHub Actions) gjør spørsmålet lite kritisk — Workeren er kun proxy/cache og lever på gratisplan om nødvendig |
 | B5 | Sverige-ambisjon | **VEDTATT med godkjenningen:** «usikkert»-nivå + sterk farled-bias |
 | B6 | Tilgangsmodell | Avgjøres i ADR (fase 0/5): Access foran Worker-API vs. API-nøkkel |
@@ -292,6 +304,27 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-04 (D8.1–D8.13, Magnus, etter /panel — se
+  `docs/research/ekspertpanel-4a-robusthet-2026-09-04.md` og
+  `docs/specs/robusthet.md` §7):** fase 4a-robusthet vedtatt som anbefalt.
+  Ny ren pakke `packages/robustness` (D8.1); delt A*-felt i klienten, delt
+  Tub kun soft m/redningsvei (D8.2, F3.5 revidert); F4.2-tall: nærmeste-
+  rang, inkonklusive/feil ut av nevneren, vist plantid = verste
+  gjennomførbare + typisk, terskeltelling som primærsetning, rå k/N, ingen
+  farge før endelig, provisoriske terskler stemplet og remåles på ekte MEPS
+  (D8.3); perturbasjon per F4.3-revisjonen (D8.4); beslutningsregel fra
+  medlemsrutenes geometriske divergens m/leave-one-out, konkordans og
+  obligatorisk fallback (D8.5); bail-out samplet langs hele ruten m/dybde-
+  og mørke-gate, `coverage.bailout`, backoff i fysisk tid, kontrollvær
+  merket (D8.6) og baklengs havnefelt som admissibel forfilter (D8.10);
+  spakrekkefølge m/PC-remåling før nettbrett, sertifikater kun i
+  advarselsretning, sekvensiell tidlig-stopp avvist (D8.7);
+  arkitekturtest først m/`provenance` (D8.8); rangeringsfikstur S-9
+  m/forhåndsregistrering + LOO (D8.9); B3 revidert (D8.11); prognose-
+  kvittering per avgang (D8.12); F3.5 «< 60 s» som hypotese under
+  ADR-0005 port 1/2, drivstoff vist m/«ikke usikkerhetsberegnet»-merke
+  (D8.13). Bindende: ingen sikkerhetsklassifiserende konstant fryses på
+  syntetiske data.
 - **2026-09-04 (D7.1–D7.5, Magnus, etter /panel — se
   `docs/research/ekspertpanel-d7-vaerpakkeformat-2026-09-04.md`):**
   bølge 3 kjører på dagens adaptive 8-bit-format med 1°-fliser (E);
