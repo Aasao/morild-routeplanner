@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src", "test-fixtures"],
+  "references": [
+    { "path": "../geo" },
+    { "path": "../protocol" },
+    { "path": "../routing" }
+  ]
+}

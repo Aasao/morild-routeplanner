@@ -1,8 +1,8 @@
 /**
  * Ensemble-forberedelse (ADR-0005, oppdragets punkt 3): kontrollmedlemmet
  * kjøres FØRST og alene, deretter strømmes de øvrige medlemmene progressivt
- * gjennom en worker-pool (`navigator.hardwareConcurrency` Workere, hver
- * kjørende `workers/weather-routing.worker.ts`). Aggregeringen
+ * gjennom en worker-pool (`defaultPoolSize`: hardwareConcurrency − 1,
+ * 1–6 Workere, hver kjørende `workers/weather-routing.worker.ts`). Aggregeringen
  * (P50/P90, gjennomførbarhetsandel, inkonklusiv-andel) er en REN funksjon
  * over ferdige `RouteResult`-er — testbar uten en eneste ekte Worker (se
  * `WorkerLike`/`WorkerFactory`-injeksjonen under).
@@ -13,7 +13,7 @@
  * ugjennomførbart — kun som inkonklusivt. > 20 % inkonklusive på en avgang
  * er horisont-porten (ADR-0005 punkt 4): et flagg, ikke en feil.
  */
-import type { RouteResult } from "@morild/routing";
+import type { DistanceFieldData, RouteResult } from "@morild/routing";
 import type { PackageHeader } from "@morild/protocol";
 
 /**
@@ -44,6 +44,24 @@ export interface PlanRouteMemberRequest {
   /** Én kilde per flis som dekker ruten OG har dette medlemmet (§7). */
   readonly tiles: readonly TileWindSource[];
   readonly departEpochS: number;
+  /**
+   * Delt A*-felt (robusthet.md §4.1, D8.2): bygget én gang av kontroll-
+   * workeren (`buildFieldForInput`) og sendt som strukturert klone til hvert
+   * medlem — bit-identisk resultat med og uten (`shared-field.test.ts`).
+   * Udefinert for kontrollen (den bygger feltet) og ved fallback.
+   */
+  readonly sharedField?: SharedField | undefined;
+}
+
+/**
+ * Et A*-felt er kun gyldig for ett (start, mål, maske)-triplett. `key`
+ * binder feltet strukturelt til det trippelet det ble bygget for
+ * (review-funn bølge 1, middels): mottakeren sammenligner med sin egen
+ * nøkkel og bygger heller selv enn å bruke et felt for feil strekk.
+ */
+export interface SharedField {
+  readonly key: string;
+  readonly data: DistanceFieldData;
 }
 
 export interface PlanRouteMemberOk {
@@ -51,6 +69,8 @@ export interface PlanRouteMemberOk {
   readonly memberIndex: number;
   readonly isControl: boolean;
   readonly result: RouteResult;
+  /** Kun fra kontrollen: feltet den bygde, til gjenbruk i medlemmene. */
+  readonly sharedField?: SharedField | undefined;
 }
 
 export interface PlanRouteMemberError {
@@ -66,6 +86,8 @@ export interface MemberJob {
   readonly isControl: boolean;
   readonly tiles: readonly TileWindSource[];
   readonly departEpochS: number;
+  /** Settes av orkestratoren fra kontrollens svar — se `PlanRouteMemberRequest.sharedField`. */
+  readonly sharedField?: SharedField | undefined;
 }
 
 export type MemberClassification = "feasible" | "infeasible" | "inconclusive";
@@ -89,6 +111,8 @@ export interface MemberOutcome {
    * anslått fra PC. Udefinert kun når `performance` mangler (testmiljø).
    */
   readonly elapsedMs?: number | undefined;
+  /** Kontrollens delte A*-felt (kun på kontrollens utfall). */
+  readonly sharedField?: SharedField | undefined;
 }
 
 export interface EnsembleSummary {
@@ -144,9 +168,29 @@ export function summarizeEnsemble(outcomes: readonly MemberOutcome[]): EnsembleS
 /** Den delmengden av `Worker` orkestratoren faktisk bruker — injiserbar for tester (ingen ekte Worker-tråd nødvendig). */
 export interface WorkerLike {
   postMessage(message: PlanRouteMemberRequest, transfer: Transferable[]): void;
-  addEventListener(type: "message", listener: (ev: MessageEvent<FromWorker>) => void): void;
-  addEventListener(type: "error", listener: (ev: ErrorEvent) => void): void;
+  addEventListener(
+    type: "message",
+    listener: (ev: MessageEvent<FromWorker>) => void,
+    options?: { once?: boolean },
+  ): void;
+  addEventListener(
+    type: "error",
+    listener: (ev: ErrorEvent) => void,
+    options?: { once?: boolean },
+  ): void;
+  removeEventListener(type: "message", listener: (ev: MessageEvent<FromWorker>) => void): void;
+  removeEventListener(type: "error", listener: (ev: ErrorEvent) => void): void;
   terminate(): void;
+}
+
+/**
+ * Pool-størrelse (robusthet.md §4.1): `hardwareConcurrency − 1`, minimum 1,
+ * maksimum 6 — én kjerne holdes fri til hovedtråden/UI, og taket står til
+ * nettbrett-målingen (ADR-0005 port 1) sier noe annet.
+ */
+export function defaultPoolSize(hardwareConcurrency: number | undefined): number {
+  const cores = hardwareConcurrency && hardwareConcurrency > 0 ? hardwareConcurrency : 4;
+  return Math.max(1, Math.min(6, cores - 1));
 }
 
 export type WorkerFactory = () => WorkerLike;
@@ -168,8 +212,15 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
       isControl: job.isControl,
       tiles: job.tiles,
       departEpochS: job.departEpochS,
+      ...(job.sharedField !== undefined ? { sharedField: job.sharedField } : {}),
     };
-    worker.addEventListener("message", (ev: MessageEvent<FromWorker>) => {
+    // Én jobb = ett lytterpar, fjernet ved første svar (robusthet.md §4.1:
+    // «Lytterne registreres med { once: true } per jobb»). Før lå alle
+    // jobbers lyttere igjen på pool-workeren for hele ensemblet — hver
+    // melding vekket N lyttere, og lukkingene holdt på gamle jobbers
+    // flisbuffere til poolen ble terminert.
+    const onMessage = (ev: MessageEvent<FromWorker>): void => {
+      worker.removeEventListener("error", onError);
       const data = ev.data;
       if (data.type === "plan-route-member-result") {
         resolve({
@@ -178,6 +229,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
           classification: classifyMember(data.result),
           result: data.result,
           elapsedMs: elapsed(),
+          ...(data.sharedField !== undefined ? { sharedField: data.sharedField } : {}),
         });
       } else {
         resolve({
@@ -188,15 +240,19 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
           elapsedMs: elapsed(),
         });
       }
-    });
-    worker.addEventListener("error", (ev: ErrorEvent) => {
+    };
+    const onError = (ev: ErrorEvent): void => {
+      worker.removeEventListener("message", onMessage);
       resolve({
         memberIndex: job.memberIndex,
         isControl: job.isControl,
         classification: "error",
         errorMessage: ev.message,
+        elapsedMs: elapsed(),
       });
-    });
+    };
+    worker.addEventListener("message", onMessage, { once: true });
+    worker.addEventListener("error", onError, { once: true });
     worker.postMessage(
       message,
       job.tiles.map((t) => t.windBuffer),
@@ -240,7 +296,17 @@ export async function runEnsemble(
   callbacks.onControlResult?.(controlOutcome);
   callbacks.onMemberResult?.(controlOutcome, summarizeEnsemble(outcomes));
 
-  if (memberJobs.length > 0) {
+  // Delt A*-felt: kontrollens felt går til alle medlemmer (robusthet.md
+  // §4.1). Mangler det (kontrollen feilet/feltet lot seg ikke bygge), bygger
+  // hvert medlem sitt eget — samme resultat, bare dyrere.
+  const sharedField = controlOutcome.sharedField;
+  const memberJobsWithField: readonly MemberJob[] =
+    sharedField === undefined
+      ? memberJobs
+      : memberJobs.map((j) => (j.sharedField === undefined ? { ...j, sharedField } : j));
+
+  if (memberJobsWithField.length > 0) {
+    const memberJobs = memberJobsWithField;
     const effectivePoolSize = Math.max(1, Math.min(poolSize, memberJobs.length));
     const workers = Array.from({ length: effectivePoolSize }, () => workerFactory());
     let nextIndex = 0;

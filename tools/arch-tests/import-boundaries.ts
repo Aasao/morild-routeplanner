@@ -65,8 +65,16 @@ export function extractImportSpecifiers(source: string): string[] {
 /**
  * Returnerer en feiltekst hvis spesifikatoren bryter grensen, ellers
  * `undefined`.
+ *
+ * `allowedPackages` lar kalleren parametrisere hvilke `@morild/*`-pakker
+ * som er lov (default: geo + protocol, dagens grense for geo/routing/
+ * weather). Relative/absolutte stier sjekkes aldri her — de kan likevel
+ * fanges av `forbiddenPathFragments` i `checkPackageBoundary`.
  */
-export function violatingReason(specifier: string): string | undefined {
+export function violatingReason(
+  specifier: string,
+  allowedPackages: ReadonlySet<string> = ALLOWED_PACKAGE_IMPORTS,
+): string | undefined {
   // Relative importer innad i pakken er alltid greit.
   if (specifier.startsWith(".") || specifier.startsWith("/")) {
     return undefined;
@@ -79,24 +87,64 @@ export function violatingReason(specifier: string): string | undefined {
       return `importerer forbudt I/O-modul "${specifier}"`;
     }
   }
-  if (specifier.startsWith("@morild/") && !ALLOWED_PACKAGE_IMPORTS.has(specifier)) {
+  if (specifier.startsWith("@morild/") && !allowedPackages.has(specifier)) {
     return `importerer pakke utenfor tillatt grense: "${specifier}"`;
   }
   return undefined;
 }
 
 /**
+ * Bevisst tekstsjekk mot sti-fragmenter (§5.1, D8.8): fanger BÅDE relative
+ * dypimporter (`../routing/src/corridor.js`) og pakkeimporter med dyp sti,
+ * uavhengig av om selve pakken/modulen ellers er tillatt.
+ */
+function violatingFragment(
+  specifier: string,
+  forbiddenPathFragments: readonly string[],
+): string | undefined {
+  for (const fragment of forbiddenPathFragments) {
+    if (specifier.includes(fragment)) {
+      return `importerer forbudt sti-fragment "${fragment}" via "${specifier}"`;
+    }
+  }
+  return undefined;
+}
+
+export interface PackageBoundaryOptions {
+  /**
+   * Default: geo + protocol (dagens grense for geo/routing/weather).
+   * `"any"` slår av pakke-grensesjekken helt — brukes for `apps/pwa`, som
+   * lovlig importerer mange `@morild/*`-pakker og der vi kun vil håndheve
+   * `forbiddenPathFragments`.
+   */
+  readonly allowedPackages?: ReadonlySet<string> | "any";
+  /** Sti-fragmenter som aldri skal forekomme i noen importspesifikator. */
+  readonly forbiddenPathFragments?: readonly string[];
+}
+
+/**
  * Skanner alle .ts-filer (unntatt *.test.ts) under `srcDir` og returnerer
  * én tekstlinje per brudd (fil + årsak). Tom liste = ingen brudd.
  */
-export function checkPackageBoundary(srcDir: string): string[] {
+export function checkPackageBoundary(
+  srcDir: string,
+  options?: PackageBoundaryOptions,
+): string[] {
+  const allowedPackages = options?.allowedPackages ?? ALLOWED_PACKAGE_IMPORTS;
+  const forbiddenPathFragments = options?.forbiddenPathFragments ?? [];
   const violations: string[] = [];
   for (const file of listTsSourceFiles(srcDir)) {
     const source = readFileSync(file, "utf8");
     for (const specifier of extractImportSpecifiers(source)) {
-      const reason = violatingReason(specifier);
-      if (reason) {
-        violations.push(`${file}: ${reason}`);
+      if (allowedPackages !== "any") {
+        const reason = violatingReason(specifier, allowedPackages);
+        if (reason) {
+          violations.push(`${file}: ${reason}`);
+        }
+      }
+      const fragmentReason = violatingFragment(specifier, forbiddenPathFragments);
+      if (fragmentReason) {
+        violations.push(`${file}: ${fragmentReason}`);
       }
     }
   }

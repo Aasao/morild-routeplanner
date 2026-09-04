@@ -7,6 +7,7 @@
     { "path": "packages/weather" },
     { "path": "packages/polar" },
     { "path": "packages/routing" },
+    { "path": "packages/robustness" },
     { "path": "tools/arch-tests" },
     { "path": "tools/chart-pack" },
     { "path": "tools/weather-pack" },

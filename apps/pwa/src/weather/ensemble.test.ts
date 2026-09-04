@@ -28,6 +28,7 @@ function fakeResult(overrides: {
 }): RouteResult {
   const durationS = overrides.durationS ?? 12 * 3600;
   return {
+    provenance: "planRoute",
     reached: overrides.reachesDestination ?? true,
     abortReason: null,
     // Rute-nivå flagg (D7.2) — tomt i den minimale fiksturen.
@@ -198,15 +199,54 @@ describe("summarizeEnsemble", () => {
 });
 
 /** Minimal `WorkerLike`-mock: svarer synkront (via microtask) med et forhåndsbestemt resultat per medlemsindeks. */
-function mockWorker(resultFor: (memberIndex: number) => FromWorker): WorkerLike {
-  let messageListener: ((ev: MessageEvent<FromWorker>) => void) | undefined;
+function mockWorker(
+  resultFor: (memberIndex: number) => FromWorker,
+  registry?: { live: number; maxLive: number },
+): WorkerLike {
+  // Emulerer ekte EventTarget-semantikk for det orkestratoren bruker:
+  // `{ once: true }` fjerner lytteren etter første kall, og
+  // `removeEventListener` fjerner den eksplisitt. `registry` teller antall
+  // registrerte lyttere som lever samtidig — lekkasjetesten under.
+  type Listener = (ev: MessageEvent<FromWorker>) => void;
+  const listeners = new Map<string, Set<{ fn: Listener; once: boolean }>>();
+  const bump = (delta: number): void => {
+    if (!registry) return;
+    registry.live += delta;
+    registry.maxLive = Math.max(registry.maxLive, registry.live);
+  };
   return {
     postMessage(message) {
       const response = resultFor(message.memberIndex);
-      queueMicrotask(() => messageListener?.({ data: response } as MessageEvent<FromWorker>));
+      queueMicrotask(() => {
+        const set = listeners.get("message");
+        if (!set) return;
+        for (const entry of [...set]) {
+          if (entry.once) {
+            set.delete(entry);
+            bump(-1);
+          }
+          entry.fn({ data: response } as MessageEvent<FromWorker>);
+        }
+      });
     },
-    addEventListener(type, listener) {
-      if (type === "message") messageListener = listener as (ev: MessageEvent<FromWorker>) => void;
+    addEventListener(type, listener, options) {
+      let set = listeners.get(type);
+      if (!set) {
+        set = new Set();
+        listeners.set(type, set);
+      }
+      set.add({ fn: listener as Listener, once: options?.once === true });
+      bump(1);
+    },
+    removeEventListener(type, listener) {
+      const set = listeners.get(type);
+      if (!set) return;
+      for (const entry of set) {
+        if (entry.fn === (listener as Listener)) {
+          set.delete(entry);
+          bump(-1);
+        }
+      }
     },
     terminate() {
       /* no-op */
@@ -224,6 +264,56 @@ function job(memberIndex: number, isControl: boolean): MemberJob {
 }
 
 describe("runEnsemble", () => {
+  it("delt A*-felt: kontrollens fieldData går videre til alle medlemsjobber (robusthet.md §4.1)", async () => {
+    const sharedField = {
+      key: "test|58,10|57,11",
+      data: { lat0: 58, lon0: 10, cellDeg: 0.01, width: 2, height: 2, d: new Float64Array([1, 2, 3, 4]) },
+    };
+    const seen = new Map<number, unknown>();
+    const workerFactory = (): WorkerLike => {
+      const base = mockWorker((memberIndex) => ({
+        type: "plan-route-member-result",
+        memberIndex,
+        isControl: memberIndex === 0,
+        result: fakeResult({ reachesDestination: true, weatherCoverage: "full" }),
+        ...(memberIndex === 0 ? { sharedField } : {}),
+      }));
+      return {
+        ...base,
+        postMessage(message, transfer) {
+          seen.set(message.memberIndex, message.sharedField);
+          base.postMessage(message, transfer);
+        },
+      };
+    };
+    const jobs = [job(0, true), job(1, false), job(2, false)];
+    const { outcomes } = await runEnsemble(jobs, 2, workerFactory);
+    expect(seen.get(0)).toBeUndefined(); // kontrollen bygger feltet selv
+    expect(seen.get(1)).toBe(sharedField);
+    expect(seen.get(2)).toBe(sharedField);
+    expect(outcomes[0]?.sharedField).toBe(sharedField);
+  });
+
+  it("lekker ingen lyttere: hver jobb registrerer ett par og fjerner det ved svar (robusthet.md §4.1)", async () => {
+    const registry = { live: 0, maxLive: 0 };
+    const workerFactory = () =>
+      mockWorker(
+        (memberIndex) => ({
+          type: "plan-route-member-result",
+          memberIndex,
+          isControl: memberIndex === 0,
+          result: fakeResult({ reachesDestination: true, weatherCoverage: "full" }),
+        }),
+        registry,
+      );
+    const jobs = [job(0, true), ...Array.from({ length: 12 }, (_, i) => job(i + 1, false))];
+    await runEnsemble(jobs, 2, workerFactory);
+    // Per jobb i flukt: nøyaktig én message- og én error-lytter; poolen på
+    // 2 + kontrollen alene ⇒ aldri mer enn 2 jobber i flukt samtidig.
+    expect(registry.maxLive).toBeLessThanOrEqual(4);
+    expect(registry.live).toBe(0);
+  });
+
   it("kjører kontrollen FØRST og alene, deretter medlemmene over en pool", async () => {
     const order: number[] = [];
     const workerFactory = () =>

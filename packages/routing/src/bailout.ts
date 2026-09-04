@@ -35,6 +35,7 @@ import { resolveGuardBandKn } from "./expand.js";
 import type { RouteOptions } from "./options.js";
 import { withDefaults } from "./options.js";
 import type { AbortReason, RouteStep } from "./result.js";
+import type { RouteInput } from "./search.js";
 import { planRoute } from "./search.js";
 
 /**
@@ -169,25 +170,35 @@ export interface R2Config {
   /** Rørets halvbredde for `korridor-skalar`. Standard 4 nm. */
   readonly tubeNm?: number | undefined;
   /**
-   * Hvor mange tidssteg tilbake langs ruten re-søket starter.
+   * Hvor langt tilbake langs ruten re-søket starter, i **sekunder fysisk
+   * tid**. Standard `min(Δt, 1800 s)` der Δt er søkets tidssteg
+   * (`RouteOptions.timeStepS`) — ADR-0005, `docs/specs/robusthet.md` §3.1
+   * pkt. 2.
    *
-   * **Standard 1, og valget er ikke kosmetisk.** Måleplanens §6.1 sier «et
+   * **Hvorfor det trengs backoff i det hele tatt.** Måleplanens §6.1 sier «et
    * punkt p på ruten der *fortsettelsen* feiler hardt». Evaluatoren
    * rapporterer avvisningen i posisjonen båten står i når feilen oppdages — og
    * ved `boatLimits` er været *der* allerede over båtens grense. Et re-søk
    * derfra kan per konstruksjon ikke ta et eneste steg (`checkHardNode` feller
-   * startnoden), og R2 ville degenerert til en omskrivning av «hard avvisning»
-   * — samme svar for alle varianter, og målingens viktigste kriterium ville
-   * vært tomt.
+   * startnoden), og R2 ville degenerert til en omskrivning av «hard
+   * avvisning» — samme svar for alle varianter, og målingens viktigste
+   * kriterium ville vært tomt. Backoffen stiller i stedet det seilbare
+   * spørsmålet: **da du sist var lovlig, kunne du ha kommet deg i havn?**
    *
-   * Med `backoffSteps: 1` stilles i stedet det seilbare spørsmålet: **da du
-   * sist var lovlig, kunne du ha kommet deg i havn?** Det er også det eneste
-   * spørsmålet som kan skille en variant fra fasiten.
+   * **Hvorfor fysisk tid og ikke steg** (erstattet `backoffSteps` 2026-09-04,
+   * ADR-0005; panelets funn i `ekspertpanel-4a-robusthet-2026-09-04.md`):
+   * evaluatorens tidssteg er *ikke* uniformt. Det siste steget inn mot hvert
+   * veipunkt er et **delsteg** (`opts.timeStepS * fraction` i `evaluate.ts`),
+   * og med en kandidatrute hvis veipunkter er rutens egne steg er delsteg
+   * regelen, ikke unntaket. «Ett steg tilbake» kunne dermed bety alt fra
+   * sekunder til en hel time avhengig av hvor langs ruten feilen traff — en
+   * skranke som varierer med diskretiseringen er ingen skranke. Med backoff
+   * i sekunder er startpunktet det samme uansett hvordan ruten er samplet.
    *
-   * `backoffSteps: 0` gir den bokstavelige lesningen og er beholdt slik at
-   * målingen kan rapportere begge.
+   * `0` gir den bokstavelige lesningen av §6.1 (start i feilpunktet) og er
+   * beholdt slik at målingen kan rapportere begge.
    */
-  readonly backoffSteps?: number | undefined;
+  readonly backoffS?: number | undefined;
   /** Opsjoner for re-søket. Slås sammen med rutens egne. */
   readonly searchOptions?: Partial<RouteOptions> | undefined;
 }
@@ -221,7 +232,7 @@ export interface R2Verdict {
   readonly isTrap: boolean;
   /** Den harde avvisningen. `null` ⇒ ruten holdt, og da er `isTrap` false. */
   readonly failure: EvalRejection | null;
-  /** Punktet re-søket startet fra (etter `backoffSteps`). */
+  /** Punktet re-søket startet fra (etter `backoffS`). */
   readonly from: LatLon | null;
   /** Sekunder siden avgang i `from`. */
   readonly fromTS: number | null;
@@ -232,6 +243,91 @@ export interface R2Verdict {
 }
 
 export const R2_LIMIT_S = 6 * 3600;
+
+/**
+ * Taket i standardbackoffen: `backoffS = min(Δt, R2_BACKOFF_CAP_S)`
+ * (ADR-0005). Taket finnes fordi et grovt tidssteg ellers ville gitt
+ * seileren mer «forutseenhet» jo dårligere oppløsning søket kjørte med —
+ * en kjent optimistisk skjevhet måleplanen noterte, og som taket avgrenser.
+ */
+export const R2_BACKOFF_CAP_S = 1800;
+
+/** Standardbackoffen for et gitt tidssteg: `min(Δt, 1800 s)`. */
+export function defaultBackoffS(timeStepS: number): number {
+  return Math.min(timeStepS, R2_BACKOFF_CAP_S);
+}
+
+/**
+ * Indeksen i `steps` re-søket starter fra: det **siste** rutepunktet med
+ * `tS <= t_feil - backoffS`, aldri før avgang (indeks 0).
+ *
+ * `steps` er sortert stigende på `tS` per konstruksjon (kostnaden vokser
+ * monotont), så lineær baklengs søking finner det største slike punktet. Er
+ * `failureIndex` negativ eller listen tom, returneres `-1` og kalleren
+ * faller tilbake til selve feilpunktet.
+ */
+export function backoffStartIndex(
+  steps: readonly RouteStep[],
+  failureIndex: number,
+  backoffS: number,
+): number {
+  if (steps.length === 0 || failureIndex < 0) return -1;
+  const from = Math.min(failureIndex, steps.length - 1);
+  const targetS = steps[from]!.tS - backoffS;
+  let i = from;
+  while (i > 0 && steps[i]!.tS > targetS) i--;
+  return i;
+}
+
+/**
+ * Inn-objektet R2s re-søk kjøres med — eksponert som ren funksjon fordi
+ * `docs/specs/robusthet.md` §5.1 krever en test som *beviser* at re-søket
+ * aldri arver en delt Tub-bound eller et delt A\*-felt, og at fasitens
+ * modus er `pareto`.
+ *
+ * Beviset er strukturelt, ikke ved inspeksjon: `RouteInput.tubBoundS` og
+ * `RouteInput.field` finnes ikke i noen av kanalene inn hit
+ * (`R2Input.options` og `R2Config.searchOptions` er begge
+ * `Partial<RouteOptions>`, og `RouteOptions` har ingen av dem), og de settes
+ * ikke her. Delt Tub i et bail-out-søk ville vært en skranke utledet fra en
+ * *helt annen* reise — «kom du fram til Skagen i tide» — brukt til å beskjære
+ * spørsmålet «kan du komme deg i havn». Den ville kuttet nettopp de lange,
+ * ikke-opplagte utveiene R2 finnes for å finne (robusthet.md §4.1: «Tub gis
+ * aldri til R2-søk»).
+ */
+export function r2SearchInput(args: {
+  readonly from: LatLon;
+  readonly harbour: LatLon;
+  readonly departEpochS: number;
+  readonly weather: WeatherField;
+  readonly mask: NavigabilityMask | undefined;
+  readonly boat: BoatModel;
+  readonly options: Partial<RouteOptions> | undefined;
+  readonly searchOptions: Partial<RouteOptions> | undefined;
+  readonly maxIterations: number;
+  readonly scalarSearchMode: boolean;
+}): RouteInput {
+  return {
+    start: args.from,
+    dest: args.harbour,
+    departEpochS: args.departEpochS,
+    weather: args.weather,
+    mask: args.mask,
+    boat: args.boat,
+    // Ingen `field`, ingen `tubBoundS` — se doc-kommentaren over.
+    options: {
+      ...(args.options ?? {}),
+      ...(args.searchOptions ?? {}),
+      maxIterations: args.maxIterations,
+      // Nødhavn-anløp er ikke underlagt dagslyskravet.
+      requireDaylightArrival: false,
+      // Settes **eksplisitt** begge veier: kalleren kan ha slått på
+      // skalarmodus for sitt eget medlemssøk (variant A), og fasitens
+      // re-søk skal aldri arve det.
+      scalarSearchMode: args.scalarSearchMode,
+    },
+  };
+}
 
 const NO_FAILURE: R2Verdict = Object.freeze({
   isTrap: false,
@@ -284,17 +380,17 @@ export function r2FromFailure(
 ): R2Verdict {
   const cfg = input.r2;
   const limitS = cfg.limitS ?? R2_LIMIT_S;
-  const backoff = cfg.backoffSteps ?? 1;
+  const opts = withDefaults(input.options ?? {});
+  const backoffS = cfg.backoffS ?? defaultBackoffS(opts.timeStepS);
   const mode: R2SearchMode = cfg.mode ?? "pareto";
   const isCorridorMode = mode === "korridor-skalar";
   const isScalarSearch = mode !== "pareto";
-  const opts = withDefaults(input.options ?? {});
 
-  // Startpunktet: `backoff` tidssteg tilbake fra der feilen ble oppdaget.
-  // `failure.stepIndex` er antall steg som lå i listen da feilen oppstod, så
-  // `stepIndex - 1` er posisjonen båten stod i.
-  const startIndex = Math.max(0, failure.stepIndex - 1 - backoff);
-  const startStep = steps[startIndex];
+  // Startpunktet: `backoffS` sekunder tilbake i FYSISK tid fra der feilen ble
+  // oppdaget. `failure.stepIndex` er antall steg som lå i listen da feilen
+  // oppstod, så `stepIndex - 1` er posisjonen båten stod i.
+  const startIndex = backoffStartIndex(steps, failure.stepIndex - 1, backoffS);
+  const startStep = startIndex < 0 ? undefined : steps[startIndex];
   const from: LatLon =
     startStep === undefined
       ? { lat: failure.lat, lon: failure.lon }
@@ -359,25 +455,20 @@ export function r2FromFailure(
     // aldri som en algoritmisk abort (måleplanens §4).
     const maxIterations = Math.ceil(limitS / opts.timeStepS) + 1;
     searchCount++;
-    const result = planRoute({
-      start: from,
-      dest: harbour.position,
-      departEpochS,
-      weather: input.weather,
-      mask: searchMask,
-      boat: input.boat,
-      options: {
-        ...(input.options ?? {}),
-        ...(cfg.searchOptions ?? {}),
+    const result = planRoute(
+      r2SearchInput({
+        from,
+        harbour: harbour.position,
+        departEpochS,
+        weather: input.weather,
+        mask: searchMask,
+        boat: input.boat,
+        options: input.options,
+        searchOptions: cfg.searchOptions,
         maxIterations,
-        // Nødhavn-anløp er ikke underlagt dagslyskravet.
-        requireDaylightArrival: false,
-        // Settes **eksplisitt** begge veier: kalleren kan ha slått på
-        // skalarmodus for sitt eget medlemssøk (variant A), og fasitens
-        // re-søk skal aldri arve det.
         scalarSearchMode: isScalarSearch,
-      },
-    });
+      }),
+    );
 
     if (!result.safety.reachesDestination) {
       attempts.push({

@@ -49,7 +49,12 @@ import { LabelStore, UNCAPPED } from "./label-store.js";
 import type { RouteOptions } from "./options.js";
 import { withDefaults } from "./options.js";
 import { buildResult, type ResultContext } from "./reconstruct.js";
-import type { AbortReason, IsochroneSnapshot, RouteResult } from "./result.js";
+import type {
+  AbortReason,
+  IsochroneSnapshot,
+  RouteProvenance,
+  RouteResult,
+} from "./result.js";
 import type { Tack } from "./tack.js";
 import { tackOf, tackPenaltyS } from "./tack.js";
 
@@ -62,9 +67,23 @@ export interface RouteInput {
   /** `undefined` ⇒ degradert modus: aldri «trygt» som dom (§6). */
   readonly mask: NavigabilityMask | undefined;
   readonly boat: BoatModel;
-  /** Delt A\*-felt. Bygges hvis det ikke oppgis — men da per kjøring. */
+  /**
+   * Delt A\*-felt (§5.5). Bygges hvis det ikke oppgis — men da per kjøring.
+   * Bygg det med `buildFieldForInput`, aldri med håndplukkede parametre:
+   * bit-identiteten med et søk som bygger sitt eget hviler på at det er
+   * nøyaktig samme kall. Overføres mellom workere som `field.data`
+   * (`DistanceFieldData`), ikke som `SharedArrayBuffer`.
+   */
   readonly field?: DistanceField | undefined;
-  /** Delt Tub-bound fra kontrollmedlemmet. */
+  /**
+   * Delt Tub-bound fra kontrollmedlemmet.
+   *
+   * **Kun myk skranke** (robusthet.md §4.1, D8.2): et medlem som terminerer
+   * uten `safety.reachesDestination` mens `diagnostics.pruned.bound > 0` er
+   * IKKE bevist ugjennomførbart — bounden kan ha kuttet den ruten som fantes.
+   * Kalleren skal da kjøre medlemmet om **uten** bound før det klassifiseres.
+   * Gis aldri til R2/bail-out-søk.
+   */
   readonly tubBoundS?: number | undefined;
   readonly options?: Partial<RouteOptions> | undefined;
 }
@@ -119,6 +138,7 @@ function bumpHardConstraint(
 }
 
 class RouteSearch implements Search {
+  private readonly provenance: RouteProvenance;
   private readonly input: RouteInput;
   private readonly opts: RouteOptions;
   private readonly grid: CellGrid;
@@ -180,7 +200,8 @@ class RouteSearch implements Search {
     outsideDomain: 0,
   };
 
-  constructor(input: RouteInput) {
+  constructor(input: RouteInput, provenance: RouteProvenance) {
+    this.provenance = provenance;
     this.input = input;
     this.opts = withDefaults(input.options ?? {});
     this.grid = new CellGrid(this.opts.domain, this.opts.cellDeg);
@@ -275,16 +296,10 @@ class RouteSearch implements Search {
   }
 
   private setUpField(): void {
-    const provided = this.input.field;
-    if (provided !== undefined) {
-      this.field = provided;
-    } else {
-      const gate =
-        this.input.mask === undefined
-          ? OPEN_EDGE_GATE
-          : maskAsEdgeGate(this.input.mask);
-      this.field = buildDistanceField(this.input.start, this.input.dest, gate);
-    }
+    // Nøyaktig samme kall som `buildFieldForInput` — én implementasjon, slik
+    // at et felt bygget utenfor motoren er bit-identisk med det motoren
+    // ville bygget selv (§5.5, robusthet.md §4.1).
+    this.field = buildFieldForInput(this.input);
     // v1-adferd: er selv 3×3 rundt start unåelig, slås feltet AV for hele
     // kjøringen. Det er en ærlig degradering med ytelseskostnad (§6), ikke
     // en feil — men både blindvei-pruning og Tub-bound bortfaller.
@@ -894,6 +909,7 @@ class RouteSearch implements Search {
 
   private resultContext(): ResultContext {
     return {
+      provenance: this.provenance,
       input: this.input,
       opts: this.opts,
       arena: this.arena,
@@ -961,19 +977,57 @@ class RouteSearch implements Search {
   }
 }
 
+/**
+ * **Feltet søket ville bygget selv** — den eneste veien til det.
+ *
+ * `RouteInput.field` er delt A\*-felt (§5.5): væruavhengig geometri som skal
+ * bygges ÉN gang per `(start, dest, maskeversjon, feltoppløsning)` og
+ * gjenbrukes for alle ensemble-medlemmer og alle avganger (robusthet.md
+ * §4.1). Klienten kaller denne i kontroll-workeren, sender `field.data` —
+ * en `DistanceFieldData`: rent objekt + `Float64Array` — som **transferable
+ * kopi** i worker-meldingen, og medlems-workeren rekonstruerer med
+ * `new DistanceField(data)` før den legger feltet i `RouteInput.field`.
+ *
+ * `DistanceFieldData` er dermed overføringskontrakten mellom workere. Ingen
+ * `SharedArrayBuffer`: feltet er skrivebeskyttet etter bygging, kopien er
+ * ~0,2–0,3 MB for Skjæløy→Skagen, og delt minne ville krevd COOP/COEP-headere
+ * hele appen ellers ikke trenger.
+ *
+ * Funksjonen finnes for at klienten ikke skal gjette parameterne: den er
+ * bokstavelig talt kallet `setUpField` gjør, så et felt bygget her gir
+ * bit-identisk `RouteResult` med et søk som bygget sitt eget
+ * (`shared-field.test.ts`). Er `input.field` allerede satt, returneres det
+ * urørt — funksjonen er idempotent.
+ *
+ * Returnerer `undefined` når feltet ikke lot seg bygge; søket degraderer da
+ * som beskrevet i §5.5 (ingen blindvei-pruning, ingen Tub-bound).
+ */
+export function buildFieldForInput(
+  input: RouteInput,
+): DistanceField | undefined {
+  if (input.field !== undefined) return input.field;
+  const gate =
+    input.mask === undefined ? OPEN_EDGE_GATE : maskAsEdgeGate(input.mask);
+  return buildDistanceField(input.start, input.dest, gate);
+}
+
 export function createSearch(input: RouteInput): Search {
-  return new RouteSearch(input);
+  return new RouteSearch(input, "createSearch");
 }
 
 /** Bekvemmelighet: løkke over `advance()` til den er ferdig. */
 export function planRoute(input: RouteInput): RouteResult {
-  const search = new RouteSearch(input);
+  const search = new RouteSearch(input, "planRoute");
   return search.finish();
 }
 
-/** Kun for tester: gir tilgang til arena-bytene for determinismesjekk. */
+/**
+ * Kun for tester: gir tilgang til arena-bytene for determinismesjekk. Samme
+ * søk som `createSearch`, og bærer derfor samme `provenance` — det er et
+ * fullt søk, bare med et bredere returtype-vindu.
+ */
 export function createSearchForTesting(input: RouteInput): RouteSearch {
-  return new RouteSearch(input);
+  return new RouteSearch(input, "createSearch");
 }
 
 export type { RouteSearch };

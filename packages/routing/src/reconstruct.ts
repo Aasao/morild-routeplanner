@@ -55,6 +55,7 @@ import type {
   RouteAlternative,
   RouteFinalLeg,
   RouteLeg,
+  RouteProvenance,
   RouteResult,
   RouteStep,
   SegmentRef,
@@ -71,6 +72,14 @@ const DIRECT_FINAL_LEG_THRESHOLD_NM = 0.3;
 const CONSOLIDATE_COURSE_TOLERANCE_DEG = 8;
 
 export interface ResultContext {
+  /**
+   * Settes av `search.ts` til `"planRoute"`/`"createSearch"` — de to
+   * inngangene `docs/specs/robusthet.md` §3.1 pkt. 1 anerkjenner. Utelatt
+   * (tester og fiksturer som bygger konteksten for hånd) faller den til
+   * `"buildResult"`: et resultat bygget fra en arena ingen full søkekjøring
+   * har fylt, og som robusthetslaget derfor skal avvise.
+   */
+  readonly provenance?: RouteProvenance | undefined;
   readonly input: RouteInput;
   readonly opts: RouteOptions;
   readonly arena: LabelArena;
@@ -591,6 +600,8 @@ export function buildResult(ctx: ResultContext): RouteResult {
   );
 
   return {
+    // Kun `search.ts` setter denne til en av de to anerkjente inngangene.
+    provenance: ctx.provenance ?? "buildResult",
     reached: ctx.reached,
     abortReason: ctx.abortReason,
     flags: routeFlags,

@@ -82,6 +82,18 @@ importers:
 
   packages/protocol: {}
 
+  packages/robustness:
+    dependencies:
+      '@morild/geo':
+        specifier: workspace:*
+        version: link:../geo
+      '@morild/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@morild/routing':
+        specifier: workspace:*
+        version: link:../routing
+
   packages/routing:
     dependencies:
       '@morild/geo':

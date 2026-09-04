@@ -128,7 +128,15 @@ describe("Search — steg-vis API (F3.5)", () => {
     while (!progress.done) progress = search.advance(3);
     const stepwise = search.finish();
     const direct = planRoute(input());
-    expect(JSON.stringify(stepwise)).toBe(JSON.stringify(direct));
+
+    // `provenance` (§4.8, robusthet.md §3.1) SKAL skille de to — det er hele
+    // feltets funksjon å si hvilken inngang resultatet kom fra. Alt annet
+    // skal være bit-identisk, og det er det denne testen vokter.
+    expect(stepwise.provenance).toBe("createSearch");
+    expect(direct.provenance).toBe("planRoute");
+    expect(JSON.stringify({ ...stepwise, provenance: direct.provenance })).toBe(
+      JSON.stringify(direct),
+    );
   });
 
   it("gir et gyldig delresultat fra snapshot() når som helst", () => {

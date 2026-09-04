@@ -579,6 +579,27 @@ describe("dagslysomvalg krever at ruten faktisk når målet (funn 1)", () => {
     expect(result.safety.reachesDestination).toBe(false);
     expect(result.safety.verdict).toBe("trygt");
   });
+
+  /**
+   * **`provenance` kan ikke forfalskes av en håndbygget kontekst**
+   * (`docs/specs/robusthet.md` §3.1 pkt. 1, D8.8).
+   *
+   * Nettopp denne filen er beviset på at det trengs: testene her fyller
+   * arenaen for hånd og kaller `buildResult` direkte. Resultatene ser ut som
+   * ekte `RouteResult`-er og ville passert enhver strukturell validering —
+   * men ingen søkekjøring har stått bak dem. De skal derfor bære
+   * `"buildResult"`, og robusthetslaget skal avvise dem.
+   */
+  it("gir provenance «buildResult» når konteksten er bygget for hånd", () => {
+    expect(buildResult(context([A_INDEX], true)).provenance).toBe(
+      "buildResult",
+    );
+  });
+
+  it("respekterer en provenance satt av søket", () => {
+    const ctx = { ...context([A_INDEX], true), provenance: "planRoute" } as const;
+    expect(buildResult(ctx).provenance).toBe("planRoute");
+  });
 });
 
 describe("recheckRoute — uavhengig sikkerhetsettersjekk (§5.10)", () => {

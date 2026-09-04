@@ -187,7 +187,13 @@ export interface TrapVerdict {
 export function trapVerdict(
   input: Omit<MemberInputE1, "variant" | "start" | "dest">,
   mode: R2SearchMode,
-  backoffSteps = 1,
+  /**
+   * Backoff i **sekunder fysisk tid** (ADR-0005, `bailout.ts`s `backoffS`).
+   * `undefined` ⇒ `min(Δt, 1800 s)`, som er det målingen kjørte med.
+   * Erstattet `backoffSteps` 2026-09-04; sensitivitetskolonnen 0/1/2 steg
+   * uttrykkes nå som 0 / Δt / 2·Δt sekunder.
+   */
+  backoffS: number | undefined = undefined,
   /**
    * Opsjoner som **kun** gjelder re-søket (lagt til 2026-09-01 for de billige
    * variantene F12/A12, som kjører grovere kursoppløsning).
@@ -229,7 +235,7 @@ export function trapVerdict(
         harbours: input.harbours,
         mode,
         tubeNm: input.tubeNm ?? E1_TUBE_NM,
-        backoffSteps,
+        ...(backoffS === undefined ? {} : { backoffS }),
         ...(searchOptions === undefined ? {} : { searchOptions }),
       },
     },

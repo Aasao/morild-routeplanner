@@ -252,6 +252,9 @@ function realWorkFakeWorker(sharedFields?: { current?: CurrentLayers; waves?: Wa
     addEventListener(type, listener) {
       if (type === "message") messageListener = listener as (ev: MessageEvent<FromWorker>) => void;
     },
+    removeEventListener() {
+      /* attrappen holder bare siste lytter — once-semantikken testes i ensemble.test.ts */
+    },
     terminate() {
       /* no-op */
     },

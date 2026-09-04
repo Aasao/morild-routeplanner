@@ -23,7 +23,21 @@ import { haversineNm } from "@morild/geo";
 import type { FieldEdgeGate } from "./contracts.js";
 import { MinHeap } from "./heap.js";
 
-/** Ren, structured-clone-bar representasjon av feltet. */
+/**
+ * Ren, structured-clone-bar representasjon av feltet — og
+ * **overføringskontrakten mellom workere** (robusthet.md §4.1).
+ *
+ * Feltet bygges én gang (`buildFieldForInput` i `search.ts`) i kontroll-
+ * workeren og sendes videre som `field.data`: et rent objekt med tall og én
+ * `Float64Array`. `postMessage` structured-cloner det uten spesialbehandling,
+ * og `d.buffer` kan i tillegg listes som **transferable** hvis avsenderen er
+ * ferdig med kopien sin. Mottakeren rekonstruerer med `new DistanceField(data)`
+ * (eller `DistanceField.fromData`).
+ *
+ * **Ingen `SharedArrayBuffer`.** Feltet er skrivebeskyttet etter bygging, en
+ * kopi koster ~0,2–0,3 MB på Skjæløy→Skagen, og delt minne ville krevd
+ * COOP/COEP-headere hele appen ellers ikke trenger.
+ */
 export interface DistanceFieldData {
   readonly lat0: number;
   readonly lon0: number;

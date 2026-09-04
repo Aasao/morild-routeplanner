@@ -10,6 +10,38 @@ import type { PackageHeader } from "@morild/protocol";
 import type { ChartSourceRef, Tillit } from "./contracts.js";
 import type { CostVector } from "./cost.js";
 
+/**
+ * **Hvor resultatet kommer fra** (`docs/specs/robusthet.md` §3.1 pkt. 1,
+ * D8.8; ADR-0005s bekreftelseskrav gjort strukturelt).
+ *
+ * ADR-0005 sier at robusthetstall — gjennomførbarhetsandel, persentiler,
+ * felle-sett — **kun** kan konstrueres fra fulle søk. Fram til nå var det en
+ * regel håndhevet av importgrensen alene: `packages/robustness` får ikke
+ * importere `variants.js`/`corridor.js`. Importgrensen fanger ikke et
+ * `RouteResult` som *ble sendt* til robusthetslaget fra et lag som selv
+ * hadde lov til å bygge det. Feltet gjør regelen strukturell: robusthet
+ * avviser (kaster på) ethvert resultat som ikke bærer `"planRoute"` eller
+ * `"createSearch"`.
+ *
+ *  - `"planRoute"` — satt av `planRoute` (§5.6). Ett fullt søk kjørt til ende.
+ *  - `"createSearch"` — satt av `createSearch` (og `snapshot()`/`finish()` på
+ *    den samme instansen). Det progressive API-et er samme søk, bare kjørt i
+ *    porsjoner; et `snapshot()` er derfor ikke *ferdig*, men det er et fullt
+ *    søks eget mellomresultat, og `abortReason`/`reached` sier hva det er.
+ *  - `"buildResult"` — `reconstruct.ts`s `buildResult` kalt direkte med en
+ *    håndbygget `ResultContext`. Det er *ikke* et fullt søk: tester og
+ *    fiksturer setter arenaen selv. Verdien finnes for at slike resultater
+ *    skal kunne skilles, ikke for at de skal telle.
+ *
+ * Merk at målevariantene i `variants.ts` (`planRouteScalar`,
+ * `planRouteParetoReference`) går gjennom `planRoute` og bærer derfor
+ * `"planRoute"`: de *er* fulle søk, bare med andre opsjoner. Det er
+ * arkitekturtestens importgrense — ikke dette feltet — som holder
+ * målevariantene borte fra robusthetstallene, nøyaktig som D8.8 beskriver
+ * (feltet er et *tillegg* til importgrensen, ikke en erstatning).
+ */
+export type RouteProvenance = "planRoute" | "createSearch" | "buildResult";
+
 export type AbortReason =
   | "stagnation"
   | "labelCap"
@@ -256,6 +288,11 @@ export interface IsochroneSnapshot {
 }
 
 export interface RouteResult {
+  /**
+   * Hvem som bygget resultatet. Settes KUN av `planRoute`/`createSearch`;
+   * alt annet er `"buildResult"`. Se `RouteProvenance`.
+   */
+  readonly provenance: RouteProvenance;
   readonly reached: boolean;
   readonly abortReason: AbortReason | null;
   /**

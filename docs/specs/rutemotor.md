@@ -436,6 +436,13 @@ interface RouteOptions {
 
 ```ts
 interface RouteResult {
+  /** HVEM som bygget resultatet (robusthet.md §3.1 pkt. 1, D8.8).
+   *  Settes KUN av de to inngangene: `planRoute` ⇒ "planRoute",
+   *  `createSearch` (inkl. `snapshot()`/`finish()`) ⇒ "createSearch". Alt
+   *  annet — `buildResult` kalt direkte med en håndbygget `ResultContext`,
+   *  altså tester og fiksturer — får "buildResult".
+   *  `packages/robustness` KASTER på alt som ikke er en av de to første. */
+  readonly provenance: "planRoute" | "createSearch" | "buildResult";
   readonly reached: boolean;
   /** RUTE-nivå flagg (D7.2) — samme bit-vokabular som RouteStep.flags
    *  (FLAG_NAMES i cost.ts), men om SØKET, ikke om et punkt på linjen.
@@ -543,6 +550,34 @@ interface RouteResult {
 
 `RouteResult` er **ren data** — ingen funksjoner, ingen sirkulære referanser —
 slik at den kan structured-clones ut av en worker uten spesialbehandling.
+
+**`provenance` (2026-09-04, robusthet.md §3.1 pkt. 1, ADR-0005).** ADR-0005
+krever at robusthetstall — gjennomførbarhetsandel, persentiler, felle-sett —
+**kun** konstrueres fra fulle søk. Fram til nå var det håndhevet av
+importgrensen alene (`packages/robustness` får ikke importere
+`variants.js`/`corridor.js`). Importgrensen ser ikke et `RouteResult` som
+*ble sendt inn* fra et lag som selv hadde lov til å bygge det, og D8.8 gjør
+derfor regelen strukturell: feltet følger med resultatet, og robusthetslaget
+avviser alt som ikke bærer `"planRoute"` eller `"createSearch"`.
+
+Konsekvenser som er verdt å skrive ned:
+
+- **Målevariantene i `variants.ts`** (`planRouteScalar`,
+  `planRouteParetoReference`) går gjennom `planRoute` og bærer derfor
+  `"planRoute"`. Det er riktig: de *er* fulle søk, bare med andre opsjoner.
+  Det er importgrensen — ikke dette feltet — som holder dem borte fra
+  robusthetstallene. Feltet er et **tillegg** til importgrensen, ikke en
+  erstatning for den.
+- **`snapshot()` bærer `"createSearch"`** selv om søket ikke er ferdig. Et
+  snapshot er et fullt søks eget mellomresultat (§5.6); `reached` og
+  `abortReason` sier hva det er, og progressiv visning skal ikke måtte
+  forfalske proveniens for å tegne en foreløpig linje.
+- **`buildResult` kalt direkte** — tester og fiksturer som fyller arenaen for
+  hånd — gir `"buildResult"`. `ResultContext.provenance` er valgfri nettopp
+  slik at et resultat uten søk bak seg ikke *kan* få en av de to andre
+  verdiene ved et uhell.
+- Feltet endrer ingen rutegeometri og inngår ikke i golden-fasitene (som
+  lagrer et utvalg felter, ikke hele `RouteResult` — §8.2).
 
 ---
 
@@ -903,6 +938,30 @@ Regel 10 sier «så nær rett vinkel som praktisk mulig», ikke en tallgrense.
 - **Feltet er væruavhengig** og bygges én gang per `(start, dest, maskeversjon,
   feltoppløsning)` og deles på tvers av alle avganger og alle
   ensemble-medlemmer (F3.5, F4.1, spike-rapportens anbefaling).
+- **`buildFieldForInput(input): DistanceField | undefined`** (2026-09-04) er
+  den eneste veien til det delte feltet. Den er bokstavelig talt kallet
+  søkets eget `setUpField` gjør — én implementasjon, ikke to like
+  parameterlister — og det er forutsetningen for bit-identiteten: et medlem
+  som får feltet utenfra gir nøyaktig samme `RouteResult` som et medlem som
+  bygget sitt eget (`shared-field.test.ts`). Er `input.field` allerede satt,
+  returneres det urørt; funksjonen er idempotent.
+- **`DistanceFieldData` er overføringskontrakten mellom workere** (robusthet.md
+  §4.1). Kontroll-workeren bygger feltet én gang og sender `field.data` — et
+  rent objekt med tall og én `Float64Array` — i worker-meldingen;
+  medlems-workeren rekonstruerer med `new DistanceField(data)` og legger det i
+  `RouteInput.field`. `postMessage` structured-cloner det uten
+  spesialbehandling, og `d.buffer` kan i tillegg listes som *transferable*.
+  **Ingen `SharedArrayBuffer`:** feltet er skrivebeskyttet etter bygging, en
+  kopi koster ~0,2–0,3 MB på Skjæløy→Skagen, og delt minne ville krevd
+  COOP/COEP-headere hele appen ellers ikke trenger. At feltet faktisk *er*
+  skrivebeskyttet — at søk nr. 2 ser det samme som søk nr. 1 — testes, ikke
+  antas.
+- **Delt Tub er noe annet enn delt felt.** `RouteInput.tubBoundS` er en
+  **myk** skranke (robusthet.md §4.1, D8.2): et medlem som terminerer uten
+  `safety.reachesDestination` mens `diagnostics.pruned.bound > 0` er ikke
+  bevist ugjennomførbart, og kalleren skal kjøre det om uten bound før det
+  klassifiseres. Tub gis aldri til R2/bail-out-søk. Skademålingen som
+  betingelsen for å slå den på ligger i `shared-tub-damage.test.ts`.
 - Er start utilgjengelig i feltet (`atNear(start) === undefined`), slås feltet
   **av** for kjøringen (v1-adferd), `coverage.fieldUsed = false`, og både
   blindvei-pruning og Tub-bound bortfaller. Det er en ærlig degradering med
@@ -1216,6 +1275,49 @@ identitetstest mellom to kodeveier i samme prosess.
 
 ---
 
+### 5.12 R2/bail-out: backoff i fysisk tid
+
+R2 er felle-definisjonen (`bailout.ts`): finn første **harde** feil langs en
+kandidatrute, og prøv å seile derfra til en nødhavn innen 6 t. Re-søket
+starter ikke i feilpunktet — ved `boatLimits` er været *der* allerede over
+båtens grense, og et søk derfra kan per konstruksjon ikke ta ett eneste steg.
+Det stilles i stedet det seilbare spørsmålet: **da du sist var lovlig, kunne
+du kommet deg i havn?**
+
+- **`R2Config.backoffS` (2026-09-04, ADR-0005, robusthet.md §3.1 pkt. 2)**
+  erstatter `backoffSteps`. Standard `min(Δt, 1800 s)` der Δt er søkets
+  tidssteg (`RouteOptions.timeStepS`); taket på 1800 s finnes fordi et grovt
+  tidssteg ellers ville gitt seileren mer «forutseenhet» jo dårligere
+  oppløsning søket kjørte med. **Ingen kompatibilitetslag** — `backoffSteps`
+  er borte.
+- **Semantikk:** re-søket starter fra det siste rutepunktet med
+  `tS ≤ t_feil − backoffS`, aldri før avgang (indeks 0). `backoffStartIndex`
+  er den regelen som ren funksjon.
+- **Hvorfor fysisk tid.** Evaluatorens tidssteg er ikke uniformt: det siste
+  steget inn mot hvert veipunkt er et *delsteg* (`timeStepS · fraction`,
+  §5.11), og med en kandidatrute hvis veipunkter er rutens egne steg er
+  delsteg regelen, ikke unntaket. «Ett steg tilbake» kunne dermed bety alt
+  fra sekunder til en time. En skranke som varierer med diskretiseringen er
+  ingen skranke.
+- **Målt effekt på fasitene (2026-09-04):** med Δt = 3600 s — det E1-
+  fiksturene kjører — er avstanden mellom evaluatorsteg 3420–3600 s, altså
+  alltid ≥ 1800 s, og den nye regelen lander på nøyaktig samme punkt som
+  `backoffSteps: 1`. Alle E1-fasiter og felle-sett er derfor **uendret**. Ved
+  halvert tidssteg (1800 s) flytter to av tolv målte tilfeller seg ett steg
+  lenger tilbake — og forkravstest 5 («samme felle-sett ved 1800 s som ved
+  3600 s») er fortsatt grønn, som er nettopp det den fysiske definisjonen
+  skal kjøpe.
+- **R2-re-søket får aldri delt Tub eller delt felt.** `r2SearchInput` er den
+  eneste konstruksjonen av re-søkets `RouteInput`; verken `tubBoundS` eller
+  `field` settes der, og ingen av opsjonskanalene kan bære dem (begge er
+  `Partial<RouteOptions>`, og `RouteOptions` har ingen av delene). En Tub
+  utledet fra reisen «kom du fram til målet i tide» ville kuttet nettopp de
+  lange, ikke-opplagte utveiene R2 finnes for å finne. Fasitens og
+  produksjonens modus er `pareto`; `skalar`/`korridor-skalar` er
+  E1′-måleinnganger kalleren må be om eksplisitt.
+
+---
+
 ## 6. Ærlig degradering (obligatorisk seksjon, N2)
 
 | Situasjon | Adferd |
@@ -1319,6 +1421,10 @@ vet):
 | Sikkerhetsettersjekk | En rute konstruert med et segment gjennom no-go gir `recheckPassed: false` og korrekt `failingSegments` |
 | Sol/natt | Kjente soloppgangs-/solnedgangstider for Skjæløy og Skagen på kjente datoer, innenfor ±2 min |
 | Retningskonvensjoner | Vind FRA / strøm MOT / bølge FRA (F2.5) — eksplisitte tester med håndregnede tilfeller |
+| `provenance` (§4.8) | `planRoute` ⇒ `"planRoute"`; `createSearch` ⇒ `"createSearch"` også i `snapshot()`; `buildResult` med håndbygget kontekst ⇒ `"buildResult"`; de to inngangene gir ellers bit-identisk resultat (`shared-field.test.ts`, `reconstruct.test.ts`) |
+| Delt A\*-felt (§5.5) | `buildFieldForInput` gir samme felt som `setUpField`; bit-identisk `RouteResult` med felt, uten felt og etter `DistanceFieldData`-overføringen (structured clone), på alle golden-scenarier; feltet er uendret etter bruk og kan deles av flere søk (`shared-field.test.ts`) |
+| Delt Tub (§5.5, robusthet.md §5.3) | Forhåndsregistrert skademåling: S-3 og S-7, 30 medlemmer, med og uten kontrollens `tubBoundS` ⇒ null klassifiseringsflipp og bit-identiske sammendrag; redningsveien beviselig utløsbar og gir baseline tilbake bit-identisk (`shared-tub-damage.test.ts`) |
+| `backoffS` (§5.12) | `min(Δt, 1800 s)` for alle tidssteg; ett steg tilbake på uniforme steg; hopper over delsteg kortere enn backoffen; aldri før avgang. R2-re-søket har verken `tubBoundS` eller `field`, og ingen opsjonskanal kan bære dem (`bailout.test.ts`) |
 
 ### 8.2 Golden-route-harness (`pnpm test:golden`)
 
@@ -1473,6 +1579,41 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 ---
 
 ## 10. Endringslogg
+
+- **2026-09-04 — fase 4a bølge 1: `provenance`, `backoffS`, delt felt som
+  eksplisitt kontrakt** (`docs/specs/robusthet.md` §3.1 og §5.3, ADR-0005;
+  bølgeplan `docs/research/fase4a-plan-2026-09-04.md`).
+  - **§4.8** — `RouteResult.provenance: "planRoute" | "createSearch" |
+    "buildResult"`. Settes kun av de to inngangene; `buildResult` kalt direkte
+    med håndbygget `ResultContext` gir `"buildResult"`. Robusthetslaget
+    avviser alt som ikke er en av de to første (D8.8). Endrer ingen
+    rutegeometri; golden-fasitene er uberørt (de lagrer et utvalg felter, ikke
+    hele `RouteResult`).
+  - **§5.5** — ny `buildFieldForInput(input)`: den eneste veien til det delte
+    A\*-feltet, og bokstavelig talt kallet `setUpField` gjør. `DistanceFieldData`
+    dokumentert som overføringskontrakten mellom workere (structured clone /
+    transferable `Float64Array`, ingen `SharedArrayBuffer`). Bit-identitet med
+    og uten `RouteInput.field`, og etter worker-hoppet, er testet på alle sju
+    golden-scenariene.
+  - **Ny §5.12** — `R2Config.backoffS` erstatter `backoffSteps`: backoff i
+    **fysisk tid**, `min(Δt, 1800 s)`, uten kompatibilitetslag. Bakgrunn:
+    evaluatorens delsteg gjør «ett steg» til ulik fysisk tid ulike steder.
+    Målt: alle E1-fasiter uendret ved Δt = 3600 s (stegavstand 3420–3600 s,
+    alltid ≥ backoffen). Samme seksjon fastholder at R2-re-søket aldri får
+    delt Tub eller delt felt (`r2SearchInput`, robusthet.md §5.1).
+  - **Skademåling av delt Tub (robusthet.md §5.3, forhåndsregistrert)** kjørt
+    i `shared-tub-damage.test.ts`: S-3 og S-7, 30 medlemmer hver, med og uten
+    kontrollens `tubBoundS`. **Null klassifiseringsflipp, bit-identiske
+    sammendrag** — ventilen holder. Men bounden kjøpte **ingenting**: 0,0 %
+    spart på iterasjoner og 0,2 % / −0,0 % på etiketter i første pass, og med
+    redningsveiene medregnet er delt Tub et **netto tap** (S-3 +2,6 %
+    iterasjoner, S-7 +59 %). Tallet er et innspill til spak 3 i robusthet.md
+    §6.3, ikke en motorendring.
+  - **Åpent, notert i testen:** §3.2s radrekkefølge lar `error` treffe før
+    bound-ventilen når en for stram bound beskjærer hele fronten
+    (`noExpandableLabels`). Ventilen kjøres derfor som eget predikat *før*
+    klassifiseringen (`needsRerunWithoutBound`); presedensen bør presiseres i
+    robusthet.md §3.2 før `packages/robustness` skriver sin `classifyMember`.
 
 - **2026-09-04 — D7.2/D7.3: per-flis vaktbånd, ærlig værdekning-flagg og
   flisvalg fra feltets rekkevidde** (vedtatt av Magnus etter `/panel`, se

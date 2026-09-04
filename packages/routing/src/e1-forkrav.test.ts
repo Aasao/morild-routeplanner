@@ -245,7 +245,9 @@ describe("§8.2 forkrav 1 — navigasjonsfellen i S-3", () => {
    */
   it("VARIANT F12: 12° kursoppløsning i re-søket finner fortsatt utveien", () => {
     const fasit = trapVerdict(felles, "pareto");
-    const grov = trapVerdict(felles, "pareto", 1, { headingStepDeg: 12 });
+    const grov = trapVerdict(felles, "pareto", undefined, {
+      headingStepDeg: 12,
+    });
     expect(grov.hardFeil).toBe(true);
     expect(grov.felle, "m24 skal ikke bli en felle av grovere kursnett").toBe(
       false,
@@ -259,8 +261,13 @@ describe("§8.2 forkrav 1 — navigasjonsfellen i S-3", () => {
   }, 180_000);
 
   it("uten `searchOptions` er dommen bit-identisk med kjøringen 2026-08-31", () => {
-    const utenOverstyring = trapVerdict(felles, "pareto", 1);
-    const eksplisittUdefinert = trapVerdict(felles, "pareto", 1, undefined);
+    const utenOverstyring = trapVerdict(felles, "pareto");
+    const eksplisittUdefinert = trapVerdict(
+      felles,
+      "pareto",
+      undefined,
+      undefined,
+    );
     expect(JSON.stringify(eksplisittUdefinert)).toBe(
       JSON.stringify(utenOverstyring),
     );
@@ -547,10 +554,19 @@ describe("§8.2 forkrav 4 — abort-paritet", () => {
 
 describe("§8.2 forkrav 5 — backoff-sanity på halvert tidssteg", () => {
   /**
-   * `backoffSteps` er låst til 1 og er definert i **tidssteg**, ikke i fysisk
-   * tid. Er felle-settet følsomt for oppløsningen, er den definisjonen feil, og
-   * §8.1 krever da at backoff defineres i fysisk tid i stedet. Testen er derfor
-   * et stoppkriterium, ikke en detalj.
+   * Backoffen er definert i **fysisk tid**, `min(Δt, 1800 s)`
+   * (ADR-0005, erstattet steg-definisjonen 2026-09-04 — `bailout.ts`s
+   * `backoffS`). Nettopp derfor er denne testen fortsatt et stoppkriterium
+   * og ikke en detalj: hele poenget med den fysiske definisjonen er at
+   * felle-settet IKKE skal være følsomt for oppløsningen. Endrer settet seg
+   * mellom 3600 s og 1800 s, er enten definisjonen eller fiksturen feil, og
+   * det skal avgjøres før tallet brukes til noe — ikke etterpå.
+   *
+   * Merk at testen nå måler noe strengere enn før: med steg-definisjonen var
+   * backoffen «ett steg» i begge kjøringene og dermed *ulik fysisk tid* i de
+   * to, så en likhet kunne like gjerne skyldes at feilpunktet lå langt fra
+   * grensen. Nå er backoffen 1800 s i begge, og likheten er en reell
+   * diskretiseringsuavhengighet.
    */
   function felleSett(timeStepS: number, mode: "pareto" | "korridor-skalar") {
     const fixture = s3FrontEnsemble();

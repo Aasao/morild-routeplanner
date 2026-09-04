@@ -121,11 +121,24 @@ Klassifisering (`classifyMember`, ren funksjon, erstatter dagens i
 
 | Vilkår | kind |
 |---|---|
-| kastet/`abortReason` ∈ {labelCap, iterationCap, noExpandableLabels} uten mål | `error` |
 | `coverage.weather === "partial"` og ikke `safety.reachesDestination` | `inconclusive` (ADR-0005) |
 | `pruned.bound > 0` og ikke `reachesDestination` | **ikke klassifiserbar** — søket kjøres om uten bound (§4.1) |
+| kastet/`abortReason` ∈ {labelCap, iterationCap, noExpandableLabels} uten mål | `error` |
 | `safety.reachesDestination === true` | `feasible` |
 | ellers | `infeasible` |
+
+*Rekkefølgen presisert 2026-09-04 (bølge 1, D9.2):* ventilen står **før**
+`error`. Skademålingen (`packages/routing/src/shared-tub-damage.test.ts`)
+viste at en for stram bound kan beskjære hele fronten slik at søket dør av
+`noExpandableLabels` — tabellen bokstavelig lest ville stemplet det
+«beregningen feilet» der bounden kuttet ruten. Omkjøring er den eneste
+retningen som aldri lyver. `inconclusive` står likevel først: tok
+værfeltet slutt, er svaret «ikke bevist» uansett bound. **Åpent (D9.2):**
+motorens *egen* Tub (ADR-0004, alltid på utenfor `exactMode`) treffer
+samme vilkår — i S-7 hadde 8 av 30 medlemmer `pruned.bound > 0` uten mål
+også uten delt Tub, og motoren har ingen «ingen Tub»-bryter. Til Magnus'
+vedtak er ventilen bare meningsfull for en *delt* bound; med D9.1 (a) er
+den i praksis død kode som beholdes som strukturell garanti.
 
 Et `feasible`-medlem kan ha `safetyVerdict !== "trygt"`; det påvirker
 ikke tellingen, men bæres videre til presentasjonen som flagg.
@@ -555,6 +568,25 @@ port 2) utløser F12-remåling automatisk ved > 60 s etter tiltak.
 Bail-out-kostnaden måles separat på én ekte 84 nm-rute med ekte
 havnetetthet før per-medlem-bail-out vurderes.
 
+**Status bølge 1 (2026-09-04/05):** spak 1 og 2 er inne (`apps/pwa`:
+lyttere per jobb med `{ once: true }` + lekkasjetest; kontroll-workeren
+bygger feltet med `buildFieldForInput` og sender `DistanceFieldData` til
+medlemmene). **Spak 3 er målt og forkastet som ytelsestiltak** — den
+forhåndsregistrerte skademålingen (§5.3, `shared-tub-damage.test.ts`):
+
+| | S-3 | S-7 |
+|---|---|---|
+| kontrollens `tubBoundS` | 14,0 t | 22,1 t |
+| klassifiseringsflipp m/soft delt Tub + redning | 0 | 0 |
+| `MemberSummary` bit-identisk | ja | ja |
+| redningsveier utløst | 1 | 14 |
+| iterasjoner spart i 1. pass | 0,0 % | 0,0 % |
+| totalt arbeid inkl. redning | +2,6 % | +59 % |
+
+Sikkerhetskriteriet holdt, men bounden kjøper ingenting: motorens egen
+Tub (ADR-0004) prunes allerede alt den delte bounden ville tatt, og
+redningsveiene koster. Se D9.1.
+
 ## 7. Åpne spørsmål — beslutningspunkter til Magnus (D8.1–D8.13)
 
 Format: alternativer, kort pro/contra, anbefaling, panelets votum.
@@ -652,9 +684,77 @@ P(< 60 s for én avgang på nettbrett etter spak 1–6) under 30 %. Spec-en
 er skrevet slik at produktet er ærlig uansett utfall, men bølge 2 kan
 ende med at F3.5 må revideres hardere enn D8.13.
 
+**Bølge 1-funn (2026-09-05) — beslutningspunkter D9.1–D9.5, til Magnus.**
+Panel: `docs/research/ekspertpanel-d9-delt-tub-2026-09-05.md` (to runder +
+tilsvar; grunnlag i `beslutningsgrunnlag-d9-delt-tub-2026-09-05.md`).
+
+**D9.1 Delt Tub etter skademålingen.** (a) Forkast delt Tub helt: ingen
+`tubBoundS` i worker-meldingen (slik bølge 1 allerede er kodet);
+`RouteInput.tubBoundS` beholdes i API-et for måling; skademålingen
+beholdes som regresjonsvakt. (b) Behold bak flagg. (c) Slå på. Pro (a):
+0 % spart beskjæring, egen Tub-beregning koster ikke målbart (S-3 20,6 s
+vs 21,9 s, S-7 20,1 s vs 21,0 s for 10 medlemmer), bransjenorm (ingen
+kryss-medlem-bounding i produksjonsprodukter). Contra (b): nødvei bak
+flagg som aldri kjøres «på». **Anbefaling: (a).** Panel: enstemmig
+GODKJENN (6/6); gjenåpningsutløser hvis delt felt forlates i produksjon.
+
+**D9.2 Ventilens rekkevidde og klassifiseringshullet.** (a) Ventil kun
+ved delt bound. (b-min) Ventilen forblir generisk (`pruned.bound > 0` og
+ikke nådd ⇒ kjør om, tak 1 per medlem); `stagnation`, `callerStopped`
+⇒ `inconclusive` med grunn «budsjett», `noWeatherAtStart` ⇒
+`inconclusive` med grunn «dekning», `outsideDomain` ⇒ `error` — ingen
+av dem er bevis på ugjennomførbarhet og skal ikke i nevneren som
+`infeasible`; `prunedBound` og `tubBoundS` (som «søkets horisont», ikke
+sertifikat) alltid i `MemberSummary`/kvittering; test-assert «intet
+medlem klassifiseres `infeasible` med `pruned.bound > 0`». (b-full)
+(b-min) + `noTubBound`-opsjon i motoren + uttømmende test per
+`abortReason` + strukturert `diagnostics.termination` — bølge 3. (c)
+Omkjøring via `exactMode`. Måling: i S-1…S-8 (210 søk) er alle 30
+tilfeller av bound-beskjæring uten mål værhorisont (`partial`) — null
+ville blitt `infeasible` i dag; hullet er strukturelt, ikke empirisk.
+**Anbefaling: (b-min) nå, (b-full) i bølge 3.** Panel: (a) avvist av
+4/6 som regresjon fra dagens generiske kode; (b-min) nå GODKJENN 5/6;
+(c) AVVIS enstemmig. Dette endrer klassifisering (sikkerhetssemantikk)
+— retningen er konservativ (færre `infeasible`, aldri flere `feasible`;
+`feasibleShare`-nevneren krymper, andelen kan stige).
+
+**D9.3 Motorens grådige Tub-rute er ikke skrankekomplett** (matematiker,
+tilsvar): `computeTubBound` sjekker hard-node, maske og TSS, men ikke
+klaringskorridor, dagslysankomst eller veipunkter ⇒ bounden kan ligge
+under det skrankede optimum; 1,25-marginen er eneste vern. (a) Legg de
+tre skrankene inn i den grådige ruten (flere avbrudd ⇒ oftere ingen
+bound ⇒ mindre beskjæring; golden-ruter kan flytte seg og må
+re-verifiseres). (b) Behold, men mål gapet: rapporter maxₘ T\*ₘ /
+tubBoundS over fiksturene og på ekte vær. (c) Ignorer. **Anbefaling:
+(a) i bølge 3, med (b) som forhåndsregistrert måling først** (endring i
+ADR-0004-motoren; Magnus eier sikkerhetssemantikken). Panel: reist i
+tilsvar, ikke votert separat.
+
+**D9.4 Rerun-tak.** (a) Per medlem = 1 (omkjøring uten bound er
+maksimalsøket; idempotent) nå; ensemble-budsjett («samlet omkjøringstid
+≤ 50 % av førstepasset» eller «> 25–30 % omkjøringer ⇒ stopp og merk
+resten `inconclusive` grunn budsjett») i bølge 3 sammen med
+`ikkeAvgjort`-grunnen. (b) Ensemble-tak nå. **Anbefaling: (a)** —
+omkjøring trigges under D9.1 (a) kun av egen Tub, som i dag aldri skjer
+i fikstursuiten. Panel: uenig om form (matematiker: per medlem +
+budsjett; ytelse: ensemble-andel; værruting: via `ikkeAvgjort`).
+
+**D9.5 Skademålingens plass i testsuiten.** (a) Egen `pnpm test:damage`
+(kjøres av `/qa` når `packages/routing/src/search.ts` eller
+`packages/robustness` er endret, og i CI nattlig/ved PR), ut av standard
+`pnpm test` (sparer ~170 s per kjøring). (b) Behold i standard. (c)
+Slett. **Anbefaling: (a).** Panel: ytelse + pragmatiker GODKJENN;
+matematiker «vakt beholdes» (oppfylt av (a)).
+
 ## 8. Endringslogg
 
 - 2026-09-04: første utkast (hovedsesjonen) etter fagagent-panel med to
   runder og tilsvar. Samme dag: **D8.1–D8.13 vedtatt av Magnus som
   anbefalt** — status Vedtatt. Anbefalingene i §7 er dermed
   beslutningene; alternativene står som historikk.
+- 2026-09-05: bølge 1 levert — `provenance`/`backoffS`/`buildFieldForInput`
+  i routing (rutemotor.md), `packages/robustness`-skjelett, arkitekturtest
+  D8.8, once-fiks + delt felt i PWA. §3.2-rekkefølge presisert (ventil
+  før error). §6.3: skademålingens tall, spak 3 forkastet som
+  ytelsestiltak. Beslutningspunkter D9.1–D9.5 (§7) etter panel — venter
+  Magnus.

@@ -10,7 +10,7 @@ import { createMap, drawHelloRoute, drawWeatherRoute, whenMapReady } from "./map
 import { runHelloRoute } from "./hello-route.js";
 import { DEFAULT_APP_CONFIG } from "./weather/config.js";
 import { browserCacheStorage, memoryCacheStorage, requestPersistentStorage } from "./weather/pack-cache.js";
-import { createRealWeatherWorker } from "./weather/ensemble.js";
+import { createRealWeatherWorker, defaultPoolSize } from "./weather/ensemble.js";
 import { runWeatherPipeline } from "./weather/pipeline.js";
 import { allDisplayFlags } from "./weather/route-flags.js";
 import type { FieldPresenceStatus } from "./weather/field-status.js";
@@ -75,7 +75,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   let lastFieldStatuses: readonly FieldPresenceStatus[] = [];
   // Nettbrett-måling (ADR-0005 port 1): veggklokke for ensemblet regnes fra
   // kontrollen er ferdig; medlemstallet hentes fra flisvalget.
-  const poolSize = navigator.hardwareConcurrency || 4;
+  const poolSize = defaultPoolSize(navigator.hardwareConcurrency);
   let ensembleStartMs: number | undefined;
   let membersTotal = 0;
 
