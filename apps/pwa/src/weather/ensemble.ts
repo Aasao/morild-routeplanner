@@ -82,6 +82,13 @@ export interface MemberOutcome {
   readonly classification: MemberClassification | "error";
   readonly result?: RouteResult;
   readonly errorMessage?: string;
+  /**
+   * Veggklokketid i ms fra jobben ble sendt til Workeren til svaret kom
+   * (inkluderer strukturert kloning av flisene + dekoding + søk). Dette er
+   * nettbrett-tallet ADR-0005 port 1 venter på — målt der det skjer, ikke
+   * anslått fra PC. Udefinert kun når `performance` mangler (testmiljø).
+   */
+  readonly elapsedMs?: number | undefined;
 }
 
 export interface EnsembleSummary {
@@ -144,8 +151,17 @@ export interface WorkerLike {
 
 export type WorkerFactory = () => WorkerLike;
 
+function nowMs(): number | undefined {
+  return typeof performance !== "undefined" ? performance.now() : undefined;
+}
+
 function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome> {
   return new Promise((resolve) => {
+    const startedMs = nowMs();
+    const elapsed = (): number | undefined => {
+      const end = nowMs();
+      return startedMs !== undefined && end !== undefined ? end - startedMs : undefined;
+    };
     const message: PlanRouteMemberRequest = {
       type: "plan-route-member",
       memberIndex: job.memberIndex,
@@ -161,6 +177,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
           isControl: data.isControl,
           classification: classifyMember(data.result),
           result: data.result,
+          elapsedMs: elapsed(),
         });
       } else {
         resolve({
@@ -168,6 +185,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
           isControl: job.isControl,
           classification: "error",
           errorMessage: data.message,
+          elapsedMs: elapsed(),
         });
       }
     });

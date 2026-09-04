@@ -81,7 +81,8 @@ export interface PipelineCallbacks {
     statuses: readonly FieldPresenceStatus[],
     tiles: readonly PointerTileEntry[],
   ) => void;
-  readonly onControlResult?: (outcome: MemberOutcome) => void;
+  /** `memberCount` = antall ensemblemedlemmer UTEN kontrollen som skal kjøres etterpå (nettbrett-målingens nevner). */
+  readonly onControlResult?: (outcome: MemberOutcome, memberCount: number) => void;
   readonly onMemberResult?: EnsembleCallbacks["onMemberResult"];
   readonly onMetAlerts?: (result: MetAlertsLoadResult, relevant: readonly RelevantAlert[]) => void;
   readonly onError?: (message: string) => void;
@@ -290,7 +291,7 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
   let metAlertsDone: Promise<void> = Promise.resolve();
   const { outcomes } = await runEnsemble(jobs, deps.poolSize, deps.workerFactory, {
     onControlResult: (outcome) => {
-      callbacks.onControlResult?.(outcome);
+      callbacks.onControlResult?.(outcome, memberIndices.length);
       if (outcome.result) {
         metAlertsDone = runMetAlertsForControl(deps, callbacks, outcome.result.steps);
       }

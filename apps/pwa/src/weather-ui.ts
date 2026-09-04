@@ -108,22 +108,52 @@ export function renderControlResult(el: HTMLElement, outcome: MemberOutcome): vo
     return;
   }
   const arrival = new Date(r.totals.arrivalEpochS * 1000).toISOString();
+  const elapsed = outcome.elapsedMs !== undefined ? ` Beregnet på ${formatElapsed(outcome.elapsedMs)}.` : "";
   el.textContent =
     `Kontroll (ekte vær): ${r.safety.reachesDestination ? "nådde målet" : "nådde IKKE målet"} — ` +
     `ankomst ${arrival}, ${r.totals.distanceNm.toFixed(1)} nm, ` +
-    `${(r.totals.durationS / 3600).toFixed(1)} t. Værdekning: ${r.coverage.weather}. Kartdekning: ${r.coverage.mask}.`;
+    `${(r.totals.durationS / 3600).toFixed(1)} t. Værdekning: ${r.coverage.weather}. Kartdekning: ${r.coverage.mask}.` +
+    elapsed;
 }
 
-export function renderEnsembleSummary(el: HTMLElement, summary: EnsembleSummary): void {
+/** «4,2 s» / «1 min 12 s» — beregningstid til nettbrett-målingen (ADR-0005 port 1). */
+export function formatElapsed(ms: number): string {
+  const s = ms / 1000;
+  if (s < 60) return `${s.toFixed(1)} s`;
+  const min = Math.floor(s / 60);
+  return `${min} min ${Math.round(s - min * 60)} s`;
+}
+
+export interface EnsembleTiming {
+  /** Veggklokke fra kontrollen var ferdig til siste medlem kom inn (ms). */
+  readonly wallMs: number;
+  /** Antall medlemmer (uten kontroll) som er ferdige så langt. */
+  readonly membersDone: number;
+  readonly membersTotal: number;
+  readonly poolSize: number;
+}
+
+export function renderEnsembleSummary(
+  el: HTMLElement,
+  summary: EnsembleSummary,
+  timing?: EnsembleTiming,
+): void {
   const p50 = summary.durationP50S !== undefined ? (summary.durationP50S / 3600).toFixed(1) : "–";
   const p90 = summary.durationP90S !== undefined ? (summary.durationP90S / 3600).toFixed(1) : "–";
+  const progress =
+    timing === undefined
+      ? ""
+      : timing.membersDone < timing.membersTotal
+        ? ` Fremdrift: ${timing.membersDone}/${timing.membersTotal} medlemmer på ${formatElapsed(timing.wallMs)} (${timing.poolSize} Workere).`
+        : ` Ensemblet tok ${formatElapsed(timing.wallMs)} for ${timing.membersTotal} medlemmer (${timing.poolSize} Workere).`;
   el.textContent =
     `Ensemble: ${summary.totalMembers} medlemmer kjørt. ` +
     `Gjennomførbar: ${(summary.feasibleFraction * 100).toFixed(0)} %. ` +
     `Inkonklusiv (partial vær-dekning, ADR-0005): ${(summary.inconclusiveFraction * 100).toFixed(0)} %` +
     `${summary.horizonTooShortWarning ? " — ADVARSEL: >20 %, medlemshorisonten er trolig for kort for denne seilasen" : ""}. ` +
     `Ugjennomførbar: ${summary.infeasibleCount}. Feil: ${summary.errorCount}. ` +
-    `Varighet blant gjennomførbare — P50 ${p50} t, P90 ${p90} t.`;
+    `Varighet blant gjennomførbare — P50 ${p50} t, P90 ${p90} t.` +
+    progress;
 }
 
 export function renderMetAlerts(

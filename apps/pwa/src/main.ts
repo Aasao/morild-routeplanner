@@ -73,6 +73,11 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   }
 
   let lastFieldStatuses: readonly FieldPresenceStatus[] = [];
+  // Nettbrett-måling (ADR-0005 port 1): veggklokke for ensemblet regnes fra
+  // kontrollen er ferdig; medlemstallet hentes fra flisvalget.
+  const poolSize = navigator.hardwareConcurrency || 4;
+  let ensembleStartMs: number | undefined;
+  let membersTotal = 0;
 
   void runWeatherPipeline(
     {
@@ -80,7 +85,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       fetchImpl: fetch.bind(window),
       cacheStorage,
       workerFactory: createRealWeatherWorker,
-      poolSize: navigator.hardwareConcurrency || 4,
+      poolSize,
       nowEpochS: Math.floor(Date.now() / 1000),
     },
     {
@@ -94,7 +99,9 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
         lastFieldStatuses = statuses;
         if (fieldStatusEl) renderFieldStatuses(fieldStatusEl, statuses);
       },
-      onControlResult: (outcome) => {
+      onControlResult: (outcome, memberCount) => {
+        ensembleStartMs = performance.now();
+        membersTotal = memberCount;
         if (controlResultEl) renderControlResult(controlResultEl, outcome);
         const result = outcome.result;
         if (result === undefined) return;
@@ -109,8 +116,18 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
             });
         }
       },
-      onMemberResult: (_outcome, summary) => {
-        if (ensembleEl) renderEnsembleSummary(ensembleEl, summary);
+      onMemberResult: (outcome, summary) => {
+        if (!ensembleEl || outcome.isControl) return;
+        const timing =
+          ensembleStartMs === undefined
+            ? undefined
+            : {
+                wallMs: performance.now() - ensembleStartMs,
+                membersDone: summary.totalMembers - 1,
+                membersTotal,
+                poolSize,
+              };
+        renderEnsembleSummary(ensembleEl, summary, timing);
       },
       onMetAlerts: (result, relevant) => {
         if (metalertsEl) renderMetAlerts(metalertsEl, result, relevant);
