@@ -45,7 +45,9 @@ import {
   type MemberOutcome,
   type TileWindSource,
   type WorkerFactory,
+  type EnsembleContext,
 } from "./ensemble.js";
+import type { RobustnessStamp } from "@morild/robustness";
 import { fetchMetAlerts, type MetAlertsLoadResult } from "./metalerts-client.js";
 import { filterAlertsForRoute, type RelevantAlert } from "./metalerts.js";
 import type { PointerFieldEntry, PointerTileEntry } from "./pointer-types.js";
@@ -63,6 +65,8 @@ export interface PipelineDeps {
   readonly cacheStorage: CacheStorageLike;
   readonly workerFactory: WorkerFactory;
   readonly poolSize: number;
+  /** D10.5 verste-først via S1b-orakel; standard på i appen, av i tester uten orakel-mock. */
+  readonly worstFirst?: boolean | undefined;
   readonly nowEpochS: number;
 }
 
@@ -289,6 +293,22 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
   // Node 22 i CI (PR #1). `runMetAlertsForControl` fanger sine egne feil,
   // så denne await-en kan ikke kaste.
   let metAlertsDone: Promise<void> = Promise.resolve();
+  // Stempelet (§3.6): hva tallene ble regnet på. Maskeversjonen er golden-
+  // scenarioets navn til farbarhetsmasken får egen versjon (app-skjelett.md
+  // §2); opsjons-hashen er en konstant for motorens standardopsjoner til
+  // RouteOptions faktisk kan velges i UI.
+  const initEpochS = Math.floor(Date.parse(controlSources[0]!.entry.header.init) / 1000);
+  const stamp: RobustnessStamp = {
+    maskVersion: "golden:skjaeloy-skagen-apent",
+    packageId: controlSources.map((s) => `${s.tile.tileId}:${s.entry.hash.slice(0, 8)}`).join(","),
+    packageInitEpochS: initEpochS,
+    memberAgesS: memberIndices.map(() => Math.max(0, deps.nowEpochS - initEpochS)),
+    optionsHash: "route-options-default-v1",
+    estimator: "naermeste-rang-v1",
+    thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
+  };
+  const context: EnsembleContext = { expectedMembers: memberIndices.length, departEpochS, stamp };
+
   const { outcomes } = await runEnsemble(jobs, deps.poolSize, deps.workerFactory, {
     onControlResult: (outcome) => {
       callbacks.onControlResult?.(outcome, memberIndices.length);
@@ -297,7 +317,7 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
       }
     },
     ...(callbacks.onMemberResult ? { onMemberResult: callbacks.onMemberResult } : {}),
-  });
+  }, { worstFirst: deps.worstFirst === true, context });
   await metAlertsDone;
 
   if (outcomes.length === 0) {

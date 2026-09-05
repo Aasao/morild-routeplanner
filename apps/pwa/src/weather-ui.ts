@@ -15,6 +15,7 @@ import type { EnsembleSummary, MemberOutcome } from "./weather/ensemble.js";
 import type { DisplayFlag } from "./weather/route-flags.js";
 import type { MetAlertsLoadResult } from "./weather/metalerts-client.js";
 import type { EnsembleMeasurement } from "./weather/measurement.js";
+import type { DepartureSummary } from "@morild/robustness";
 import type { RelevantAlert } from "./weather/metalerts.js";
 
 export function renderPointerStatus(el: HTMLElement, status: PointerLoadResult): void {
@@ -134,27 +135,78 @@ export interface EnsembleTiming {
   readonly poolSize: number;
 }
 
+function progressText(timing: EnsembleTiming | undefined): string {
+  if (timing === undefined) return "";
+  return timing.membersDone < timing.membersTotal
+    ? ` Fremdrift: ${timing.membersDone}/${timing.membersTotal} medlemmer på ${formatElapsed(timing.wallMs)} (${timing.poolSize} Workere).`
+    : ` Ensemblet tok ${formatElapsed(timing.wallMs)} for ${timing.membersTotal} medlemmer (${timing.poolSize} Workere).`;
+}
+
+const LIGHT_LABEL: Record<DepartureSummary["light"]["color"], string> = {
+  gronn: "GRØNT",
+  gul: "GULT",
+  rod: "RØDT",
+  beregner: "beregner",
+};
+
+/**
+ * Avgangssammendraget slik robusthet.md §4.2.2/§4.2.3 og D10.4 vil ha det:
+ * tellinger og eksakte skranker, aldri prosent; «regn med inntil» (verste
+ * gjennomførbare) + «typisk» (P50); ordet P90 vises ikke her; trafikklys
+ * kun når det er avgjort (sertifikat eller komplett), provisoriske
+ * terskler merket.
+ */
+export function renderDepartureText(d: DepartureSummary): string {
+  const n = d.members.length;
+  const expected = d.expectedMembers;
+  const minK = Math.round(d.feasibleShareBounds.min * expected);
+  const maxK = Math.round(d.feasibleShareBounds.max * expected);
+  const counts =
+    `${n} av ${expected} ferdig — ${d.nF} har gått, ${d.nInf} kom ikke fram, ` +
+    `${d.nInc} inkonklusive, ${d.nErr} feil. Gjennomførbare av ${expected}: minst ${minK}, høyst ${maxK}.`;
+  const light =
+    d.light.color === "beregner"
+      ? " Trafikklys: ikke avgjort ennå."
+      : ` Trafikklys: ${LIGHT_LABEL[d.light.color]}${d.light.reason ? ` (${d.light.reason})` : ""}` +
+        `${d.certificate !== null && !d.complete ? " — sertifikat før alle er ferdige" : ""}; provisoriske terskler.`;
+  const times =
+    d.durationWorstS !== null && d.durationP50S !== null
+      ? ` Regn med inntil ${(d.durationWorstS / 3600).toFixed(1)} t, typisk ${(d.durationP50S / 3600).toFixed(1)} t` +
+        `${d.nF < 12 ? ` (tynt utvalg: verste av ${d.nF} gjennomførbare)` : ""}.`
+      : "";
+  const horizon = d.horizonTooShort ? " ADVARSEL: >20 % inkonklusive — medlemshorisonten er trolig for kort." : "";
+  const felt = d.members.filter((m) => m.inconclusiveReason === "dekning-felt").length;
+  const feltText =
+    felt > 0
+      ? ` ${felt} kom fram på vind alene — bølger og strøm mangler i pakken, telles ikke som gjennomførbare (D11.1).`
+      : "";
+  const thin =
+    d.light.reason === "tynt-grunnlag"
+      ? ` Av ${d.nF + d.nInf} avgjorte kom ${d.nInf} ikke fram — for få til å tallfeste andelen.`
+      : "";
+  return `Ensemble (ADR-0005/§4.2): ${counts}${light}${thin}${times}${horizon}${feltText}`;
+}
+
 export function renderEnsembleSummary(
   el: HTMLElement,
   summary: EnsembleSummary,
   timing?: EnsembleTiming,
 ): void {
+  const d = summary.departure;
+  if (d !== null) {
+    el.textContent = renderDepartureText(d) + progressText(timing);
+    return;
+  }
+  // Fallback uten stempel/kontekst (tester, degradert flyt): de gamle tellingene.
   const p50 = summary.durationP50S !== undefined ? (summary.durationP50S / 3600).toFixed(1) : "–";
   const p90 = summary.durationP90S !== undefined ? (summary.durationP90S / 3600).toFixed(1) : "–";
-  const progress =
-    timing === undefined
-      ? ""
-      : timing.membersDone < timing.membersTotal
-        ? ` Fremdrift: ${timing.membersDone}/${timing.membersTotal} medlemmer på ${formatElapsed(timing.wallMs)} (${timing.poolSize} Workere).`
-        : ` Ensemblet tok ${formatElapsed(timing.wallMs)} for ${timing.membersTotal} medlemmer (${timing.poolSize} Workere).`;
   el.textContent =
     `Ensemble: ${summary.totalMembers} medlemmer kjørt. ` +
-    `Gjennomførbar: ${(summary.feasibleFraction * 100).toFixed(0)} %. ` +
-    `Inkonklusiv (partial vær-dekning, ADR-0005): ${(summary.inconclusiveFraction * 100).toFixed(0)} %` +
+    `Gjennomførbar: ${summary.feasibleCount}. Inkonklusiv: ${summary.inconclusiveCount}` +
     `${summary.horizonTooShortWarning ? " — ADVARSEL: >20 %, medlemshorisonten er trolig for kort for denne seilasen" : ""}. ` +
     `Ugjennomførbar: ${summary.infeasibleCount}. Feil: ${summary.errorCount}. ` +
     `Varighet blant gjennomførbare — P50 ${p50} t, P90 ${p90} t.` +
-    progress;
+    progressText(timing);
 }
 
 /**

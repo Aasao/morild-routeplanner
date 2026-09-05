@@ -51,6 +51,65 @@ export type AbortReason =
   | "outsideDomain"
   | "callerStopped";
 
+/**
+ * **Hvorfor søket stoppet, som strukturert svar** (D9.2 b-full,
+ * `docs/specs/robusthet.md` §7; formen er matematikerens, §4.1 i
+ * `docs/research/ekspertpanel-d9-delt-tub-2026-09-05.md`).
+ *
+ * `abortReason` alene svarer ikke på spørsmålet robusthetslaget faktisk
+ * stiller — «er dette et *bevis* på at strekket ikke lot seg seile i dette
+ * været, eller ga søket bare opp?». `termination` deler svaret i fem
+ * gjensidig utelukkende utfall:
+ *
+ *  - `"reached"` — målet ble nådd. (Om ruten *ender* i målet er et annet,
+ *    strengere spørsmål: `safety.reachesDestination`, §5.8.)
+ *  - `"exhausted"` — ingen utvidbare etiketter igjen
+ *    (`noExpandableLabels`). Søket brukte opp rommet sitt uten å bli stoppet
+ *    av noe tak. Dette er det **eneste** utfallet som kan bli et positivt
+ *    sertifikat for ugjennomførbarhet, og bare under vilkårene under.
+ *  - `"capped"` — `labelCap` eller `iterationCap`. Et budsjett tok slutt.
+ *  - `"guard"` — `stagnation`. Vakten slo inn; søket kan ha hatt mer å gi.
+ *  - `"aborted"` — `callerStopped`, `noWeatherAtStart`, `outsideDomain`,
+ *    eller et resultat tatt ut av et søk som ennå ikke er ferdig
+ *    (`snapshot()`). Ingenting er bevist.
+ *
+ * **Sertifikatregelen** (robusthet.md §3.2, «Konsekvens for nevneren»):
+ * et medlem er bevist ugjennomførbart bare når
+ *
+ *     kind === "exhausted" && boundSource === null && prunedBound === 0
+ *     && coverage.weather === "full" && !safety.reachesDestination
+ *
+ * Alt annet er «ikke avgjort». Merk at regelen krever `boundSource === null`
+ * — altså at ingen Tub-bound i det hele tatt var i spill (`noTubBound`, §4.7,
+ * eller ingen bound funnet). Det er strengere enn nødvendig når bounden
+ * fantes uten å beskjære, og det er med vilje: en bound som ikke beskar
+ * *denne* gangen kan ha formet søket på måter tellerne ikke ser.
+ */
+export type TerminationKind =
+  | "reached"
+  | "exhausted"
+  | "capped"
+  | "guard"
+  | "aborted";
+
+/**
+ * Hvor Tub-bounden kom fra. `"shared"` = `RouteInput.tubBoundS` (kontrollens
+ * bound), `"own"` = motorens grådige forhåndsrute (§5.5), `null` = ingen
+ * bound: enten `RouteInput.noTubBound`, eller at forhåndsruten ikke nådde
+ * målet (og da finnes det ingen bound å beskjære med).
+ *
+ * Feltet er **kilde, ikke bruk**: i `exactMode` er kilden `"own"` selv om
+ * bounden aldri beskjærer. Om den faktisk beskar står i `prunedBound`.
+ */
+export type TubBoundSource = "shared" | "own" | null;
+
+export interface RouteTermination {
+  readonly kind: TerminationKind;
+  readonly boundSource: TubBoundSource;
+  /** Speiler `diagnostics.pruned.bound` — sertifikatet skal kunne leses alene. */
+  readonly prunedBound: number;
+}
+
 /** Ett rått tidssteg langs ruten. Grunnlaget for alle totaler. */
 export interface RouteStep {
   readonly lat: number;
@@ -238,8 +297,21 @@ export interface RouteDiagnostics {
   readonly labelsCreated: number;
   readonly peakActiveLabels: number;
   readonly fieldCells: number;
+  /**
+   * Tub-bounden i sekunder, `null` når ingen bound var i spill.
+   *
+   * Rapporteres som **horisont, ikke sertifikat** (robusthet.md §3.2, D9.3):
+   * den grådige forhåndsruten er en lovlig rute etter motorens skranker, men
+   * den er ikke optimal, og `null` betyr bare at den ikke kom fram — ikke at
+   * strekket er ugjennomførbart. `null` skiller heller ikke «slått av med
+   * `noTubBound`» fra «fant ingen»: begge betyr at ingen bound beskar, og
+   * det er det spørsmålet feltet finnes for å svare på. Hvem som slo den av
+   * vet kalleren selv.
+   */
   readonly tubBoundS: number | null;
   readonly vmaxKn: number;
+  /** Hvorfor søket stoppet, strukturert (D9.2 b-full). Se `RouteTermination`. */
+  readonly termination: RouteTermination;
   /** Korridorsjekken i **søket** (§5.3 steg 13). */
   readonly clearance: ClearanceDiagnostics;
   /**

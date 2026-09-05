@@ -23,9 +23,12 @@ export type OutcomeKind = "feasible" | "infeasible" | "inconclusive" | "error";
  * horisont); `budsjett` = søket stoppet på stagnasjonsvakt eller ble
  * avbrutt av kalleren — ingen av delene er bevis på ugjennomførbarhet;
  * `bound` = reservert for bølge 3s ensemble-budsjett (omkjøring ikke
- * rukket). Ingen av grunnene teller i `feasibleShare`-nevneren.
+ * rukket); `dekning-felt` = målet ble nådd, men et helt felt (bølger/
+ * strøm) manglet i pakken — D11.1s konservative lesning, skilt fra
+ * horisont så UI kan si «bølger og strøm mangler» (matematiker/værruting,
+ * panel D11). Ingen av grunnene teller i `feasibleShare`-nevneren.
  */
-export type InconclusiveReason = "dekning" | "budsjett" | "bound";
+export type InconclusiveReason = "dekning" | "dekning-felt" | "budsjett" | "bound";
 
 export type MemberClassification =
   | { readonly kind: "feasible" }
@@ -66,8 +69,13 @@ export interface MemberOutcome {
   /** 0 = kontroll, 1..30 = medlemmer. */
   readonly memberIndex: number;
   readonly kind: OutcomeKind;
-  /** Redusert form beholdes for ALLE medlemmer (§6.2). */
-  readonly summary: MemberSummary;
+  /**
+   * Redusert form beholdes for ALLE medlemmer med et resultat (§6.2).
+   * `null` KUN når `kind === "error"` uten `RouteResult` (Workeren kastet)
+   * — et feilet medlem har ingen tall å redusere, og det skal ikke
+   * dikte opp noen.
+   */
+  readonly summary: MemberSummary | null;
   /** Full RouteResult beholdes kun for medlemmer §6.2 navngir. */
   readonly full?: RouteResult;
   /** Kun satt når `kind === "error"`. */

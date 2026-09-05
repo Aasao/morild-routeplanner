@@ -139,16 +139,52 @@ describe("summarizeDeparture — telling (§3.3, bølge 1-skjelett)", () => {
     expect(withErrorsAndInconclusive.feasibleShare).toBe(withoutErrors.feasibleShare);
   });
 
-  it("bølge 1: estimatorer og trafikklys er stubbet, aldri grønn/rød", () => {
-    const members = Array.from({ length: 30 }, (_, i) => makeOutcome(i + 1, "feasible"));
+  it("30 av 30 gjennomførbare, identisk durationS -> grønt lys, estimatorer regnet ut", () => {
+    const members = Array.from({ length: 30 }, (_, i) => makeOutcome(i + 1, "feasible", { durationS: 36000, fuelL: 12 }));
     const summary = summarizeDeparture(baseInput(members));
-    expect(summary.durationWorstS).toBeNull();
-    expect(summary.durationP50S).toBeNull();
-    expect(summary.durationP90S).toBeNull();
-    expect(summary.fuelWorstL).toBeNull();
-    expect(summary.certificate).toBeNull();
-    expect(summary.light.color).toBe("beregner");
+    expect(summary.durationWorstS).toBe(36000);
+    expect(summary.durationP50S).toBe(36000);
+    expect(summary.durationP90S).toBe(36000);
+    expect(summary.fuelWorstL).toBe(12);
+    expect(summary.certificate).toBeNull(); // ingen sertifikat NÅR complete — det er den endelige raden.
+    expect(summary.light.color).toBe("gronn");
     expect(summary.light.provisionalThresholds).toBe(true);
+  });
+
+  it("ufullstendig avgang uten sertifikatgrunnlag viser beregner, aldri grønn", () => {
+    const members = Array.from({ length: 5 }, (_, i) => makeOutcome(i + 1, "feasible"));
+    const summary = summarizeDeparture(baseInput(members));
+    expect(summary.complete).toBe(false);
+    expect(summary.light.color).toBe("beregner");
+    expect(summary.light.kOfN).toEqual({ k: 5, n: 30 });
+  });
+
+  it("feasibleShareBounds: min = nF/expected, max = (nF + expected - klassifiserte)/expected", () => {
+    const members = [
+      ...Array.from({ length: 2 }, (_, i) => makeOutcome(i + 1, "feasible")),
+      ...Array.from({ length: 20 }, (_, i) => makeOutcome(i + 3, "infeasible")),
+    ];
+    const summary = summarizeDeparture(baseInput(members));
+    expect(summary.feasibleShareBounds.min).toBeCloseTo(2 / 30);
+    expect(summary.feasibleShareBounds.max).toBeCloseTo((2 + 30 - 22) / 30);
+  });
+});
+
+describe("summarizeDeparture — terskeltelling (§4.2.2)", () => {
+  it("thresholds telles k av n gjennomførbare, uavhengig av ugjennomførbare/inkonklusive", () => {
+    const members = [
+      makeOutcome(1, "feasible", { daylightArrival: true }),
+      makeOutcome(2, "feasible", { daylightArrival: true }),
+      makeOutcome(3, "feasible", { daylightArrival: false }),
+      makeOutcome(4, "infeasible", { daylightArrival: false }),
+      makeOutcome(5, "inconclusive"),
+    ];
+    const input = {
+      ...baseInput(members),
+      thresholds: [{ id: "moerke", label: "framme før mørket", passes: (m: { daylightArrival: boolean }) => m.daylightArrival }],
+    };
+    const summary = summarizeDeparture(input);
+    expect(summary.thresholds).toEqual([{ id: "moerke", k: 2, n: 3 }]);
   });
 });
 

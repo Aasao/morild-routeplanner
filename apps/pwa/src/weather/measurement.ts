@@ -10,8 +10,10 @@ import type { MemberOutcome } from "./ensemble.js";
 export interface MemberMeasurement {
   readonly memberIndex: number;
   readonly classification: MemberOutcome["classification"];
-  /** Rekkefølgen svaret kom inn i (0 = først) — orakelrang når verste-først-orakelet kommer (D10.5). */
+  /** Rekkefølgen svaret kom inn i (0 = først). */
   readonly arrivalOrder: number;
+  /** Orakelets rang (D10.5, 0 = søkt først); null uten orakel. Mot `durationS` gir dette orakelets treffsikkerhet. */
+  readonly oracleRank: number | null;
   /** Rundtur hovedtråd→worker→hovedtråd. */
   readonly elapsedMs: number | null;
   readonly decodeMs: number | null;
@@ -46,6 +48,7 @@ export function memberMeasurement(outcome: MemberOutcome, arrivalOrder: number):
     memberIndex: outcome.memberIndex,
     classification: outcome.classification,
     arrivalOrder,
+    oracleRank: outcome.oracleRank ?? null,
     elapsedMs: outcome.elapsedMs ?? null,
     decodeMs: outcome.workerTiming?.decodeMs ?? null,
     fieldMs: outcome.workerTiming?.fieldMs ?? null,

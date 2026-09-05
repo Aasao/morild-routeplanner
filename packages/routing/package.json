@@ -13,6 +13,10 @@
     "./test-fixtures/golden-scenarios": {
       "types": "./dist/test-fixtures/golden-scenarios.d.ts",
       "default": "./dist/test-fixtures/golden-scenarios.js"
+    },
+    "./test-fixtures/ensemble-s9-ranking": {
+      "types": "./dist/test-fixtures/ensemble-s9-ranking.d.ts",
+      "default": "./dist/test-fixtures/ensemble-s9-ranking.js"
     }
   },
   "scripts": {

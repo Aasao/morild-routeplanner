@@ -13,6 +13,7 @@
     "@morild/charts": "workspace:*",
     "@morild/geo": "workspace:*",
     "@morild/protocol": "workspace:*",
+    "@morild/robustness": "workspace:*",
     "@morild/routing": "workspace:*",
     "@morild/weather": "workspace:*",
     "maplibre-gl": "^6.7.0"

@@ -13,5 +13,8 @@ export default defineConfig({
     include: ["packages/**/*.damage.test.ts"],
     exclude: ["**/node_modules/**", "**/dist/**"],
     testTimeout: 600_000,
+    // Skademålingenes tall skrives med console.log — standardreporteren
+    // svelger dem; verbose viser dem (rutemotor-agentens funn 2026-09-05).
+    reporters: ["verbose"],
   },
 });

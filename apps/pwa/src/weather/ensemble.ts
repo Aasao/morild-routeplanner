@@ -13,8 +13,19 @@
  * ugjennomførbart — kun som inkonklusivt. > 20 % inkonklusive på en avgang
  * er horisont-porten (ADR-0005 punkt 4): et flagg, ikke en feil.
  */
-import type { DistanceFieldData, RouteResult } from "@morild/routing";
+import type { DistanceFieldData, LatLon, RouteResult } from "@morild/routing";
 import type { PackageHeader } from "@morild/protocol";
+import {
+  classifyMember as classifyRobust,
+  nextAction,
+  summarizeDeparture,
+  summarizeMember,
+  type DepartureSummary,
+  type InconclusiveReason,
+  type MemberClassification as RobustClassification,
+  type MemberOutcome as RobustMemberOutcome,
+  type RobustnessStamp,
+} from "@morild/robustness";
 
 /**
  * Strukturell kopi av `workers/weather-routing.worker.ts`s meldingstyper —
@@ -44,6 +55,8 @@ export interface PlanRouteMemberRequest {
   /** Én kilde per flis som dekker ruten OG har dette medlemmet (§7). */
   readonly tiles: readonly TileWindSource[];
   readonly departEpochS: number;
+  /** Omkjøring uten motorens egen Tub-bound (§4.1-ventilen; maks én per medlem, D9.4). */
+  readonly noTubBound?: boolean | undefined;
   /**
    * Delt A*-felt (robusthet.md §4.1, D8.2): bygget én gang av kontroll-
    * workeren (`buildFieldForInput`) og sendt som strukturert klone til hvert
@@ -92,7 +105,29 @@ export interface PlanRouteMemberError {
   readonly message: string;
 }
 
-export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError;
+/**
+ * Verste-først-orakelet (robusthet.md §4.1, D10.5 vedtatt 2026-09-05):
+ * kontrollruten evaluert i medlemmets vær. Svaret styrer KUN i hvilken
+ * rekkefølge medlemmene søkes (ADR-0005s rekkefølge-klausul) — det vises
+ * aldri og teller aldri. Strukturell kopi i `workers/weather-routing.worker.ts`.
+ */
+export interface EvaluateControlRequest {
+  readonly type: "evaluate-control";
+  readonly memberIndex: number;
+  readonly tiles: readonly TileWindSource[];
+  readonly departEpochS: number;
+  readonly waypoints: readonly LatLon[];
+}
+
+export interface EvaluateControlResult {
+  readonly type: "evaluate-control-result";
+  readonly memberIndex: number;
+  readonly feasible: boolean;
+  readonly durationS: number;
+}
+
+export type ToWorker = PlanRouteMemberRequest | EvaluateControlRequest;
+export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError | EvaluateControlResult;
 
 export interface MemberJob {
   readonly memberIndex: number;
@@ -101,14 +136,41 @@ export interface MemberJob {
   readonly departEpochS: number;
   /** Settes av orkestratoren fra kontrollens svar — se `PlanRouteMemberRequest.sharedField`. */
   readonly sharedField?: SharedField | undefined;
+  /** Orakelets plass i køen (0 = søkes først). Settes av orkestratoren; kun til målingen. */
+  readonly oracleRank?: number | undefined;
+  /** Settes av orkestratoren for omkjøringen (§4.1-ventilen). */
+  readonly noTubBound?: boolean | undefined;
 }
 
 export type MemberClassification = "feasible" | "infeasible" | "inconclusive";
 
-/** ADR-0005: partial vær-dekning ⇒ inkonklusiv, uansett `reachesDestination`. */
-export function classifyMember(result: RouteResult): MemberClassification {
-  if (result.coverage.weather === "partial") return "inconclusive";
-  return result.safety.reachesDestination ? "feasible" : "infeasible";
+/**
+ * Klassifisering etter robusthet.md §3.2 via `@morild/robustness` (bølge 3
+ * koblet den inn — før lå en egen, enklere regel her). Ventilen
+ * («kjør om uten bound») håndteres av `runMemberWithRerun`; kalles denne
+ * direkte på et resultat som krever omkjøring, gis ærlig `inconclusive`
+ * (grunn «bound») — aldri `infeasible` uten bevis.
+ *
+ * **Konservativ overstyring (åpent beslutningspunkt D11.1):** §3.2-tabellen
+ * gir `feasible` for «partial + nådd mål». ADR-0005 sier «partial
+ * værdekning ⇒ inkonklusiv», og fase 3s PWA fulgte det: en rute som nådde
+ * målet på vind alene, uten bølge-/strømdata, telles ikke som
+ * gjennomførbar — den kan være ugjennomførbar med bølger. Inntil Magnus
+ * har vedtatt hvilken lesning som gjelder, beholder appen den
+ * konservative (flere inkonklusive, aldri flere gjennomførbare). Retningen
+ * er trygg; kostnaden er at vind-only-pakker gir 100 % inkonklusivt.
+ */
+export function classifyMember(result: RouteResult): MemberClassification | "error" {
+  return conservativeCoverage(result, classifyRobust(result)).kind as MemberClassification | "error";
+}
+
+/** D11.1-overstyringen: `partial` dekning ⇒ inkonklusiv (grunn «dekning»), uansett mål. */
+function conservativeCoverage(result: RouteResult, cls: RobustClassification): RobustClassification {
+  const settled = nextAction(cls, 1);
+  if (result.coverage.weather === "partial" && settled.kind !== "inconclusive") {
+    return { kind: "inconclusive", reason: "dekning-felt" };
+  }
+  return settled;
 }
 
 export interface MemberOutcome {
@@ -128,6 +190,44 @@ export interface MemberOutcome {
   readonly sharedField?: SharedField | undefined;
   /** Tid inne i workeren (D10.2 b); udefinert ved feil. */
   readonly workerTiming?: WorkerTiming | undefined;
+  /** Orakelets rang (D10.5) — kun for nettbrett-målingen/treffsikkerhet, aldri et tall i UI. */
+  readonly oracleRank?: number | undefined;
+  /** Antall omkjøringer uten bound (§4.1-ventilen, maks 1 — D9.4). */
+  readonly rerunCount?: 0 | 1 | undefined;
+  /** Intern: første pass ba om omkjøring (`runMemberWithRerun` avgjør). */
+  readonly needsRerun?: boolean | undefined;
+  /** Hvorfor medlemmet er inkonklusivt (D9.2): dekning / budsjett / bound. */
+  readonly inconclusiveReason?: InconclusiveReason | undefined;
+}
+
+/** Robusthetslagets form av utfallet — det `summarizeDeparture` regner på. */
+export function toRobustOutcome(outcome: MemberOutcome): RobustMemberOutcome {
+  const result = outcome.result;
+  if (result === undefined) {
+    return {
+      memberIndex: outcome.memberIndex,
+      kind: "error",
+      summary: null,
+      ...(outcome.errorMessage !== undefined ? { error: outcome.errorMessage } : {}),
+    };
+  }
+  const kind = outcome.classification;
+  return {
+    memberIndex: outcome.memberIndex,
+    kind,
+    summary: summarizeMember(result),
+    full: result,
+    ...(kind === "inconclusive" && outcome.inconclusiveReason !== undefined
+      ? { inconclusiveReason: outcome.inconclusiveReason }
+      : {}),
+  };
+}
+
+/** Konteksten `summarizeDeparture` trenger (§3.3/§3.6) — bygges av pipelinen. */
+export interface EnsembleContext {
+  readonly expectedMembers: number;
+  readonly departEpochS: number;
+  readonly stamp: RobustnessStamp;
 }
 
 export interface EnsembleSummary {
@@ -143,6 +243,12 @@ export interface EnsembleSummary {
   /** Varighet i sekunder — KUN blant gjennomførbare medlemmer (§7.4-mønsteret: inkonklusive/ugjennomførbare forurenser ikke fordelingen). */
   readonly durationP50S?: number;
   readonly durationP90S?: number;
+  /**
+   * Avgangssammendraget fra `@morild/robustness` (§3.3: tellinger, eksakte
+   * skranker, trafikklys, sertifikat). `null` uten kontekst (tester uten
+   * stempel) eller uten kontrollutfall.
+   */
+  readonly departure: DepartureSummary | null;
 }
 
 function percentile(sortedAscending: readonly number[], p: number): number | undefined {
@@ -152,7 +258,22 @@ function percentile(sortedAscending: readonly number[], p: number): number | und
 }
 
 /** Ren aggregering — ingen Worker, ingen I/O. */
-export function summarizeEnsemble(outcomes: readonly MemberOutcome[]): EnsembleSummary {
+export function summarizeEnsemble(
+  outcomes: readonly MemberOutcome[],
+  context?: EnsembleContext,
+): EnsembleSummary {
+  const control = outcomes.find((o) => o.isControl);
+  const departure =
+    context === undefined || control === undefined
+      ? null
+      : summarizeDeparture({
+          departEpochS: context.departEpochS,
+          control: toRobustOutcome(control),
+          members: outcomes.filter((o) => !o.isControl).map(toRobustOutcome),
+          expectedMembers: context.expectedMembers,
+          thresholds: [],
+          stamp: context.stamp,
+        });
   const total = outcomes.length;
   const feasible = outcomes.filter((o) => o.classification === "feasible");
   const infeasibleCount = outcomes.filter((o) => o.classification === "infeasible").length;
@@ -175,6 +296,7 @@ export function summarizeEnsemble(outcomes: readonly MemberOutcome[]): EnsembleS
     horizonTooShortWarning: total > 0 && inconclusiveCount / total > 0.2,
     ...(p50 !== undefined ? { durationP50S: p50 } : {}),
     ...(p90 !== undefined ? { durationP90S: p90 } : {}),
+    departure,
   };
 }
 
@@ -182,7 +304,7 @@ export function summarizeEnsemble(outcomes: readonly MemberOutcome[]): EnsembleS
 
 /** Den delmengden av `Worker` orkestratoren faktisk bruker — injiserbar for tester (ingen ekte Worker-tråd nødvendig). */
 export interface WorkerLike {
-  postMessage(message: PlanRouteMemberRequest, transfer: Transferable[]): void;
+  postMessage(message: ToWorker, transfer: Transferable[]): void;
   addEventListener(
     type: "message",
     listener: (ev: MessageEvent<FromWorker>) => void,
@@ -214,6 +336,29 @@ function nowMs(): number | undefined {
   return typeof performance !== "undefined" ? performance.now() : undefined;
 }
 
+/**
+ * §4.1-ventilen (D9.2 generisk, D9.4 tak = 1): et medlem som ikke nådde
+ * målet mens motorens Tub-bound beskar noe, er ikke bevist ugjennomførbart
+ * og kjøres om én gang uten bound. Svaret fra omkjøringen er det som
+ * teller; krever den fortsatt omkjøring, blir medlemmet ærlig
+ * `inconclusive` med grunn «bound» (`nextAction`).
+ */
+async function runMemberWithRerun(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome> {
+  const first = await runOnWorker(worker, job);
+  if (first.needsRerun !== true || job.noTubBound === true) {
+    return { ...first, rerunCount: 0 };
+  }
+  const second = await runOnWorker(worker, { ...job, noTubBound: true });
+  return {
+    ...second,
+    rerunCount: 1,
+    elapsedMs:
+      first.elapsedMs !== undefined && second.elapsedMs !== undefined
+        ? first.elapsedMs + second.elapsedMs
+        : second.elapsedMs,
+  };
+}
+
 function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome> {
   return new Promise((resolve) => {
     const startedMs = nowMs();
@@ -228,6 +373,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
       tiles: job.tiles,
       departEpochS: job.departEpochS,
       ...(job.sharedField !== undefined ? { sharedField: job.sharedField } : {}),
+      ...(job.noTubBound === true ? { noTubBound: true } : {}),
     };
     // Én jobb = ett lytterpar, fjernet ved første svar (robusthet.md §4.1:
     // «Lytterne registreres med { once: true } per jobb»). Før lå alle
@@ -237,15 +383,32 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
     const onMessage = (ev: MessageEvent<FromWorker>): void => {
       worker.removeEventListener("error", onError);
       const data = ev.data;
-      if (data.type === "plan-route-member-result") {
+      if (data.type === "evaluate-control-result") {
+        // Et orakelsvar på en søkejobb er en programmeringsfeil — aldri stille.
+        resolve({
+          memberIndex: job.memberIndex,
+          isControl: job.isControl,
+          classification: "error",
+          errorMessage: "uventet evaluate-control-result under søk",
+          elapsedMs: elapsed(),
+        });
+      } else if (data.type === "plan-route-member-result") {
+        const raw: RobustClassification = classifyRobust(data.result);
+        // «rerun-without-bound» oversettes av `runMemberWithRerun`; her
+        // stemples den foreløpig inconclusive/bound så ingen kan lese den
+        // som et tall. Deretter D11.1-overstyringen (partial ⇒ inkonklusiv).
+        const cls = conservativeCoverage(data.result, raw);
         resolve({
           memberIndex: data.memberIndex,
           isControl: data.isControl,
-          classification: classifyMember(data.result),
+          classification: cls.kind as MemberClassification | "error",
+          ...(cls.kind === "inconclusive" ? { inconclusiveReason: cls.reason } : {}),
+          ...(raw.kind === "rerun-without-bound" ? { needsRerun: true } : {}),
           result: data.result,
           elapsedMs: elapsed(),
           ...(data.sharedField !== undefined ? { sharedField: data.sharedField } : {}),
           ...(data.timing !== undefined ? { workerTiming: data.timing } : {}),
+          ...(job.oracleRank !== undefined ? { oracleRank: job.oracleRank } : {}),
         });
       } else {
         resolve({
@@ -281,6 +444,86 @@ export interface EnsembleCallbacks {
   readonly onMemberResult?: (outcome: MemberOutcome, runningSummary: EnsembleSummary) => void;
 }
 
+export interface EnsembleOptions {
+  /**
+   * Verste-først (D10.5): evaluer kontrollruten i hvert medlems vær før
+   * søkene og søk de verste først, så advarselssertifikater kan slå til
+   * tidlig. Påvirker aldri tall — bare rekkefølgen. Av i tester som ikke
+   * har et orakelsvarende worker-mock.
+   */
+  readonly worstFirst?: boolean | undefined;
+  /** Kontekst for avgangssammendraget (§3.3); uten den er `summary.departure` null. */
+  readonly context?: EnsembleContext | undefined;
+}
+
+/** Orakelsvar for ett medlem; `null` når evalueringen feilet (medlemmet søkes sist). */
+export interface OracleVerdict {
+  readonly memberIndex: number;
+  readonly feasible: boolean;
+  readonly durationS: number;
+}
+
+function evaluateOnWorker(
+  worker: WorkerLike,
+  job: MemberJob,
+  waypoints: readonly LatLon[],
+): Promise<OracleVerdict | null> {
+  return new Promise((resolve) => {
+    const onMessage = (ev: MessageEvent<FromWorker>): void => {
+      worker.removeEventListener("error", onError);
+      const data = ev.data;
+      if (data.type === "evaluate-control-result") {
+        resolve({ memberIndex: data.memberIndex, feasible: data.feasible, durationS: data.durationS });
+      } else {
+        resolve(null);
+      }
+    };
+    const onError = (): void => {
+      worker.removeEventListener("message", onMessage);
+      resolve(null);
+    };
+    worker.addEventListener("message", onMessage, { once: true });
+    worker.addEventListener("error", onError, { once: true });
+    // INGEN transfer: flisbufferne trengs igjen til selve søket (705 kB
+    // kopieres — 0,6 ms målt, panelet D10 §1.4).
+    worker.postMessage(
+      {
+        type: "evaluate-control",
+        memberIndex: job.memberIndex,
+        tiles: job.tiles,
+        departEpochS: job.departEpochS,
+        waypoints,
+      },
+      [],
+    );
+  });
+}
+
+/**
+ * Ren sortering (D10.5): ugjennomførbare i kontrollruten først (stigende
+ * memberIndex), så gjennomførbare etter synkende evaluert seilingstid
+ * (tie-break memberIndex), så medlemmer uten orakelsvar i opprinnelig
+ * rekkefølge. Deterministisk — og påvirker per konstruksjon ingen tall.
+ */
+export function worstFirstOrder(
+  jobs: readonly MemberJob[],
+  verdicts: ReadonlyMap<number, OracleVerdict | null>,
+): readonly MemberJob[] {
+  const rank = (j: MemberJob): [number, number, number] => {
+    const v = verdicts.get(j.memberIndex) ?? null;
+    if (v === null) return [2, 0, j.memberIndex];
+    if (!v.feasible) return [0, 0, j.memberIndex];
+    return [1, -v.durationS, j.memberIndex];
+  };
+  return [...jobs]
+    .sort((a, b) => {
+      const ra = rank(a);
+      const rb = rank(b);
+      return ra[0] - rb[0] || ra[1] - rb[1] || ra[2] - rb[2];
+    })
+    .map((j, i) => ({ ...j, oracleRank: i }));
+}
+
 /**
  * Kjører kontrollen ALENE og FØRST (progressiv UX, oppdragets punkt 3),
  * deretter de øvrige jobbene fordelt over en pool på `poolSize` Workere —
@@ -294,6 +537,7 @@ export async function runEnsemble(
   poolSize: number,
   workerFactory: WorkerFactory,
   callbacks: EnsembleCallbacks = {},
+  options: EnsembleOptions = {},
 ): Promise<{ readonly outcomes: readonly MemberOutcome[]; readonly summary: EnsembleSummary }> {
   const [controlJob, ...memberJobs] = jobs;
   if (controlJob === undefined) {
@@ -306,11 +550,11 @@ export async function runEnsemble(
   const outcomes: MemberOutcome[] = [];
 
   const controlWorker = workerFactory();
-  const controlOutcome = await runOnWorker(controlWorker, controlJob);
+  const controlOutcome = await runMemberWithRerun(controlWorker, controlJob);
   controlWorker.terminate();
   outcomes.push(controlOutcome);
   callbacks.onControlResult?.(controlOutcome);
-  callbacks.onMemberResult?.(controlOutcome, summarizeEnsemble(outcomes));
+  callbacks.onMemberResult?.(controlOutcome, summarizeEnsemble(outcomes, options.context));
 
   // Delt A*-felt: kontrollens felt går til alle medlemmer (robusthet.md
   // §4.1). Mangler det (kontrollen feilet/feltet lot seg ikke bygge), bygger
@@ -322,9 +566,30 @@ export async function runEnsemble(
       : memberJobs.map((j) => (j.sharedField === undefined ? { ...j, sharedField } : j));
 
   if (memberJobsWithField.length > 0) {
-    const memberJobs = memberJobsWithField;
-    const effectivePoolSize = Math.max(1, Math.min(poolSize, memberJobs.length));
+    const effectivePoolSize = Math.max(1, Math.min(poolSize, memberJobsWithField.length));
     const workers = Array.from({ length: effectivePoolSize }, () => workerFactory());
+
+    // Orakelfasen (D10.5): kontrollruten evaluert i hvert medlems vær over
+    // samme pool, så søkene kjøres verste-først. Uten kontrollrute (kontrollen
+    // feilet) eller uten opt-in: opprinnelig rekkefølge.
+    const controlSteps = controlOutcome.result?.steps ?? [];
+    let memberJobs: readonly MemberJob[] = memberJobsWithField;
+    if (options.worstFirst === true && controlSteps.length >= 2) {
+      const waypoints: LatLon[] = controlSteps.map((s) => ({ lat: s.lat, lon: s.lon }));
+      const verdicts = new Map<number, OracleVerdict | null>();
+      let evalIndex = 0;
+      async function drainOracle(worker: WorkerLike): Promise<void> {
+        for (;;) {
+          const job = memberJobsWithField[evalIndex];
+          if (job === undefined) return;
+          evalIndex += 1;
+          verdicts.set(job.memberIndex, await evaluateOnWorker(worker, job, waypoints));
+        }
+      }
+      await Promise.all(workers.map((w) => drainOracle(w)));
+      memberJobs = worstFirstOrder(memberJobsWithField, verdicts);
+    }
+
     let nextIndex = 0;
     const takeNext = (): MemberJob | undefined => {
       if (nextIndex >= memberJobs.length) return undefined;
@@ -337,9 +602,9 @@ export async function runEnsemble(
       for (;;) {
         const job = takeNext();
         if (job === undefined) return;
-        const outcome = await runOnWorker(worker, job);
+        const outcome = await runMemberWithRerun(worker, job);
         outcomes.push(outcome);
-        callbacks.onMemberResult?.(outcome, summarizeEnsemble(outcomes));
+        callbacks.onMemberResult?.(outcome, summarizeEnsemble(outcomes, options.context));
       }
     }
 
@@ -347,7 +612,7 @@ export async function runEnsemble(
     workers.forEach((w) => w.terminate());
   }
 
-  return { outcomes, summary: summarizeEnsemble(outcomes) };
+  return { outcomes, summary: summarizeEnsemble(outcomes, options.context) };
 }
 
 /**

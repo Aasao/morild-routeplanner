@@ -41,6 +41,9 @@ importers:
       '@morild/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
+      '@morild/robustness':
+        specifier: workspace:*
+        version: link:../../packages/robustness
       '@morild/routing':
         specifier: workspace:*
         version: link:../../packages/routing

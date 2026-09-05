@@ -6,8 +6,8 @@
 > slengen, med datert endringslogg nederst.
 
 - Status: gjeldende (ADR-0004 godkjent 2026-08-30)
-- Dato: 2026-08-30, sist endret 2026-08-31 (§5.3.2 R3-kystbuffer langs korden;
-  §5.11 evaluator; §7 E2)
+- Dato: 2026-08-30, sist endret 2026-09-05 (§5.13 stoppårsak + `noTubBound`;
+  §5.5 skrankekomplett Tub-rute og gapmåling — D9.2/D9.3)
 - Fase: 2 (`docs/01-prosjektplan.md`)
 - Pakke: `packages/routing`, med `packages/geo`, `packages/polar` og
   `packages/charts` som avhengigheter
@@ -381,6 +381,8 @@ interface RouteInput {
   readonly boat: BoatModel;
   readonly field?: DistanceField;          // delt A*-felt (§5.5); bygges hvis fraværende
   readonly tubBoundS?: number;             // delt Tub-bound fra kontrollmedlemmet
+  /** Slår AV all Tub-beskjæring (§5.13). Med `tubBoundS` ⇒ kaster. */
+  readonly noTubBound?: boolean;
   readonly options: RouteOptions;
 }
 
@@ -519,6 +521,14 @@ interface RouteResult {
     readonly iterations: number;
     readonly labelsCreated: number;
     readonly peakActiveLabels: number;
+    /** Motorens Tub-horisont, `null` når ingen bound var i spill (§5.13). */
+    readonly tubBoundS: number | null;
+    /** Hvorfor søket stoppet, strukturert (D9.2 b-full) — se §5.13. */
+    readonly termination: {
+      readonly kind: "reached" | "exhausted" | "capped" | "guard" | "aborted";
+      readonly boundSource: "shared" | "own" | null;
+      readonly prunedBound: number;
+    };
     /** R3s kostnad (§5.3.2), delt i søket og den autoritative stien.
      *  `{ gatePass, gateMiss, midpointChecks, maxDepth, clearanceCalls,
      *     rejections, exemptChords, uncertified }` */
@@ -930,6 +940,85 @@ Regel 10 sier «så nær rett vinkel som praktisk mulig», ikke en tallgrense.
 - **Tub** (øvre tidsgrense) settes fra en grådig forhåndsrute mot feltets
   gradient (15°-kursoppløsning, som v1), eller mottas ferdig fra kalleren
   (delt bound på tvers av ensemble-medlemmer, F3.5).
+- **Den grådige forhåndsruten må være skrankekomplett** (D9.3, 2026-09-05).
+  Bounden er bare gyldig hvis forhåndsruten selv er en **lovlig** rute etter
+  søkets egne skranker; er den ikke det, er tiden dens ikke en øvre skranke
+  for det skrankede optimum, og steg 10 i §5.3 kan kutte den beste lovlige
+  ruten. Fram til 2026-09-05 sjekket forhåndsruten værdekning, harde
+  båtgrenser (`checkHardNode`, med vaktbånd), farbarhetsmasken
+  (`checkSegment`) og TSS — men **ikke** klaringskorridoren (§5.3.2) og
+  **ikke** dagslyskravet. Begge er nå med, via de samme kallene søket bruker
+  (`checkClearanceCorridor`, `daylightArrival`); kandidatkurser som bryter
+  dem forkastes, nøyaktig som i §5.3. Mellomliggende **veipunkter** — den
+  tredje skranken panelet nevnte — finnes ikke i `RouteInput` (en tur med
+  veipunkter er flere søk etter hverandre), og punktet er derfor uten
+  innhold i v2.0.
+  Retningen er trygg: flere avviste kandidater ⇒ oftere ingen bound ⇒
+  mindre beskjæring, aldri mer. Forhåndsruten har **egen klaringscache og
+  egne korridortellere**, slik at den ikke kan påvirke hvilke korder søkets
+  Lipschitz-gate sertifiserer og ikke forurenser `diagnostics.clearance`.
+  Alle sju golden-fasitene er bit-identiske etter endringen (regenerert med
+  `UPDATE_GOLDEN=1`, null diff).
+- **Gapmålingen (D9.3 (b), forhåndsregistrert)** —
+  `src/tub-gap.damage.test.ts`, kjøres med `pnpm test:damage`. Den måler
+  `T*ₘ / tubBoundS` per medlem (funnet varighet mot motorens egen bound i
+  samme kjøring) over S-1, S-3, S-5, S-7 og S-8, 30 medlemmer hver. Tallene
+  **før** fiksen (2026-09-05):
+
+  | fikstur | målt (bound + mål) | maks ratio | andel > 1,00 | andel > 1,25 |
+  |---|---|---|---|---|
+  | S-1 | 23/30 | 1,0250 | 8/23 (34,8 %) | **0** |
+  | S-3 | 12/30 | 1,0287 | 8/12 (66,7 %) | **0** |
+  | S-5 | 15/30 | 1,0287 | 11/15 (73,3 %) | **0** |
+  | S-7 | 7/30 | 1,0360 | 6/7 (85,7 %) | **0** |
+  | S-8 | 19/30 | 1,0282 | 13/19 (68,4 %) | **0** |
+
+  Den forhåndsregistrerte hypotesen — **andel > 1,25 er 0** — holder i alle
+  fem, og er nå hard assertion. Men bounden er *for stram* i 35–86 % av de
+  målte medlemmene: den grådige ruten kommer typisk 2–3,6 % raskere fram enn
+  ruten søket ender med. Marginen `tubMarginFrac = 0,25` er altså det som
+  bærer korrektheten i dag, med rundt en tierpotens' slakk igjen. Merk at
+  målingen er en **nedre** skranke for gapet: `T*ₘ` er den *funne* ruten, og
+  et medlem hvis optimum ble beskåret bort teller enten med en for høy `T*`
+  eller havner i «uten mål».
+
+  **Etter** at klaring og dagslys kom inn i forhåndsruten, samme kjøring:
+
+  | fikstur | målt | uten bound | maks ratio | andel > 1,00 | andel > 1,25 |
+  |---|---|---|---|---|---|
+  | S-1 | 23/30 (=) | 7 (=) | 1,0250 (=) | 8/23 (=) | **0** |
+  | S-3 | 12/30 (=) | 18 (=) | 1,0287 (=) | 8/12 (=) | **0** |
+  | S-5 | 15/30 (=) | 15 (=) | 1,0287 (=) | 11/15 (=) | **0** |
+  | S-7 | **5**/30 (−2) | **6** (+3) | 1,0362 | 4/5 | **0** |
+  | S-8 | 19/30 (=) | 11 (=) | 1,0282 (=) | 13/19 (=) | **0** |
+
+  **Hvor det gjenværende gapet kommer fra.** Ratioene ligger tett på
+  1,02–1,036 i alle fiksturene, og det er neppe tilfeldig: forhåndsruten
+  stopper når den er innenfor `reachRadius` (2 nm ved 3600 s tidssteg), mens
+  `T*ₘ` er varigheten **helt fram til målet**, inkludert den direkte
+  sluttetappen (§5.8). 2 nm på ~6 kn er ~1200 s, altså ~2,4 % av en 14-timers
+  etappe — nøyaktig størrelsesordenen vi måler. Det gjenværende gapet ser
+  altså ut til å være en *målekonvensjon*, ikke en manglende skranke. Skal
+  bounden gjøres til en ekte øvre skranke også i denne detaljen, må
+  sluttetappen legges til (grovt `reachRadius·3600/Vmax`). Det ville gjort
+  bounden **større**, altså svakere — trygg retning, men den koster
+  beskjæringsevne, og endringen hører hjemme i en egen, målt bølge. Notert
+  som oppfølging, ikke gjort her.
+
+  Fire av fem fiksturer er **helt uendret** — der var den grådige ruten
+  allerede lovlig. I S-7 mistet **tre medlemmer** bounden sin: forhåndsruten
+  deres brøt klaringskorridoren (S-7 går over Skagerrakbanken) og produserer
+  nå ingen bound i stedet for en ugyldig én. Antall medlemmer der bounden
+  faktisk beskar falt fra 14 til 11. Det er nøyaktig den trygge retningen
+  D9.3 (a) lovet: mindre beskjæring, aldri mer.
+
+  **Sidegevinst, målt i samme kjøring** (`shared-tub.damage.test.ts`): S-7s
+  omkjøringskostnad — arbeidet §4.1s ventil påfører når et medlem termineres
+  med `pruned.bound > 0` uten mål — falt fra **+59 %** (bølge 1, samme
+  fikstur) til **+17,2 %** av førstepassets iterasjoner (7 omkjøringer,
+  98 av 571 iterasjoner). Færre ugyldige bounds ⇒ færre falske
+  bound-terminieringer ⇒ færre omkjøringer. S-3 er uendret på +2,6 %.
+  Klassifiseringsflipp er fortsatt **0** i begge fiksturene.
 - **Konsekvens som må stå tydelig:** Tub-bound er **endimensjonal** — den
   beskjærer på tid. En etikett som er tregere men bedre på kryss/motor/natt
   kan bli kuttet. Derfor `tubMarginFrac = 0,25` (v1 brukte
@@ -1316,6 +1405,73 @@ du kommet deg i havn?**
   produksjonens modus er `pareto`; `skalar`/`korridor-skalar` er
   E1′-måleinnganger kalleren må be om eksplisitt.
 
+### 5.13 Stoppårsak, `noTubBound` og sertifikatet for ugjennomførbarhet
+
+Vedtatt 2026-09-05 (D9.2 b-full, `docs/specs/robusthet.md` §7; formen er
+matematikerens i `docs/research/ekspertpanel-d9-delt-tub-2026-09-05.md`
+§4.1). Bakgrunnen er et spørsmål robusthetslaget må kunne svare på uten å
+kjenne motorens interne avbruddsnavn: **er dette et bevis på at strekket
+ikke lot seg seile i dette været, eller ga søket bare opp?**
+
+```ts
+diagnostics.termination: {
+  kind: "reached" | "exhausted" | "capped" | "guard" | "aborted";
+  boundSource: "shared" | "own" | null;
+  prunedBound: number;      // speiler pruned.bound
+}
+```
+
+| `abortReason` | `kind` | betydning |
+|---|---|---|
+| `null` + `reached` | `reached` | målet ble nådd (om ruten *ender* der: `safety.reachesDestination`, §5.8) |
+| `noExpandableLabels` | `exhausted` | ingen utvidbare etiketter igjen — søket brukte opp rommet sitt |
+| `labelCap`, `iterationCap` | `capped` | et budsjett tok slutt |
+| `stagnation` | `guard` | vakten slo inn; søket kunne hatt mer å gi |
+| `callerStopped`, `noWeatherAtStart`, `outsideDomain` | `aborted` | avbrutt utenfra eller før noe ble forsøkt |
+| `null` uten `reached` | `aborted` | uferdig `snapshot()` eller håndbygget kontekst — ingenting er bevist |
+
+Oversettelsen er **total**, og uttømmeligheten håndheves to steder
+(`src/termination.test.ts`): tabellen er en `Record<AbortReason, …>` slik at
+kompilatoren krever en rad per verdi, og hver rad kjører et **ekte søk** som
+faktisk produserer nettopp den aborten.
+
+**Sertifikatet.** Et medlem er *bevist* ugjennomførbart bare når
+
+```
+kind === "exhausted" && boundSource === null && prunedBound === 0
+&& coverage.weather === "full" && !safety.reachesDestination
+```
+
+Alt annet er «ikke avgjort» (robusthet.md §3.2, «Konsekvens for nevneren»).
+Kravet `boundSource === null` er strengere enn strengt nødvendig når en
+bound fantes uten å beskjære, og det er med vilje: en bound som ikke beskar
+*denne* gangen kan likevel ha formet søket på måter tellerne ikke ser. Merk
+også at `boundSource` er **kilde, ikke bruk** — i `exactMode` står den som
+`"own"` selv om beskjæringen er av.
+
+**`RouteInput.noTubBound`.** Veien til `boundSource === null` — og til
+omkjøringen robusthet.md §4.1s ventil krever. Med `noTubBound: true`:
+
+- den grådige forhåndsruten kjøres ikke, `tubBoundS = null`,
+  `pruned.bound = 0`, `boundSource = null`;
+- **etikett-tak og stagnasjonsvakt står som før.** Det er hele grunnen til at
+  opsjonen finnes i stedet for `exactMode`: omkjøringen skal være *samme søk
+  uten bound*, ikke et referansesøk med helt andre tak;
+- sammen med `tubBoundS` kaster konstruktøren — å slå av og oppgi den samme
+  bounden er en motstridende bestilling, og ingen av dem overstyres stille.
+
+`tubBoundS = null` skiller ikke «slått av» fra «forhåndsruten kom ikke
+fram». Det er bevisst: begge betyr at ingen bound beskjærer, som er
+spørsmålet feltet finnes for å svare på, og hvem som slo den av vet
+kalleren selv. Feltet rapporteres uansett som **horisont, ikke sertifikat**
+(D9.3, §5.5).
+
+Målt konsekvens (`src/no-tub-bound.test.ts`): på et åpent, trivielt strekk
+beskjærer motorens egen bound over 11 000 kandidater, og uten den lages det
+nær ti ganger så mange etiketter — men ruten, totalene, sikkerhetsdommen og
+alternativene er **bit-identiske**. Bounden beskar bare kandidater som
+uansett ikke vant.
+
 ---
 
 ## 6. Ærlig degradering (obligatorisk seksjon, N2)
@@ -1424,6 +1580,9 @@ vet):
 | `provenance` (§4.8) | `planRoute` ⇒ `"planRoute"`; `createSearch` ⇒ `"createSearch"` også i `snapshot()`; `buildResult` med håndbygget kontekst ⇒ `"buildResult"`; de to inngangene gir ellers bit-identisk resultat (`shared-field.test.ts`, `reconstruct.test.ts`) |
 | Delt A\*-felt (§5.5) | `buildFieldForInput` gir samme felt som `setUpField`; bit-identisk `RouteResult` med felt, uten felt og etter `DistanceFieldData`-overføringen (structured clone), på alle golden-scenarier; feltet er uendret etter bruk og kan deles av flere søk (`shared-field.test.ts`) |
 | Delt Tub (§5.5, robusthet.md §5.3) | Forhåndsregistrert skademåling: S-3 og S-7, 30 medlemmer, med og uten kontrollens `tubBoundS` ⇒ null klassifiseringsflipp og bit-identiske sammendrag; redningsveien beviselig utløsbar og gir baseline tilbake bit-identisk (`shared-tub.damage.test.ts`) |
+| `termination` (§5.13) | Uttømmende: én test per `abortReason` + `null`, hver med et **ekte** søk som produserer nettopp den aborten, og en `Record<AbortReason, …>` som gjør en manglende rad til kompileringsfeil; `boundSource` = `"own"`/`"shared"`/`null` inkludert `exactMode`-tilfellet (kilde, ikke bruk) (`termination.test.ts`) |
+| `noTubBound` (§5.13) | Ingen bound, ingen bound-beskjæring, `boundSource: null`; **bit-identisk rute** mot kjøringen med motorens egen bound på et strekk der bounden faktisk beskjærer (> 11 000 kandidater); etikett-tak og stagnasjonsvakt fortsatt aktive; motstridende bestilling sammen med `tubBoundS` kaster (`no-tub-bound.test.ts`) |
+| Skrankekomplett Tub-rute (§5.5, D9.3) | Forhåndsregistrert gapmåling `T*ₘ/tubBoundS` over S-1/S-3/S-5/S-7/S-8 med hard assertion på hypotesen «ingen ratio over `1 + tubMarginFrac`»; golden-fasitene bit-identiske før/etter at klaring og dagslys kom inn i forhåndsruten (`tub-gap.damage.test.ts`, `pnpm test:damage`) |
 | `backoffS` (§5.12) | `min(Δt, 1800 s)` for alle tidssteg; ett steg tilbake på uniforme steg; hopper over delsteg kortere enn backoffen; aldri før avgang. R2-re-søket har verken `tubBoundS` eller `field`, og ingen opsjonskanal kan bære dem (`bailout.test.ts`) |
 
 ### 8.2 Golden-route-harness (`pnpm test:golden`)
@@ -1579,6 +1738,45 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 ---
 
 ## 10. Endringslogg
+
+- **2026-09-05 — fase 4a bølge 3: `noTubBound`, `diagnostics.termination` og
+  skrankekomplett Tub-rute** (`docs/specs/robusthet.md` §7 D9.2 (b-full) og
+  D9.3 (a), vedtatt av Magnus 2026-09-05; panel
+  `docs/research/ekspertpanel-d9-delt-tub-2026-09-05.md` §3.1 og §4.1).
+  - **Ny §4.7 `RouteInput.noTubBound`** — slår av all Tub-beskjæring uten
+    `exactMode`s bivirkninger: etikett-tak og stagnasjonsvakt står. Dette er
+    omkjøringsveien robusthet.md §4.1s ventil krever, og den eneste veien til
+    `boundSource === null`. Sammen med `tubBoundS` kaster den (motstridende
+    bestilling). Målt: på et strekk der motorens egen bound beskjærer > 11 000
+    kandidater er ruten **bit-identisk** med og uten bound — bare
+    `diagnostics`-tellerne skiller (`no-tub-bound.test.ts`).
+  - **Ny §5.13 + §4.8 `diagnostics.termination`** —
+    `{ kind, boundSource, prunedBound }` i matematikerens form.
+    `exhausted` (`noExpandableLabels`) er det eneste utfallet som kan bli et
+    *positivt* sertifikat for ugjennomførbarhet, og bare med
+    `boundSource === null`, `prunedBound === 0`, full værdekning og ikke nådd
+    mål. Oversettelsen fra `abortReason` er total og bevist uttømmende både i
+    kompilatoren (`Record<AbortReason, …>`) og i kjøretiden (ett ekte søk per
+    verdi, `termination.test.ts`). Feltet er **påkrevd** i `RouteDiagnostics`:
+    et resultat uten stoppårsak finnes ikke.
+  - **§5.5 — den grådige Tub-forhåndsruten er nå skrankekomplett** (D9.3).
+    Klaringskorridoren (§5.3.2) og dagslyskravet er lagt inn med de samme
+    kallene søket bruker; veipunkter er uten innhold i v2.0 (`RouteInput` har
+    ingen). Forhåndsruten har egen klaringscache og egne korridortellere, slik
+    at den ikke kan påvirke søkets gate-sertifisering eller
+    `diagnostics.clearance`.
+  - **Forhåndsregistrert gapmåling (D9.3 (b) først)** i ny
+    `src/tub-gap.damage.test.ts` (`pnpm test:damage`): `T*ₘ/tubBoundS` over
+    S-1/S-3/S-5/S-7/S-8, 30 medlemmer hver. Hypotesen «andel > 1,25 = 0»
+    holdt i alle fem, før og etter, og er nå hard assertion — men bounden var
+    for stram (ratio > 1,00) i 35–86 % av de målte medlemmene, med maks
+    1,036. Etter fiksen er fire av fem fiksturer uendret; i S-7 mistet tre
+    medlemmer en ugyldig bound, og medlemmer med faktisk bound-beskjæring
+    falt fra 14 til 11. Tabeller i §5.5.
+  - **Golden-fasitene er bit-identiske** — regenerert med `UPDATE_GOLDEN=1`,
+    null diff på alle sju. Skademålingen (`shared-tub.damage.test.ts`) har
+    fortsatt **null klassifiseringsflipp**; S-7s omkjøringskostnad falt fra
+    +59 % til +17,2 %.
 
 - **2026-09-04 — fase 4a bølge 1: `provenance`, `backoffS`, delt felt som
   eksplisitt kontrakt** (`docs/specs/robusthet.md` §3.1 og §5.3, ADR-0005;

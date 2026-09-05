@@ -17,6 +17,7 @@ import type {
   RouteResult,
   RouteSafety,
   RouteStep,
+  RouteTermination,
   RouteTotals,
 } from "@morild/routing";
 
@@ -57,12 +58,27 @@ function makeClearanceDiagnostics(): ClearanceDiagnostics {
 
 type PrunedDiagnostics = RouteDiagnostics["pruned"];
 
-export interface DiagnosticsOverrides extends Partial<Omit<RouteDiagnostics, "pruned">> {
+export interface DiagnosticsOverrides extends Partial<Omit<RouteDiagnostics, "pruned" | "termination">> {
   readonly pruned?: Partial<PrunedDiagnostics>;
+  /**
+   * D9.2 b-full (`RouteTermination`): denne fabrikken tar ikke stilling til
+   * sertifikatregelen selv (§3.2 «Konsekvens for nevneren») — den er
+   * `classifyMember`s ansvar. Default speiler `reached: true`-standarden;
+   * tester som overstyrer `abortReason`/`safety.reachesDestination` bør
+   * normalt overstyre `termination` til match, men `outcome.ts` leser i dag
+   * ikke feltet, så et default-mismatch endrer ingen eksisterende testutfall.
+   */
+  readonly termination?: Partial<RouteTermination>;
 }
 
 function makeDiagnostics(overrides?: DiagnosticsOverrides): RouteDiagnostics {
-  const { pruned: prunedOverrides, ...rest } = overrides ?? {};
+  const { pruned: prunedOverrides, termination: terminationOverrides, ...rest } = overrides ?? {};
+  const termination: RouteTermination = {
+    kind: "reached",
+    boundSource: null,
+    prunedBound: 0,
+    ...terminationOverrides,
+  };
   const pruned: PrunedDiagnostics = {
     dominated: 0,
     bound: 0,
@@ -92,6 +108,7 @@ function makeDiagnostics(overrides?: DiagnosticsOverrides): RouteDiagnostics {
     clearanceRecheck: makeClearanceDiagnostics(),
     ...rest,
     pruned,
+    termination,
   };
 }
 

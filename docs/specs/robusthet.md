@@ -135,6 +135,15 @@ når den grådige forhåndsruten ikke nådde målet) — rapportert som
 *horisont*, ikke sertifikat (D9.3). Testvakt: intet medlem klassifiseres
 `infeasible` med `pruned.bound > 0`.
 
+**Åpent D11.1 (bølge 3, 2026-09-05):** tabellens første rad gir
+`feasible` for «`partial` + nådd mål». ADR-0005 sier «partial
+værdekning ⇒ inkonklusiv», og fase 3s app fulgte det: en rute som når
+målet på vind alene, uten bølge-/strømdata (`coverage.weather ===
+"partial"` fordi feltene mangler, ikke fordi horisonten tok slutt),
+telles ikke gjennomførbar. Appen beholder den konservative lesningen
+(`conservativeCoverage` i `apps/pwa/src/weather/ensemble.ts`) til
+Magnus har vedtatt; se §7 D11.1.
+
 **Konsekvens for nevneren (bølge 3-avhengighet):** etter D9.2 er
 `infeasible` nåbar kun via «ikke nådd, full dekning, ingen beskjæring,
 ingen budsjett-/verktøystopp» — som motoren i praksis ikke produserer
@@ -359,6 +368,14 @@ Med `s = feasibleShare` og `t = min over terskler av k/n` (1 hvis ingen):
 | `s < 0,7` | rød | andel |
 | `s ≥ 0,7` og `s < 0,9` | gul | andel |
 | `s ≥ 0,9` og `t < 0,9` | gul | tid |
+
+*Presisering bølge 3 (review-funn, D11.4 — venter Magnus):* rødt
+dominerer de gule radene: er `s < 0,7` blant de avgjorte, gis `rod/andel`
+selv om horisont-, tynt-utvalg- eller usikkert-grunnlag-raden også
+treffer — et varsel skal aldri mykes stille. Sertifikatet `rod/andel`
+følger formelen `nInf > 0,3 · N` (sunt for `s` uansett resten); D10.4s
+skranker (`j/N`, `(j + N − k)/N`) har en annen nevner og vises som
+tellinger, ikke som sertifikat. `gul/tid`-taket trekker også fra `nErr`.
 
 Tersklene 0,9/0,7/0,2 er **provisoriske, syntetisk kalibrert** og bærer
 stempelet i `RobustnessStamp`; de remåles under ADR-0005 port 3. Ingen
@@ -834,6 +851,56 @@ spec-utkast i fase 4b.** MET-vilkår berøres ikke (lokal CPU, ikke poll).
 Avvist av panelet: felles stamme (< 2 % gevinst, førsteordens
 korrekthetsrisiko), server-side A\*-felt (20–30 ms), «verste 10 av 30».
 
+**Bølge 3-funn (2026-09-05) — beslutningspunkter D11.1–D11.4, til
+Magnus. Panel: `docs/research/ekspertpanel-d11-boelge3-2026-09-05.md`
+(enstemmig (a) på D11.1–D11.3; D11.4 (a) med reason-splitt
+`rod/tynt-grunnlag`, implementert).**
+
+**D11.1 «partial + nådd mål».** (a) ADR-0005-lesningen: all `partial`
+dekning ⇒ inkonklusiv (grunn «dekning»), uansett mål — vind-only-pakker
+gir 100 % inkonklusivt til bølge/strøm er i pakken; (b) §3.2-tabellen
+bokstavelig: nådd mål ⇒ feasible, forbeholdet bæres av rutens flagg
+(`VAERDEKNING_BEGRENSET`, `SJOEGANG_DATA_MANGLER`, usikkert-gulv); (c)
+skille de to «partial»-årsakene i motoren (horisont vs manglende felt):
+horisont ⇒ inkonklusiv, manglende felt ⇒ feasible med flagg.
+**Anbefaling: (a) nå, (c) når strøm/bølger er i pakken** (fase 3-rest) —
+en gjennomførbarhetsandel regnet uten bølgedata er ikke et
+robusthetstall for en seilbåt (panel: øvre skranke presentert som
+estimat; skjevheten størst i sterkvindsmedlemmene, forvrenger også
+rangeringen). Implementert med `inconclusiveReason: "dekning-felt"` og
+UI-tekst «k kom fram på vind alene — bølger og strøm mangler i pakken»
+(værruting-utviklerens (c)-tekst uten å røre nevneren).
+
+**D11.2 Skal R2/bail-out sette `noTubBound: true`?** `r2SearchInput`
+nekter delt Tub og felt, men motoren regner egen bound i re-søket, og R2
+har ingen ventil/omkjøring. (a) Ja — bail-out-søk kjører alltid uten
+Tub-bound (dyrere, men «kan du komme deg i havn» skal aldri beskjæres av
+et anslag). (b) Nei, behold egen bound (gapmålingen: aldri > 1,25).
+**Anbefaling: (a)** — panel enstemmig; djevelens advokat: midlertidig
+sikkerhetsdefault til havnefeltet (D8.10) gjør bail-out billig nok til
+å kjøres alltid. Én linje i `r2SearchInput` når vedtatt.
+
+**D11.3 `tubMarginFrac = 0,25` mot målt maks-gap 1,036** (~7× slakk).
+(a) La stå til ekte-data-porten (ADR-0005 port 3). (b) Stram til 0,10
+etter måling på ekte fliser. **Anbefaling: (a)** — panel enstemmig.
+Kriterier før stramming (matematiker): sluttetappen (reachRadius) inn i
+bounden; gapet målt mot `noTubBound`-referanse for alle medlemmer; maks
+ratio < 1,05 med korteste etappe ≤ 3 t i settet (2,4 % absolutt tid
+skalerer 1/T — 0,10 brytes av enhver etappe under ~3,3 t).
+
+**D11.4 Rødt dominerer gule rader i §4.2.3** (review-funn bølge 3: et
+rødt sertifikat underveis kunne ende som gult/tynt-utvalg ved
+`complete`). (a) Rekkefølgen presisert som i §4.2.3 (rød før horisont/
+tynt-utvalg/usikkert-grunnlag), sertifikat = `nInf > 0,3·N`. (b) Behold
+tabellen bokstavelig og stram sertifikatet til å bevise «ingen gul rad
+kan treffe» (i praksis aldri rødt før complete). **Anbefaling: (a)** —
+implementert som konservativ presisering med panelets ENDRE: ny reason
+`rod/tynt-grunnlag` når `nF + nInf < 12` eller `nInc + nErr > N/3`
+(fargen mykes aldri, begrunnelsen påstår ingen andel materialet ikke
+bærer); død `s < 0,7`-rad etter gul-radene fjernet; sertifikatets
+forutsetning «ingen omklassifisering fra infeasible» (omkjøringen ferdig
+før telling) står i §4.1. Bekreftes.
+
 ## 8. Endringslogg
 
 - 2026-09-04: første utkast (hovedsesjonen) etter fagagent-panel med to
@@ -858,3 +925,12 @@ korrekthetsrisiko), server-side A\*-felt (20–30 ms), «verste 10 av 30».
   felt/søk), kopierbar JSON i panelet; kravspek F3.5 revidert (D10.1).
   Bølge 3 arver D10.4 (eksakte skranker, §4.2.3) og D10.5 (S1b-orakel,
   §4.1); D10.6 til fase 4b-spec.
+- 2026-09-05: **bølge 3 levert.** Routing: `noTubBound`,
+  `diagnostics.termination`, skrankekomplett Tub-rute (D9.3 a) etter
+  forhåndsregistrert gapmåling (`tub-gap.damage.test.ts`: aldri > 1,25;
+  S-7s omkjøringskostnad falt +59 % → +17 %). Robustness: §4.2.1
+  estimatorer, §4.2.3 trafikklys/sertifikater + D10.4-skranker, §4.3
+  rangering, D9.4 `nextAction`, S-9-fikstur (argmin P50 = A, argmin P90
+  = B, LOO-invariant). App: klassifisering via robustness med omkjøring
+  uten Tub, D10.5-orakel (S1b i worker), stempel/`EnsembleContext`,
+  `renderDepartureText`. Åpent: D11.1–D11.3 (§7).

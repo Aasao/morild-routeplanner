@@ -1,42 +1,23 @@
 /**
- * Avgangssammendrag (`docs/specs/robusthet.md` §3.3, §3.6).
- *
- * Bølge 1 (denne fila): kun skjelettet — typene og de tellbare feltene
- * (`nF/nInf/nInc/nErr`, `feasibleShare`, `inconclusiveShare`,
- * `horizonTooShort`, `complete`). Estimatorene (persentiler, terskler,
- * trafikklys, sertifikat) kommer i bølge 3 (§4.2) og returneres her som
- * `null`/`"beregner"` med tydelig markering — se kommentarene under.
+ * Avgangssammendrag (`docs/specs/robusthet.md` §3.3, §3.6, §4.2, §4.2.3,
+ * D10.4).
  *
  * Ren og deterministisk, uavhengig av rekkefølgen `members` ankommer i:
- * `summarizeDeparture` sorterer selv på `memberIndex` før noe telles.
+ * `summarizeDeparture` sorterer selv på `memberIndex` før noe telles, og
+ * alle estimatorer (`estimators.ts`) og trafikklyset (`traffic-light.ts`)
+ * regner kun på verdier, aldri på ankomstrekkefølgen.
  */
+import { computeFeasibleEstimates } from "./estimators.js";
 import type { MemberOutcome, MemberSummary } from "./outcome.js";
-
-export interface ThresholdSpec {
-  /** F.eks. "moerke", "tidsbudsjett". */
-  readonly id: string;
-  /** F.eks. «framme før mørket». */
-  readonly label: string;
-  readonly passes: (m: MemberSummary) => boolean;
-}
-
-export interface TrafficLight {
-  readonly color: "gronn" | "gul" | "rod" | "beregner";
-  readonly reason: "andel" | "tid" | "inkonklusiv" | "tynt-utvalg" | "ingen-kontrollrute" | null;
-  readonly kOfN: { readonly k: number; readonly n: number };
-  /** DA6-stempel: tersklene som brukes er provisoriske (§4.2.3). */
-  readonly provisionalThresholds: true;
-}
-
-/**
- * Bevis om det fulle ensemblet, utledet fra en delmengde (§4.2.3).
- * Deterministisk og kun i advarselsretning — grønn kan aldri sertifiseres.
- * Bølge 3 fyller ut sertifikatlogikken; bølge 1 returnerer alltid `null`.
- */
-export interface Certificate {
-  readonly color: "rod" | "gul";
-  readonly reason: "andel" | "tid";
-}
+import {
+  computeFeasibleShareBounds,
+  computeTrafficLight,
+  type Certificate,
+  type FeasibleShareBounds,
+  type ThresholdRate,
+  type ThresholdSpec,
+  type TrafficLight,
+} from "./traffic-light.js";
 
 export interface RobustnessStamp {
   readonly maskVersion: string;
@@ -58,17 +39,25 @@ export interface DepartureSummary {
   readonly members: readonly MemberOutcome[];
   /** Alle `expectedMembers` klassifisert. */
   readonly complete: boolean;
+  /** Forventet antall medlemmer (typisk 30) — nevneren i skrankene og «k av N». */
+  readonly expectedMembers: number;
   readonly nF: number;
   readonly nInf: number;
   readonly nInc: number;
   readonly nErr: number;
   /** nF / (nF + nInf). Inkonklusive og feil er IKKE i nevneren. `null` når nF + nInf === 0. */
   readonly feasibleShare: number | null;
-  /** nInc / forventet antall medlemmer. */
+  /**
+   * D10.4s eksakte skranker på andelen av HELE ensemblet som ender
+   * gjennomførbar — bygget kun på `k` klassifiserte og `j` gjennomførbare,
+   * uten antakelser om de uklassifiserte. Se `traffic-light.ts`.
+   */
+  readonly feasibleShareBounds: FeasibleShareBounds;
+  /** nInc / expectedMembers. */
   readonly inconclusiveShare: number;
   /** inconclusiveShare > 0,20. */
   readonly horizonTooShort: boolean;
-  /** Seilingstid blant gjennomførbare, nærmeste-rang (§4.2.1). Bølge 3. */
+  /** Seilingstid blant gjennomførbare, nærmeste-rang (§4.2.1). */
   readonly durationWorstS: number | null;
   readonly durationP50S: number | null;
   readonly durationP90S: number | null;
@@ -76,9 +65,9 @@ export interface DepartureSummary {
   readonly beatShareP90: number | null;
   readonly motorShareP50: number | null;
   readonly motorShareP90: number | null;
-  /** Merkes «ikke usikkerhetsberegnet» i presentasjonen. Bølge 3. */
+  /** Merkes «ikke usikkerhetsberegnet» i presentasjonen. */
   readonly fuelWorstL: number | null;
-  /** k av n gjennomførbare som består terskelen. Tom i bølge 1 — se merknad. */
+  /** k av n gjennomførbare som består terskelen. */
   readonly thresholds: readonly { readonly id: string; readonly k: number; readonly n: number }[];
   readonly light: TrafficLight;
   readonly certificate: Certificate | null;
@@ -95,20 +84,20 @@ export interface SummarizeDepartureInput {
   readonly stamp: RobustnessStamp;
 }
 
+/** Predikat-argumentet en `ThresholdSpec.passes` faktisk trenger fra `MemberSummary`. */
+function thresholdSubject(m: MemberSummary): { readonly durationS: number; readonly daylightArrival: boolean } {
+  return { durationS: m.durationS, daylightArrival: m.daylightArrival };
+}
+
 /**
- * Bølge 1-skjelett av avgangssammendraget (§3.3). Teller `nF/nInf/nInc/
- * nErr` og de avledede andelene; alle estimatorer som krever nærmeste-rang
- * (§4.2.1) eller trafikklys-tabellen (§4.2.3) er stubbet ut som `null`
- * eller `"beregner"` — IKKE implementert her, se bølge 3 i
- * `docs/research/fase4a-plan-2026-09-04.md`.
- *
- * Uavhengig av ankomstrekkefølge: `input.members` sorteres på
- * `memberIndex` før noe som helst telles.
+ * Avgangssammendraget (§3.3). `input.members` sorteres på `memberIndex` før
+ * noe som helst telles eller estimeres — determinismekravet i §5.2.
  */
 export function summarizeDeparture(input: SummarizeDepartureInput): DepartureSummary {
   const members = [...input.members].sort((a, b) => a.memberIndex - b.memberIndex);
 
-  const nF = members.filter((m) => m.kind === "feasible").length;
+  const feasible = members.filter((m) => m.kind === "feasible");
+  const nF = feasible.length;
   const nInf = members.filter((m) => m.kind === "infeasible").length;
   const nInc = members.filter((m) => m.kind === "inconclusive").length;
   const nErr = members.filter((m) => m.kind === "error").length;
@@ -118,51 +107,58 @@ export function summarizeDeparture(input: SummarizeDepartureInput): DepartureSum
   const horizonTooShort = inconclusiveShare > 0.2;
   const complete = members.length === input.expectedMembers;
 
-  // bølge 3: nærmeste-rang over gjennomførbare (§4.2.1/§4.2.4).
-  const durationWorstS = null;
-  const durationP50S = null;
-  const durationP90S = null;
-  const beatShareP50 = null;
-  const beatShareP90 = null;
-  const motorShareP50 = null;
-  const motorShareP90 = null;
-  const fuelWorstL = null;
+  const feasibleShareBounds = computeFeasibleShareBounds({
+    nF,
+    nInf,
+    nInc,
+    nErr,
+    expectedMembers: input.expectedMembers,
+  });
 
-  // bølge 3: terskeltelling (§4.2.2) — `input.thresholds` brukes ikke ennå.
-  const thresholds: readonly { readonly id: string; readonly k: number; readonly n: number }[] = [];
+  const estimates = computeFeasibleEstimates(feasible);
 
-  // bølge 3: trafikklys-tabellen (§4.2.3). Før den er implementert er
-  // svaret alltid "beregner" med `kOfN` = ferdige klassifisert av forventet.
-  const light: TrafficLight = {
-    color: "beregner",
-    reason: null,
-    kOfN: { k: members.length, n: input.expectedMembers },
-    provisionalThresholds: true,
-  };
+  // §4.2.2: terskeltelling blant gjennomførbare SÅ LANGT — `k av n`.
+  const thresholds = input.thresholds.map((spec) => ({
+    id: spec.id,
+    k: feasible.filter((m) => m.summary !== null && spec.passes(thresholdSubject(m.summary))).length,
+    n: nF,
+  }));
+  const thresholdRates: readonly ThresholdRate[] = thresholds;
 
-  // bølge 3: sertifikater (§4.2.3) — deterministiske, kun i advarselsretning.
-  const certificate = null;
-
-  return {
-    departEpochS: input.departEpochS,
-    control: input.control,
-    members,
+  const { light, certificate } = computeTrafficLight({
     complete,
+    expectedMembers: input.expectedMembers,
     nF,
     nInf,
     nInc,
     nErr,
     feasibleShare,
     inconclusiveShare,
+    thresholdRates,
+  });
+
+  return {
+    departEpochS: input.departEpochS,
+    control: input.control,
+    members,
+    complete,
+    expectedMembers: input.expectedMembers,
+    nF,
+    nInf,
+    nInc,
+    nErr,
+    feasibleShare,
+    feasibleShareBounds,
+    inconclusiveShare,
     horizonTooShort,
-    durationWorstS,
-    durationP50S,
-    durationP90S,
-    beatShareP50,
-    beatShareP90,
-    motorShareP50,
-    motorShareP90,
-    fuelWorstL,
+    durationWorstS: estimates.durationWorstS,
+    durationP50S: estimates.durationP50S,
+    durationP90S: estimates.durationP90S,
+    beatShareP50: estimates.beatShareP50,
+    beatShareP90: estimates.beatShareP90,
+    motorShareP50: estimates.motorShareP50,
+    motorShareP90: estimates.motorShareP90,
+    fuelWorstL: estimates.fuelWorstL,
     thresholds,
     light,
     certificate,

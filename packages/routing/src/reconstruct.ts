@@ -58,7 +58,10 @@ import type {
   RouteProvenance,
   RouteResult,
   RouteStep,
+  RouteTermination,
   SegmentRef,
+  TerminationKind,
+  TubBoundSource,
 } from "./result.js";
 import type { RouteInput } from "./search.js";
 import { tackOf, tackPenaltyS } from "./tack.js";
@@ -95,6 +98,12 @@ export interface ResultContext {
   readonly fieldUsed: boolean;
   readonly fieldCells: number;
   readonly tubBoundS: number | null;
+  /**
+   * Kilden til Tub-bounden (D9.2 b-full). Valgfri fordi tester og fiksturer
+   * bygger konteksten for hånd; utelatt betyr `null` — «ingen bound i spill»,
+   * den eneste verdien et resultat uten søk bak seg kan stå inne for.
+   */
+  readonly boundSource?: TubBoundSource | undefined;
   readonly vmaxKn: number;
   readonly iterations: number;
   readonly peakActiveLabels: number;
@@ -117,6 +126,52 @@ export interface ResultContext {
     readonly noWeatherInWindow: number;
     readonly cone: number;
     readonly outsideDomain: number;
+  };
+}
+
+/**
+ * `abortReason` (+ `reached`) → `termination.kind`. Uttømmende over
+ * `AbortReason`, og bevist uttømmende med én test per verdi i
+ * `termination.test.ts`.
+ *
+ * `null` uten `reached` er det ene tilfellet som ikke er en stoppårsak i det
+ * hele tatt: et `snapshot()` av et søk som fortsatt kunne gått videre, eller
+ * en håndbygget `ResultContext`. Det er «avbrutt» i den eneste betydningen
+ * som betyr noe her — ingenting er uttømt, ingenting er bevist — og faller
+ * derfor på `"aborted"`.
+ */
+function terminationKindOf(
+  reached: boolean,
+  abortReason: AbortReason | null,
+): TerminationKind {
+  if (reached) return "reached";
+  switch (abortReason) {
+    case "noExpandableLabels":
+      return "exhausted";
+    case "labelCap":
+    case "iterationCap":
+      return "capped";
+    case "stagnation":
+      return "guard";
+    case "callerStopped":
+    case "noWeatherAtStart":
+    case "outsideDomain":
+      return "aborted";
+    case null:
+      return "aborted";
+  }
+}
+
+function terminationOf(
+  reached: boolean,
+  abortReason: AbortReason | null,
+  boundSource: TubBoundSource,
+  prunedBound: number,
+): RouteTermination {
+  return {
+    kind: terminationKindOf(reached, abortReason),
+    boundSource,
+    prunedBound,
   };
 }
 
@@ -644,6 +699,12 @@ export function buildResult(ctx: ResultContext): RouteResult {
       fieldCells: ctx.fieldCells,
       tubBoundS: ctx.tubBoundS,
       vmaxKn: ctx.vmaxKn,
+      termination: terminationOf(
+        ctx.reached,
+        ctx.abortReason,
+        ctx.boundSource ?? null,
+        ctx.pruned.bound,
+      ),
       clearance: freezeCorridorStats(
         ctx.clearanceStats ?? createCorridorStats(),
       ),

@@ -30,6 +30,7 @@
 import {
   DistanceField,
   buildFieldForInput,
+  evaluateRoute,
   planRoute,
   type DistanceFieldData,
   type RouteResult,
@@ -63,6 +64,8 @@ export interface PlanRouteMemberRequest {
   readonly departEpochS: number;
   /** Delt A*-felt fra kontrollen (robusthet.md §4.1) — strukturell kopi av `ensemble.ts`. */
   readonly sharedField?: SharedField | undefined;
+  /** Omkjøring uten motorens egen Tub-bound (§4.1-ventilen, D9.2/D9.4) — settes av orkestratoren. */
+  readonly noTubBound?: boolean | undefined;
 }
 
 /** Strukturell kopi av `ensemble.ts::SharedField` — se toppkommentaren. */
@@ -71,7 +74,31 @@ export interface SharedField {
   readonly data: DistanceFieldData;
 }
 
-export type ToWorker = PlanRouteMemberRequest;
+/**
+ * Verste-først-orakelet (robusthet.md §4.1, D10.5): kontrollruten evaluert
+ * i medlemmets vær med S1b-evaluatoren — millisekunder, og lovlig under
+ * ADR-0005s rekkefølge-klausul fordi svaret KUN styrer i hvilken rekkefølge
+ * medlemmene søkes, aldri et tall som vises. Strukturell kopi av
+ * `../weather/ensemble.ts`.
+ */
+export interface EvaluateControlRequest {
+  readonly type: "evaluate-control";
+  readonly memberIndex: number;
+  readonly tiles: readonly TileWindSource[];
+  readonly departEpochS: number;
+  /** Kontrollrutens steg som veipunkter (`steps[0]` = avgang). */
+  readonly waypoints: readonly { readonly lat: number; readonly lon: number }[];
+}
+
+export interface EvaluateControlResult {
+  readonly type: "evaluate-control-result";
+  readonly memberIndex: number;
+  readonly feasible: boolean;
+  /** Evaluert seilingstid (s) fram til der evalueringen stoppet. */
+  readonly durationS: number;
+}
+
+export type ToWorker = PlanRouteMemberRequest | EvaluateControlRequest;
 
 export interface PlanRouteMemberOk {
   readonly type: "plan-route-member-result";
@@ -100,13 +127,57 @@ export interface PlanRouteMemberError {
   readonly message: string;
 }
 
-export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError;
+export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError | EvaluateControlResult;
 
-function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
+function scenarioOrThrow() {
   const scenario = goldenScenarios().find((candidate) => candidate.name === SCENARIO_NAME);
   if (!scenario) {
     throw new Error(`Fant ikke golden-scenario "${SCENARIO_NAME}"`);
   }
+  return scenario;
+}
+
+/** Orakelet: kontrollruten seilt i medlemmets vær (S1b-evaluator). Aldri et tall til UI. */
+function evaluateControl(msg: EvaluateControlRequest): EvaluateControlResult {
+  const scenario = scenarioOrThrow();
+  if (msg.tiles.length === 0 || msg.waypoints.length < 2) {
+    throw new Error("evaluate-control: mangler vinddata eller veipunkter");
+  }
+  const weather = decodeWeather(msg.tiles, msg.departEpochS, false);
+  const evaluation = evaluateRoute({
+    waypoints: msg.waypoints,
+    departEpochS: msg.departEpochS,
+    weather,
+    mask: scenario.input.mask,
+    boat: scenario.input.boat,
+    options: scenario.input.options,
+  });
+  return {
+    type: "evaluate-control-result",
+    memberIndex: msg.memberIndex,
+    feasible: evaluation.feasible,
+    durationS: evaluation.arrivalEpochS - msg.departEpochS,
+  };
+}
+
+function decodeWeather(
+  tiles: readonly TileWindSource[],
+  departEpochS: number,
+  isControl: boolean,
+): WeatherFieldLike {
+  const tileFields: WeatherFieldLike[] = tiles.map((tile) => {
+    const windMember = windMemberLayersFromBytes(new Uint8Array(tile.windBuffer));
+    const pkg: WeatherPackage = {
+      windMembers: [windMember],
+      windHeader: tile.windHeader,
+    };
+    return toWeatherField(pkg, 0, { departEpochS, isControl });
+  });
+  return compositeWeatherField(tileFields);
+}
+
+function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
+  const scenario = scenarioOrThrow();
   if (msg.tiles.length === 0) {
     throw new Error("plan-route-member: meldingen manglet vinddata for alle fliser");
   }
@@ -153,7 +224,11 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
     : buildFieldForInput(input);
   const fieldMs = performance.now() - tField0;
   const tSearch0 = performance.now();
-  const result = planRoute(distanceField !== undefined ? { ...input, field: distanceField } : input);
+  const result = planRoute({
+    ...input,
+    ...(distanceField !== undefined ? { field: distanceField } : {}),
+    ...(msg.noTubBound === true ? { noTubBound: true } : {}),
+  });
   const searchMs = performance.now() - tSearch0;
   return {
     type: "plan-route-member-result",
@@ -184,7 +259,7 @@ export function sharedFieldKey(
 self.addEventListener("message", (event: MessageEvent<ToWorker>) => {
   const msg = event.data;
   try {
-    self.postMessage(runMember(msg));
+    self.postMessage(msg.type === "evaluate-control" ? evaluateControl(msg) : runMember(msg));
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     self.postMessage({ type: "error", memberIndex: msg.memberIndex, message } satisfies FromWorker);

@@ -97,6 +97,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       cacheStorage,
       workerFactory: createRealWeatherWorker,
       poolSize,
+      worstFirst: true,
       nowEpochS: Math.floor(Date.now() / 1000),
     },
     {

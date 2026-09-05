@@ -9,6 +9,9 @@ import {
   type MemberJob,
   type MemberOutcome,
   type WorkerLike,
+  type ToWorker,
+  type OracleVerdict,
+  worstFirstOrder,
 } from "./ensemble.js";
 
 const HEADER: PackageHeader = {
@@ -25,6 +28,8 @@ function fakeResult(overrides: {
   readonly weatherCoverage?: "full" | "partial";
   readonly reachesDestination?: boolean;
   readonly durationS?: number;
+  /** Antall syntetiske steg (orakelet krever ≥ 2 veipunkter). */
+  readonly steps?: number;
 }): RouteResult {
   const durationS = overrides.durationS ?? 12 * 3600;
   return {
@@ -35,7 +40,14 @@ function fakeResult(overrides: {
     flags: 0,
     flagNames: [],
     legs: [],
-    steps: [],
+    steps: Array.from({ length: overrides.steps ?? 0 }, (_, i) => ({
+      lat: 59 - i * 0.1,
+      lon: 10.5,
+      tS: i * 1800,
+      epochS: i * 1800,
+      headingDeg: 180,
+      flags: 0,
+    })) as unknown as RouteResult["steps"],
     totals: {
       durationS,
       distanceNm: 87,
@@ -67,6 +79,7 @@ function fakeResult(overrides: {
     alternatives: [],
     isochrones: [],
     diagnostics: {
+      termination: { kind: "reached", boundSource: null, prunedBound: 0 },
       iterations: 0,
       labelsCreated: 0,
       peakActiveLabels: 0,
@@ -123,7 +136,7 @@ describe("classifyMember — ADR-0005 inkonklusiv-regel", () => {
     expect(classifyMember(fakeResult({ reachesDestination: false, weatherCoverage: "full" }))).toBe("infeasible");
   });
 
-  it("inkonklusiv når værdekningen er 'partial' — SELV OM reachesDestination er true", () => {
+  it("partial + nådd mål ⇒ inkonklusiv (konservativ D11.1-overstyring av §3.2-tabellen til Magnus har vedtatt lesningen)", () => {
     expect(classifyMember(fakeResult({ reachesDestination: true, weatherCoverage: "partial" }))).toBe("inconclusive");
   });
 
@@ -202,6 +215,8 @@ describe("summarizeEnsemble", () => {
 function mockWorker(
   resultFor: (memberIndex: number) => FromWorker,
   registry?: { live: number; maxLive: number },
+  /** Valgfri kanal for orakelmeldinger: returner et svar, eller `undefined` for å falle til `resultFor`. */
+  intercept?: (message: ToWorker) => FromWorker | undefined,
 ): WorkerLike {
   // Emulerer ekte EventTarget-semantikk for det orkestratoren bruker:
   // `{ once: true }` fjerner lytteren etter første kall, og
@@ -216,7 +231,7 @@ function mockWorker(
   };
   return {
     postMessage(message) {
-      const response = resultFor(message.memberIndex);
+      const response = intercept?.(message) ?? resultFor(message.memberIndex);
       queueMicrotask(() => {
         const set = listeners.get("message");
         if (!set) return;
@@ -263,6 +278,56 @@ function job(memberIndex: number, isControl: boolean): MemberJob {
   };
 }
 
+describe("verste-først-orakelet (D10.5)", () => {
+  it("worstFirstOrder: ugjennomførbare først, så tregeste, så uten svar — deterministisk", () => {
+    const jobs = [1, 2, 3, 4, 5].map((i) => job(i, false));
+    const verdicts = new Map<number, OracleVerdict | null>([
+      [1, { memberIndex: 1, feasible: true, durationS: 40_000 }],
+      [2, { memberIndex: 2, feasible: false, durationS: 10_000 }],
+      [3, null],
+      [4, { memberIndex: 4, feasible: true, durationS: 50_000 }],
+      [5, { memberIndex: 5, feasible: false, durationS: 20_000 }],
+    ]);
+    const ordered = worstFirstOrder(jobs, verdicts);
+    expect(ordered.map((j) => j.memberIndex)).toEqual([2, 5, 4, 1, 3]);
+    expect(ordered.map((j) => j.oracleRank)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it("runEnsemble med worstFirst søker i orakelets rekkefølge og gir samme sammendrag som uten", async () => {
+    const searchOrder: number[] = [];
+    const durations = new Map<number, number>([
+      [1, 40_000],
+      [2, 50_000],
+      [3, 30_000],
+    ]);
+    const factory = (): WorkerLike =>
+      mockWorker((memberIndex) => ({
+        type: "plan-route-member-result",
+        memberIndex,
+        isControl: memberIndex === 0,
+        result: fakeResult({ reachesDestination: true, weatherCoverage: "full", steps: 3 }),
+      }), undefined, (message) => {
+        if (message.type === "evaluate-control") {
+          return {
+            type: "evaluate-control-result",
+            memberIndex: message.memberIndex,
+            feasible: message.memberIndex !== 3,
+            durationS: durations.get(message.memberIndex) ?? 0,
+          };
+        }
+        searchOrder.push(message.memberIndex);
+        return undefined;
+      });
+    const jobs = [job(0, true), job(1, false), job(2, false), job(3, false)];
+    const withOracle = await runEnsemble(jobs, 1, factory, {}, { worstFirst: true });
+    // 3 er ugjennomførbar i kontrollruten ⇒ først; så 2 (50 000 s) før 1 (40 000 s).
+    expect(searchOrder).toEqual([0, 3, 2, 1]);
+    expect(withOracle.outcomes.find((o) => o.memberIndex === 3)?.oracleRank).toBe(0);
+    const without = await runEnsemble(jobs, 1, factory, {});
+    expect(withOracle.summary).toEqual(without.summary);
+  });
+});
+
 describe("runEnsemble", () => {
   it("delt A*-felt: kontrollens fieldData går videre til alle medlemsjobber (robusthet.md §4.1)", async () => {
     const sharedField = {
@@ -281,7 +346,7 @@ describe("runEnsemble", () => {
       return {
         ...base,
         postMessage(message, transfer) {
-          seen.set(message.memberIndex, message.sharedField);
+          seen.set(message.memberIndex, message.type === "plan-route-member" ? message.sharedField : undefined);
           base.postMessage(message, transfer);
         },
       };

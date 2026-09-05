@@ -54,6 +54,7 @@ import type {
   IsochroneSnapshot,
   RouteProvenance,
   RouteResult,
+  TubBoundSource,
 } from "./result.js";
 import type { Tack } from "./tack.js";
 import { tackOf, tackPenaltyS } from "./tack.js";
@@ -85,6 +86,29 @@ export interface RouteInput {
    * Gis aldri til R2/bail-out-søk.
    */
   readonly tubBoundS?: number | undefined;
+  /**
+   * **Slår av Tub-bound-beskjæringen helt** (D9.2 b-full, robusthet.md §7).
+   *
+   * Dette er omkjøringsveien §4.1s ventil trenger: terminerer et medlem uten
+   * `safety.reachesDestination` mens `diagnostics.pruned.bound > 0`, er det
+   * ikke bevist ugjennomførbart, og medlemmet skal kjøres om **uten** bound
+   * før det klassifiseres. Fram til nå fantes ingen slik bryter for motorens
+   * *egen* bound — bare `exactMode`, som i tillegg slår av etikett-takene og
+   * stagnasjonsvakten og dermed endrer helt andre ting enn beskjæringen.
+   *
+   * Med `noTubBound: true`:
+   *  - den grådige forhåndsruten kjøres ikke, ingen bound settes,
+   *  - `diagnostics.tubBoundS === null` og `diagnostics.pruned.bound === 0`,
+   *  - `diagnostics.termination.boundSource === null` — som er det
+   *    `exhausted` trenger for å være et *positivt* sertifikat for
+   *    ugjennomførbarhet,
+   *  - **etikett-tak og stagnasjonsvakt står som før.** Omkjøringen er
+   *    «samme søk uten bound», ikke et referansesøk.
+   *
+   * Kombinert med `tubBoundS` er det en motstridende bestilling (slå av og
+   * oppgi den samme bounden) og kaster — vi overstyrer ikke stille.
+   */
+  readonly noTubBound?: boolean | undefined;
   readonly options?: Partial<RouteOptions> | undefined;
 }
 
@@ -122,6 +146,24 @@ interface PrunedCounters {
   outsideDomain: number;
 }
 
+/**
+ * Klaringscache per celle: **hvor** tallet ble målt, ikke bare verdien — se
+ * `clearanceAt` for hvorfor posisjonen er nødvendig for at cachen skal være
+ * en gyldig nedre skranke.
+ *
+ * Søket og den grådige Tub-forhåndsruten (§5.5) har **hver sin** cache. Et
+ * cachet tall er en gyldig, men mulig svakere, nedre skranke enn et ferskt
+ * oppslag i punktet, så en cache varmet opp av forhåndsruten kunne endret
+ * hvilke korder søkets Lipschitz-gate klarer å sertifisere uten bisection.
+ * Det ville gjort forhåndsruten til en usynlig input til søket. Prisen er
+ * noen titalls ekstra `clearanceNm`-kall; gevinsten er at forhåndsruten
+ * beviselig ikke kan flytte en eneste rute.
+ */
+type ClearanceCache = Map<
+  number,
+  { readonly lat: number; readonly lon: number; readonly valueNm: number }
+>;
+
 /** Øker både totalen og den navngitte delkategorien i ett kall. */
 function bumpHardConstraint(
   pruned: PrunedCounters,
@@ -153,6 +195,13 @@ class RouteSearch implements Search {
   private fieldUsed = false;
   private vmaxKn = 0;
   private tubBoundS: number | null = null;
+  /**
+   * Hvor bounden kom fra — **kilde, ikke bruk** (D9.2 b-full). `"own"` står
+   * også når `exactMode` gjør at bounden aldri beskjærer; om den faktisk
+   * beskar sier `pruned.bound`. Sertifikatregelen i §5.13 krever `null`, og
+   * er dermed konservativ i den retningen som ikke kan lyve.
+   */
+  private boundSource: TubBoundSource = null;
 
   private frontier: number[] = [];
   private iterations = 0;
@@ -162,15 +211,8 @@ class RouteSearch implements Search {
   private lastSnapshotHours = 0;
   private readonly reachedIndices: number[] = [];
   private readonly isochrones: IsochroneSnapshot[] = [];
-  /**
-   * Klaringscache per celle. Lagrer **hvor** tallet ble målt, ikke bare
-   * verdien — se `clearanceAt` for hvorfor det er nødvendig for at cachen skal
-   * være en gyldig nedre skranke.
-   */
-  private readonly clearanceCache = new Map<
-    number,
-    { readonly lat: number; readonly lon: number; readonly valueNm: number }
-  >();
+  /** Søkets egen klaringscache. Se `ClearanceCache` og `clearanceAt`. */
+  private readonly clearanceCache: ClearanceCache = new Map();
   /** `maxNm` alle klaringsoppslag i søket gjøres med. Se `computeClearanceCap`. */
   private clearanceCapNm = 0;
   private readonly clearanceStats: CorridorStats = createCorridorStats();
@@ -201,6 +243,13 @@ class RouteSearch implements Search {
   };
 
   constructor(input: RouteInput, provenance: RouteProvenance) {
+    if (input.noTubBound === true && input.tubBoundS !== undefined) {
+      throw new Error(
+        "noTubBound=true sammen med tubBoundS er en motstridende bestilling: " +
+          "den ene slår av Tub-beskjæringen, den andre oppgir bounden som " +
+          "skal beskjære. Ingen av dem overstyres stille (D9.2)",
+      );
+    }
     this.provenance = provenance;
     this.input = input;
     this.opts = withDefaults(input.options ?? {});
@@ -373,15 +422,17 @@ class RouteSearch implements Search {
     cellKey: number,
     point: LatLon,
     sufficientNm: number,
+    cache: ClearanceCache,
+    stats: CorridorStats,
   ): number {
-    const cached = this.clearanceCache.get(cellKey);
+    const cached = cache.get(cellKey);
     if (cached !== undefined) {
       const bound = cached.valueNm - haversineNm(cached, point);
       if (bound >= sufficientNm) return bound;
     }
     const valueNm = mask.clearanceNm(point.lat, point.lon, this.clearanceCapNm);
-    this.clearanceStats.clearanceCalls++;
-    this.clearanceCache.set(cellKey, {
+    stats.clearanceCalls++;
+    cache.set(cellKey, {
       lat: point.lat,
       lon: point.lon,
       valueNm,
@@ -393,17 +444,50 @@ class RouteSearch implements Search {
    * Øvre tidsgrense fra en grådig forhåndsrute mot feltets gradient
    * (15°-kursoppløsning, som v1), eller mottatt ferdig fra kalleren — delt
    * bound på tvers av ensemble-medlemmer.
+   *
+   * **Skrankekomplett fra 2026-09-05 (D9.3).** Bounden er bare gyldig hvis
+   * den grådige ruten selv er en **lovlig** rute: er den ulovlig, er tiden
+   * dens ikke en øvre skranke for det skrankede optimum, og beskjæringen i
+   * §5.3 steg 10 kan kutte den beste lovlige ruten. Panelets matematiker
+   * fant at forhåndsruten sjekket vær, harde båtgrenser, maske og TSS — men
+   * ikke klaringskorridoren (R3) og ikke dagslyskravet. Begge er nå med, med
+   * **nøyaktig samme kall** som søket bruker (`checkClearanceCorridor`,
+   * `daylightArrival`); ett sted å endre semantikken, ikke to.
+   *
+   * Retningen er trygg: flere avviste kandidater ⇒ oftere ingen bound
+   * (`tubBoundS = null`) ⇒ mindre beskjæring, aldri mer.
+   *
+   * Mellomliggende **veipunkter** er den tredje skranken panelet nevnte.
+   * `RouteInput` har ingen: en tur med veipunkter kjøres som flere søk
+   * etter hverandre, og hvert delsøk har start og mål som endepunkter.
+   * Punktet er dermed uten innhold i v2.0 og noteres her i stedet for å
+   * kodes.
    */
   private computeTubBound(): void {
+    // D9.2 b-full: eksplisitt av. Ingen bound, ingen kilde, ingen
+    // beskjæring — men etikett-tak og stagnasjonsvakt står.
+    if (this.input.noTubBound === true) return;
     if (this.input.tubBoundS !== undefined) {
       this.tubBoundS = this.input.tubBoundS;
+      this.boundSource = "shared";
       return;
     }
     const field = this.field;
     if (field === undefined) return;
 
     const { start, dest, boat, departEpochS, mask } = this.input;
+    const opts = this.opts;
+    // Egen cache og egne tellere: forhåndsruten skal ikke kunne påvirke
+    // søkets korridorsjekk (se `ClearanceCache`) og heller ikke blande seg
+    // inn i `diagnostics.clearance`, som måler søket.
+    const cache: ClearanceCache = new Map();
+    const stats = createCorridorStats();
+    const useClearance = mask !== undefined && opts.minOffingNm > 0;
+
     let pos: LatLon = { lat: start.lat, lon: start.lon };
+    let posClearanceNm = useClearance
+      ? mask.clearanceNm(start.lat, start.lon, this.clearanceCapNm)
+      : Number.POSITIVE_INFINITY;
     let tS = 0;
     let headingDeg: number | null = null;
 
@@ -416,16 +500,59 @@ class RouteSearch implements Search {
       if (dHere === undefined) return;
 
       let best:
-        | { next: LatLon; tS: number; headingDeg: number; gain: number }
+        | {
+            next: LatLon;
+            tS: number;
+            headingDeg: number;
+            gain: number;
+            clearanceNm: number;
+          }
         | undefined;
       for (let h = 0; h < 360; h += 15) {
-        const kin = stepKinematics(pos, h, env, boat, this.opts.timeStepS);
+        const kin = stepKinematics(pos, h, env, boat, opts.timeStepS);
         if (kin === undefined) continue;
-        const dNext = field.atOrNear(kin.next.lat, kin.next.lon);
+        const next = kin.next;
+        const dNext = field.atOrNear(next.lat, next.lon);
         if (dNext === undefined) continue;
+        // Samme rekkefølge som §5.3: domene, klaring, segment, TSS, dagslys.
+        const cellKey = this.grid.keyOf(next.lat, next.lon);
+        if (cellKey === undefined) continue;
+
+        let clearanceNm = Number.POSITIVE_INFINITY;
+        if (useClearance) {
+          const hsM = env.waves?.hsM;
+          const requiredNm = requiredClearanceNm(
+            opts.minOffingNm,
+            hsM,
+            opts.seaStateOffingNmPerM,
+          );
+          const corridor = checkClearanceCorridor({
+            mask,
+            from: pos,
+            to: next,
+            fromClearanceNm: posClearanceNm,
+            toClearanceNm: this.clearanceAt(
+              mask,
+              cellKey,
+              next,
+              requiredNm + kin.distanceNm / 2,
+              cache,
+              stats,
+            ),
+            chordNm: kin.distanceNm,
+            hsM,
+            ends: { start, dest },
+            params: opts,
+            queryCapNm: this.clearanceCapNm,
+            stats,
+          });
+          if (!corridor.check.ok) continue;
+          clearanceNm = corridor.toClearanceNm;
+        }
+
         if (
-          !checkSegment(mask, pos, kin.next).ok ||
-          !checkTssStep(mask, pos, kin.next, this.opts.tssParams).check.ok
+          !checkSegment(mask, pos, next).ok ||
+          !checkTssStep(mask, pos, next, opts.tssParams).check.ok
         ) {
           continue;
         }
@@ -435,27 +562,34 @@ class RouteSearch implements Search {
             : tackPenaltyS(
                 headingDeg,
                 h,
-                tackOf(headingDeg, env.wind.fromDeg, this.opts.beatTwaDeg),
-                tackOf(h, env.wind.fromDeg, this.opts.beatTwaDeg),
+                tackOf(headingDeg, env.wind.fromDeg, opts.beatTwaDeg),
+                tackOf(h, env.wind.fromDeg, opts.beatTwaDeg),
                 env.wind.speedKn,
-                this.opts.tackParams,
+                opts.tackParams,
               );
+        const nextTS = tS + opts.timeStepS + penaltyS;
+        // Dagslyskravet gjelder ankomsten, og måles — som i §5.3 steg 16 —
+        // på kandidaten som faktisk er innenfor `reachRadius` av målet.
+        if (
+          opts.requireDaylightArrival &&
+          haversineNm(next, dest) < this.reachRadiusNm &&
+          !daylightArrival(dest.lat, dest.lon, departEpochS + nextTS).isDaylight
+        ) {
+          continue;
+        }
         const gain = dHere - dNext;
         if (best === undefined || gain > best.gain) {
-          best = {
-            next: kin.next,
-            tS: tS + this.opts.timeStepS + penaltyS,
-            headingDeg: h,
-            gain,
-          };
+          best = { next, tS: nextTS, headingDeg: h, gain, clearanceNm };
         }
       }
       if (best === undefined || best.gain <= 0.01) return;
       pos = best.next;
+      posClearanceNm = best.clearanceNm;
       tS = best.tS;
       headingDeg = best.headingDeg;
       if (haversineNm(pos, dest) < this.reachRadiusNm) {
         this.tubBoundS = tS;
+        this.boundSource = "own";
         return;
       }
     }
@@ -785,6 +919,8 @@ class RouteSearch implements Search {
         cellKey,
         next,
         requiredNm + kin.distanceNm / 2,
+        this.clearanceCache,
+        this.clearanceStats,
       );
       const corridor = checkClearanceCorridor({
         mask,
@@ -925,6 +1061,7 @@ class RouteSearch implements Search {
       fieldUsed: this.fieldUsed,
       fieldCells: this.field?.cellCount ?? 0,
       tubBoundS: this.tubBoundS,
+      boundSource: this.boundSource,
       vmaxKn: this.vmaxKn,
       iterations: this.iterations,
       peakActiveLabels: this.peakActiveLabels,

@@ -9,4 +9,8 @@
  * (D8.8).
  */
 export * from "./outcome.js";
+export * from "./estimators.js";
+export * from "./traffic-light.js";
 export * from "./summary.js";
+export * from "./ranking.js";
+export * from "./rerun.js";
