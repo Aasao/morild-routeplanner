@@ -29,3 +29,19 @@ jobs:
 
       - name: Arkitekturgrense-tester
         run: pnpm test:arch
+
+  # Skademålingen (robusthet.md §5.3, D9.5): egen jobb så den ikke forsinker
+  # check-jobben — ~5 min med 122 fulle søk.
+  damage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Aktiver pnpm via corepack
+        run: corepack enable
+      - name: Installer avhengigheter
+        run: pnpm install --frozen-lockfile
+      - name: Skademåling (delt Tub / delt felt, null flipp)
+        run: pnpm test:damage

@@ -17,6 +17,24 @@ export type ProvenancedRouteResult = RouteResult;
 /** Medlemmets utfall etter klassifiseringstabellen i §3.2. */
 export type OutcomeKind = "feasible" | "infeasible" | "inconclusive" | "error";
 
+/**
+ * Hvorfor et medlem er inkonklusivt (D9.2 b-min, vedtatt 2026-09-05):
+ * `dekning` = værfeltet tok slutt eller manglet i avgangspunktet (ADR-0005
+ * horisont); `budsjett` = søket stoppet på stagnasjonsvakt eller ble
+ * avbrutt av kalleren — ingen av delene er bevis på ugjennomførbarhet;
+ * `bound` = reservert for bølge 3s ensemble-budsjett (omkjøring ikke
+ * rukket). Ingen av grunnene teller i `feasibleShare`-nevneren.
+ */
+export type InconclusiveReason = "dekning" | "budsjett" | "bound";
+
+export type MemberClassification =
+  | { readonly kind: "feasible" }
+  | { readonly kind: "infeasible" }
+  | { readonly kind: "inconclusive"; readonly reason: InconclusiveReason }
+  | { readonly kind: "error" }
+  /** §4.1-ventilen: ikke klassifiserbar før søket er kjørt om uten bound (maks én gang, D9.4). */
+  | { readonly kind: "rerun-without-bound" };
+
 export interface MemberSummary {
   readonly durationS: number;
   readonly distanceNm: number;
@@ -33,6 +51,13 @@ export interface MemberSummary {
   readonly coverageWeather: "full" | "partial";
   /** For §4.1-ventilen: `pruned.bound > 0 && !reachesDestination` ⇒ ikke bevist ugjennomførbart. */
   readonly prunedBound: number;
+  /**
+   * Søkets egen tidshorisont (motorens Tub-bound i sekunder, `null` når
+   * den grådige forhåndsruten ikke nådde målet). Rapporteres som
+   * *horisont*, ikke som sertifikat — den grådige ruten er ikke
+   * skrankekomplett (D9.3). Alltid med i kvitteringen (D9.2).
+   */
+  readonly tubBoundS: number | null;
   /** Posisjon per hele time fra avgang, for viften og D8.5. Maks 48 punkter. */
   readonly hourlyTrack: readonly LatLon[];
 }
@@ -47,6 +72,8 @@ export interface MemberOutcome {
   readonly full?: RouteResult;
   /** Kun satt når `kind === "error"`. */
   readonly error?: string;
+  /** Kun satt når `kind === "inconclusive"`. */
+  readonly inconclusiveReason?: InconclusiveReason | undefined;
 }
 
 const VALID_PROVENANCE: ReadonlySet<string> = new Set(["planRoute", "createSearch"]);
@@ -131,6 +158,7 @@ export function summarizeMember(result: RouteResult): MemberSummary {
     safetyVerdict: result.safety.verdict,
     coverageWeather: result.coverage.weather,
     prunedBound: result.diagnostics.pruned.bound,
+    tubBoundS: result.diagnostics.tubBoundS,
     hourlyTrack: hourlyTrackFromSteps(result.steps),
   };
 }
@@ -139,7 +167,12 @@ const ERROR_ABORT_REASONS: ReadonlySet<AbortReason> = new Set([
   "labelCap",
   "iterationCap",
   "noExpandableLabels",
+  // Start utenfor maske-/feltdomenet: et verktøysvar, ikke et værsvar (D9.2).
+  "outsideDomain",
 ]);
+
+/** Søket ga opp av budsjettgrunner — ikke bevis på ugjennomførbarhet (D9.2 b-min). */
+const BUDGET_ABORT_REASONS: ReadonlySet<AbortReason> = new Set(["stagnation", "callerStopped"]);
 
 /**
  * Klassifiserer et medlem etter tabellen i §3.2 (rekkefølgen er bindende).
@@ -152,7 +185,7 @@ const ERROR_ABORT_REASONS: ReadonlySet<AbortReason> = new Set([
  * kan klassifiseres endelig.
  *
  * **Rekkefølge (presisert 2026-09-04 etter skademålingen i
- * `packages/routing/src/shared-tub-damage.test.ts`):** inconclusive →
+ * `packages/routing/src/shared-tub.damage.test.ts`):** inconclusive →
  * ventil → error → feasible → infeasible. Ventilen står FØR `error`: en
  * for stram bound kan beskjære hele fronten, og søket dør da av
  * `noExpandableLabels` — tabellen bokstavelig lest ville stemplet det som
@@ -162,30 +195,39 @@ const ERROR_ABORT_REASONS: ReadonlySet<AbortReason> = new Set([
  * bound, og en omkjøring ville bare gjenta det. Presisering til
  * robusthet.md §3.2 (D9.2) — se spec-ens §7.
  */
-export function classifyMember(
-  result: RouteResult,
-): { readonly kind: OutcomeKind } | { readonly kind: "rerun-without-bound" } {
+export function classifyMember(result: RouteResult): MemberClassification {
   assertProvenance(result);
+  const reached = result.safety.reachesDestination;
 
-  if (result.coverage.weather === "partial" && !result.safety.reachesDestination) {
-    return { kind: "inconclusive" };
+  // Datahorisont: feltet tok slutt underveis, eller manglet allerede i
+  // avgangspunktet (`noWeatherAtStart` settes før `environmentAt` kalles,
+  // så `coverage.weather` er da fortsatt "full" — D9.2).
+  if (!reached && (result.coverage.weather === "partial" || result.abortReason === "noWeatherAtStart")) {
+    return { kind: "inconclusive", reason: "dekning" };
   }
 
-  if (result.diagnostics.pruned.bound > 0 && !result.safety.reachesDestination) {
+  if (!reached && result.diagnostics.pruned.bound > 0) {
     return { kind: "rerun-without-bound" };
   }
 
-  if (
-    result.abortReason !== null &&
-    ERROR_ABORT_REASONS.has(result.abortReason) &&
-    !result.safety.reachesDestination
-  ) {
+  if (!reached && result.abortReason !== null && ERROR_ABORT_REASONS.has(result.abortReason)) {
     return { kind: "error" };
   }
 
-  if (result.safety.reachesDestination) {
+  // Regnebudsjett: stagnasjonsvakt eller avbrudd fra kalleren. Var
+  // «infeasible» før D9.2 — et budsjettstopp beviser ikke at ingen vei
+  // finnes, og skal ikke inn i nevneren som «været sier nei».
+  if (!reached && result.abortReason !== null && BUDGET_ABORT_REASONS.has(result.abortReason)) {
+    return { kind: "inconclusive", reason: "budsjett" };
+  }
+
+  if (reached) {
     return { kind: "feasible" };
   }
 
+  // Gjenstår: ikke nådd, full dekning, ingen beskjæring, ingen budsjett-/
+  // verktøystopp. Inntil bølge 3s `diagnostics.termination` gir et positivt
+  // sertifikat («uttømt uten tak, uten bound, full dekning»), er dette
+  // det eneste som får bli `infeasible`.
   return { kind: "infeasible" };
 }

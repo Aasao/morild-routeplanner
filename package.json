@@ -11,6 +11,7 @@
     "check": "tsc -b && eslint .",
     "test": "vitest run",
     "test:arch": "vitest run tools/arch-tests",
+    "test:damage": "vitest run --config vitest.damage.config.ts",
     "test:golden": "pnpm --filter @morild/routing test:golden",
     "dev": "concurrently -n worker,pwa -c blue,green \"pnpm --filter @morild/worker dev\" \"pnpm --filter @morild/pwa dev\""
   },

@@ -16,10 +16,16 @@ stopp ikke ved første feil — alle tre skal rapporteres:
 1. `pnpm check` (tsc -b strict + eslint)
 2. `pnpm test` — eller `pnpm vitest run $ARGUMENTS` hvis et filter er gitt
 3. `pnpm test:arch` (arkitekturgrensene for packages/geo og packages/routing)
+4. **Betinget:** `pnpm test:damage` (skademålingen, robusthet.md §5.3,
+   ~5 min) — kun hvis `git diff --name-only HEAD` (pluss untracked) treffer
+   `packages/routing/src/search.ts`, `expand.ts`, `distance-field.ts`,
+   `cost.ts` eller noe under `packages/robustness/`. Ellers rapporter
+   `damage: hoppet over (ingen berørte filer)`.
 
 Rapportformat (norsk, kompakt):
 
-- Én linje per steg: `check: rent` / `test: 788 grønt` / `arch: grønt`,
+- Én linje per steg: `check: rent` / `test: 788 grønt` / `arch: grønt` /
+  `damage: grønt` eller `hoppet over`,
   eller ved feil: fil:linje, feilmelding og testnavn. Ta med nok kontekst
   (forventet vs. faktisk) til at hovedsesjonen kan fikse uten å kjøre selv.
 - Antall grønne tester og «check rent/ikke rent» skal stå eksplisitt —

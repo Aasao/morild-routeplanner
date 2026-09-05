@@ -51,7 +51,7 @@ ble avvist for, uten Tub.
 **Rekkefølgen: GODKJENN.** Krav: `infeasible` skal være det eneste
 utfallet som krever et *positivt* sertifikat — i dag har det ingen.
 
-Votering: D9.1 (a) GODKJENN (behold `shared-tub-damage.test.ts` som
+Votering: D9.1 (a) GODKJENN (behold `shared-tub.damage.test.ts` som
 regresjonsvakt); (b) AVVIS; (c) AVVIS. D9.2 (a) **AVVIS** (stagnation ⇒
 falsk infeasible); (b) **GODKJENN, ENDRET**: ingen ny bryter trengs —
 `tubBoundS: +∞` gir null bound-pruning i dag; innfør eksplisitt opsjon

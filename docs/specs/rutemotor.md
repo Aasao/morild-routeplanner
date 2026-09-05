@@ -961,7 +961,7 @@ Regel 10 sier «så nær rett vinkel som praktisk mulig», ikke en tallgrense.
   `safety.reachesDestination` mens `diagnostics.pruned.bound > 0` er ikke
   bevist ugjennomførbart, og kalleren skal kjøre det om uten bound før det
   klassifiseres. Tub gis aldri til R2/bail-out-søk. Skademålingen som
-  betingelsen for å slå den på ligger i `shared-tub-damage.test.ts`.
+  betingelsen for å slå den på ligger i `shared-tub.damage.test.ts`.
 - Er start utilgjengelig i feltet (`atNear(start) === undefined`), slås feltet
   **av** for kjøringen (v1-adferd), `coverage.fieldUsed = false`, og både
   blindvei-pruning og Tub-bound bortfaller. Det er en ærlig degradering med
@@ -1423,7 +1423,7 @@ vet):
 | Retningskonvensjoner | Vind FRA / strøm MOT / bølge FRA (F2.5) — eksplisitte tester med håndregnede tilfeller |
 | `provenance` (§4.8) | `planRoute` ⇒ `"planRoute"`; `createSearch` ⇒ `"createSearch"` også i `snapshot()`; `buildResult` med håndbygget kontekst ⇒ `"buildResult"`; de to inngangene gir ellers bit-identisk resultat (`shared-field.test.ts`, `reconstruct.test.ts`) |
 | Delt A\*-felt (§5.5) | `buildFieldForInput` gir samme felt som `setUpField`; bit-identisk `RouteResult` med felt, uten felt og etter `DistanceFieldData`-overføringen (structured clone), på alle golden-scenarier; feltet er uendret etter bruk og kan deles av flere søk (`shared-field.test.ts`) |
-| Delt Tub (§5.5, robusthet.md §5.3) | Forhåndsregistrert skademåling: S-3 og S-7, 30 medlemmer, med og uten kontrollens `tubBoundS` ⇒ null klassifiseringsflipp og bit-identiske sammendrag; redningsveien beviselig utløsbar og gir baseline tilbake bit-identisk (`shared-tub-damage.test.ts`) |
+| Delt Tub (§5.5, robusthet.md §5.3) | Forhåndsregistrert skademåling: S-3 og S-7, 30 medlemmer, med og uten kontrollens `tubBoundS` ⇒ null klassifiseringsflipp og bit-identiske sammendrag; redningsveien beviselig utløsbar og gir baseline tilbake bit-identisk (`shared-tub.damage.test.ts`) |
 | `backoffS` (§5.12) | `min(Δt, 1800 s)` for alle tidssteg; ett steg tilbake på uniforme steg; hopper over delsteg kortere enn backoffen; aldri før avgang. R2-re-søket har verken `tubBoundS` eller `field`, og ingen opsjonskanal kan bære dem (`bailout.test.ts`) |
 
 ### 8.2 Golden-route-harness (`pnpm test:golden`)
@@ -1602,7 +1602,7 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
     alltid ≥ backoffen). Samme seksjon fastholder at R2-re-søket aldri får
     delt Tub eller delt felt (`r2SearchInput`, robusthet.md §5.1).
   - **Skademåling av delt Tub (robusthet.md §5.3, forhåndsregistrert)** kjørt
-    i `shared-tub-damage.test.ts`: S-3 og S-7, 30 medlemmer hver, med og uten
+    i `shared-tub.damage.test.ts`: S-3 og S-7, 30 medlemmer hver, med og uten
     kontrollens `tubBoundS`. **Null klassifiseringsflipp, bit-identiske
     sammendrag** — ventilen holder. Men bounden kjøpte **ingenting**: 0,0 %
     spart på iterasjoner og 0,2 % / −0,0 % på etiketter i første pass, og med

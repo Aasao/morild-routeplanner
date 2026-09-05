@@ -46,6 +46,7 @@ function makeSummary(overrides: Partial<MemberSummary> = {}): MemberSummary {
     safetyVerdict: "trygt",
     coverageWeather: "full",
     prunedBound: 0,
+    tubBoundS: null,
     hourlyTrack: [],
     ...overrides,
   };

@@ -121,14 +121,32 @@ Klassifisering (`classifyMember`, ren funksjon, erstatter dagens i
 
 | Vilkår | kind |
 |---|---|
-| `coverage.weather === "partial"` og ikke `safety.reachesDestination` | `inconclusive` (ADR-0005) |
-| `pruned.bound > 0` og ikke `reachesDestination` | **ikke klassifiserbar** — søket kjøres om uten bound (§4.1) |
-| kastet/`abortReason` ∈ {labelCap, iterationCap, noExpandableLabels} uten mål | `error` |
+| `coverage.weather === "partial"` **eller** `abortReason === "noWeatherAtStart"`, og ikke `safety.reachesDestination` | `inconclusive`, grunn `dekning` (ADR-0005) |
+| `pruned.bound > 0` og ikke `reachesDestination` | **ikke klassifiserbar** — søket kjøres om uten bound (§4.1), maks én gang per medlem (D9.4) |
+| kastet/`abortReason` ∈ {labelCap, iterationCap, noExpandableLabels, outsideDomain} uten mål | `error` |
+| `abortReason` ∈ {stagnation, callerStopped} uten mål | `inconclusive`, grunn `budsjett` (D9.2) |
 | `safety.reachesDestination === true` | `feasible` |
 | ellers | `infeasible` |
 
-*Rekkefølgen presisert 2026-09-04 (bølge 1, D9.2):* ventilen står **før**
-`error`. Skademålingen (`packages/routing/src/shared-tub-damage.test.ts`)
+`MemberOutcome.inconclusiveReason: "dekning" | "budsjett" | "bound"`
+(`bound` reservert for bølge 3s ensemble-budsjett). `MemberSummary`
+bærer alltid `prunedBound` og `tubBoundS` (motorens egen horisont, `null`
+når den grådige forhåndsruten ikke nådde målet) — rapportert som
+*horisont*, ikke sertifikat (D9.3). Testvakt: intet medlem klassifiseres
+`infeasible` med `pruned.bound > 0`.
+
+**Konsekvens for nevneren (bølge 3-avhengighet):** etter D9.2 er
+`infeasible` nåbar kun via «ikke nådd, full dekning, ingen beskjæring,
+ingen budsjett-/verktøystopp» — som motoren i praksis ikke produserer
+(uttømt søk ender som `noExpandableLabels` ⇒ `error`). Inntil
+`diagnostics.termination` (D9.2 b-full) gjør «uttømt uten tak, uten
+bound, full dekning» til et positivt sertifikat for `infeasible`, må
+trafikklyset (§4.2.3) vise «usikkert grunnlag» + antall avklarte i
+stedet for andel når `nInc + nErr > 1/3` — nevneren kan ikke tolkes som
+«andel gjennomførbare» før sertifikatet finnes.
+
+*Rekkefølgen presisert 2026-09-04 (bølge 1) og D9.2 vedtatt 2026-09-05:* ventilen står **før**
+`error`. Skademålingen (`packages/routing/src/shared-tub.damage.test.ts`)
 viste at en for stram bound kan beskjære hele fronten slik at søket dør av
 `noExpandableLabels` — tabellen bokstavelig lest ville stemplet det
 «beregningen feilet» der bounden kuttet ruten. Omkjøring er den eneste
@@ -136,9 +154,10 @@ retningen som aldri lyver. `inconclusive` står likevel først: tok
 værfeltet slutt, er svaret «ikke bevist» uansett bound. **Åpent (D9.2):**
 motorens *egen* Tub (ADR-0004, alltid på utenfor `exactMode`) treffer
 samme vilkår — i S-7 hadde 8 av 30 medlemmer `pruned.bound > 0` uten mål
-også uten delt Tub, og motoren har ingen «ingen Tub»-bryter. Til Magnus'
-vedtak er ventilen bare meningsfull for en *delt* bound; med D9.1 (a) er
-den i praksis død kode som beholdes som strukturell garanti.
+også uten delt Tub, og motoren har ingen «ingen Tub»-bryter. **Vedtak
+D9.2 (b-min):** ventilen er generisk (gjelder også motorens egen Tub);
+`noTubBound`-opsjon, uttømmende `abortReason`-test og
+`diagnostics.termination` kommer i bølge 3 (b-full).
 
 Et `feasible`-medlem kan ha `safetyVerdict !== "trygt"`; det påvirker
 ikke tellingen, men bæres videre til presentasjonen som flagg.
@@ -572,7 +591,7 @@ havnetetthet før per-medlem-bail-out vurderes.
 lyttere per jobb med `{ once: true }` + lekkasjetest; kontroll-workeren
 bygger feltet med `buildFieldForInput` og sender `DistanceFieldData` til
 medlemmene). **Spak 3 er målt og forkastet som ytelsestiltak** — den
-forhåndsregistrerte skademålingen (§5.3, `shared-tub-damage.test.ts`):
+forhåndsregistrerte skademålingen (§5.3, `shared-tub.damage.test.ts`):
 
 | | S-3 | S-7 |
 |---|---|---|
@@ -684,7 +703,10 @@ P(< 60 s for én avgang på nettbrett etter spak 1–6) under 30 %. Spec-en
 er skrevet slik at produktet er ærlig uansett utfall, men bølge 2 kan
 ende med at F3.5 må revideres hardere enn D8.13.
 
-**Bølge 1-funn (2026-09-05) — beslutningspunkter D9.1–D9.5, til Magnus.**
+**Bølge 1-funn (2026-09-05) — beslutningspunkter D9.1–D9.5. Vedtatt av
+Magnus 2026-09-05 som anbefalt («anbefalinger besluttet»): D9.1 (a),
+D9.2 (b-min) nå + (b-full) bølge 3, D9.3 (a) i bølge 3 med (b) først,
+D9.4 (a), D9.5 (a).**
 Panel: `docs/research/ekspertpanel-d9-delt-tub-2026-09-05.md` (to runder +
 tilsvar; grunnlag i `beslutningsgrunnlag-d9-delt-tub-2026-09-05.md`).
 
@@ -756,5 +778,11 @@ matematiker «vakt beholdes» (oppfylt av (a)).
   i routing (rutemotor.md), `packages/robustness`-skjelett, arkitekturtest
   D8.8, once-fiks + delt felt i PWA. §3.2-rekkefølge presisert (ventil
   før error). §6.3: skademålingens tall, spak 3 forkastet som
-  ytelsestiltak. Beslutningspunkter D9.1–D9.5 (§7) etter panel — venter
-  Magnus.
+  ytelsestiltak. Beslutningspunkter D9.1–D9.5 (§7) etter panel.
+- 2026-09-05: **D9.1–D9.5 vedtatt** som anbefalt. Gjennomført samme dag:
+  §3.2-tabellen revidert (stagnation/callerStopped ⇒ inconclusive
+  «budsjett», noWeatherAtStart ⇒ inconclusive «dekning», outsideDomain ⇒
+  error; `inconclusiveReason`, `tubBoundS` i `MemberSummary`; testvakt
+  mot infeasible m/beskjæring); skademålingen flyttet til
+  `pnpm test:damage` (egen CI-jobb, betinget i `/qa`). Bølge 3 arver
+  D9.2 (b-full), D9.3 (a) etter måling, D9.4 ensemble-budsjett.

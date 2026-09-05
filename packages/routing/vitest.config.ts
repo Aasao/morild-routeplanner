@@ -13,7 +13,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["src/**/*.test.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**"],
+    // Skademålingen (`*.damage.test.ts`) kjøres kun via `pnpm test:damage` (D9.5).
+    exclude: ["**/node_modules/**", "**/dist/**", "**/*.damage.test.ts"],
     // Golden-, ytelses- og egenskapstestene kjører hele ruter og er tregere
     // enn vitests standard på 5 s. Grensen her er en sikkerhetsventil mot
     // hengende kjøringer, ikke et ytelsesbudsjett — det ligger i perf.test.ts.

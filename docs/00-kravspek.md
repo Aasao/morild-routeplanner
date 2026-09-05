@@ -304,6 +304,19 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-05 (D9.1–D9.5, Magnus, etter /panel — se
+  `docs/research/ekspertpanel-d9-delt-tub-2026-09-05.md` og
+  `docs/specs/robusthet.md` §7):** delt Tub-bound mellom ensemblemedlemmer
+  forkastet etter skademåling (0 % spart, netto tap; D9.1) — F3.5s «delt
+  Tub kun soft» er dermed avløst av «delt A*-felt, ingen delt Tub».
+  F4.2-klassifisering skjerpet: budsjettstopp (stagnasjon/avbrudd) og
+  manglende vær i avgangspunktet er inkonklusivt, aldri «ugjennomførbar»;
+  motorens egen Tub-beskjæring uten mål utløser omkjøring uten bound
+  (maks én per medlem, D9.4); `prunedBound`/`tubBoundS` alltid i
+  kvitteringen (D9.2). Motorens grådige Tub-rute skal gjøres
+  skrankekomplett (klaring, dagslys, veipunkter) i fase 4a bølge 3 etter
+  forhåndsregistrert gapmåling (D9.3). Skademålingen kjøres som egen
+  `test:damage` (D9.5).
 - **2026-09-04 (D8.1–D8.13, Magnus, etter /panel — se
   `docs/research/ekspertpanel-4a-robusthet-2026-09-04.md` og
   `docs/specs/robusthet.md` §7):** fase 4a-robusthet vedtatt som anbefalt.

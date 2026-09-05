@@ -78,6 +78,51 @@ describe("classifyMember — tabellen i §3.2 (rekkefølgen er bindende)", () =>
     expect(classifyMember(result).kind).toBe("feasible");
   });
 
+  it("stagnation/callerStopped uten mål ⇒ inconclusive «budsjett», ikke infeasible (D9.2)", () => {
+    for (const abortReason of ["stagnation", "callerStopped"] as const) {
+      const result = makeRouteResult({ abortReason, safety: { reachesDestination: false } });
+      expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "budsjett" });
+    }
+  });
+
+  it("noWeatherAtStart uten mål ⇒ inconclusive «dekning» selv om coverage.weather er full (D9.2)", () => {
+    const result = makeRouteResult({
+      abortReason: "noWeatherAtStart",
+      coverage: { weather: "full" },
+      safety: { reachesDestination: false },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning" });
+  });
+
+  it("outsideDomain uten mål ⇒ error (D9.2)", () => {
+    const result = makeRouteResult({ abortReason: "outsideDomain", safety: { reachesDestination: false } });
+    expect(classifyMember(result).kind).toBe("error");
+  });
+
+  it("intet medlem klassifiseres infeasible med pruned.bound > 0 — uansett abortReason (D9.2-vakt)", () => {
+    const reasons = [
+      null,
+      "stagnation",
+      "labelCap",
+      "iterationCap",
+      "noExpandableLabels",
+      "noWeatherAtStart",
+      "outsideDomain",
+      "callerStopped",
+    ] as const;
+    for (const abortReason of reasons) {
+      for (const weather of ["full", "partial"] as const) {
+        const result = makeRouteResult({
+          abortReason,
+          coverage: { weather },
+          safety: { reachesDestination: false },
+          diagnostics: { pruned: { bound: 1 } },
+        });
+        expect(classifyMember(result).kind).not.toBe("infeasible");
+      }
+    }
+  });
+
   it("reachesDestination === true ⇒ feasible", () => {
     const result = makeRouteResult({ safety: { reachesDestination: true } });
     expect(classifyMember(result).kind).toBe("feasible");
@@ -93,6 +138,13 @@ describe("classifyMember — tabellen i §3.2 (rekkefølgen er bindende)", () =>
 });
 
 describe("summarizeMember — reduksjonen (§3.2)", () => {
+  it("bærer tubBoundS som horisont (null når grådig forhåndsrute ikke nådde målet)", () => {
+    const withBound = summarizeMember(makeRouteResult({ diagnostics: { tubBoundS: 50_400 } }));
+    expect(withBound.tubBoundS).toBe(50_400);
+    const without = summarizeMember(makeRouteResult({ diagnostics: { tubBoundS: null } }));
+    expect(without.tubBoundS).toBeNull();
+  });
+
   it("bærer safetyVerdict, coverageWeather og prunedBound fra RouteResult", () => {
     const result = makeRouteResult({
       safety: { verdict: "usikkert" },

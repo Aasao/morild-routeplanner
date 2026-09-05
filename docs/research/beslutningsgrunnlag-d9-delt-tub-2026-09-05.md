@@ -7,7 +7,7 @@
   bølge 1), §7 (D8.2 vedtatt, D9.1/D9.2 åpne); `docs/specs/rutemotor.md`
   §5.5 og endringslogg 2026-09-04; `docs/decisions/ADR-0004-*.md`
   (motorens egen Tub-bound), `docs/decisions/ADR-0005-ensemble-mekanisme.md`;
-  `packages/routing/src/shared-tub-damage.test.ts` (forhåndsregistrert
+  `packages/routing/src/shared-tub.damage.test.ts` (forhåndsregistrert
   skademåling, §5.3), `packages/routing/src/search.ts` (`computeTubBound`,
   `tubMarginFrac`, `pruned.bound`), `packages/robustness/src/outcome.ts`
   (`classifyMember`), `docs/research/ekspertpanel-4a-robusthet-2026-09-04.md`
@@ -23,7 +23,7 @@ kun som *soft* bound med redningsvei — et medlem som terminerer uten
 ugjennomførbart og kjøres om uten bound. Slås ikke på i produksjon før
 skademålingen i §5.3 er grønn. Tub gis aldri til R2.
 
-## 2. Skademålingen (bølge 1, `shared-tub-damage.test.ts`)
+## 2. Skademålingen (bølge 1, `shared-tub.damage.test.ts`)
 
 S-3 (front, 30 medlemmer + kontroll) og S-7 (to regimer, 30 + kontroll),
 (a) uten delt Tub, (b) soft delt Tub + redningsvei:

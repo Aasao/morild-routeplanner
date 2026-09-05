@@ -7,6 +7,8 @@ export default defineConfig({
       "apps/**/*.test.ts",
       "tools/**/*.test.ts",
     ],
-    exclude: ["**/node_modules/**", "**/dist/**", "**/fixtures/**"],
+    // `*.damage.test.ts` er den forhåndsregistrerte skademålingen (robusthet.md
+    // §5.3, ~250 s): egen kommando `pnpm test:damage` (D9.5), ikke standardløpet.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/fixtures/**", "**/*.damage.test.ts"],
   },
 });
