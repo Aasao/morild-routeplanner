@@ -122,6 +122,7 @@ Klassifisering (`classifyMember`, ren funksjon, erstatter dagens i
 | Vilkår | kind |
 |---|---|
 | `coverage.weather === "partial"` **eller** `abortReason === "noWeatherAtStart"`, og ikke `safety.reachesDestination` | `inconclusive`, grunn `dekning` (ADR-0005) |
+| `coverage.weather === "partial"` og `safety.reachesDestination` (nådd målet, men et felt manglet — bølger/strøm) | `inconclusive`, grunn `dekning-felt` (D11.1, vedtatt 2026-09-05) |
 | `pruned.bound > 0` og ikke `reachesDestination` | **ikke klassifiserbar** — søket kjøres om uten bound (§4.1), maks én gang per medlem (D9.4) |
 | kastet/`abortReason` ∈ {labelCap, iterationCap, noExpandableLabels, outsideDomain} uten mål | `error` |
 | `abortReason` ∈ {stagnation, callerStopped} uten mål | `inconclusive`, grunn `budsjett` (D9.2) |
@@ -135,14 +136,12 @@ når den grådige forhåndsruten ikke nådde målet) — rapportert som
 *horisont*, ikke sertifikat (D9.3). Testvakt: intet medlem klassifiseres
 `infeasible` med `pruned.bound > 0`.
 
-**Åpent D11.1 (bølge 3, 2026-09-05):** tabellens første rad gir
-`feasible` for «`partial` + nådd mål». ADR-0005 sier «partial
-værdekning ⇒ inkonklusiv», og fase 3s app fulgte det: en rute som når
-målet på vind alene, uten bølge-/strømdata (`coverage.weather ===
-"partial"` fordi feltene mangler, ikke fordi horisonten tok slutt),
-telles ikke gjennomførbar. Appen beholder den konservative lesningen
-(`conservativeCoverage` i `apps/pwa/src/weather/ensemble.ts`) til
-Magnus har vedtatt; se §7 D11.1.
+**D11.1 (vedtatt 2026-09-05):** all `partial` dekning er inkonklusiv —
+også når målet ble nådd (grunn `dekning-felt`): en andel regnet uten
+bølgedata er en øvre skranke presentert som estimat. UI viser «k kom
+fram på vind alene — bølger og strøm mangler i pakken». Skillet
+horisont/manglende felt i motoren (D11.1 c) kommer når bølger/strøm er
+i pakken. Regelen bor i `packages/robustness/src/outcome.ts`.
 
 **Konsekvens for nevneren (bølge 3-avhengighet):** etter D9.2 er
 `infeasible` nåbar kun via «ikke nådd, full dekning, ingen beskjæring,
@@ -851,10 +850,10 @@ spec-utkast i fase 4b.** MET-vilkår berøres ikke (lokal CPU, ikke poll).
 Avvist av panelet: felles stamme (< 2 % gevinst, førsteordens
 korrekthetsrisiko), server-side A\*-felt (20–30 ms), «verste 10 av 30».
 
-**Bølge 3-funn (2026-09-05) — beslutningspunkter D11.1–D11.4, til
-Magnus. Panel: `docs/research/ekspertpanel-d11-boelge3-2026-09-05.md`
-(enstemmig (a) på D11.1–D11.3; D11.4 (a) med reason-splitt
-`rod/tynt-grunnlag`, implementert).**
+**Bølge 3-funn (2026-09-05) — beslutningspunkter D11.1–D11.4. Vedtatt av
+Magnus 2026-09-05 som anbefalt: D11.1 (a) nå + (c) når bølger/strøm er i
+pakken, D11.2 (a), D11.3 (a), D11.4 (a) m/reason-splitt. Panel:
+`docs/research/ekspertpanel-d11-boelge3-2026-09-05.md`.**
 
 **D11.1 «partial + nådd mål».** (a) ADR-0005-lesningen: all `partial`
 dekning ⇒ inkonklusiv (grunn «dekning»), uansett mål — vind-only-pakker
@@ -933,4 +932,7 @@ før telling) står i §4.1. Bekreftes.
   rangering, D9.4 `nextAction`, S-9-fikstur (argmin P50 = A, argmin P90
   = B, LOO-invariant). App: klassifisering via robustness med omkjøring
   uten Tub, D10.5-orakel (S1b i worker), stempel/`EnsembleContext`,
-  `renderDepartureText`. Åpent: D11.1–D11.3 (§7).
+  `renderDepartureText`. D11.1–D11.4 vedtatt samme dag og gjennomført:
+  «partial + nådd mål» ⇒ inkonklusiv `dekning-felt` i robustness (ikke
+  app-overstyring), `r2SearchInput` setter `noTubBound: true` (D11.2),
+  `rod/tynt-grunnlag` (D11.4); D11.3-kriterier i §7.

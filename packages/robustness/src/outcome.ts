@@ -214,6 +214,17 @@ export function classifyMember(result: RouteResult): MemberClassification {
     return { kind: "inconclusive", reason: "dekning" };
   }
 
+  // D11.1 (vedtatt 2026-09-05): nådde målet, men dekningen var partial —
+  // i praksis et helt felt (bølger/strøm) manglet i pakken. Bølger kan bare
+  // fjerne gjennomførbare, aldri legge til; en andel regnet uten dem er en
+  // øvre skranke presentert som estimat. Telles derfor inkonklusivt med
+  // egen grunn, så UI kan si «kom fram på vind alene — bølger og strøm
+  // mangler i pakken». (c) — skille horisont fra manglende felt i motoren —
+  // kommer når bølger/strøm er i pakken.
+  if (reached && result.coverage.weather === "partial") {
+    return { kind: "inconclusive", reason: "dekning-felt" };
+  }
+
   if (!reached && result.diagnostics.pruned.bound > 0) {
     return { kind: "rerun-without-bound" };
   }

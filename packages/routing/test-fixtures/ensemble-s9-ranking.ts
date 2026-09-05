@@ -151,6 +151,11 @@ function baseFrontOptions(
     swellHsM: 1.8,
     swellFromDeg: 225,
     swellTpS: 8,
+    // Full værdekning (D11.1, vedtatt 2026-09-05): uten strømfelt ville alle
+    // medlemmer vært inkonklusive «dekning-felt», og F4.2-tallene ville
+    // ikke hatt noe å regne på. Stille strøm er en bevisst, dokumentert
+    // forenkling for rangeringsfiksturen — ikke en påstand om Skagerrak.
+    current: { u: 0, v: 0 },
     swellPersistH: 9,
     postWaveFromDeg: 300,
     postTpS: 5.5,

@@ -314,7 +314,12 @@ export function r2SearchInput(args: {
     weather: args.weather,
     mask: args.mask,
     boat: args.boat,
-    // Ingen `field`, ingen `tubBoundS` — se doc-kommentaren over.
+    // Ingen `field`, ingen `tubBoundS` — se doc-kommentaren over. Og ingen
+    // EGEN Tub-bound heller (D11.2, vedtatt 2026-09-05): «kan du komme deg i
+    // havn» er et eksistensspørsmål, og et anslag skal aldri kutte en
+    // kandidat der. Kostnaden bæres til havnefeltet (D8.10) gjør
+    // bail-out billig; det er en sikkerhetsdefault, ikke en optimalisering.
+    noTubBound: true,
     options: {
       ...(args.options ?? {}),
       ...(args.searchOptions ?? {}),

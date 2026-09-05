@@ -1739,6 +1739,11 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- 2026-09-05 (D11.2, vedtatt): `r2SearchInput` setter `noTubBound: true` —
+  nødhavnsøket beskjæres aldri av motorens egen Tub-bound (eksistens-
+  spørsmål, ikke optimalitet). Kostnad bæres til havnefeltet (robusthet.md
+  D8.10). Test i `bailout.test.ts`.
+
 - **2026-09-05 — fase 4a bølge 3: `noTubBound`, `diagnostics.termination` og
   skrankekomplett Tub-rute** (`docs/specs/robusthet.md` §7 D9.2 (b-full) og
   D9.3 (a), vedtatt av Magnus 2026-09-05; panel

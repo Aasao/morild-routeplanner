@@ -123,6 +123,11 @@ describe("classifyMember — tabellen i §3.2 (rekkefølgen er bindende)", () =>
     }
   });
 
+  it("partial + nådd mål ⇒ inconclusive «dekning-felt» (D11.1 vedtatt 2026-09-05)", () => {
+    const result = makeRouteResult({ coverage: { weather: "partial" }, safety: { reachesDestination: true } });
+    expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning-felt" });
+  });
+
   it("reachesDestination === true ⇒ feasible", () => {
     const result = makeRouteResult({ safety: { reachesDestination: true } });
     expect(classifyMember(result).kind).toBe("feasible");

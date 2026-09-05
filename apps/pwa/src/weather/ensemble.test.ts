@@ -136,7 +136,7 @@ describe("classifyMember — ADR-0005 inkonklusiv-regel", () => {
     expect(classifyMember(fakeResult({ reachesDestination: false, weatherCoverage: "full" }))).toBe("infeasible");
   });
 
-  it("partial + nådd mål ⇒ inkonklusiv (konservativ D11.1-overstyring av §3.2-tabellen til Magnus har vedtatt lesningen)", () => {
+  it("partial + nådd mål ⇒ inkonklusiv «dekning-felt» (D11.1 vedtatt; regelen bor i @morild/robustness)", () => {
     expect(classifyMember(fakeResult({ reachesDestination: true, weatherCoverage: "partial" }))).toBe("inconclusive");
   });
 

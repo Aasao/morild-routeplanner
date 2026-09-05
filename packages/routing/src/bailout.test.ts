@@ -81,6 +81,8 @@ describe("R2-re-søket får aldri delt Tub eller delt felt (§5.1)", () => {
       options: undefined,
       searchOptions: undefined,
     });
+    // D11.2: nødhavnsøket kjører alltid uten motorens egen Tub-bound.
+    expect(input.noTubBound).toBe(true);
     expect(Object.hasOwn(input, "tubBoundS")).toBe(false);
     expect(Object.hasOwn(input, "field")).toBe(false);
     expect(input.tubBoundS).toBeUndefined();

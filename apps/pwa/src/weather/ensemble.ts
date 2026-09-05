@@ -151,26 +151,11 @@ export type MemberClassification = "feasible" | "infeasible" | "inconclusive";
  * direkte på et resultat som krever omkjøring, gis ærlig `inconclusive`
  * (grunn «bound») — aldri `infeasible` uten bevis.
  *
- * **Konservativ overstyring (åpent beslutningspunkt D11.1):** §3.2-tabellen
- * gir `feasible` for «partial + nådd mål». ADR-0005 sier «partial
- * værdekning ⇒ inkonklusiv», og fase 3s PWA fulgte det: en rute som nådde
- * målet på vind alene, uten bølge-/strømdata, telles ikke som
- * gjennomførbar — den kan være ugjennomførbar med bølger. Inntil Magnus
- * har vedtatt hvilken lesning som gjelder, beholder appen den
- * konservative (flere inkonklusive, aldri flere gjennomførbare). Retningen
- * er trygg; kostnaden er at vind-only-pakker gir 100 % inkonklusivt.
+ * «partial + nådd mål» er inkonklusiv med grunn «dekning-felt» (D11.1,
+ * vedtatt 2026-09-05) — regelen bor i `@morild/robustness`, ikke her.
  */
 export function classifyMember(result: RouteResult): MemberClassification | "error" {
-  return conservativeCoverage(result, classifyRobust(result)).kind as MemberClassification | "error";
-}
-
-/** D11.1-overstyringen: `partial` dekning ⇒ inkonklusiv (grunn «dekning»), uansett mål. */
-function conservativeCoverage(result: RouteResult, cls: RobustClassification): RobustClassification {
-  const settled = nextAction(cls, 1);
-  if (result.coverage.weather === "partial" && settled.kind !== "inconclusive") {
-    return { kind: "inconclusive", reason: "dekning-felt" };
-  }
-  return settled;
+  return nextAction(classifyRobust(result), 1).kind as MemberClassification | "error";
 }
 
 export interface MemberOutcome {
@@ -396,8 +381,8 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
         const raw: RobustClassification = classifyRobust(data.result);
         // «rerun-without-bound» oversettes av `runMemberWithRerun`; her
         // stemples den foreløpig inconclusive/bound så ingen kan lese den
-        // som et tall. Deretter D11.1-overstyringen (partial ⇒ inkonklusiv).
-        const cls = conservativeCoverage(data.result, raw);
+        // som et tall.
+        const cls = nextAction(raw, 1);
         resolve({
           memberIndex: data.memberIndex,
           isControl: data.isControl,

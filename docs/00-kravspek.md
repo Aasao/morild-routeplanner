@@ -314,6 +314,16 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-05 (D11.1–D11.4, Magnus, etter /panel — se
+  `docs/research/ekspertpanel-d11-boelge3-2026-09-05.md` og
+  `docs/specs/robusthet.md` §7):** F4.2-klassifisering: all partial
+  værdekning er inkonklusiv, også når målet nås (grunn «dekning-felt» —
+  en andel uten bølgedata er ingen robusthetsandel; ADR-0005-lesningen
+  bekreftet over §3.2-tabellens første utkast); nødhavnsøk (F4.6) kjører
+  alltid uten Tub-bound (D11.2, sikkerhetsdefault til havnefeltet D8.10);
+  Tub-margin 0,25 beholdes med forhåndsregistrerte kriterier før
+  stramming (D11.3); trafikklys: rødt dominerer gule rader, egen
+  begrunnelse «tynt grunnlag» (D11.4).
 - **2026-09-05 (D10.1–D10.6, Magnus, etter /panel — se
   `docs/research/ekspertpanel-d10-f35-etter-spak7-2026-09-05.md` og
   `docs/specs/robusthet.md` §7):** F3.5 revidert etter spak 7 — progressiv
