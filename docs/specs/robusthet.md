@@ -768,6 +768,70 @@ budsjett; ytelse: ensemble-andel; værruting: via `ikkeAvgjort`).
 Slett. **Anbefaling: (a).** Panel: ytelse + pragmatiker GODKJENN;
 matematiker «vakt beholdes» (oppfylt av (a)).
 
+**Bølge 2-funn (2026-09-05, spak 7) — beslutningspunkter D10.1–D10.6, til
+Magnus.** Panel: `docs/research/ekspertpanel-d10-f35-etter-spak7-2026-09-05.md`
+(grunnlag `beslutningsgrunnlag-d10-f35-etter-spak7-2026-09-05.md`, rådata
+`maaling-spak7-2026-09-05.md`). PC, full oppløsning 6°/1800 s, delt felt:
+kontroll 3,3–3,7 s; 30 medlemmer sekvensielt 79–87 s (median 2,4–3,3 s
+per medlem, ~170 k etiketter); pool-anslag 16–23 s med 5–6 workere, 28–36 s
+med 3. Nettbrett-faktor umålt. Dekoding per medlem 32 ms (1 %).
+
+**D10.1 F3.5 etter spak 7.** (a) Progressiv semantikk er kontrakten;
+«< 60 s for topp-avgang» strykes som løfte, målt tid vises i UI; ingen
+nye spaker før nettbrett-tallet. (b) (a) + spak 4–6 nå. (c) 15 av 30
+medlemmer først. (d) F12 grov modus. **Anbefaling: (a).** Panel: (a)
+enstemmig; (b) godkjent i runde 1 av alle tre eksperter og trukket av
+alle tre i tilsvar (port 1, 3–5 dager for 1,2–1,8×) — etter bølge 3–5
+og betinget av tallet; (c) avvist (produserer et tall §4.2.3 forbyr;
+nevner-endring uten kalibrering); (d) avvist (ADR-0005 pkt. 4).
+Kontrakt (til F3.5): «Kontrollruten for alle avganger på sekunder;
+robusthetstallene bygges utelukkende fra fulle søk mens du ser på —
+hvert tall er enten endelig (30 av 30) eller vist som tellinger med
+eksakte skranker; advarsler kan bli endelige før alle er ferdige, grønt
+aldri; appen lover ingen ferdig-tid.»
+
+**D10.2 Nettbrett-målingen (ADR-0005 port 1).** (a) Avlesning av
+panelet (kontrolltid, ensemble-veggklokke). (b) (a) + kopierbar JSON:
+`hardwareConcurrency`, brukt pool, minne der det finnes, per medlem
+`memberIndex`, søketid, dekodetid, etiketter, iterasjoner, orakelrang og
+realisert `durationS`, Periodic Background Sync-støtte; tre kjøringer.
+(c) Egen målingsside. **Anbefaling: (b).** Panel: enstemmig.
+
+**D10.3 Vise-versa-porten (ADR-0005 port 2).** (a) Beholdes; utløses
+først når nettbrett-tallet foreligger og > 60 s etter tiltak;
+utfallsmengden omskrives: F12 ut, «gjenåpne F3.5-semantikk /
+medlemshorisont / avgangsvindu» inn. (b) Utløses nå på PC-anslaget. (c)
+Slettes. **Anbefaling: (a).** Panel: enstemmig (matematiker: «en
+falsifiseringsport slettes ikke fordi vi tror vi vet svaret»).
+
+**D10.4 Eksakte skranker i UI (utvidelse av §4.2.3, bølge 3).** Etter k
+ferdige med j gjennomførbare og m ugjennomførbare: `s_min = j/30`,
+`s_max = (j + 30 − k)/30`; vis «k av 30 — j har gått, m kom ikke fram,
+resten ukjent»; trafikklys kun ved skrankekryss (`s_max < 0,7` ⇒ rød,
+terskeltelling ⇒ gul), grønn aldri før 30, aldri sd, aldri prosent.
+(a) Vedta som §4.2.3-tekst. (b) Løpende punktestimat ± sd. (c) Kun
+«k av 30». **Anbefaling: (a).** Panel: matematiker + værruting for (a);
+(b) avvist (skjevt utvalg under verste-først); (c) utilstrekkelig
+(brukbarhetsgulv, djevelens advokat).
+
+**D10.5 S1b-evaluatoren som pool-orakel (§4.1 verste-først).** (a)
+Erstatt «A\*-feltets lengde × middelvind» med S1b-evaluert kontrollrute
+per medlem (predikert `durationS`, tidlig ugjennomførbarhetssignal),
+kun rekkefølge, aldri vist som tall; permutasjonstest dekker
+orakelbytte; orakelrang logges så treffsikkerheten faller ut av
+D10.2-JSON-en. (b) Behold dagens orakel. **Anbefaling: (a), bølge 3.**
+Panel: 4 for, ingen mot (ADR-0005s τ-klausul: rekkefølge er lovlig).
+
+**D10.6 Bakgrunnsberegning ved lading (eget spor, etter tallet).** (a)
+Når pakken lander OG enheten lader: kjør ensemblet for lagrede
+strekk/vindu, inputs-hash-invalidering (maske-/pakkeversjon, båt,
+vindu), vist som «beregnet i natt kl HH:MM — pakke X t gammel»; beste
+innsats (Periodic Background Sync er Chrome/TWA-spesifikk). (b) Ikke
+nå. **Anbefaling: (a) som eget spor etter nettbrett-tallet,
+spec-utkast i fase 4b.** MET-vilkår berøres ikke (lokal CPU, ikke poll).
+Avvist av panelet: felles stamme (< 2 % gevinst, førsteordens
+korrekthetsrisiko), server-side A\*-felt (20–30 ms), «verste 10 av 30».
+
 ## 8. Endringslogg
 
 - 2026-09-04: første utkast (hovedsesjonen) etter fagagent-panel med to
@@ -786,3 +850,5 @@ matematiker «vakt beholdes» (oppfylt av (a)).
   mot infeasible m/beskjæring); skademålingen flyttet til
   `pnpm test:damage` (egen CI-jobb, betinget i `/qa`). Bølge 3 arver
   D9.2 (b-full), D9.3 (a) etter måling, D9.4 ensemble-budsjett.
+- 2026-09-05: bølge 2 spak 7 målt (`maaling-spak7-2026-09-05.md`);
+  §7 D10.1–D10.6 etter panel — venter Magnus.
