@@ -189,6 +189,16 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
   og UI lover ikke 60 s før tallet finnes. Delt Tub-bound kun som *soft*
   bound med redningsvei (et medlem beskåret av bound telles aldri
   ugjennomførbart), aldri i R2-søk. Se `docs/specs/robusthet.md` §4.1/§6.
+  **Revidert 2026-09-05 (D10.1, D9.1):** spak 7 målt (PC, 6°/1800 s, delt
+  felt: 79–87 s sekvensielt per avgang, pool-anslag 16–23 s med 5–6
+  workere). «< 60 s» strykes som løfte. **Kontrakten:** kontrollruten for
+  alle avganger på sekunder; robusthetstallene bygges utelukkende fra
+  fulle søk mens seileren ser på — hvert tall er enten endelig (30 av 30)
+  eller vist som tellinger med eksakte skranker; advarsler kan bli
+  endelige før alle er ferdige, grønt aldri; appen lover ingen ferdig-tid
+  og viser målt tid. Delt Tub er forkastet (D9.1); delt A*-felt beholdes.
+  Ytelsesspaker (profilsøk, alloc-fri hot-loop, read-only-cacher) tas
+  etter nettbrett-tallet og etter fase 4a bølge 3–5, betinget av tallet.
 
 ### F4 Robusthet (kjerne 3: appens signatur)
 
@@ -304,6 +314,16 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-05 (D10.1–D10.6, Magnus, etter /panel — se
+  `docs/research/ekspertpanel-d10-f35-etter-spak7-2026-09-05.md` og
+  `docs/specs/robusthet.md` §7):** F3.5 revidert etter spak 7 — progressiv
+  semantikk med tellinger og eksakte skranker er kontrakten, «< 60 s»
+  strøket (D10.1); nettbrett-målingen som kopierbar JSON per medlem
+  (D10.2); vise-versa-porten beholdt med omskrevet utfallsmengde (F12 ut;
+  D10.3); eksakte skranker i UI (D10.4, bølge 3); S1b-evaluatoren som
+  pool-orakel, kun rekkefølge (D10.5, bølge 3); bakgrunnsberegning ved
+  lading som eget spor (D10.6, fase 4b). Avvist: 15-av-30-modus, F12,
+  felles søkestamme, server-side A*-felt.
 - **2026-09-05 (D9.1–D9.5, Magnus, etter /panel — se
   `docs/research/ekspertpanel-d9-delt-tub-2026-09-05.md` og
   `docs/specs/robusthet.md` §7):** delt Tub-bound mellom ensemblemedlemmer

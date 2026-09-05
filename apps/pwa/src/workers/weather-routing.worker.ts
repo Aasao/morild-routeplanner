@@ -80,6 +80,18 @@ export interface PlanRouteMemberOk {
   readonly result: RouteResult;
   /** Kun fra kontrollen: feltet den bygde. */
   readonly sharedField?: SharedField | undefined;
+  /** Nettbrett-målingen (D10.2 b): tid i workeren, delt opp. */
+  readonly timing: WorkerTiming;
+}
+
+/** Strukturell kopi av `ensemble.ts::WorkerTiming`. Millisekunder, `performance.now()` i workeren. */
+export interface WorkerTiming {
+  /** `windMemberLayersFromBytes` + `toWeatherField` + `compositeWeatherField` for alle fliser. */
+  readonly decodeMs: number;
+  /** `buildFieldForInput` (kontrollen) eller rekonstruksjon fra delt felt (medlemmer). */
+  readonly fieldMs: number;
+  /** `planRoute` alene. */
+  readonly searchMs: number;
 }
 
 export interface PlanRouteMemberError {
@@ -98,6 +110,7 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
   if (msg.tiles.length === 0) {
     throw new Error("plan-route-member: meldingen manglet vinddata for alle fliser");
   }
+  const tDecode0 = performance.now();
   const tileFields: WeatherFieldLike[] = msg.tiles.map((tile) => {
     const windMember = windMemberLayersFromBytes(new Uint8Array(tile.windBuffer));
     const pkg: WeatherPackage = {
@@ -116,6 +129,7 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
   // falle i hvilken som helst av rutens fliser, og motoren vet ikke noe om
   // fliser i det hele tatt — den ser bare ett `WeatherField`.
   const weather = compositeWeatherField(tileFields);
+  const decodeMs = performance.now() - tDecode0;
   const input = {
     ...scenario.input,
     departEpochS: msg.departEpochS,
@@ -133,15 +147,20 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
   // kontrollens, bygges feltet på nytt i stedet for å bruke feil felt.
   const fieldKey = sharedFieldKey(SCENARIO_NAME, input.start, input.dest);
   const reusable = msg.sharedField !== undefined && msg.sharedField.key === fieldKey;
+  const tField0 = performance.now();
   const distanceField = reusable
     ? new DistanceField(msg.sharedField!.data)
     : buildFieldForInput(input);
+  const fieldMs = performance.now() - tField0;
+  const tSearch0 = performance.now();
   const result = planRoute(distanceField !== undefined ? { ...input, field: distanceField } : input);
+  const searchMs = performance.now() - tSearch0;
   return {
     type: "plan-route-member-result",
     memberIndex: msg.memberIndex,
     isControl: msg.isControl,
     result,
+    timing: { decodeMs, fieldMs, searchMs },
     ...(msg.isControl && distanceField !== undefined
       ? { sharedField: { key: fieldKey, data: distanceField.data } }
       : {}),

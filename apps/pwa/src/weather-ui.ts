@@ -14,6 +14,7 @@ import { FIELD_LABEL_NO } from "./weather/field-status.js";
 import type { EnsembleSummary, MemberOutcome } from "./weather/ensemble.js";
 import type { DisplayFlag } from "./weather/route-flags.js";
 import type { MetAlertsLoadResult } from "./weather/metalerts-client.js";
+import type { EnsembleMeasurement } from "./weather/measurement.js";
 import type { RelevantAlert } from "./weather/metalerts.js";
 
 export function renderPointerStatus(el: HTMLElement, status: PointerLoadResult): void {
@@ -154,6 +155,44 @@ export function renderEnsembleSummary(
     `Ugjennomførbar: ${summary.infeasibleCount}. Feil: ${summary.errorCount}. ` +
     `Varighet blant gjennomførbare — P50 ${p50} t, P90 ${p90} t.` +
     progress;
+}
+
+/**
+ * Nettbrett-målingen (D10.2 b): JSON i et skrivebeskyttet tekstfelt + knapp
+ * som kopierer til utklippstavlen (Magnus limer den inn i chatten). Ingen
+ * nettverkssending — målingen forlater aldri enheten av seg selv.
+ */
+export function renderMeasurement(el: HTMLElement, measurement: EnsembleMeasurement): void {
+  const json = JSON.stringify(measurement, null, 1);
+  el.replaceChildren();
+  const title = document.createElement("div");
+  const wall = measurement.ensembleWallMs !== null ? formatElapsed(measurement.ensembleWallMs) : "–";
+  title.textContent =
+    `Nettbrett-måling (ADR-0005 port 1): ${measurement.members.length} medlemmer på ${wall}, ` +
+    `${measurement.hardwareConcurrency ?? "?"} kjerner, ${measurement.poolSize} Workere. Kopier og send:`;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Kopier måling";
+  button.addEventListener("click", () => {
+    const done = (): void => {
+      button.textContent = "Kopiert ✓";
+    };
+    const fallback = (): void => {
+      area.select();
+      button.textContent = "Marker og kopier manuelt";
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(json).then(done, fallback);
+    } else {
+      fallback();
+    }
+  });
+  const area = document.createElement("textarea");
+  area.readOnly = true;
+  area.value = json;
+  area.rows = 6;
+  area.setAttribute("aria-label", "Nettbrett-måling som JSON");
+  el.append(title, button, area);
 }
 
 export function renderMetAlerts(

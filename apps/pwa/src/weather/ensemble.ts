@@ -71,6 +71,19 @@ export interface PlanRouteMemberOk {
   readonly result: RouteResult;
   /** Kun fra kontrollen: feltet den bygde, til gjenbruk i medlemmene. */
   readonly sharedField?: SharedField | undefined;
+  /** Nettbrett-målingen (D10.2 b): tid i workeren, delt opp — se `WorkerTiming`. */
+  readonly timing?: WorkerTiming | undefined;
+}
+
+/**
+ * Tid målt INNE i workeren (ADR-0005 port 1 / D10.2 b), så nettbrett-tallet
+ * kan skille dekoding, feltbygging og selve søket fra worker-overhead
+ * (`MemberOutcome.elapsedMs` er rundturen sett fra hovedtråden).
+ */
+export interface WorkerTiming {
+  readonly decodeMs: number;
+  readonly fieldMs: number;
+  readonly searchMs: number;
 }
 
 export interface PlanRouteMemberError {
@@ -113,6 +126,8 @@ export interface MemberOutcome {
   readonly elapsedMs?: number | undefined;
   /** Kontrollens delte A*-felt (kun på kontrollens utfall). */
   readonly sharedField?: SharedField | undefined;
+  /** Tid inne i workeren (D10.2 b); udefinert ved feil. */
+  readonly workerTiming?: WorkerTiming | undefined;
 }
 
 export interface EnsembleSummary {
@@ -230,6 +245,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
           result: data.result,
           elapsedMs: elapsed(),
           ...(data.sharedField !== undefined ? { sharedField: data.sharedField } : {}),
+          ...(data.timing !== undefined ? { workerTiming: data.timing } : {}),
         });
       } else {
         resolve({

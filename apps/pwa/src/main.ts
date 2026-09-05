@@ -11,6 +11,12 @@ import { runHelloRoute } from "./hello-route.js";
 import { DEFAULT_APP_CONFIG } from "./weather/config.js";
 import { browserCacheStorage, memoryCacheStorage, requestPersistentStorage } from "./weather/pack-cache.js";
 import { createRealWeatherWorker, defaultPoolSize } from "./weather/ensemble.js";
+import {
+  browserMeasurementEnvironment,
+  buildEnsembleMeasurement,
+  memberMeasurement,
+  type MemberMeasurement,
+} from "./weather/measurement.js";
 import { runWeatherPipeline } from "./weather/pipeline.js";
 import { allDisplayFlags } from "./weather/route-flags.js";
 import type { FieldPresenceStatus } from "./weather/field-status.js";
@@ -22,6 +28,7 @@ import {
   renderMetAlerts,
   renderPointerStatus,
   renderTileSelection,
+  renderMeasurement,
 } from "./weather-ui.js";
 
 function registerServiceWorker(): void {
@@ -56,6 +63,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   const flagsEl = document.querySelector<HTMLDivElement>("#weather-flags");
   const ensembleEl = document.querySelector<HTMLDivElement>("#weather-ensemble-summary");
   const metalertsEl = document.querySelector<HTMLDivElement>("#weather-metalerts");
+  const measurementEl = document.querySelector<HTMLDivElement>("#weather-measurement");
 
   // Cache API finnes kun i secure context (https/localhost). Fra en
   // LAN-IP over http (nettbrett-røyktest) faller vi ærlig tilbake til
@@ -78,6 +86,9 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   const poolSize = defaultPoolSize(navigator.hardwareConcurrency);
   let ensembleStartMs: number | undefined;
   let membersTotal = 0;
+  // D10.2 (b): per-medlem-registrering til den kopierbare JSON-en.
+  let controlMeasurement: MemberMeasurement | null = null;
+  const memberMeasurements: MemberMeasurement[] = [];
 
   void runWeatherPipeline(
     {
@@ -102,6 +113,8 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       onControlResult: (outcome, memberCount) => {
         ensembleStartMs = performance.now();
         membersTotal = memberCount;
+        controlMeasurement = memberMeasurement(outcome, 0);
+        memberMeasurements.length = 0;
         if (controlResultEl) renderControlResult(controlResultEl, outcome);
         const result = outcome.result;
         if (result === undefined) return;
@@ -117,17 +130,26 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
         }
       },
       onMemberResult: (outcome, summary) => {
-        if (!ensembleEl || outcome.isControl) return;
-        const timing =
-          ensembleStartMs === undefined
-            ? undefined
-            : {
-                wallMs: performance.now() - ensembleStartMs,
-                membersDone: summary.totalMembers - 1,
-                membersTotal,
-                poolSize,
-              };
-        renderEnsembleSummary(ensembleEl, summary, timing);
+        if (outcome.isControl) return;
+        memberMeasurements.push(memberMeasurement(outcome, memberMeasurements.length));
+        const wallMs = ensembleStartMs === undefined ? undefined : performance.now() - ensembleStartMs;
+        const membersDone = summary.totalMembers - 1;
+        if (ensembleEl) {
+          const timing = wallMs === undefined ? undefined : { wallMs, membersDone, membersTotal, poolSize };
+          renderEnsembleSummary(ensembleEl, summary, timing);
+        }
+        if (measurementEl && membersDone >= membersTotal) {
+          renderMeasurement(
+            measurementEl,
+            buildEnsembleMeasurement({
+              env: browserMeasurementEnvironment(),
+              poolSize,
+              control: controlMeasurement,
+              ensembleWallMs: wallMs ?? null,
+              members: memberMeasurements,
+            }),
+          );
+        }
       },
       onMetAlerts: (result, relevant) => {
         if (metalertsEl) renderMetAlerts(metalertsEl, result, relevant);

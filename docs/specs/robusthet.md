@@ -768,8 +768,10 @@ budsjett; ytelse: ensemble-andel; værruting: via `ikkeAvgjort`).
 Slett. **Anbefaling: (a).** Panel: ytelse + pragmatiker GODKJENN;
 matematiker «vakt beholdes» (oppfylt av (a)).
 
-**Bølge 2-funn (2026-09-05, spak 7) — beslutningspunkter D10.1–D10.6, til
-Magnus.** Panel: `docs/research/ekspertpanel-d10-f35-etter-spak7-2026-09-05.md`
+**Bølge 2-funn (2026-09-05, spak 7) — beslutningspunkter D10.1–D10.6.
+Vedtatt av Magnus 2026-09-05 som anbefalt («anbefalinger besluttet»):
+D10.1 (a), D10.2 (b), D10.3 (a), D10.4 (a) bølge 3, D10.5 (a) bølge 3,
+D10.6 (a) eget spor etter nettbrett-tallet.** Panel: `docs/research/ekspertpanel-d10-f35-etter-spak7-2026-09-05.md`
 (grunnlag `beslutningsgrunnlag-d10-f35-etter-spak7-2026-09-05.md`, rådata
 `maaling-spak7-2026-09-05.md`). PC, full oppløsning 6°/1800 s, delt felt:
 kontroll 3,3–3,7 s; 30 medlemmer sekvensielt 79–87 s (median 2,4–3,3 s
@@ -851,4 +853,8 @@ korrekthetsrisiko), server-side A\*-felt (20–30 ms), «verste 10 av 30».
   `pnpm test:damage` (egen CI-jobb, betinget i `/qa`). Bølge 3 arver
   D9.2 (b-full), D9.3 (a) etter måling, D9.4 ensemble-budsjett.
 - 2026-09-05: bølge 2 spak 7 målt (`maaling-spak7-2026-09-05.md`);
-  §7 D10.1–D10.6 etter panel — venter Magnus.
+  §7 D10.1–D10.6 etter panel. **Vedtatt samme dag.** Gjennomført: D10.2
+  (b) — `apps/pwa/src/weather/measurement.ts`, worker-timing (dekode/
+  felt/søk), kopierbar JSON i panelet; kravspek F3.5 revidert (D10.1).
+  Bølge 3 arver D10.4 (eksakte skranker, §4.2.3) og D10.5 (S1b-orakel,
+  §4.1); D10.6 til fase 4b-spec.

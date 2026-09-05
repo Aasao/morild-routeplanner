@@ -85,3 +85,5 @@ body {
 }
 
 .weather-warning { background: #7a3b00; color: #fff; padding: 6px 10px; font-size: 0.9rem; }
+#weather-measurement textarea { width: 100%; font: 11px/1.3 monospace; margin-top: 4px; }
+#weather-measurement button { margin: 4px 0; }
