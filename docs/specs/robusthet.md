@@ -906,11 +906,42 @@ forutsetning «ingen omklassifisering fra infeasible» (omkjøringen ferdig
 før telling) står i §4.1. Bekreftes.
 
 **Bølge 4-funn (2026-09-05) — beslutningspunkter D12.1–D12.5, til
-Magnus (grunnlag: `docs/research/beslutningsgrunnlag-d12-boelge4-2026-09-05.md`,
-panel pågår):** D12.1 bail-out over medlemmer (bølge 6, D8.6 c — kostnad
-3,3 s per profil på PC); D12.2 `draughtM`/`depthClearanceM` obligatoriske;
-D12.3 dybdegate `min` vs kai-verifisert `max`; D12.4 perturbasjonsfasens
-omfang (6 søk); D12.5 `departEpochS` i `MemberSummary`.
+Magnus.** Grunnlag `docs/research/beslutningsgrunnlag-d12-boelge4-2026-09-05.md`,
+panel `ekspertpanel-d12-boelge4-2026-09-05.md`. Kostnadsmåling: 32
+samples, 33 R2-søk, 3,3 s per profil på golden (PC); admissibilitet 200
+punkter 0 brudd.
+
+**D12.1 Bail-out over medlemmer (bølge 6, D8.6 c).** (a) Alle
+gjennomførbare medlemmer, «maks over medlemmer». (b) Kun kontrollvær.
+(c) Tre profiler: kontroll + de to medlemmene med størst *feltgap*
+(billig forsortering på havnefeltets nedre skranke langs hvert medlems
+`hourlyTrack`, ingen R2-søk), vist som «verste testede værutfall: inntil
+X t fra havn (kontrollvær: Y t)». **Anbefaling: (c), spec nå,
+implementasjon i bølge 6 etter nettbrett-tallet.** Panel: (c) enstemmig;
+djevelens advokat: rang på gap, ikke seilingstid (tatt inn).
+
+**D12.2 `BoatModel.draughtM`/`depthClearanceM`.** (a) Obligatoriske
+(typefeil å utelate), verdien satt eksplisitt ett sted (`test-boat.ts`:
+Morild 2,6 m + klaring) og arvet av `packages/polar`s fabrikk fra typen.
+(b) Valgfrie med 2,6 m-fallback. **Anbefaling: (a).** Panel: alle for
+(a); djevelens advokat: kun med eksplisitt fabrikkverdi (tatt inn).
+
+**D12.3 Dybdegaten.** (a) Behold `min(kai, ankring)` — konservativt
+(færre havner godtas, aldri kortere strekk vist), dokumentert som kjent
+begrensning. (b) `max` når kaia er verifisert. (c) Gate per anløpstype
+(kai/ankring) med `nightApproachSafe` per type. **Anbefaling: (a) nå,
+(c) som eksplisitt gjenåpning av 4a-kuttet «havnebok-felter» i fase 4b.**
+Panel: kartolog + værruting (c); pragmatiker utsett; djevelens advokat
+(c) kun som eksplisitt gjenåpning.
+
+**D12.4 Perturbasjonsfasen.** (a) Seks søk sekvensielt på én worker. (b)
+Over poolen parallelt. (c) Tre søk. **Anbefaling: (b).** Panel: 4 av 5
+(b). I tillegg (ytelsesingeniør): bail-out-profilen gates til valgt
+avgang når avgangsvinduet (F4.5) kommer — i dag én avgang.
+
+**D12.5 `departEpochS` i `MemberSummary`.** (a) Legg til (ren
+bokføring; `checkEpochS` utledes i dag fra ankomst − varighet). (b)
+Behold. **Anbefaling: (a).** Panel enstemmig.
 
 ## 8. Endringslogg
 
