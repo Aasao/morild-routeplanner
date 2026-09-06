@@ -15,7 +15,8 @@ import type { EnsembleSummary, MemberOutcome } from "./weather/ensemble.js";
 import type { DisplayFlag } from "./weather/route-flags.js";
 import type { MetAlertsLoadResult } from "./weather/metalerts-client.js";
 import type { EnsembleMeasurement } from "./weather/measurement.js";
-import type { DepartureSummary } from "@morild/robustness";
+import type { DecisionAdvice, DepartureSummary, SensitivityReport } from "@morild/robustness";
+import type { BailoutProfile } from "@morild/routing";
 import type { RelevantAlert } from "./weather/metalerts.js";
 
 export function renderPointerStatus(el: HTMLElement, status: PointerLoadResult): void {
@@ -207,6 +208,67 @@ export function renderEnsembleSummary(
     `Ugjennomførbar: ${summary.infeasibleCount}. Feil: ${summary.errorCount}. ` +
     `Varighet blant gjennomførbare — P50 ${p50} t, P90 ${p90} t.` +
     progressText(timing);
+}
+
+/**
+ * Bail-out-linjen (§4.5, F4.6): «lengste strekk uten brukbart alternativ»
+ * + dekning, alltid merket med basis. Tom bok/ingen dekning sier
+ * «havnebok mangler dekning her» — aldri «ingen brukbart alternativ».
+ */
+export function renderBailout(el: HTMLElement, profile: BailoutProfile, bookLabel: string): void {
+  const head = `Nødhavn (${bookLabel}; ${profile.label})`;
+  if (profile.coverage === "none") {
+    el.textContent = `${head}: havnebok mangler dekning her — ingen havn kunne vurderes.`;
+    return;
+  }
+  const reached = profile.samples.filter((s) => s.status === "naadd").length;
+  const gap =
+    profile.longestGapS === null
+      ? "ukjent"
+      : profile.longestGapS >= profile.limitS
+        ? `≥ ${(profile.limitS / 3600).toFixed(0)} t`
+        : `${(profile.longestGapS / 3600).toFixed(1)} t`;
+  const partial =
+    profile.coverage === "partial"
+      ? ` Dekning delvis — mangler dybde: ${profile.missingDepthHarbourIds.join(", ") || "–"}` +
+        `${profile.missingFieldHarbourIds.length > 0 ? `; uten felt: ${profile.missingFieldHarbourIds.join(", ")}` : ""}.`
+      : "";
+  el.textContent =
+    `${head}: lengste strekk uten brukbart alternativ ${gap}; ` +
+    `${reached} av ${profile.samples.length} punkter langs ruten når en havn innen ${(profile.limitS / 3600).toFixed(0)} t ` +
+    `(${profile.searchCount} nødhavnsøk, ${profile.fieldScreenedSamples} punkter silt av havnefeltet).${partial}`;
+}
+
+/** Følsomhetslinjen (§4.4): merket «basert på kontrollvær», aldri en del av trafikklyset. */
+export function renderSensitivity(el: HTMLElement, report: SensitivityReport): void {
+  const runText = report.runs
+    .map((r) => {
+      const s = r.outcome.summary;
+      const t = r.outcome.kind === "feasible" && s !== null ? `${(s.durationS / 3600).toFixed(1)} t` : r.outcome.kind;
+      const label = r.kind === "cruising" ? `fart ×${r.factor}` : `strøm ×${r.factor}`;
+      return `${label}${r.basis === "verste-medlem" ? " (verste medlem)" : ""}: ${t}`;
+    })
+    .join("; ");
+  const conflict = report.conflict
+    ? " KONFLIKTSIGNAL: kontrollen kommer fram, men en perturbasjon gjør det ikke — se detaljer."
+    : "";
+  const most = report.mostSensitive === null ? "" : ` Mest følsom: ${report.mostSensitive === "cruising" ? "båtfart" : "strøm"}.`;
+  el.textContent = `Følsomhet (${report.label}): ${runText || "ingen kjøringer"}.${most}${conflict}`;
+}
+
+/** Beslutningsregelen (§4.6) eller den alltid kodede fallbacken. */
+export function renderDecision(el: HTMLElement, advice: DecisionAdvice): void {
+  if (advice.kind === "fallback") {
+    el.textContent = `Sjekkpunkt: ${advice.text}`;
+    return;
+  }
+  const r = advice.rule;
+  const when = new Date(r.checkEpochS * 1000).toISOString().slice(11, 16);
+  el.textContent =
+    `Sjekk selv kl. ${when} UTC ved ${r.position.lat.toFixed(3)}°N ${r.position.lon.toFixed(3)}°Ø: ` +
+    `er du ${r.test} for punktet?${r.explanation ? ` (${r.explanation})` : ""} Hvis ikke — ${r.action} ` +
+    `Skiller ${r.hitRate.k} av ${r.hitRate.n} utfall. ` +
+    `Provisoriske terskler (2 nm, 0,75) — viften vises alltid ved siden av.`;
 }
 
 /**

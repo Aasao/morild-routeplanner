@@ -29,12 +29,18 @@
  */
 import {
   DistanceField,
+  bailoutProfile,
   buildFieldForInput,
+  buildHarbourField,
   evaluateRoute,
+  harbourFieldVmaxKn,
   planRoute,
+  type BailoutProfile,
   type DistanceFieldData,
+  type HarbourField,
   type RouteResult,
 } from "@morild/routing";
+import { INTERIM_HARBOUR_BOOK } from "@morild/routing/test-fixtures/harbour-book";
 import { goldenScenarios } from "@morild/routing/test-fixtures/golden-scenarios";
 import {
   compositeWeatherField,
@@ -44,6 +50,7 @@ import {
   type WeatherPackage,
 } from "@morild/weather";
 import type { PackageHeader } from "@morild/protocol";
+import { withCruisingFactor, withCurrentScale } from "@morild/robustness";
 
 const SCENARIO_NAME = "skjaeloy-skagen-apent";
 
@@ -66,6 +73,8 @@ export interface PlanRouteMemberRequest {
   readonly sharedField?: SharedField | undefined;
   /** Omkjøring uten motorens egen Tub-bound (§4.1-ventilen, D9.2/D9.4) — settes av orkestratoren. */
   readonly noTubBound?: boolean | undefined;
+  /** Perturbasjon (§4.4, D8.4 c): cruising-faktor på båten eller skalering av strømmen. Strukturell kopi av `ensemble.ts`. */
+  readonly perturbation?: { readonly kind: "cruising" | "current"; readonly factor: number } | undefined;
 }
 
 /** Strukturell kopi av `ensemble.ts::SharedField` — se toppkommentaren. */
@@ -109,6 +118,12 @@ export interface PlanRouteMemberOk {
   readonly sharedField?: SharedField | undefined;
   /** Nettbrett-målingen (D10.2 b): tid i workeren, delt opp. */
   readonly timing: WorkerTiming;
+  /**
+   * Bail-out-profilen (robusthet.md §4.5, F4.6) — kun fra kontrollen, regnet
+   * på kontrollvær med interim-havneboken. Strukturell kopi av
+   * `ensemble.ts`.
+   */
+  readonly bailout?: BailoutProfile | undefined;
 }
 
 /** Strukturell kopi av `ensemble.ts::WorkerTiming`. Millisekunder, `performance.now()` i workeren. */
@@ -119,6 +134,8 @@ export interface WorkerTiming {
   readonly fieldMs: number;
   /** `planRoute` alene. */
   readonly searchMs: number;
+  /** Havnefelt + bail-out-profil (kun kontrollen). */
+  readonly bailoutMs?: number | undefined;
 }
 
 export interface PlanRouteMemberError {
@@ -199,12 +216,18 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
   // Sy sammen per-flis-feltene til ETT felt (funn 2): rutens punkter kan
   // falle i hvilken som helst av rutens fliser, og motoren vet ikke noe om
   // fliser i det hele tatt — den ser bare ett `WeatherField`.
-  const weather = compositeWeatherField(tileFields);
+  const composite = compositeWeatherField(tileFields);
   const decodeMs = performance.now() - tDecode0;
+  // Perturbasjon (§4.4): rene dekoratorer rundt båt/vær — samme fulle søk
+  // med samme opsjoner, bare en annen båt eller et annet hav.
+  const pert = msg.perturbation;
+  const weather = pert?.kind === "current" ? withCurrentScale(composite, pert.factor) : composite;
+  const boat = pert?.kind === "cruising" ? withCruisingFactor(scenario.input.boat, pert.factor) : scenario.input.boat;
   const input = {
     ...scenario.input,
     departEpochS: msg.departEpochS,
     weather,
+    boat,
   };
   // Delt A*-felt (robusthet.md §4.1, D8.2): kontrollen bygger feltet med
   // NØYAKTIG samme parametre som søket selv ville brukt
@@ -230,16 +253,63 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
     ...(msg.noTubBound === true ? { noTubBound: true } : {}),
   });
   const searchMs = performance.now() - tSearch0;
+
+  // Bail-out-profil (robusthet.md §4.5, F4.6): kun for kontrollen, på
+  // kontrollvær, med interim-havneboken — merket «ikke ensemble-sjekket».
+  // Perturbasjoner og medlemmer får ingen profil (basis 4a).
+  let bailout: BailoutProfile | undefined;
+  let bailoutMs: number | undefined;
+  if (msg.isControl && pert === undefined && result.steps.length > 0) {
+    const tB0 = performance.now();
+    const vmaxKn = harbourFieldVmaxKn(boat, weather);
+    const fields = harbourFieldsFor(vmaxKn, input.mask);
+    bailout = bailoutProfile({
+      route: { steps: result.steps, legs: result.legs },
+      departEpochS: msg.departEpochS,
+      weather,
+      mask: input.mask,
+      boat,
+      book: INTERIM_HARBOUR_BOOK,
+      fields,
+      options: input.options,
+    });
+    bailoutMs = performance.now() - tB0;
+  }
   return {
     type: "plan-route-member-result",
     memberIndex: msg.memberIndex,
     isControl: msg.isControl,
     result,
-    timing: { decodeMs, fieldMs, searchMs },
+    timing: { decodeMs, fieldMs, searchMs, ...(bailoutMs !== undefined ? { bailoutMs } : {}) },
+    ...(bailout !== undefined ? { bailout } : {}),
     ...(msg.isControl && distanceField !== undefined
       ? { sharedField: { key: fieldKey, data: distanceField.data } }
       : {}),
   };
+}
+
+/**
+ * Havnefeltene (D8.10) er væruavhengige og bygges én gang per worker-liv
+ * per (maske, vmaxKn) — 8 havner tar ~0,1 s (kostnadsmålingen
+ * `bailout-cost.damage.test.ts`). `vmaxKn` avhenger av pakkens maksvind, så
+ * nøkkelen tar den med (avrundet, så støy i siste desimal ikke bygger på
+ * nytt).
+ */
+const harbourFieldCache = new Map<string, ReadonlyMap<string, HarbourField>>();
+
+function harbourFieldsFor(
+  vmaxKn: number,
+  mask: Parameters<typeof buildHarbourField>[1],
+): ReadonlyMap<string, HarbourField> {
+  const key = `${SCENARIO_NAME}|${vmaxKn.toFixed(2)}`;
+  const cached = harbourFieldCache.get(key);
+  if (cached !== undefined) return cached;
+  const fields = new Map<string, HarbourField>();
+  for (const harbour of INTERIM_HARBOUR_BOOK) {
+    fields.set(harbour.id, buildHarbourField(harbour, mask, { vmaxKn, maskVersion: SCENARIO_NAME }));
+  }
+  harbourFieldCache.set(key, fields);
+  return fields;
 }
 
 /**

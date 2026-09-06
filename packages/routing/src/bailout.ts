@@ -258,6 +258,25 @@ export function defaultBackoffS(timeStepS: number): number {
 }
 
 /**
+ * **Øvre fartsskranke for bail-out:** raskeste polarfart i feltets sterkeste
+ * vind, motorfarten, pluss maks strøm i pakken.
+ *
+ * Bevisst raus — den skal aldri kunne utelukke en havn som faktisk var innen
+ * rekkevidde. Den brukes to steder, og begge er ensidige på samme måte:
+ * `r2FromFailure`s avstandsfilter, og havnefeltets `lowerBoundS`
+ * (`harbour-field.ts`, D8.10). Regnestykket er utformet slik at en høyere
+ * `vmaxKn` alltid gir en *svakere* filtrering, aldri en falsk avvisning.
+ */
+export function r2VmaxKn(boat: BoatModel, weather: WeatherField): number {
+  let vmaxKn = boat.motorThresholdKn > 0 ? boat.motorSpeedKn : 0;
+  for (let twa = 0; twa <= 180; twa += 5) {
+    const v = boat.boatSpeedKn(Math.min(weather.maxTwsKn, boat.maxTwsKn), twa);
+    if (v > vmaxKn) vmaxKn = v;
+  }
+  return vmaxKn + weather.maxCurrentKn;
+}
+
+/**
  * Indeksen i `steps` re-søket starter fra: det **siste** rutepunktet med
  * `tS <= t_feil - backoffS`, aldri før avgang (indeks 0).
  *
@@ -403,18 +422,9 @@ export function r2FromFailure(
   const fromTS = startStep === undefined ? failure.tS : startStep.tS;
   const departEpochS = input.departEpochS + fromTS;
 
-  // Øvre fartsgrense for forhåndsfiltreringen: raskeste polarfart i feltets
-  // sterkeste vind, motor og strøm. Bevisst raus — den skal aldri kunne
-  // utelukke en havn som faktisk var innen rekkevidde.
-  let vmaxKn = input.boat.motorThresholdKn > 0 ? input.boat.motorSpeedKn : 0;
-  for (let twa = 0; twa <= 180; twa += 5) {
-    const v = input.boat.boatSpeedKn(
-      Math.min(input.weather.maxTwsKn, input.boat.maxTwsKn),
-      twa,
-    );
-    if (v > vmaxKn) vmaxKn = v;
-  }
-  vmaxKn += input.weather.maxCurrentKn;
+  // Øvre fartsgrense for forhåndsfiltreringen (`r2VmaxKn`, samme skranke som
+  // havnefeltet bruker).
+  const vmaxKn = r2VmaxKn(input.boat, input.weather);
   const reachNm = (vmaxKn * limitS) / 3600;
 
   const attempts: BailoutAttempt[] = [];

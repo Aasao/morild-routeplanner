@@ -67,6 +67,8 @@ export interface PipelineDeps {
   readonly poolSize: number;
   /** D10.5 verste-først via S1b-orakel; standard på i appen, av i tester uten orakel-mock. */
   readonly worstFirst?: boolean | undefined;
+  /** Kjør perturbasjonene (§4.4) etter ensemblet — fem ekstra søk. Av i tester. */
+  readonly perturbation?: boolean | undefined;
   readonly nowEpochS: number;
 }
 
@@ -89,6 +91,7 @@ export interface PipelineCallbacks {
   readonly onControlResult?: (outcome: MemberOutcome, memberCount: number) => void;
   readonly onMemberResult?: EnsembleCallbacks["onMemberResult"];
   readonly onMetAlerts?: (result: MetAlertsLoadResult, relevant: readonly RelevantAlert[]) => void;
+  readonly onSensitivity?: EnsembleCallbacks["onSensitivity"];
   readonly onError?: (message: string) => void;
 }
 
@@ -317,7 +320,31 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
       }
     },
     ...(callbacks.onMemberResult ? { onMemberResult: callbacks.onMemberResult } : {}),
-  }, { worstFirst: deps.worstFirst === true, context });
+    ...(callbacks.onSensitivity ? { onSensitivity: callbacks.onSensitivity } : {}),
+  }, {
+    worstFirst: deps.worstFirst === true,
+    context,
+    ...(deps.perturbation === true
+      ? {
+          perturbation: {
+            // Flisene leses fra cachen på nytt: de opprinnelige bufferne ble
+            // overført til poolen. Cache API kloner ved `arrayBuffer()`.
+            tilesFor: async (memberIndex: number): Promise<readonly TileWindSource[]> => {
+              const sources = byMember.get(memberIndex);
+              if (sources === undefined) throw new Error(`perturbasjon: medlem ${memberIndex} finnes ikke i pakken`);
+              const blobs = await Promise.all(
+                sources.map((s) => loadWeatherBlob(deps.config, s.entry.key, blobDeps)),
+              );
+              return sources.map((s, i) => ({
+                tileId: s.tile.tileId,
+                windHeader: s.entry.header,
+                windBuffer: blobs[i]!.buffer,
+              }));
+            },
+          },
+        }
+      : {}),
+  });
   await metAlertsDone;
 
   if (outcomes.length === 0) {

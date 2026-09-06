@@ -13,13 +13,17 @@
  * ugjennomførbart — kun som inkonklusivt. > 20 % inkonklusive på en avgang
  * er horisont-porten (ADR-0005 punkt 4): et flagg, ikke en feil.
  */
-import type { DistanceFieldData, LatLon, RouteResult } from "@morild/routing";
+import type { BailoutProfile, DistanceFieldData, LatLon, RouteResult } from "@morild/routing";
 import type { PackageHeader } from "@morild/protocol";
 import {
   classifyMember as classifyRobust,
   nextAction,
+  perturbationPlan,
   summarizeDeparture,
   summarizeMember,
+  summarizeSensitivity,
+  type PerturbationRun,
+  type SensitivityReport,
   type DepartureSummary,
   type InconclusiveReason,
   type MemberClassification as RobustClassification,
@@ -57,6 +61,8 @@ export interface PlanRouteMemberRequest {
   readonly departEpochS: number;
   /** Omkjøring uten motorens egen Tub-bound (§4.1-ventilen; maks én per medlem, D9.4). */
   readonly noTubBound?: boolean | undefined;
+  /** Perturbasjon (§4.4): cruising-faktor på båten eller skalering av strømmen. */
+  readonly perturbation?: Perturbation | undefined;
   /**
    * Delt A*-felt (robusthet.md §4.1, D8.2): bygget én gang av kontroll-
    * workeren (`buildFieldForInput`) og sendt som strukturert klone til hvert
@@ -64,6 +70,12 @@ export interface PlanRouteMemberRequest {
    * Udefinert for kontrollen (den bygger feltet) og ved fallback.
    */
   readonly sharedField?: SharedField | undefined;
+}
+
+/** Én perturbasjon (§4.4, D8.4 c) — kjøres som et eget fullt søk. */
+export interface Perturbation {
+  readonly kind: "cruising" | "current";
+  readonly factor: number;
 }
 
 /**
@@ -86,6 +98,8 @@ export interface PlanRouteMemberOk {
   readonly sharedField?: SharedField | undefined;
   /** Nettbrett-målingen (D10.2 b): tid i workeren, delt opp — se `WorkerTiming`. */
   readonly timing?: WorkerTiming | undefined;
+  /** Bail-out-profilen (§4.5) — kun fra kontrollen, på kontrollvær. */
+  readonly bailout?: BailoutProfile | undefined;
 }
 
 /**
@@ -97,6 +111,8 @@ export interface WorkerTiming {
   readonly decodeMs: number;
   readonly fieldMs: number;
   readonly searchMs: number;
+  /** Havnefelt + bail-out-profil (kun kontrollen). */
+  readonly bailoutMs?: number | undefined;
 }
 
 export interface PlanRouteMemberError {
@@ -140,6 +156,8 @@ export interface MemberJob {
   readonly oracleRank?: number | undefined;
   /** Settes av orkestratoren for omkjøringen (§4.1-ventilen). */
   readonly noTubBound?: boolean | undefined;
+  /** Settes av orkestratoren i perturbasjonsfasen (§4.4). */
+  readonly perturbation?: Perturbation | undefined;
 }
 
 export type MemberClassification = "feasible" | "infeasible" | "inconclusive";
@@ -175,6 +193,8 @@ export interface MemberOutcome {
   readonly sharedField?: SharedField | undefined;
   /** Tid inne i workeren (D10.2 b); udefinert ved feil. */
   readonly workerTiming?: WorkerTiming | undefined;
+  /** Bail-out-profilen (§4.5, F4.6) — kun på kontrollens utfall, merket «kontrollvær — ikke ensemble-sjekket». */
+  readonly bailout?: BailoutProfile | undefined;
   /** Orakelets rang (D10.5) — kun for nettbrett-målingen/treffsikkerhet, aldri et tall i UI. */
   readonly oracleRank?: number | undefined;
   /** Antall omkjøringer uten bound (§4.1-ventilen, maks 1 — D9.4). */
@@ -359,6 +379,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
       departEpochS: job.departEpochS,
       ...(job.sharedField !== undefined ? { sharedField: job.sharedField } : {}),
       ...(job.noTubBound === true ? { noTubBound: true } : {}),
+      ...(job.perturbation !== undefined ? { perturbation: job.perturbation } : {}),
     };
     // Én jobb = ett lytterpar, fjernet ved første svar (robusthet.md §4.1:
     // «Lytterne registreres med { once: true } per jobb»). Før lå alle
@@ -393,6 +414,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
           elapsedMs: elapsed(),
           ...(data.sharedField !== undefined ? { sharedField: data.sharedField } : {}),
           ...(data.timing !== undefined ? { workerTiming: data.timing } : {}),
+          ...(data.bailout !== undefined ? { bailout: data.bailout } : {}),
           ...(job.oracleRank !== undefined ? { oracleRank: job.oracleRank } : {}),
         });
       } else {
@@ -427,6 +449,17 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
 export interface EnsembleCallbacks {
   readonly onControlResult?: (outcome: MemberOutcome) => void;
   readonly onMemberResult?: (outcome: MemberOutcome, runningSummary: EnsembleSummary) => void;
+  /** Følsomhetsrapporten (§4.4) når perturbasjonsfasen er ferdig — påvirker aldri trafikklyset. */
+  readonly onSensitivity?: (report: SensitivityReport) => void;
+}
+
+/**
+ * Perturbasjonsfasen (§4.4, D8.4 c) trenger flisene på nytt — de opprinnelige
+ * bufferne ble overført (transfer) til poolen og er tomme i hovedtråden.
+ * Pipelinen leser dem fra cachen igjen (billig, Cache API kloner).
+ */
+export interface PerturbationOptions {
+  readonly tilesFor: (memberIndex: number) => Promise<readonly TileWindSource[]>;
 }
 
 export interface EnsembleOptions {
@@ -439,6 +472,55 @@ export interface EnsembleOptions {
   readonly worstFirst?: boolean | undefined;
   /** Kontekst for avgangssammendraget (§3.3); uten den er `summary.departure` null. */
   readonly context?: EnsembleContext | undefined;
+  /** Kjør perturbasjonene (§4.4) etter ensemblet; udefinert ⇒ ingen følsomhetsrapport. */
+  readonly perturbation?: PerturbationOptions | undefined;
+}
+
+/**
+ * Perturbasjonsfasen (§4.4): fem søk på kontrollen (cruising 0,85/0,90/
+ * 0,95; strøm 0,8/1,2) og ett på det verste gjennomførbare medlemmet
+ * (cruising 0,85). Sekvensielt på én worker etter at ensemblet er ferdig —
+ * seks søk, aldri i veien for tallene, og resultatet påvirker aldri
+ * trafikklyset (§3.4). (Spec-teksten §4.4 sier «4 ekstra søk» — tellingen
+ * av {0,85; 0,90; 0,95} + {0,8; 1,2} er fem; rettet i spec 2026-09-05.)
+ */
+async function runPerturbations(
+  controlJob: MemberJob,
+  controlOutcome: MemberOutcome,
+  outcomes: readonly MemberOutcome[],
+  workerFactory: WorkerFactory,
+  perturbation: PerturbationOptions,
+): Promise<SensitivityReport> {
+  const feasible = outcomes.filter(
+    (o) => !o.isControl && o.classification === "feasible" && o.result !== undefined,
+  );
+  const worst =
+    feasible.length === 0
+      ? null
+      : feasible.reduce((a, b) => (b.result!.totals.durationS > a.result!.totals.durationS ? b : a));
+  const plan = perturbationPlan(toRobustOutcome(controlOutcome), worst === null ? null : toRobustOutcome(worst));
+  const worker = workerFactory();
+  const runs: PerturbationRun[] = [];
+  try {
+    for (const entry of plan) {
+      const basisOutcome = entry.basis === "kontroll" ? controlOutcome : worst;
+      if (basisOutcome === null) continue;
+      const tiles = await perturbation.tilesFor(basisOutcome.memberIndex);
+      const job: MemberJob = {
+        memberIndex: basisOutcome.memberIndex,
+        isControl: false,
+        tiles,
+        departEpochS: controlJob.departEpochS,
+        ...(controlOutcome.sharedField !== undefined ? { sharedField: controlOutcome.sharedField } : {}),
+        perturbation: { kind: entry.kind, factor: entry.factor },
+      };
+      const outcome = await runMemberWithRerun(worker, job);
+      runs.push({ kind: entry.kind, factor: entry.factor, basis: entry.basis, outcome: toRobustOutcome(outcome) });
+    }
+  } finally {
+    worker.terminate();
+  }
+  return summarizeSensitivity(runs, controlOutcome.classification === "feasible");
 }
 
 /** Orakelsvar for ett medlem; `null` når evalueringen feilet (medlemmet søkes sist). */
@@ -523,10 +605,14 @@ export async function runEnsemble(
   workerFactory: WorkerFactory,
   callbacks: EnsembleCallbacks = {},
   options: EnsembleOptions = {},
-): Promise<{ readonly outcomes: readonly MemberOutcome[]; readonly summary: EnsembleSummary }> {
+): Promise<{
+  readonly outcomes: readonly MemberOutcome[];
+  readonly summary: EnsembleSummary;
+  readonly sensitivity: SensitivityReport | null;
+}> {
   const [controlJob, ...memberJobs] = jobs;
   if (controlJob === undefined) {
-    return { outcomes: [], summary: summarizeEnsemble([]) };
+    return { outcomes: [], summary: summarizeEnsemble([]), sensitivity: null };
   }
   if (!controlJob.isControl) {
     throw new Error("runEnsemble: jobs[0] må være kontrollmedlemmet (isControl: true)");
@@ -597,7 +683,13 @@ export async function runEnsemble(
     workers.forEach((w) => w.terminate());
   }
 
-  return { outcomes, summary: summarizeEnsemble(outcomes, options.context) };
+  let sensitivity: SensitivityReport | null = null;
+  if (options.perturbation !== undefined && controlOutcome.result !== undefined) {
+    sensitivity = await runPerturbations(controlJob, controlOutcome, outcomes, workerFactory, options.perturbation);
+    callbacks.onSensitivity?.(sensitivity);
+  }
+
+  return { outcomes, summary: summarizeEnsemble(outcomes, options.context), sensitivity };
 }
 
 /**

@@ -32,4 +32,7 @@ export * from "./search.js";
 // E1′-målevariantene. Egne innganger, av som standard — se `variants.ts`.
 export * from "./corridor.js";
 export * from "./bailout.js";
+export * from "./harbour-book.js";
+export * from "./harbour-field.js";
+export * from "./bailout-profile.js";
 export * from "./variants.js";

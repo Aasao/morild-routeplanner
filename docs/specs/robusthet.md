@@ -278,6 +278,10 @@ interface BailoutProfile {
   readonly coverage: "none" | "partial" | "full";   // tom bok / noen havner uten dybde / alle gates evaluert
   readonly basis: "kontrollvaer" | "medlemmer";      // 4a: alltid kontrollvaer
   readonly label: "kontrollvær — ikke ensemble-sjekket" | "maks over medlemmer";
+  readonly sampleIntervalS: number; readonly limitS: number;
+  /** Listen bak «partial» (§4.5 pkt. 4) og kostnadstall (§6.3) — lagt til i bølge 4. */
+  readonly missingDepthHarbourIds: readonly string[]; readonly missingFieldHarbourIds: readonly string[];
+  readonly searchCount: number; readonly fieldScreenedSamples: number;
 }
 ```
 
@@ -406,7 +410,8 @@ ordning; to avganger med identisk nøkkel skilles av tidligste avgang.
 ### 4.4 Perturbasjon (F4.3, D8.4)
 
 På valgt avgang, etter ensemblet: kontrollen kjøres med cruising-faktor
-{0,85; 0,90; 0,95} og strømskalering {0,8; 1,2} (4 ekstra søk), pluss
+{0,85; 0,90; 0,95} og strømskalering {0,8; 1,2} (fem ekstra søk — tellingen
+«4» i D8.4 var feil, rettet 2026-09-05), pluss
 cruising 0,85 på **verste gjennomførbare medlem** (1 søk;
 kommutasjonsargumentet: en tregere båt møter en annen værsekvens).
 Resultatene vises som «følsomhet»-linje merket «basert på kontrollvær»
@@ -900,6 +905,13 @@ bærer); død `s < 0,7`-rad etter gul-radene fjernet; sertifikatets
 forutsetning «ingen omklassifisering fra infeasible» (omkjøringen ferdig
 før telling) står i §4.1. Bekreftes.
 
+**Bølge 4-funn (2026-09-05) — beslutningspunkter D12.1–D12.5, til
+Magnus (grunnlag: `docs/research/beslutningsgrunnlag-d12-boelge4-2026-09-05.md`,
+panel pågår):** D12.1 bail-out over medlemmer (bølge 6, D8.6 c — kostnad
+3,3 s per profil på PC); D12.2 `draughtM`/`depthClearanceM` obligatoriske;
+D12.3 dybdegate `min` vs kai-verifisert `max`; D12.4 perturbasjonsfasens
+omfang (6 søk); D12.5 `departEpochS` i `MemberSummary`.
+
 ## 8. Endringslogg
 
 - 2026-09-04: første utkast (hovedsesjonen) etter fagagent-panel med to
@@ -936,3 +948,14 @@ før telling) står i §4.1. Bekreftes.
   «partial + nådd mål» ⇒ inkonklusiv `dekning-felt` i robustness (ikke
   app-overstyring), `r2SearchInput` setter `noTubBound: true` (D11.2),
   `rod/tynt-grunnlag` (D11.4); D11.3-kriterier i §7.
+- 2026-09-05: **bølge 4 levert.** Routing: havnebok m/gates (dybde,
+  mørke, vær), avkortet baklengs havnefelt (D8.10, admissibilitet 200
+  punkter 0 brudd, `harbourFieldVmaxKn` = `r2VmaxKn` + 0,3 kn), `bailoutProfile`
+  (§4.5), kostnadsmåling: 32 samples, 33 R2-søk, 3,3 s på golden 85 nm.
+  Robustness: `deriveDecisionRule` (§4.6, LOO, støyfikstur 100 % fallback),
+  `perturbationPlan`/`summarizeSensitivity` (§4.4; fem + én søk — «4»
+  rettet), `withCruisingFactor`/`withCurrentScale`. App: bail-out-profil
+  på kontrollen (interim-havnebok, merket FIKSTUR i UI), perturbasjonsfase
+  etter ensemblet, beslutningsregel og følsomhet i panelet. Review: 4
+  funn fikset (vmax-margin, fikstur-merking, prosent, dypgang i wrapper).
+  Åpent: D12.1–D12.5 (§7, panel).

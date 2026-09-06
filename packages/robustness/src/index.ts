@@ -14,3 +14,6 @@ export * from "./traffic-light.js";
 export * from "./summary.js";
 export * from "./ranking.js";
 export * from "./rerun.js";
+export * from "./decision-rule.js";
+export * from "./perturbation.js";
+export * from "./perturbation-wrappers.js";

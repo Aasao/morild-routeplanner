@@ -1472,6 +1472,103 @@ nær ti ganger så mange etiketter — men ruten, totalene, sikkerhetsdommen og
 alternativene er **bit-identiske**. Bounden beskar bare kandidater som
 uansett ikke vant.
 
+### 5.14 Havnebok, havnefelt og bail-out-profil (F4.6)
+
+Detaljene og vedtakene bor i `docs/specs/robusthet.md` §3.5 (typene), §4.5
+(adferden), §5.6 (testkravene) og §7 D8.6/D8.10/D11.2. Her står bare det
+rutemotoren eier: tre rene moduler, ingen I/O, ingen klokke.
+
+**Hvorfor det finnes.** Fram til fase 4a bølge 4 svarte R2 (§5.12) bare når
+en rute feilet hardt. På en rute som holder — altså den ruten Magnus faktisk
+får anbefalt — sa den ingenting. Spørsmålet «hvor lenge er jeg uten en havn
+jeg kan gå inn i?» er interessant nettopp da. D8.6 (b) er derfor en bugfiks,
+ikke en utvidelse.
+
+**`harbour-book.ts` — boken og gatene.** `HarbourBookEntry` utvider
+`BailoutHarbour` med `id`, dybde ved kai og ankringsplass (`DepthRef | null`),
+`nightApproachSafe` og LWW-feltene fra F6.1. Tre rene gates:
+
+| Gate | Regel | Retning |
+|---|---|---|
+| dybde | `null` i ett av dybdefeltene ⇒ `mangler-dybde`, havnen ekskluderes. Ellers kreves `min(kai, ankring) ≥ dypgang + klaring`. | avviser |
+| mørke | Ankomst utenfor dagslys (`daylight.ts`) og `!nightApproachSafe` ⇒ `moerke`. Før søket avvises kun når HELE ankomstvinduet `[t + lowerBoundS, t + limitS]` er mørkt. | avviser |
+| vær | `harbourApproachable` (§5.12) på ankomsttidspunktet, med vaktbånd på pålandsvinden (D7.3). | avviser |
+
+Ingen av gatene kan gjøre en havn *nådd*; de kan bare stryke den. «Mangler
+dybde» er en egen utgang fra «for grunt» med vilje: det er skillet mellom
+ukjent og målt, og D7.3-feilklassen er at de to blandes.
+
+Dybdekravet leses fra `BoatModel.draughtM` + `depthClearanceM`, som er
+**valgfrie** felt (motorens eget søk møter aldri en dybde — masken er bygget
+for én dypgang i byggetid, F1.0/F1.1). Mangler de, brukes kravspekens B1-tall
+for Morild, 2,10 + 0,5 = 2,6 m. Det er en kjent skarp kant, se §9.
+
+**`harbour-field.ts` — det avkortede baklengs havnefeltet (D8.10).** Én
+Dijkstra per havn over farbarhetsmasken, avkortet ved `vmaxKn · limitS/3600`,
+lagret som `Float32Array` (~0,2 MB per havn på 0,01°) og delt som transferable
+buffer på tvers av avganger og medlemmer. Væruavhengig: en funksjon av
+geometri, ikke av vær. `vmaxKn` kommer fra kalleren og er `r2VmaxKn(boat,
+weather)` — raskeste polarfart i feltets sterkeste vind, motorfart og maks
+strøm i pakken; den samme skranken R2s avstandsfilter bruker.
+
+Feltet har **lov til å trekke én konklusjon**: `lowerBoundS > limitS` ⇒ havnen
+kan ikke nås innen skranken, og søket hoppes over. `≤` beviser ingenting.
+Snus den retningen, melder profilen «ingen trygg havn» der det fantes en — den
+farligste feilen delsystemet kan gjøre, og den ville aldri krasjet.
+
+Tre detaljer holder skranken **under** sannheten:
+
+1. **Float64 under beregningen, Float32 kun ved lagring**, og konverteringen
+   runder alltid nedover (`froundDown`). Float32-buggen fra §5.5
+   (foreldede celler) oppstår ikke, fordi heapen aldri ser den avrundede
+   verdien.
+2. **Gridgeometri:** en 8-nabo-vei er inntil `√(4−2√2) ≈ 1,0824` ganger
+   lengre enn linjen den tilnærmer. `lowerBoundNm` deler på faktoren.
+3. **Snapping:** havn og punkt er begge snappet til cellesentre, og
+   nabolagsminimet (3×3, `atNear`-mønsteret fra §5.5) kan hente en verdi
+   halvannen celle unna. To celle-diagonaler trekkes fra.
+
+Det som ikke kan korrigeres bort er at masken er diskretisert: et sund
+smalere enn cellen finnes ikke i feltet. Da blir avstanden for lang eller
+`Infinity` — «ingen havn innen 6 t» der det kanskje fantes en. Pessimistisk,
+altså trygg retning for en advarsel, og nok en grunn til at feltet aldri får
+si at en havn *er* nådd. Målt margin (robusthet.md §5.6, 200 seedede punkter
+på golden-masken): 0 brudd, og i det strammeste punktet er den faktiske
+R2-tiden 1,52–1,56 × skranken.
+
+**`bailout-profile.ts` — profilen.** `bailoutProfile(input)` sampler den
+anbefalte ruten hvert 30. minutt (`BAILOUT_SAMPLE_INTERVAL_S`) pluss ved hvert
+segmentskifte, med lineær interpolasjon mellom `steps` — profilens oppløsning
+skal ikke avhenge av søkets tidssteg. Per punkt:
+
+1. `lowerBoundS = min_h` over havnefeltene. `> limitS` ⇒ `ingen-innen-6t`,
+   uten et eneste søk.
+2. Ellers kandidater i stigende `lowerBoundS` (havn-id som tie-break):
+   dybdegate → mørke-forgate → **fullt R2-søk** (`r2SearchInput`: pareto,
+   udelt maske, `noTubBound: true` per D11.2) → mørkegate på faktisk
+   ankomsttid → `harbourApproachable` med kontrollværet. Første `naadd`
+   avslutter punktet.
+3. Statusene er ærlige om hva som er bevist: `naadd`; `ikke-anloepbar` (vi
+   rekker fram, men kommer ikke inn — mørke eller vær); `ingen-innen-6t`
+   (feltets ene konklusjon); `ukjent` (søket kom ikke fram, eller ble aldri
+   kjørt). En budsjettventil (`maxSearchesPerSample`) etterlater alltid
+   `ukjent`, aldri `ingen-innen-6t`.
+
+`longestGapS` er lengste ubrutte strekk uten `naadd` i rutetid, rundet **opp**
+med et halvt sampleintervall (den umålte biten på hver side); `null` når det
+ikke finnes samples. «≥ 6 t» er `gapAtLeastLimit` (`longestGapS >= limitS`).
+`coverage` er `"none"` for tom bok eller bok uten en eneste brukbar havn,
+`"partial"` når noen havner er ekskludert (liste i `missingDepthHarbourIds` /
+`missingFieldHarbourIds`), ellers `"full"`. `basis` er alltid `"kontrollvaer"`
+i 4a, med `label` «kontrollvær — ikke ensemble-sjekket» i selve
+datastrukturen: merkingen er ikke noe UI-et må huske.
+
+**Målt kostnad** (`bailout-cost.damage.test.ts`, golden
+`skjaeloy-skagen-apent`, full oppløsning, PC 2026-09-05): 32 samples, **33
+fulle R2-søk**, 128 kandidater silt bort av feltet, 8 havnefelt bygget på
+0,12 s (368 k celler, 1,4 MB), profil 3,1 s. Panelets anslag var < 40 søk og
+< 2 min; begge er harde assertions i målingen.
+
 ---
 
 ## 6. Ærlig degradering (obligatorisk seksjon, N2)
@@ -1489,6 +1586,9 @@ uansett ikke vant.
 | Etikett-taket nås | `abortReason: "labelCap"`. Dette er *ikke* en stille kvalitetsforringelse — det står i resultatet og skal vises. |
 | Sjøgangstillegg (F1.2) overskrider maskens statiske margin | Segmentet flagges `SJOEGANGS_MARGIN_OVERSKREDET` og får `tillit: "usikkert"`. Det avvises **ikke** — masken er bygd med statisk margin, og vi later ikke som vi kan gjøre den strengere i ettertid. Se §9 spm. 10. |
 | Negativ meteorologisk vannstand i prognosen | Flagg `NEGATIV_VANNSTAND_RISIKO` på berørte segmenter (F1.2). Flagg, ikke constraint, i v2.0. |
+| Havnebok tom, eller ingen havn med kjent dybde (§5.14) | `BailoutProfile.coverage = "none"`, `longestGapS = null`, **ingen samples**. Teksten er «havneboken mangler dekning her» — aldri «ingen brukbart alternativ». Manglende data er ikke et funn. |
+| Havn uten dybdetall i boken | Havnen ekskluderes fra R2 med `mangler-dybde`, `coverage = "partial"` og id-en i `missingDepthHarbourIds`. Aldri stilltiende antatt dyp nok. |
+| Havnefelt mangler eller nådde ingen celler (havn på land i masken) | Havnen ekskluderes, id-en i `missingFieldHarbourIds`, `coverage = "partial"`. |
 
 ---
 
@@ -1734,10 +1834,49 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
     (Magnus):** ja — kun sluttankomst i v2.0.
 13. **Grensesnittnavnene i §4.1** må avstemmes mot
     `docs/specs/farbarhetsmaske.md` når den lander.
+14. **Dybdekravet i havneboken (§5.14) har to skarpe kanter.** (a)
+    `BoatModel.draughtM`/`depthClearanceM` er valgfrie, og fallbacken er
+    Morilds B1-tall (2,6 m): en annen båt med større dypgang, plugget inn i
+    en modell uten feltene, ville fått Morilds krav. Feltene bør bli
+    obligatoriske den dagen v2 får mer enn én båt. (b) Gaten krever
+    `min(kai, ankring) ≥ krav`, altså at **begge** liggemulighetene holder,
+    selv om det i prinsippet holder at én gjør det. Valget er bevisst
+    konservativt (et bail-out-anløp i kuling ender ofte på svai fordi kaia er
+    full), men det kan stryke en havn som var brukbar. **Spørsmål til Magnus:
+    skal `max` brukes når kaia er verifisert (`verified: true`)?**
+15. **Bail-out-profilens basis er kontrollværet** (robusthet.md §4.5 pkt. 5).
+    «Maks over medlemmer» for valgt avgang er en egen bølge, betinget av
+    kostnadsmålingen — den er nå kjørt (33 søk, 3,2 s per rute), så
+    betingelsen i D8.6 (c) er teknisk oppfylt. Beslutningen om å ta den er
+    Magnus'.
 
 ---
 
 ## 10. Endringslogg
+
+- **2026-09-05 — fase 4a bølge 4: havnebok, havnefelt og bail-out-profil**
+  (`docs/specs/robusthet.md` §3.5, §4.5, §5.6 og §7 D8.6 (b), D8.10, D11.2).
+  - **Ny §5.14** med tre rene moduler i `packages/routing`:
+    `harbour-book.ts` (`HarbourBookEntry`, `DepthRef` og gatene dybde/mørke),
+    `harbour-field.ts` (avkortet baklengs Dijkstra per havn, `Float32Array`,
+    `lowerBoundS`) og `bailout-profile.ts` (sampling hvert 30. minutt +
+    segmentskifter, `longestGapS`, `coverage`, `basis`/`label`).
+  - **Feltet siler kun i «ingen havn»-retning.** `lowerBoundS > limitS`
+    beviser at havnen ikke kan nås; `≤` beviser ingenting. Skranken holdes
+    under sannheten av tre ting: Float64 under beregningen med `froundDown`
+    ved lagring, deling på oktil-faktoren `√(4−2√2)`, og fratrekk av to
+    celle-diagonaler for snapping. Målt på 200 seedede punkter: 0 brudd,
+    strammeste margin 1,52–1,56 (`harbour-field.test.ts`).
+  - **`BoatModel` fikk valgfrie `draughtM`/`depthClearanceM`** — kun
+    havnebokens dybdegate bruker dem; søket møter aldri en dybde. Fallback er
+    kravspekens B1-tall (2,6 m), notert som skarp kant i §9.
+  - **`r2VmaxKn` trukket ut av `r2FromFailure`** slik at avstandsfilteret og
+    havnefeltet deler nøyaktig samme øvre fartsskranke (identisk regnestykke,
+    ingen endring i R2s adferd).
+  - **Kostnadsmåling** (D8.6 c-betingelse) i `bailout-cost.damage.test.ts`:
+    32 samples, 33 fulle R2-søk, 128 kandidater silt av feltet, 3,2 s totalt
+    på golden-strekket i full oppløsning. Panelets anslag (< 40 søk, < 2 min)
+    holdt og er hard assertion.
 
 - 2026-09-05 (D11.2, vedtatt): `r2SearchInput` setter `noTubBound: true` —
   nødhavnsøket beskjæres aldri av motorens egen Tub-bound (eksistens-

@@ -29,7 +29,11 @@ import {
   renderPointerStatus,
   renderTileSelection,
   renderMeasurement,
+  renderSensitivity,
+  renderDecision,
+  renderBailout,
 } from "./weather-ui.js";
+import { deriveDecisionRule } from "@morild/robustness";
 
 function registerServiceWorker(): void {
   if (!("serviceWorker" in navigator)) {
@@ -64,6 +68,9 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   const ensembleEl = document.querySelector<HTMLDivElement>("#weather-ensemble-summary");
   const metalertsEl = document.querySelector<HTMLDivElement>("#weather-metalerts");
   const measurementEl = document.querySelector<HTMLDivElement>("#weather-measurement");
+  const sensitivityEl = document.querySelector<HTMLDivElement>("#weather-sensitivity");
+  const bailoutEl = document.querySelector<HTMLDivElement>("#weather-bailout");
+  const decisionEl = document.querySelector<HTMLDivElement>("#weather-decision");
 
   // Cache API finnes kun i secure context (https/localhost). Fra en
   // LAN-IP over http (nettbrett-røyktest) faller vi ærlig tilbake til
@@ -97,6 +104,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       cacheStorage,
       workerFactory: createRealWeatherWorker,
       poolSize,
+      perturbation: true,
       worstFirst: true,
       nowEpochS: Math.floor(Date.now() / 1000),
     },
@@ -117,6 +125,11 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
         controlMeasurement = memberMeasurement(outcome, 0);
         memberMeasurements.length = 0;
         if (controlResultEl) renderControlResult(controlResultEl, outcome);
+        // Havneboken i appen er ennå interim-fiksturen (robusthet.md §2: aldri
+        // produksjonsdata) — det skal stå i selve linjen til F4.6-boken er reell.
+        if (bailoutEl && outcome.bailout !== undefined) {
+          renderBailout(bailoutEl, outcome.bailout, "FIKSTUR-HAVNEBOK — dybder og mørketrygghet er ikke reelle");
+        }
         const result = outcome.result;
         if (result === undefined) return;
         if (flagsEl) {
@@ -130,7 +143,17 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
             });
         }
       },
+      onSensitivity: (report) => {
+        if (sensitivityEl) renderSensitivity(sensitivityEl, report);
+      },
       onMemberResult: (outcome, summary) => {
+        const d = summary.departure;
+        if (decisionEl && d !== null && d.complete) {
+          renderDecision(
+            decisionEl,
+            deriveDecisionRule({ control: d.control, members: d.members, complete: d.complete, nF: d.nF, nInf: d.nInf }),
+          );
+        }
         if (outcome.isControl) return;
         memberMeasurements.push(memberMeasurement(outcome, memberMeasurements.length));
         const wallMs = ensembleStartMs === undefined ? undefined : performance.now() - ensembleStartMs;

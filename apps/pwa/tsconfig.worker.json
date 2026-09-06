@@ -10,6 +10,7 @@
     { "path": "../../packages/geo" },
     { "path": "../../packages/protocol" },
     { "path": "../../packages/weather" },
-    { "path": "../../packages/routing" }
+    { "path": "../../packages/routing" },
+    { "path": "../../packages/robustness" }
   ]
 }

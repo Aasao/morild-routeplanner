@@ -191,6 +191,21 @@ export interface BoatModel {
   readonly motorThresholdKn: number;
   readonly motorSpeedKn: number;
   readonly motorFuelLPerH: number;
+
+  /**
+   * Dypgang i meter, og klaringen som kreves under kjølen (kravspek B1/F1.2:
+   * Morild 2,10 m + 0,5 m statisk margin).
+   *
+   * **Valgfrie, og bare bail-out bruker dem.** Selve rutesøket møter aldri en
+   * dybde: farbarhetsmasken er bygget for ÉN dypgang i byggetid (F1.0/F1.1),
+   * så motoren har ingen bruk for tallet. Havnebokens dybdegate
+   * (`harbour-book.ts`) har det: «er det dypt nok til å ligge her i natt» er
+   * et spørsmål masken ikke svarer på. Valgfrie for ikke å bryte
+   * `packages/polar` og samtlige fiksturer; `requiredHarbourDepthM` faller
+   * tilbake på B1-tallene og dokumenterer den skarpe kanten.
+   */
+  readonly draughtM?: number;
+  readonly depthClearanceM?: number;
 }
 
 /**

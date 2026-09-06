@@ -213,7 +213,15 @@ kvalitetstransparens finnes ingen steder. Appens to unike kjerner.
   gjennomførbare medlem for valgt avgang; opprinnelig ±0,05 var for smalt
   mot v1-loggenes 0,86–1,21 (regimeavhengig — noteres som kjent
   forenkling). Perturbasjoner påvirker aldri trafikklyset og merkes
-  «basert på kontrollvær».
+  «basert på kontrollvær». **Implementert 2026-09-05 (bølge 4,
+  `docs/specs/robusthet.md` §4.4):** `perturbationPlan`/
+  `summarizeSensitivity` i `packages/robustness` — planen (5–6 søk: 3
+  cruising- + 2 strømfaktorer på kontrollen, pluss cruising 0,85 på
+  verste gjennomførbare medlem) og aggregeringen er rene funksjoner;
+  selve søkene kjøres av appen. Motoren mangler i dag en cruising-/
+  strømskaleringsknapp på `RouteInput` — se pakkens egen
+  toppkommentar for hva som må bygges (`BoatModel`-/`WeatherField`-
+  dekoratorer) før perturbasjonene faktisk kan kjøres.
 - **F4.4** **Presentasjon (etter seiler-review):** trafikklys + én setning
   klartekst; P90 som *plantid* («regn med inntil 31 t»), ikke statistikk;
   følsomste faktor som **beslutningsregel med klokkeslett** («sjekk 05:30:
@@ -314,6 +322,16 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-05 (bølge 4, `docs/specs/robusthet.md` §3.4/§4.4/§4.6):**
+  F4.3 implementert — `perturbationPlan`/`summarizeSensitivity` i
+  `packages/robustness` (rene funksjoner; søkene kjøres av appen; motoren
+  mangler foreløpig en cruising-/strømskaleringsvei på `RouteInput`, se
+  `perturbation.ts`s toppkommentar); beslutningsregelen (D8.5) levert som
+  `deriveDecisionRule` — geometrisk divergens av medlemssporene med
+  margin-, konkordans- og leave-one-out-gater, obligatorisk kodet
+  fallback, testet mot et konstruert frontscenario og en seedet
+  støyfikstur (100 kjøringer, fallback-andel ≈ 100 %, komfortabelt over
+  95 %-kravet).
 - **2026-09-05 (D11.1–D11.4, Magnus, etter /panel — se
   `docs/research/ekspertpanel-d11-boelge3-2026-09-05.md` og
   `docs/specs/robusthet.md` §7):** F4.2-klassifisering: all partial

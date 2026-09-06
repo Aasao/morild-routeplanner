@@ -329,6 +329,58 @@ describe("verste-først-orakelet (D10.5)", () => {
 });
 
 describe("runEnsemble", () => {
+  it("perturbasjonsfasen (§4.4): fem søk på kontrollen (cruising ×3, strøm ×2) + ett på verste gjennomførbare medlem, flisene hentes på nytt", async () => {
+    const tilesRequested: number[] = [];
+    const perturbationsSeen: Array<{ memberIndex: number; kind: string; factor: number }> = [];
+    const durations: Record<number, number> = { 0: 10 * 3600, 1: 11 * 3600, 2: 14 * 3600, 3: 12 * 3600 };
+    const workerFactory = (): WorkerLike => {
+      const base = mockWorker((memberIndex) => ({
+        type: "plan-route-member-result",
+        memberIndex,
+        isControl: memberIndex === 0,
+        result: fakeResult({ reachesDestination: true, weatherCoverage: "full", durationS: durations[memberIndex] ?? 9 * 3600 }),
+      }));
+      return {
+        ...base,
+        postMessage(message, transfer) {
+          if (message.type === "plan-route-member" && message.perturbation !== undefined) {
+            perturbationsSeen.push({ memberIndex: message.memberIndex, ...message.perturbation });
+          }
+          base.postMessage(message, transfer);
+        },
+      };
+    };
+    const jobs = [job(0, true), job(1, false), job(2, false), job(3, false)];
+    const { sensitivity } = await runEnsemble(jobs, 2, workerFactory, {}, {
+      perturbation: {
+        tilesFor: (memberIndex) => {
+          tilesRequested.push(memberIndex);
+          return Promise.resolve(job(memberIndex, false).tiles);
+        },
+      },
+    });
+    expect(sensitivity).not.toBeNull();
+    expect(sensitivity!.runs).toHaveLength(6);
+    expect(sensitivity!.label).toBe("basert på kontrollvær");
+    // Fem på kontrollen (medlem 0), én på verste gjennomførbare (medlem 2, 14 t).
+    expect(perturbationsSeen.filter((p) => p.memberIndex === 0)).toHaveLength(5);
+    expect(perturbationsSeen.filter((p) => p.memberIndex === 2)).toEqual([{ memberIndex: 2, kind: "cruising", factor: 0.85 }]);
+    expect(new Set(tilesRequested)).toEqual(new Set([0, 2]));
+    expect(sensitivity!.conflict).toBe(false);
+  });
+
+  it("uten perturbation-opsjon: ingen følsomhetsrapport og ingen ekstra søk", async () => {
+    const workerFactory = () =>
+      mockWorker((memberIndex) => ({
+        type: "plan-route-member-result",
+        memberIndex,
+        isControl: memberIndex === 0,
+        result: fakeResult({ reachesDestination: true, weatherCoverage: "full" }),
+      }));
+    const { sensitivity } = await runEnsemble([job(0, true), job(1, false)], 1, workerFactory);
+    expect(sensitivity).toBeNull();
+  });
+
   it("delt A*-felt: kontrollens fieldData går videre til alle medlemsjobber (robusthet.md §4.1)", async () => {
     const sharedField = {
       key: "test|58,10|57,11",
