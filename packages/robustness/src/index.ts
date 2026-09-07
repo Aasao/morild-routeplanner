@@ -17,3 +17,5 @@ export * from "./rerun.js";
 export * from "./decision-rule.js";
 export * from "./perturbation.js";
 export * from "./perturbation-wrappers.js";
+export * from "./presentation.js";
+export * from "./receipt.js";

@@ -30,17 +30,25 @@
       syntetiske golden-beviset, se docs/specs/app-skjelett.md §5.3).
     -->
     <div id="weather-panel" aria-live="polite">
+      <!-- Førstesiden (robusthet.md §4.7): lys, plantid, regel, dekning, nødhavn, varsler, vifte, kvittering. -->
+      <div id="weather-firstpage">Beregner …</div>
+      <div id="weather-fan"></div>
+      <div id="weather-receipt"></div>
+      <!-- Sikkerhetsflagg og farevarsler er ALDRI bak et lukket ikon (N2, CLAUDE.md §1). -->
+      <div id="weather-flags"></div>
+      <div id="weather-metalerts"></div>
+      <details id="weather-diagnostics">
+        <summary>Datakilder og diagnostikk</summary>
       <div id="weather-pointer-status">Laster værpakke …</div>
       <div id="weather-tile-selection"></div>
       <div id="weather-field-status"></div>
       <div id="weather-control-result"></div>
-      <div id="weather-flags"></div>
       <div id="weather-ensemble-summary"></div>
-      <div id="weather-metalerts"></div>
       <div id="weather-bailout"></div>
       <div id="weather-decision"></div>
       <div id="weather-sensitivity"></div>
       <div id="weather-measurement"></div>
+      </details>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

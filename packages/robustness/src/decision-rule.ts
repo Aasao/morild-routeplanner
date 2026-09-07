@@ -109,7 +109,8 @@ const MIN_NINF = 3;
 
 const FALLBACK_TEXT =
   "Ingen enkelt sjekkpunkt skiller utfallene i dag — følg vindviften underveis og revider om vinden avviker fra kartet.";
-const FALLBACK: DecisionAdvice = { kind: "fallback", text: FALLBACK_TEXT };
+/** Den alltid kodede fallbacken (§4.6 pkt. 6) — eksportert så appen aldri dikter en egen. */
+export const FALLBACK: DecisionAdvice = { kind: "fallback", text: FALLBACK_TEXT };
 
 /** Kodet handlingstekst — se valg 6 i toppkommentaren. */
 const ACTION_TEXT = "Vent til neste vindu, eller revurder ruten hvis vinduet ikke kommer.";

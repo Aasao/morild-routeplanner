@@ -87,3 +87,19 @@ body {
 .weather-warning { background: #7a3b00; color: #fff; padding: 6px 10px; font-size: 0.9rem; }
 #weather-measurement textarea { width: 100%; font: 11px/1.3 monospace; margin-top: 4px; }
 #weather-measurement button { margin: 4px 0; }
+/* Førstesiden (§4.7) */
+.fp-line { padding: 2px 0; }
+.fp-lys { font-weight: 700; font-size: 13px; }
+.fp-advarsel { color: #7a3b00; }
+.fp-kritisk { color: #8b0000; font-weight: 700; }
+.fp-behind { margin-top: 4px; font-size: 11px; }
+.fp-behind-row { padding: 1px 0; }
+.fp-fan { width: 100%; height: auto; display: block; margin-top: 4px; }
+.fp-fan-outer { fill: rgba(11, 61, 99, 0.15); stroke: none; }
+.fp-fan-inner { fill: rgba(11, 61, 99, 0.35); stroke: none; }
+.fp-fan-p50 { fill: none; stroke: #0b3d63; stroke-width: 1.5; }
+.fp-fan-control { stroke: #8b0000; stroke-width: 1; stroke-dasharray: 3 2; }
+.fp-fan-label { font-size: 9px; fill: #0b3d63; }
+.fp-fan-caption { font-size: 10px; color: #0b3d63; }
+#weather-receipt button { margin: 2px 4px 2px 0; font-size: 11px; }
+#weather-diagnostics > summary { cursor: pointer; font-size: 11px; color: #0b3d63; }

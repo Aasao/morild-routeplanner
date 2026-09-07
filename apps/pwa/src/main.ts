@@ -33,7 +33,18 @@ import {
   renderDecision,
   renderBailout,
 } from "./weather-ui.js";
-import { deriveDecisionRule } from "@morild/robustness";
+import {
+  FALLBACK,
+  buildFirstPage,
+  createPlanReceipt,
+  deriveDecisionRule,
+  realizeReceipt,
+  type DecisionAdvice,
+  type DepartureSummary,
+  type SensitivityReport,
+} from "@morild/robustness";
+import type { BailoutProfile } from "@morild/routing";
+import { renderFan, renderFirstPage, renderReceiptControls } from "./first-page-ui.js";
 
 function registerServiceWorker(): void {
   if (!("serviceWorker" in navigator)) {
@@ -70,6 +81,63 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   const measurementEl = document.querySelector<HTMLDivElement>("#weather-measurement");
   const sensitivityEl = document.querySelector<HTMLDivElement>("#weather-sensitivity");
   const bailoutEl = document.querySelector<HTMLDivElement>("#weather-bailout");
+  const firstPageEl = document.querySelector<HTMLDivElement>("#weather-firstpage");
+  const fanEl = document.querySelector<HTMLDivElement>("#weather-fan");
+  const receiptEl = document.querySelector<HTMLDivElement>("#weather-receipt");
+
+  // Førstesiden (§4.7) bygges på nytt ved hver ny bit informasjon — alt
+  // kommer ferdig fra @morild/robustness; her holdes bare siste tilstand.
+  const page: {
+    departure: DepartureSummary | null;
+    advice: DecisionAdvice | null;
+    sensitivity: SensitivityReport | null | "ikke-beregnet";
+    bailout: BailoutProfile | null;
+  } = { departure: null, advice: null, sensitivity: "ikke-beregnet", bailout: null };
+  const STALE_AFTER_S = 6 * 3600; // samme som packages/weather/age.ts
+  function refreshFirstPage(): void {
+    const d = page.departure;
+    if (d === null || firstPageEl === null) return;
+    const wind = lastFieldStatuses.find((f) => f.field === "wind");
+    const feasible = d.members.filter((m) => m.kind === "feasible" && m.summary !== null);
+    const thresholds = [
+      {
+        id: "moerke",
+        label: "framme før mørket",
+        k: feasible.filter((m) => m.summary?.daylightArrival === true).length,
+        n: feasible.length,
+      },
+    ];
+    const built = buildFirstPage({
+      summary: d,
+      advice: page.advice,
+      sensitivity: page.sensitivity,
+      bailout: page.bailout,
+      packageAgeS: wind?.ageS ?? null,
+      staleAfterS: STALE_AFTER_S,
+      thresholds,
+    });
+    renderFirstPage(firstPageEl, built);
+    if (fanEl) renderFan(fanEl, built.fan);
+    if (receiptEl) {
+      // Kvitteringen fryser også bail-out-tallet (§3.6) — uten profil er
+      // planen ikke komplett nok til å kvittere på.
+      const bailout = page.bailout;
+      renderReceiptControls(receiptEl, {
+        canPlan: d.complete && bailout !== null,
+        onPlan: () =>
+          d.complete && bailout !== null
+            ? createPlanReceipt({
+                plannedAtEpochS: Math.floor(Date.now() / 1000),
+                summary: d,
+                advice: page.advice ?? FALLBACK,
+                bailout,
+              })
+            : null,
+        onRealize: (receipt) =>
+          realizeReceipt(receipt, { arrivalEpochS: Math.floor(Date.now() / 1000), aborted: false }),
+      });
+    }
+  }
   const decisionEl = document.querySelector<HTMLDivElement>("#weather-decision");
 
   // Cache API finnes kun i secure context (https/localhost). Fra en
@@ -118,6 +186,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       onFieldStatuses: (statuses) => {
         lastFieldStatuses = statuses;
         if (fieldStatusEl) renderFieldStatuses(fieldStatusEl, statuses);
+        refreshFirstPage();
       },
       onControlResult: (outcome, memberCount) => {
         ensembleStartMs = performance.now();
@@ -130,6 +199,8 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
         if (bailoutEl && outcome.bailout !== undefined) {
           renderBailout(bailoutEl, outcome.bailout, "FIKSTUR-HAVNEBOK — dybder og mørketrygghet er ikke reelle");
         }
+        page.bailout = outcome.bailout ?? null;
+        refreshFirstPage();
         const result = outcome.result;
         if (result === undefined) return;
         if (flagsEl) {
@@ -145,15 +216,23 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       },
       onSensitivity: (report) => {
         if (sensitivityEl) renderSensitivity(sensitivityEl, report);
+        page.sensitivity = report;
+        refreshFirstPage();
       },
       onMemberResult: (outcome, summary) => {
         const d = summary.departure;
-        if (decisionEl && d !== null && d.complete) {
-          renderDecision(
-            decisionEl,
-            deriveDecisionRule({ control: d.control, members: d.members, complete: d.complete, nF: d.nF, nInf: d.nInf }),
-          );
+        page.departure = d;
+        if (d !== null && d.complete) {
+          page.advice = deriveDecisionRule({
+            control: d.control,
+            members: d.members,
+            complete: d.complete,
+            nF: d.nF,
+            nInf: d.nInf,
+          });
+          if (decisionEl) renderDecision(decisionEl, page.advice);
         }
+        refreshFirstPage();
         if (outcome.isControl) return;
         memberMeasurements.push(memberMeasurement(outcome, memberMeasurements.length));
         const wallMs = ensembleStartMs === undefined ? undefined : performance.now() - ensembleStartMs;

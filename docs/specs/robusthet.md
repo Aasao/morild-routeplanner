@@ -1008,3 +1008,18 @@ Behold. **Anbefaling: (a).** Panel enstemmig.
   dypgangsfelt m/eksplisitt verdi i `test-boat.ts`; D12.4 perturbasjon over
   poolen; D12.5 `departEpochS` i `MemberSummary`); D12.1 spec §4.5 pkt. 5
   (bølge 6), D12.3 §4.5 pkt. 7 (4b).
+- 2026-09-07: **bølge 5 levert.** Robustness: `buildFirstPage` (§4.7 pkt.
+  1–6 som strukturerte linjer, tabellen «ærlig degradering» testet rad for
+  rad, aldri «%»/«P90» på førstesiden, lokal tid, sjømannsformat),
+  `buildFanBand` (§4.7 pkt. 7: nærmeste-rang-persentiler av tverravstand
+  per time), `PlanReceipt` m/`createPlanReceipt`/`realizeReceipt` (én
+  gang)/`receiptToJson` (stabil). App: førstesiden øverst i panelet,
+  viften som SVG, kvitteringslogg i `localStorage` (D1/LWW i 4b),
+  diagnostikkradene bak `<details>` — men rutens sikkerhetsflagg og
+  MetAlerts alltid synlige (N2; review-funn A). Review-funn fikset: kontroll
+  merket usikker/usikker-rute gir kritisk varsellinje (B); pakkealder
+  ukjent ⇒ ingen robusthetstall (C); «ingen kontrollrute»-teksten lover
+  ikke lenger en geometri-substitusjon som ikke er bygget (D — verste/
+  typisk medlem som geometri er en bølge 6-/4b-oppgave); bail-out-gapet
+  rundes opp (E); viften sier fra når horisonten er kuttet (F). Gjenstår
+  i bølge 5: nettbrett-røyktest i UI med ekte pakke (Magnus).
