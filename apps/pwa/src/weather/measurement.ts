@@ -19,6 +19,8 @@ export interface MemberMeasurement {
   readonly decodeMs: number | null;
   readonly fieldMs: number | null;
   readonly searchMs: number | null;
+  /** Bail-out-profilen (kun kontrollen, egen fase). */
+  readonly bailoutMs: number | null;
   readonly labelsCreated: number | null;
   readonly iterations: number | null;
   /** Realisert seilingstid — for orakelets treffsikkerhet (D10.5). */
@@ -53,6 +55,7 @@ export function memberMeasurement(outcome: MemberOutcome, arrivalOrder: number):
     decodeMs: outcome.workerTiming?.decodeMs ?? null,
     fieldMs: outcome.workerTiming?.fieldMs ?? null,
     searchMs: outcome.workerTiming?.searchMs ?? null,
+    bailoutMs: outcome.workerTiming?.bailoutMs ?? null,
     labelsCreated: d?.labelsCreated ?? null,
     iterations: d?.iterations ?? null,
     durationS: outcome.result?.totals.durationS ?? null,

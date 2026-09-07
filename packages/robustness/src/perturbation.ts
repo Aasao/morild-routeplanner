@@ -127,7 +127,11 @@ function relativeChangeForKind(runs: readonly PerturbationRun[], kind: "cruising
   const durations: number[] = [];
   for (const run of runs) {
     if (run.kind !== kind) continue;
-    if (run.outcome.summary === null) continue;
+    // Kun gjennomførbare kjøringer har en seilingstid å sammenligne — en
+    // inkonklusiv/ugjennomførbar `durationS` er ikke en ankomst (målt i
+    // appen 2026-09-07: alle perturbasjoner inkonklusive ga «mest følsom:
+    // båtfart» av ren støy).
+    if (run.outcome.kind !== "feasible" || run.outcome.summary === null) continue;
     durations.push(run.outcome.summary.durationS);
   }
   if (durations.length < 2) return null;

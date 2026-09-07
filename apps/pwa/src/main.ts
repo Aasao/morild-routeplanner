@@ -173,6 +173,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       workerFactory: createRealWeatherWorker,
       poolSize,
       perturbation: true,
+      bailout: true,
       worstFirst: true,
       nowEpochS: Math.floor(Date.now() / 1000),
     },
@@ -194,12 +195,8 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
         controlMeasurement = memberMeasurement(outcome, 0);
         memberMeasurements.length = 0;
         if (controlResultEl) renderControlResult(controlResultEl, outcome);
-        // Havneboken i appen er ennå interim-fiksturen (robusthet.md §2: aldri
-        // produksjonsdata) — det skal stå i selve linjen til F4.6-boken er reell.
-        if (bailoutEl && outcome.bailout !== undefined) {
-          renderBailout(bailoutEl, outcome.bailout, "FIKSTUR-HAVNEBOK — dybder og mørketrygghet er ikke reelle");
-        }
-        page.bailout = outcome.bailout ?? null;
+        if (bailoutEl) bailoutEl.textContent = "Nødhavn: beregner profil langs ruten …";
+        page.bailout = null;
         refreshFirstPage();
         const result = outcome.result;
         if (result === undefined) return;
@@ -213,6 +210,16 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
               /* kartet er uansett ikke kritisk for at værpanelet skal vise tall */
             });
         }
+      },
+      onBailout: (profile, bailoutMs) => {
+        // Havneboken i appen er ennå interim-fiksturen (robusthet.md §2: aldri
+        // produksjonsdata) — det skal stå i selve linjen til F4.6-boken er reell.
+        if (bailoutEl) {
+          renderBailout(bailoutEl, profile, "FIKSTUR-HAVNEBOK — dybder og mørketrygghet er ikke reelle");
+        }
+        page.bailout = profile;
+        if (controlMeasurement !== null) controlMeasurement = { ...controlMeasurement, bailoutMs };
+        refreshFirstPage();
       },
       onSensitivity: (report) => {
         if (sensitivityEl) renderSensitivity(sensitivityEl, report);

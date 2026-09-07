@@ -36,8 +36,11 @@ import {
   harbourFieldVmaxKn,
   planRoute,
   type BailoutProfile,
+  type BoatModel,
   type DistanceFieldData,
   type HarbourField,
+  type NavigabilityMask,
+  type RouteOptions,
   type RouteResult,
 } from "@morild/routing";
 import { INTERIM_HARBOUR_BOOK } from "@morild/routing/test-fixtures/harbour-book";
@@ -107,7 +110,7 @@ export interface EvaluateControlResult {
   readonly durationS: number;
 }
 
-export type ToWorker = PlanRouteMemberRequest | EvaluateControlRequest;
+export type ToWorker = PlanRouteMemberRequest | EvaluateControlRequest | BailoutProfileRequest;
 
 export interface PlanRouteMemberOk {
   readonly type: "plan-route-member-result";
@@ -118,12 +121,25 @@ export interface PlanRouteMemberOk {
   readonly sharedField?: SharedField | undefined;
   /** Nettbrett-målingen (D10.2 b): tid i workeren, delt opp. */
   readonly timing: WorkerTiming;
-  /**
-   * Bail-out-profilen (robusthet.md §4.5, F4.6) — kun fra kontrollen, regnet
-   * på kontrollvær med interim-havneboken. Strukturell kopi av
-   * `ensemble.ts`.
-   */
-  readonly bailout?: BailoutProfile | undefined;
+}
+
+/**
+ * Bail-out-profilen (robusthet.md §4.5) bes om SEPARAT etter at kontroll-
+ * resultatet er levert — den koster ~20 s på ekte vær (målt 2026-09-07,
+ * 40 R2-søk), og progressiv semantikk (F3.5) krever at kontrollruten står
+ * på skjermen på sekunder. Workeren husker sitt siste kontrollsøk.
+ * Strukturell kopi av `ensemble.ts`.
+ */
+export interface BailoutProfileRequest {
+  readonly type: "bailout-profile";
+  readonly memberIndex: number;
+}
+
+export interface BailoutProfileResult {
+  readonly type: "bailout-profile-result";
+  readonly memberIndex: number;
+  readonly bailout: BailoutProfile;
+  readonly bailoutMs: number;
 }
 
 /** Strukturell kopi av `ensemble.ts::WorkerTiming`. Millisekunder, `performance.now()` i workeren. */
@@ -134,8 +150,6 @@ export interface WorkerTiming {
   readonly fieldMs: number;
   /** `planRoute` alene. */
   readonly searchMs: number;
-  /** Havnefelt + bail-out-profil (kun kontrollen). */
-  readonly bailoutMs?: number | undefined;
 }
 
 export interface PlanRouteMemberError {
@@ -144,7 +158,7 @@ export interface PlanRouteMemberError {
   readonly message: string;
 }
 
-export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError | EvaluateControlResult;
+export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError | EvaluateControlResult | BailoutProfileResult;
 
 function scenarioOrThrow() {
   const scenario = goldenScenarios().find((candidate) => candidate.name === SCENARIO_NAME);
@@ -254,38 +268,57 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
   });
   const searchMs = performance.now() - tSearch0;
 
-  // Bail-out-profil (robusthet.md §4.5, F4.6): kun for kontrollen, på
-  // kontrollvær, med interim-havneboken — merket «ikke ensemble-sjekket».
-  // Perturbasjoner og medlemmer får ingen profil (basis 4a).
-  let bailout: BailoutProfile | undefined;
-  let bailoutMs: number | undefined;
-  if (msg.isControl && pert === undefined && result.steps.length > 0) {
-    const tB0 = performance.now();
-    const vmaxKn = harbourFieldVmaxKn(boat, weather);
-    const fields = harbourFieldsFor(vmaxKn, input.mask);
-    bailout = bailoutProfile({
-      route: { steps: result.steps, legs: result.legs },
-      departEpochS: msg.departEpochS,
-      weather,
-      mask: input.mask,
-      boat,
-      book: INTERIM_HARBOUR_BOOK,
-      fields,
-      options: input.options,
-    });
-    bailoutMs = performance.now() - tB0;
+  // Kontrollsøket huskes så bail-out-profilen kan bes om etterpå uten å
+  // søke på nytt (progressiv semantikk: kontrollruten først, profilen
+  // som egen fase — se `BailoutProfileRequest`).
+  if (msg.isControl && pert === undefined) {
+    lastControl = { result, weather, boat, mask: input.mask, options: input.options, departEpochS: msg.departEpochS };
   }
   return {
     type: "plan-route-member-result",
     memberIndex: msg.memberIndex,
     isControl: msg.isControl,
     result,
-    timing: { decodeMs, fieldMs, searchMs, ...(bailoutMs !== undefined ? { bailoutMs } : {}) },
-    ...(bailout !== undefined ? { bailout } : {}),
+    timing: { decodeMs, fieldMs, searchMs },
     ...(msg.isControl && distanceField !== undefined
       ? { sharedField: { key: fieldKey, data: distanceField.data } }
       : {}),
   };
+}
+
+interface LastControl {
+  readonly result: RouteResult;
+  readonly weather: WeatherFieldLike;
+  readonly boat: BoatModel;
+  readonly mask: NavigabilityMask | undefined;
+  readonly options: Partial<RouteOptions> | undefined;
+  readonly departEpochS: number;
+}
+let lastControl: LastControl | null = null;
+
+/**
+ * Bail-out-profil (robusthet.md §4.5, F4.6) for siste kontrollsøk i denne
+ * workeren: kontrollvær, interim-havnebok — merket «ikke ensemble-sjekket».
+ */
+function runBailoutProfile(msg: BailoutProfileRequest): BailoutProfileResult {
+  const c = lastControl;
+  if (c === null) {
+    throw new Error("bailout-profile: ingen kontrollrute i denne workeren ennå");
+  }
+  const tB0 = performance.now();
+  const vmaxKn = harbourFieldVmaxKn(c.boat, c.weather);
+  const fields = harbourFieldsFor(vmaxKn, c.mask);
+  const bailout = bailoutProfile({
+    route: { steps: c.result.steps, legs: c.result.legs },
+    departEpochS: c.departEpochS,
+    weather: c.weather,
+    mask: c.mask,
+    boat: c.boat,
+    book: INTERIM_HARBOUR_BOOK,
+    fields,
+    options: c.options,
+  });
+  return { type: "bailout-profile-result", memberIndex: msg.memberIndex, bailout, bailoutMs: performance.now() - tB0 };
 }
 
 /**
@@ -329,7 +362,13 @@ export function sharedFieldKey(
 self.addEventListener("message", (event: MessageEvent<ToWorker>) => {
   const msg = event.data;
   try {
-    self.postMessage(msg.type === "evaluate-control" ? evaluateControl(msg) : runMember(msg));
+    self.postMessage(
+      msg.type === "evaluate-control"
+        ? evaluateControl(msg)
+        : msg.type === "bailout-profile"
+          ? runBailoutProfile(msg)
+          : runMember(msg),
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     self.postMessage({ type: "error", memberIndex: msg.memberIndex, message } satisfies FromWorker);

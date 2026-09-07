@@ -231,7 +231,13 @@ function mockWorker(
   };
   return {
     postMessage(message) {
-      const response = intercept?.(message) ?? resultFor(message.memberIndex);
+      // Orkestratoren ber om bail-out-profil etter kontrollen (default på);
+      // attrappen har ingen havnebok og svarer ærlig med feil, så utfallet
+      // får `bailout` udefinert — aldri en oppdiktet profil.
+      const response: FromWorker =
+        message.type === "bailout-profile"
+          ? { type: "error", memberIndex: message.memberIndex, message: "attrapp uten havnebok" }
+          : (intercept?.(message) ?? resultFor(message.memberIndex));
       queueMicrotask(() => {
         const set = listeners.get("message");
         if (!set) return;

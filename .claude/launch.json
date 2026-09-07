@@ -6,6 +6,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@morild/pwa", "dev"],
       "port": 5173
+    },
+    {
+      "name": "worker-remote",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@morild/worker", "exec", "wrangler", "dev", "--remote"],
+      "port": 8787
     }
   ]
 }

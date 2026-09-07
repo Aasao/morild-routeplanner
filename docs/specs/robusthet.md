@@ -1023,3 +1023,9 @@ Behold. **Anbefaling: (a).** Panel enstemmig.
   typisk medlem som geometri er en bølge 6-/4b-oppgave); bail-out-gapet
   rundes opp (E); viften sier fra når horisonten er kuttet (F). Gjenstår
   i bølge 5: nettbrett-røyktest i UI med ekte pakke (Magnus).
+- 2026-09-07: PC-måling på ekte pakke ende-til-ende
+  (`docs/research/maaling-ekte-pc-2026-09-07.md`): ekte vær ~2,5× dyrere
+  per medlem enn syntetisk (ensemble 41 s, 6 workere); bail-out-profilen
+  koster ~20 s på ekte vær og er flyttet til egen fase etter kontroll-
+  resultatet (progressiv semantikk); D12.1 må kostnadsmåles på ekte vær
+  før bølge 6; `mostSensitive` kun over gjennomførbare kjøringer.

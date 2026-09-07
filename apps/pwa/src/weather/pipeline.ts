@@ -69,6 +69,8 @@ export interface PipelineDeps {
   readonly worstFirst?: boolean | undefined;
   /** Kjør perturbasjonene (§4.4) etter ensemblet — fem ekstra søk. Av i tester. */
   readonly perturbation?: boolean | undefined;
+  /** Be om bail-out-profil etter kontrollen (§4.5). Av i tester uten havnebok. */
+  readonly bailout?: boolean | undefined;
   readonly nowEpochS: number;
 }
 
@@ -92,6 +94,7 @@ export interface PipelineCallbacks {
   readonly onMemberResult?: EnsembleCallbacks["onMemberResult"];
   readonly onMetAlerts?: (result: MetAlertsLoadResult, relevant: readonly RelevantAlert[]) => void;
   readonly onSensitivity?: EnsembleCallbacks["onSensitivity"];
+  readonly onBailout?: EnsembleCallbacks["onBailout"];
   readonly onError?: (message: string) => void;
 }
 
@@ -321,8 +324,10 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
     },
     ...(callbacks.onMemberResult ? { onMemberResult: callbacks.onMemberResult } : {}),
     ...(callbacks.onSensitivity ? { onSensitivity: callbacks.onSensitivity } : {}),
+    ...(callbacks.onBailout ? { onBailout: callbacks.onBailout } : {}),
   }, {
     worstFirst: deps.worstFirst === true,
+    bailout: deps.bailout === true,
     context,
     ...(deps.perturbation === true
       ? {

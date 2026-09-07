@@ -98,8 +98,19 @@ export interface PlanRouteMemberOk {
   readonly sharedField?: SharedField | undefined;
   /** Nettbrett-målingen (D10.2 b): tid i workeren, delt opp — se `WorkerTiming`. */
   readonly timing?: WorkerTiming | undefined;
-  /** Bail-out-profilen (§4.5) — kun fra kontrollen, på kontrollvær. */
-  readonly bailout?: BailoutProfile | undefined;
+}
+
+/** Egen fase etter kontrollresultatet (progressiv semantikk) — se workerens toppkommentar. */
+export interface BailoutProfileRequest {
+  readonly type: "bailout-profile";
+  readonly memberIndex: number;
+}
+
+export interface BailoutProfileResult {
+  readonly type: "bailout-profile-result";
+  readonly memberIndex: number;
+  readonly bailout: BailoutProfile;
+  readonly bailoutMs: number;
 }
 
 /**
@@ -111,7 +122,7 @@ export interface WorkerTiming {
   readonly decodeMs: number;
   readonly fieldMs: number;
   readonly searchMs: number;
-  /** Havnefelt + bail-out-profil (kun kontrollen). */
+  /** Havnefelt + bail-out-profil (kun kontrollen, egen fase). */
   readonly bailoutMs?: number | undefined;
 }
 
@@ -142,8 +153,8 @@ export interface EvaluateControlResult {
   readonly durationS: number;
 }
 
-export type ToWorker = PlanRouteMemberRequest | EvaluateControlRequest;
-export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError | EvaluateControlResult;
+export type ToWorker = PlanRouteMemberRequest | EvaluateControlRequest | BailoutProfileRequest;
+export type FromWorker = PlanRouteMemberOk | PlanRouteMemberError | EvaluateControlResult | BailoutProfileResult;
 
 export interface MemberJob {
   readonly memberIndex: number;
@@ -414,8 +425,15 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
           elapsedMs: elapsed(),
           ...(data.sharedField !== undefined ? { sharedField: data.sharedField } : {}),
           ...(data.timing !== undefined ? { workerTiming: data.timing } : {}),
-          ...(data.bailout !== undefined ? { bailout: data.bailout } : {}),
           ...(job.oracleRank !== undefined ? { oracleRank: job.oracleRank } : {}),
+        });
+      } else if (data.type === "bailout-profile-result") {
+        resolve({
+          memberIndex: job.memberIndex,
+          isControl: job.isControl,
+          classification: "error",
+          errorMessage: "uventet bailout-profile-result under søk",
+          elapsedMs: elapsed(),
         });
       } else {
         resolve({
@@ -448,6 +466,8 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
 
 export interface EnsembleCallbacks {
   readonly onControlResult?: (outcome: MemberOutcome) => void;
+  /** Bail-out-profilen (§4.5) når den egne fasen etter kontrollen er ferdig. */
+  readonly onBailout?: (profile: BailoutProfile, bailoutMs: number) => void;
   readonly onMemberResult?: (outcome: MemberOutcome, runningSummary: EnsembleSummary) => void;
   /** Følsomhetsrapporten (§4.4) når perturbasjonsfasen er ferdig — påvirker aldri trafikklyset. */
   readonly onSensitivity?: (report: SensitivityReport) => void;
@@ -474,6 +494,34 @@ export interface EnsembleOptions {
   readonly context?: EnsembleContext | undefined;
   /** Kjør perturbasjonene (§4.4) etter ensemblet; udefinert ⇒ ingen følsomhetsrapport. */
   readonly perturbation?: PerturbationOptions | undefined;
+  /** Be om bail-out-profil etter kontrollen (§4.5). Default true; av i tester uten havnebok. */
+  readonly bailout?: boolean | undefined;
+}
+
+/**
+ * Bail-out-fasen: bes om på kontroll-workeren ETTER at kontrollresultatet
+ * er levert til UI (progressiv semantikk, F3.5) — på ekte vær koster
+ * profilen ~20 s (40 R2-søk), og den skal aldri forsinke kontrollruten.
+ * Feil ⇒ `null` (UI viser «ikke beregnet»), aldri kast.
+ */
+function requestBailoutProfile(
+  worker: WorkerLike,
+  memberIndex: number,
+): Promise<{ readonly bailout: BailoutProfile; readonly bailoutMs: number } | null> {
+  return new Promise((resolve) => {
+    const onMessage = (ev: MessageEvent<FromWorker>): void => {
+      worker.removeEventListener("error", onError);
+      const data = ev.data;
+      resolve(data.type === "bailout-profile-result" ? { bailout: data.bailout, bailoutMs: data.bailoutMs } : null);
+    };
+    const onError = (): void => {
+      worker.removeEventListener("message", onMessage);
+      resolve(null);
+    };
+    worker.addEventListener("message", onMessage, { once: true });
+    worker.addEventListener("error", onError, { once: true });
+    worker.postMessage({ type: "bailout-profile", memberIndex }, []);
+  });
 }
 
 /**
@@ -638,11 +686,26 @@ export async function runEnsemble(
   const outcomes: MemberOutcome[] = [];
 
   const controlWorker = workerFactory();
-  const controlOutcome = await runMemberWithRerun(controlWorker, controlJob);
-  controlWorker.terminate();
+  let controlOutcome = await runMemberWithRerun(controlWorker, controlJob);
   outcomes.push(controlOutcome);
+  // Kontrollruten til UI FØR bail-out-fasen (progressiv semantikk).
   callbacks.onControlResult?.(controlOutcome);
   callbacks.onMemberResult?.(controlOutcome, summarizeEnsemble(outcomes, options.context));
+  if (options.bailout !== false && controlOutcome.result !== undefined && controlOutcome.result.steps.length > 0) {
+    const b = await requestBailoutProfile(controlWorker, controlJob.memberIndex);
+    if (b !== null) {
+      controlOutcome = {
+        ...controlOutcome,
+        bailout: b.bailout,
+        ...(controlOutcome.workerTiming !== undefined
+          ? { workerTiming: { ...controlOutcome.workerTiming, bailoutMs: b.bailoutMs } }
+          : {}),
+      };
+      outcomes[0] = controlOutcome;
+      callbacks.onBailout?.(b.bailout, b.bailoutMs);
+    }
+  }
+  controlWorker.terminate();
 
   // Delt A*-felt: kontrollens felt går til alle medlemmer (robusthet.md
   // §4.1). Mangler det (kontrollen feilet/feltet lot seg ikke bygge), bygger
