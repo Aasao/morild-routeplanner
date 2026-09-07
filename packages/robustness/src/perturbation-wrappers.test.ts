@@ -10,6 +10,8 @@ const boat: BoatModel = {
   motorThresholdKn: 3,
   motorSpeedKn: 6,
   motorFuelLPerH: 2.5,
+  draughtM: 2.1,
+  depthClearanceM: 0.5,
 };
 
 function field(): WeatherField {

@@ -7,6 +7,7 @@
  * at kryssoppførselen faktisk testes.
  */
 import type { BoatModel } from "../src/index.js";
+import { MORILD_DRAUGHT_M, STATIC_DEPTH_MARGIN_M } from "../src/harbour-book.js";
 
 export interface TestBoatOptions {
   readonly maxTwsKn?: number;
@@ -14,6 +15,9 @@ export interface TestBoatOptions {
   readonly motorThresholdKn?: number;
   readonly motorSpeedKn?: number;
   readonly motorFuelLPerH?: number;
+  /** Dypgang og klaring for havnebokens dybdegate (D12.2). Standard: Morild (B1). */
+  readonly draughtM?: number;
+  readonly depthClearanceM?: number;
   /** Cruising-faktor: skalerer hele polaren. */
   readonly cruisingFactor?: number;
   /** Slår av bølgederating (nyttig i golden-fiksturer uten sjø). */
@@ -82,5 +86,8 @@ export function testBoat(options: TestBoatOptions = {}): BoatModel {
     motorThresholdKn: options.motorThresholdKn ?? 4,
     motorSpeedKn: options.motorSpeedKn ?? 7,
     motorFuelLPerH: options.motorFuelLPerH ?? 4,
+    // D12.2: eksplisitt her, aldri som stille fallback i motoren.
+    draughtM: options.draughtM ?? MORILD_DRAUGHT_M,
+    depthClearanceM: options.depthClearanceM ?? STATIC_DEPTH_MARGIN_M,
   };
 }

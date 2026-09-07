@@ -47,6 +47,8 @@ export interface MemberSummary {
   readonly beatAtNightS: number;
   readonly fuelL: number;
   readonly arrivalEpochS: number;
+  /** Avgangstid (D12.5): `hourlyTrack[h]` gjelder `departEpochS + h·3600`. */
+  readonly departEpochS: number;
   readonly daylightArrival: boolean;
   /** Rute-nivå flagg — FLAG_* fra `@morild/routing`s `cost.ts`. */
   readonly flags: number;
@@ -161,6 +163,7 @@ export function summarizeMember(result: RouteResult): MemberSummary {
     beatAtNightS: result.totals.beatAtNightS,
     fuelL: result.totals.fuelL,
     arrivalEpochS: result.totals.arrivalEpochS,
+    departEpochS: result.steps[0]?.epochS ?? result.totals.arrivalEpochS - result.totals.durationS,
     daylightArrival: result.totals.daylightArrival,
     flags: result.flags,
     safetyVerdict: result.safety.verdict,

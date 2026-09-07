@@ -322,6 +322,14 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-07 (D12.1–D12.5, Magnus, etter /panel — se
+  `docs/research/ekspertpanel-d12-boelge4-2026-09-05.md` og
+  `docs/specs/robusthet.md` §7):** F4.6 nødhavn over ensemblet som tre
+  profiler rangert på feltgap (bølge 6, aldri «maks over 30»); dypgang og
+  klaring obligatoriske i båtmodellen (ingen stille fallback); dybdegate
+  `min(kai, ankring)` beholdt som kjent begrensning, gate per anløpstype
+  i 4b; F4.3-perturbasjon over worker-poolen; avgangstid bokført i
+  medlemssammendraget.
 - **2026-09-05 (bølge 4, `docs/specs/robusthet.md` §3.4/§4.4/§4.6):**
   F4.3 implementert — `perturbationPlan`/`summarizeSensitivity` i
   `packages/robustness` (rene funksjoner; søkene kjøres av appen; motoren

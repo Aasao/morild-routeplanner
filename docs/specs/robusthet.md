@@ -106,7 +106,8 @@ interface MemberSummary {
   readonly durationS: number; readonly distanceNm: number;
   readonly beatS: number; readonly motorS: number; readonly nightS: number;
   readonly beatAtNightS: number; readonly fuelL: number;
-  readonly arrivalEpochS: number; readonly daylightArrival: boolean;
+  readonly arrivalEpochS: number; readonly departEpochS: number;   // D12.5
+  readonly daylightArrival: boolean;
   readonly flags: number;                // FLAG_* fra cost.ts, rute-nivå
   readonly safetyVerdict: "trygt" | "usikkert" | "usikker-rute";
   readonly coverageWeather: "full" | "partial";
@@ -415,7 +416,8 @@ På valgt avgang, etter ensemblet: kontrollen kjøres med cruising-faktor
 cruising 0,85 på **verste gjennomførbare medlem** (1 søk;
 kommutasjonsargumentet: en tregere båt møter en annen værsekvens).
 Resultatene vises som «følsomhet»-linje merket «basert på kontrollvær»
-og påvirker aldri trafikklyset. `conflict = true` (kontroll
+og påvirker aldri trafikklyset. Søkene kjøres over worker-poolen
+(D12.4, 2026-09-07), rapporten i planens rekkefølge uansett ankomst. `conflict = true` (kontroll
 gjennomførbar, en perturbasjon ikke) gir varsellinjen «konfliktsignal —
 se detaljer». Kravspekens ±0,05 (F4.3) revideres datert til dette
 intervallet; v1-loggenes 0,86–1,21 noteres som kjent forenkling.
@@ -444,9 +446,21 @@ intervallet; v1-loggenes 0,86–1,21 noteres som kjent forenkling.
    mangler dekning her» — aldri «ingen brukbart alternativ». Noen havner
    ekskludert for manglende dybde ⇒ `"partial"` med liste.
 5. **Basis:** 4a beregner alltid på kontrollvær, merket
-   «kontrollvær — ikke ensemble-sjekket». Maks over medlemmer for valgt
-   avgang er en egen bølge betinget av kostnadsmålingen (§6.3).
+   «kontrollvær — ikke ensemble-sjekket». **Bølge 6 (D12.1, vedtatt
+   2026-09-07):** tre profiler for valgt avgang — kontrollen + de to
+   medlemmene med størst *feltgap* (forsortering på havnefeltets nedre
+   skranke langs hvert medlems `hourlyTrack`, ingen R2-søk), vist som
+   «verste testede værutfall: inntil X t fra havn (kontrollvær: Y t)».
+   Aldri «maks over 30» (outlier-tall). Kostnad: 3 × 3,3 s på PC.
+   Profilen gates til valgt avgang når avgangsvinduet (F4.5) kommer.
+
 6. R2 er unntatt alle sertifikat-/rekkefølgemekanismer.
+7. **Dybdegaten** krever `min(kai, ankring) ≥ dypgang + klaring` (D12.3
+   a, 2026-09-07) — konservativt: en havn med grunn kai og god ankring
+   strykes. Kjent begrensning; gate per anløpstype med egen
+   `nightApproachSafe` (D12.3 c) er en eksplisitt gjenåpning av 4a-kuttet
+   «havnebok-felter» og tas i fase 4b sammen med LWW-synk av boken.
+   `BoatModel.draughtM`/`depthClearanceM` er obligatoriske (D12.2).
 
 ### 4.6 Beslutningsregel (F4.4, D8.5)
 
@@ -905,8 +919,9 @@ bærer); død `s < 0,7`-rad etter gul-radene fjernet; sertifikatets
 forutsetning «ingen omklassifisering fra infeasible» (omkjøringen ferdig
 før telling) står i §4.1. Bekreftes.
 
-**Bølge 4-funn (2026-09-05) — beslutningspunkter D12.1–D12.5, til
-Magnus.** Grunnlag `docs/research/beslutningsgrunnlag-d12-boelge4-2026-09-05.md`,
+**Bølge 4-funn (2026-09-05) — beslutningspunkter D12.1–D12.5. Vedtatt av
+Magnus 2026-09-07 som anbefalt: D12.1 (c) spec nå/bølge 6, D12.2 (a),
+D12.3 (a) nå + (c) i 4b, D12.4 (b), D12.5 (a).** Grunnlag `docs/research/beslutningsgrunnlag-d12-boelge4-2026-09-05.md`,
 panel `ekspertpanel-d12-boelge4-2026-09-05.md`. Kostnadsmåling: 32
 samples, 33 R2-søk, 3,3 s per profil på golden (PC); admissibilitet 200
 punkter 0 brudd.
@@ -989,4 +1004,7 @@ Behold. **Anbefaling: (a).** Panel enstemmig.
   på kontrollen (interim-havnebok, merket FIKSTUR i UI), perturbasjonsfase
   etter ensemblet, beslutningsregel og følsomhet i panelet. Review: 4
   funn fikset (vmax-margin, fikstur-merking, prosent, dypgang i wrapper).
-  Åpent: D12.1–D12.5 (§7, panel).
+  D12.1–D12.5 vedtatt 2026-09-07 og gjennomført samme dag (D12.2 obligatoriske
+  dypgangsfelt m/eksplisitt verdi i `test-boat.ts`; D12.4 perturbasjon over
+  poolen; D12.5 `departEpochS` i `MemberSummary`); D12.1 spec §4.5 pkt. 5
+  (bølge 6), D12.3 §4.5 pkt. 7 (4b).

@@ -95,8 +95,9 @@ export const STATIC_DEPTH_MARGIN_M = 0.5;
  * flere båter må feltet bli obligatorisk. Notert i rutemotor.md §5.14.
  */
 export function requiredHarbourDepthM(boat: BoatModel): number {
-  const draught = boat.draughtM ?? MORILD_DRAUGHT_M;
-  const clearance = boat.depthClearanceM ?? STATIC_DEPTH_MARGIN_M;
+  // D12.2: feltene er obligatoriske i typen — ingen fallback her lenger.
+  const draught = boat.draughtM;
+  const clearance = boat.depthClearanceM;
   return draught + clearance;
 }
 

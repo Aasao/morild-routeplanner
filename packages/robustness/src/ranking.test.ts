@@ -19,6 +19,7 @@ function makeMemberSummary(overrides: Partial<MemberSummary> = {}): MemberSummar
     coverageWeather: "full",
     prunedBound: 0,
     tubBoundS: null,
+    departEpochS: 1_700_000_000,
     hourlyTrack: [],
     ...overrides,
   };

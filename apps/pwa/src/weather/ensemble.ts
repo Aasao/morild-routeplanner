@@ -490,6 +490,7 @@ async function runPerturbations(
   outcomes: readonly MemberOutcome[],
   workerFactory: WorkerFactory,
   perturbation: PerturbationOptions,
+  poolSize: number,
 ): Promise<SensitivityReport> {
   const feasible = outcomes.filter(
     (o) => !o.isControl && o.classification === "feasible" && o.result !== undefined,
@@ -499,12 +500,22 @@ async function runPerturbations(
       ? null
       : feasible.reduce((a, b) => (b.result!.totals.durationS > a.result!.totals.durationS ? b : a));
   const plan = perturbationPlan(toRobustOutcome(controlOutcome), worst === null ? null : toRobustOutcome(worst));
-  const worker = workerFactory();
-  const runs: PerturbationRun[] = [];
-  try {
-    for (const entry of plan) {
-      const basisOutcome = entry.basis === "kontroll" ? controlOutcome : worst;
-      if (basisOutcome === null) continue;
+  const entries = plan.filter((e) => e.basis === "kontroll" || worst !== null);
+
+  // D12.4 (vedtatt 2026-09-07): over poolen, samme drain-mønster som
+  // medlemmene — seks uavhengige søk skal ikke stå i kø på én worker.
+  // Resultatene legges i planens rekkefølge uansett ankomst, så rapporten
+  // er deterministisk.
+  const runs: (PerturbationRun | undefined)[] = new Array<PerturbationRun | undefined>(entries.length).fill(undefined);
+  let next = 0;
+  const workers = Array.from({ length: Math.max(1, Math.min(poolSize, entries.length)) }, () => workerFactory());
+  async function drain(worker: WorkerLike): Promise<void> {
+    for (;;) {
+      const i = next;
+      if (i >= entries.length) return;
+      next += 1;
+      const entry = entries[i]!;
+      const basisOutcome = entry.basis === "kontroll" ? controlOutcome : worst!;
       const tiles = await perturbation.tilesFor(basisOutcome.memberIndex);
       const job: MemberJob = {
         memberIndex: basisOutcome.memberIndex,
@@ -515,12 +526,18 @@ async function runPerturbations(
         perturbation: { kind: entry.kind, factor: entry.factor },
       };
       const outcome = await runMemberWithRerun(worker, job);
-      runs.push({ kind: entry.kind, factor: entry.factor, basis: entry.basis, outcome: toRobustOutcome(outcome) });
+      runs[i] = { kind: entry.kind, factor: entry.factor, basis: entry.basis, outcome: toRobustOutcome(outcome) };
     }
-  } finally {
-    worker.terminate();
   }
-  return summarizeSensitivity(runs, controlOutcome.classification === "feasible");
+  try {
+    await Promise.all(workers.map((w) => drain(w)));
+  } finally {
+    workers.forEach((w) => w.terminate());
+  }
+  return summarizeSensitivity(
+    runs.filter((r): r is PerturbationRun => r !== undefined),
+    controlOutcome.classification === "feasible",
+  );
 }
 
 /** Orakelsvar for ett medlem; `null` når evalueringen feilet (medlemmet søkes sist). */
@@ -685,7 +702,7 @@ export async function runEnsemble(
 
   let sensitivity: SensitivityReport | null = null;
   if (options.perturbation !== undefined && controlOutcome.result !== undefined) {
-    sensitivity = await runPerturbations(controlJob, controlOutcome, outcomes, workerFactory, options.perturbation);
+    sensitivity = await runPerturbations(controlJob, controlOutcome, outcomes, workerFactory, options.perturbation, poolSize);
     callbacks.onSensitivity?.(sensitivity);
   }
 

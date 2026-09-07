@@ -19,6 +19,7 @@ function makeSummary(hourlyTrack: readonly LatLon[], overrides: Partial<MemberSu
     beatAtNightS: 0,
     fuelL: 0,
     arrivalEpochS: DEPART_EPOCH_S + durationS,
+    departEpochS: DEPART_EPOCH_S,
     daylightArrival: true,
     flags: 0,
     safetyVerdict: "trygt",

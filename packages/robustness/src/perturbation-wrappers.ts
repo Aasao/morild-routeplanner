@@ -28,10 +28,10 @@ export function withCruisingFactor(boat: BoatModel, factor: number): BoatModel {
     motorThresholdKn: boat.motorThresholdKn,
     motorSpeedKn: boat.motorSpeedKn,
     motorFuelLPerH: boat.motorFuelLPerH,
-    // Dybdegatens felt (bølge 4) — eksplisitt, ikke spread: `BoatModel` kan
-    // være en klasseinstans med metoder på prototypen (review-funn 4).
-    ...(boat.draughtM !== undefined ? { draughtM: boat.draughtM } : {}),
-    ...(boat.depthClearanceM !== undefined ? { depthClearanceM: boat.depthClearanceM } : {}),
+    // Dybdegatens felt — eksplisitt, ikke spread: `BoatModel` kan være en
+    // klasseinstans med metoder på prototypen (review-funn 4, bølge 4).
+    draughtM: boat.draughtM,
+    depthClearanceM: boat.depthClearanceM,
   };
 }
 

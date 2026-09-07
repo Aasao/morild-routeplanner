@@ -200,12 +200,14 @@ export interface BoatModel {
    * dybde: farbarhetsmasken er bygget for ÉN dypgang i byggetid (F1.0/F1.1),
    * så motoren har ingen bruk for tallet. Havnebokens dybdegate
    * (`harbour-book.ts`) har det: «er det dypt nok til å ligge her i natt» er
-   * et spørsmål masken ikke svarer på. Valgfrie for ikke å bryte
-   * `packages/polar` og samtlige fiksturer; `requiredHarbourDepthM` faller
-   * tilbake på B1-tallene og dokumenterer den skarpe kanten.
+   * et spørsmål masken ikke svarer på. **Obligatoriske (D12.2, vedtatt
+   * 2026-09-07):** en stille fallback ville presentert «ukjent» som trygt
+   * for en båt med annen dypgang. Verdien settes eksplisitt ett sted
+   * (`test-fixtures/test-boat.ts` for Morild) og `packages/polar`s fabrikk
+   * arver kravet fra typen.
    */
-  readonly draughtM?: number;
-  readonly depthClearanceM?: number;
+  readonly draughtM: number;
+  readonly depthClearanceM: number;
 }
 
 /**

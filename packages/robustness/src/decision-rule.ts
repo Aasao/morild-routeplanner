@@ -271,7 +271,7 @@ function computeRule(
     if (looSplit.highIsFeasible !== split.highIsFeasible) return null;
   }
 
-  const departEpochS = controlSummary.arrivalEpochS - controlSummary.durationS;
+  const departEpochS = controlSummary.departEpochS; // D12.5: bokført, ikke utledet.
   const checkEpochS = departEpochS + split.h * 3600;
   // Positiv crossTrackNm = styrbord for kursen a→b = retning kurs+90°.
   const testBearing = split.highIsFeasible ? (split.course + 90) % 360 : (split.course + 270) % 360;
