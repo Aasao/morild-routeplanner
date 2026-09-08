@@ -336,11 +336,17 @@ function buildVarselLines(input: FirstPageInput): readonly FirstPageLine[] {
   if (sensitivity === "ikke-beregnet") {
     lines.push(line("varsel", "Følsomhet ikke beregnet.", "advarsel"));
   }
-  if (summary.control.kind !== "feasible") {
-    // §4.7-tabellen sier «verste/typisk medlem som geometri» — den
-    // substitusjonen er ikke bygget ennå (viften og kartet trenger
-    // kontrollens spor), og teksten skal ikke påstå noe som ikke skjer.
+  // «Ingen kontrollrute å tegne» gjelder når det ikke finnes noen
+  // rutegeometri — ikke når kontrollen er inkonklusiv av datamangel
+  // (D11.1 «dekning-felt»: ruten finnes og tegnes, bare bølger/strøm
+  // mangler). Målt i appen 2026-09-08: linjen sto feilaktig på en synlig
+  // kontrollrute. §4.7-tabellens «verste/typisk medlem som geometri» er
+  // ikke bygget ennå, og teksten påstår ikke det.
+  const controlTrack = summary.control.summary?.hourlyTrack ?? [];
+  if (summary.control.kind === "error" || controlTrack.length === 0) {
     lines.push(line("varsel", "Ingen kontrollrute å tegne — vifte og kart kan mangle geometri.", "kritisk"));
+  } else if (summary.control.kind === "infeasible") {
+    lines.push(line("varsel", "Kontrollruten nådde ikke målet — tegnes som referanse, ikke som plan.", "kritisk"));
   }
   // Sikkerhetsflagg fra ruten selv (§3.2: «bæres videre til presentasjonen
   // som flagg»; CLAUDE.md §1: usikker rute merkes eksplisitt i UI).

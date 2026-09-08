@@ -159,6 +159,20 @@ function linesOf(page: { readonly lines: readonly FirstPageLine[] }): readonly F
 // §4.7 «ærlig degradering» — tabellen rad for rad. Én test per rad (9 rader).
 // ---------------------------------------------------------------------------
 describe("buildFirstPage — §4.7 ærlig degradering, tabellen rad for rad", () => {
+  it("inkonklusiv kontroll MED rute (dekning-felt) gir IKKE «ingen kontrollrute å tegne» (målt 2026-09-08)", () => {
+    const control = outcome(0, "inconclusive", { hourlyTrack: [{ lat: 59.1, lon: 10.9 }, { lat: 58.9, lon: 10.8 }] }, "dekning-felt");
+    const summary = buildDeparture({ nF: 0, nInf: 0, nInc: 29, nErr: 0 }, { control });
+    const texts = linesOf(buildFirstPage(baseInput(summary))).map((l) => l.text);
+    expect(texts.some((t) => t.includes("Ingen kontrollrute å tegne"))).toBe(false);
+  });
+
+  it("kontroll uten rutegeometri (tomt spor) ⇒ «ingen kontrollrute å tegne»", () => {
+    const control = outcome(0, "error", { hourlyTrack: [] });
+    const summary = buildDeparture({ nF: 20, nInf: 5, nInc: 4, nErr: 0 }, { control });
+    const texts = linesOf(buildFirstPage(baseInput(summary))).map((l) => l.text);
+    expect(texts.some((t) => t.includes("Ingen kontrollrute å tegne"))).toBe(true);
+  });
+
   it("rad 1b (review bølge 5): pakkealder ukjent (null) ⇒ ingen robusthetstall, aldri tolket som fersk", () => {
     const summary = buildDeparture({ nF: 27, nInf: 1, nInc: 1, nErr: 1 });
     const page = buildFirstPage(baseInput(summary, { packageAgeS: null }));

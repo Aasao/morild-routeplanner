@@ -43,3 +43,26 @@
    «ingen robusthetstall vises», kontrollrute og flagg fortsatt synlige.
    Cron-jobben (GitHub Actions, Magnus' secrets) er forutsetningen for at
    førstesiden noen gang viser tall.
+
+## Tillegg 2026-09-08 — fersk pakke (init 2026-09-08T14Z, alder 3,0 t)
+
+Pakken ble bygget lokalt (`build-live`, 180 blober, 20,1 MB) og lastet
+til `morild-mirror` (180/180 OK, peker, 4 stikkprøver byte-identiske).
+Samme oppsett som over; blobene hentet ferskt fra R2 (ikke cache).
+
+| | verdi |
+|---|---|
+| kontroll: dekode / felt / søk / rundtur | 130 ms / 65 ms / 5,0 s / 5,4 s |
+| bail-out-profil (egen fase, 21 R2-søk) | 21,2 s |
+| medlem: median søk | 9,6 s |
+| ensemble 29 medlemmer, 6 workere | 73 s |
+| JS-heap | 55 MB |
+| førstesiden | alle seksjoner (§4.7 pkt. 1–6) rendret; lys «Beregner (k av 29)» underveis, GULT/inkonklusiv ved slutt |
+| nødhavn | 3 av 26 punkter når havn innen 6 t ⇒ «≥ 6 t» (vær-gate i dette været) |
+
+Ensemblet var 73 s mot 41 s dagen før på samme PC — 6 wrangler-/Vite-
+prosesser konkurrerte om kjernene, og medlemsmedianen steg fra 7,8 til
+9,6 s. Bekrefter at veggklokke på PC ikke er reproduserbar; nettbrett-
+tallet må måles der (D10.2). UI-feil funnet og rettet: «Ingen
+kontrollrute å tegne» ble vist for en inkonklusiv (dekning-felt) kontroll
+som faktisk har rute — betingelsen er nå «ingen rutegeometri».
