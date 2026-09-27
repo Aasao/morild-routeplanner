@@ -45,6 +45,8 @@ import {
 } from "@morild/robustness";
 import type { BailoutProfile } from "@morild/routing";
 import { renderFan, renderFirstPage, renderReceiptControls } from "./first-page-ui.js";
+import { browserScreenLockDeps, createScreenLock, screenLockStatusText } from "./screen-lock.js";
+import { isMeasurementProgramRequested, startMeasurementProgram } from "./maaleprogram/ui.js";
 
 function registerServiceWorker(): void {
   if (!("serviceWorker" in navigator)) {
@@ -139,6 +141,18 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
     }
   }
   const decisionEl = document.querySelector<HTMLDivElement>("#weather-decision");
+  const screenLockEl = document.querySelector<HTMLDivElement>("#weather-screenlock");
+
+  // Skjermlås (robusthet.md §6.4, D13.3 a): fra flyten starter til ensemble,
+  // perturbasjon og nødhavnprofil er ferdige — det er når `runWeatherPipeline`
+  // løser seg (den venter på alle tre). Tas på nytt ved synlig mens den pågår.
+  const screenLock = createScreenLock({
+    ...browserScreenLockDeps(),
+    onState: (state) => {
+      if (screenLockEl) screenLockEl.textContent = screenLockStatusText(state);
+    },
+  });
+  void screenLock.acquire();
 
   // Cache API finnes kun i secure context (https/localhost). Fra en
   // LAN-IP over http (nettbrett-røyktest) faller vi ærlig tilbake til
@@ -269,10 +283,18 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
         console.warn("Værflyt feilet:", message);
       },
     },
-  );
+  ).finally(() => {
+    void screenLock.release();
+  });
 }
 
 function main(): void {
+  // Måleprogrammet (§6.4, D13.5 bolk 1): egen modus uten kart, hello-route
+  // og værflyt — ingenting annet skal konkurrere om CPU-en mens det måler.
+  if (isMeasurementProgramRequested(window.location.search)) {
+    startMeasurementProgram(document.body);
+    return;
+  }
   const container = document.querySelector<HTMLDivElement>("#map");
   if (!container) {
     throw new Error("Fant ikke #map i index.html");

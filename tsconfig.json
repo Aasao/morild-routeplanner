@@ -13,6 +13,7 @@
     { "path": "tools/weather-pack" },
     { "path": "apps/pwa" },
     { "path": "apps/pwa/tsconfig.worker.json" },
+    { "path": "apps/pwa/tsconfig.node.json" },
     { "path": "apps/worker" }
   ]
 }

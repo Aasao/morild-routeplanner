@@ -4,6 +4,13 @@
  * skille «for få kjerner», «små kjerner» og «dyrere etiketter på ARM» fra
  * hverandre — per medlem, ikke bare veggklokke. Ren datamodell + ren
  * bygging; DOM-en lever i `weather-ui.ts`.
+ *
+ * **Skjemaversjon (§6.4, D13.2 a):** `workerHeapMB`/`workerSlot` per medlem
+ * og `workerMemoryApi`/`maxWorkerHeapMB` på toppnivå er lagt til UTEN å
+ * bumpe `morild-nettbrett-maaling/1`: ingen eksisterende felt har endret
+ * navn, type eller betydning, så en leser av gamle filer bare ser feltene
+ * mangle (= «ikke målt da»). En bump ville gjort de tre allerede innsamlede
+ * nettbrett-JSON-ene «foreldet» uten at noe i dem var blitt feil.
  */
 import type { MemberOutcome } from "./ensemble.js";
 
@@ -26,6 +33,10 @@ export interface MemberMeasurement {
   /** Realisert seilingstid — for orakelets treffsikkerhet (D10.5). */
   readonly durationS: number | null;
   readonly reachesDestination: boolean | null;
+  /** Heap i Worker-konteksten etter søket (MB); null = API-et finnes ikke der (eller feil). */
+  readonly workerHeapMB: number | null;
+  /** Pool-plassen (0…pool−1); null for kontroll-Workeren og ved feil. */
+  readonly workerSlot: number | null;
 }
 
 export interface EnsembleMeasurement {
@@ -38,8 +49,22 @@ export interface EnsembleMeasurement {
   readonly jsHeapSizeLimitMB: number | null;
   readonly usedJSHeapSizeMB: number | null;
   readonly periodicBackgroundSyncSupported: boolean;
+  /**
+   * Om minst én Worker leverte `performance.memory` (D13.2 a). `false` ⇒
+   * ingen per-Worker-heap finnes i denne målingen: da gjelder den analytiske
+   * grensen (§6.2) og en manuell kontroll — ikke et tall vi later som vi har.
+   */
+  readonly workerMemoryApi: boolean;
+  /** Største `workerHeapMB` over kontroll + medlemmer; null når API-et mangler. */
+  readonly maxWorkerHeapMB: number | null;
   readonly control: MemberMeasurement | null;
-  /** Veggklokke fra kontrollen var ferdig til siste medlem kom inn. */
+  /**
+   * Veggklokke fra kontrollen var ferdig til siste medlem kom inn.
+   * **Inkluderer nødhavnprofilen** (`control.bailoutMs`, ~2,2 s på Tab S7
+   * FE): den kjører sekvensielt på kontroll-Workeren FØR medlemmene startes
+   * (`runEnsemble`). Selve ensemblet er `ensembleWallMs − control.bailoutMs`
+   * — det er det tallet måleprogrammets poolsveip (uten nødhavn) sammenlignes med.
+   */
   readonly ensembleWallMs: number | null;
   readonly members: readonly MemberMeasurement[];
 }
@@ -60,6 +85,19 @@ export function memberMeasurement(outcome: MemberOutcome, arrivalOrder: number):
     iterations: d?.iterations ?? null,
     durationS: outcome.result?.totals.durationS ?? null,
     reachesDestination: outcome.result?.safety.reachesDestination ?? null,
+    workerHeapMB: outcome.workerTiming?.workerHeapMB ?? null,
+    workerSlot: outcome.workerTiming?.workerSlot ?? null,
+  };
+}
+
+/** Toppnivå-feltene for per-Worker heap (D13.2 a) — ren, delt med måleprogrammet. */
+export function workerHeapSummary(
+  measurements: readonly { readonly workerHeapMB: number | null }[],
+): { readonly workerMemoryApi: boolean; readonly maxWorkerHeapMB: number | null } {
+  const heaps = measurements.map((m) => m.workerHeapMB).filter((h): h is number => h !== null);
+  return {
+    workerMemoryApi: heaps.length > 0,
+    maxWorkerHeapMB: heaps.length > 0 ? Math.max(...heaps) : null,
   };
 }
 
@@ -99,6 +137,7 @@ export function buildEnsembleMeasurement(args: {
 }): EnsembleMeasurement {
   const toMB = (b: number | undefined): number | null =>
     b === undefined ? null : Math.round(b / (1024 * 1024));
+  const heap = workerHeapSummary(args.control === null ? args.members : [args.control, ...args.members]);
   return {
     schema: "morild-nettbrett-maaling/1",
     runAt: args.env.now(),
@@ -108,6 +147,8 @@ export function buildEnsembleMeasurement(args: {
     jsHeapSizeLimitMB: toMB(args.env.memory?.jsHeapSizeLimit),
     usedJSHeapSizeMB: toMB(args.env.memory?.usedJSHeapSize),
     periodicBackgroundSyncSupported: args.env.periodicBackgroundSyncSupported,
+    workerMemoryApi: heap.workerMemoryApi,
+    maxWorkerHeapMB: heap.maxWorkerHeapMB,
     control: args.control,
     ensembleWallMs: args.ensembleWallMs,
     members: [...args.members].sort((a, b) => a.memberIndex - b.memberIndex),

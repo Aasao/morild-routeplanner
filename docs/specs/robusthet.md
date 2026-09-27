@@ -711,6 +711,16 @@ i `stream` ⇒ minnebåndbredde; kun i `alloc` ⇒ GC ⇒ spak 5); maks
 Worker-heap mot N6 (< 500 MB). Tolkningsregler er forhåndsregistrert
 her, før data finnes.
 
+**Sammenlignbarhet (review 2026-09-27, før data):** (1) 27/9-tallene
+(58,5/60,6/60,2 s) inkluderer nødhavnprofilen (~2,2 s, sekvensiell før
+medlemmene); selve ensemblet var 56,3/58,3/58,0 s. Poolsveipen kjører uten
+nødhavn og sammenlignes med de siste. (2) Solo og dummy kjører alltid på en
+fersk Worker (kald JIT), pool-medlemmer for det meste på varme Workere.
+Solo- og dummy-kjøringene er innbyrdes sammenlignbare; solo mot
+pool-medlemmer i µs/etikett blander inn JIT-tilstand og tolkes bare som
+retning. (3) `workerHeapMB` er ett punkt etter søket, ikke toppen;
+tallet er en nedre grense for N6-toppen.
+
 **Tester:** skjemabygging og gjenopptak fra lagret fremdrift (ren
 funksjon, injisert lager); rekkefølgegenerator (vekselvis, deterministisk);
 skjermlås-tilstandsmaskin med injisert `wakeLock`/`document`; mellomvaren
@@ -1152,3 +1162,13 @@ bølge 6 / spak 5. Panel enstemmig m/justeringer tatt inn.
   rettet i hovedsesjonen (hello-route gislet av kartet; MapLibre-Worker
   404 i Vite-dev). Ny §6.4: skjermlås, per-Worker heap og måleprogrammet
   (bolk 1).
+- 2026-09-27: **bolk 1 levert** (§6.4): skjermlås (`apps/pwa/src/screen-lock.ts`)
+  rundt værflyten; `workerHeapMB`/`workerSlot` per medlem i målings-JSON
+  (skjema uendret `/1`, felt lagt til); måleprogrammet `?maaleprogram=1`
+  (`apps/pwa/src/maaleprogram/`, dummy-Worker, dev-only mottak
+  `apps/pwa/dev-server/`). Funn: `performance.memory` finnes ikke i Workere
+  i Chrome 152 på PC (nettbrettet avgjør). Review-funn fikset: evig
+  gjenopptak av en kjøring som tar ned fanen (hoppes over etter 2 avbrudd),
+  sent avslag overskrev «sluppet — ferdig», tak på 20 filer i mottaket,
+  pakkevakten skilt ut og testet; sammenlignbarhets-notatet i §6.4 (27/9-
+  tallene inkluderer nødhavnprofilen, kald/varm JIT, heap etter søket).

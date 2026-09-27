@@ -70,6 +70,13 @@ export interface PlanRouteMemberRequest {
    * Udefinert for kontrollen (den bygger feltet) og ved fallback.
    */
   readonly sharedField?: SharedField | undefined;
+  /**
+   * Hvilken pool-Worker jobben går på (0…pool−1, robusthet.md §6.4 D13.2 a).
+   * Workeren ekkoer den i `WorkerTiming.workerSlot`; den vet ellers ikke
+   * selv hvilken plass den har i poolen. Udefinert for kontroll-Workeren,
+   * som går alene før poolen startes.
+   */
+  readonly workerSlot?: number | undefined;
 }
 
 /** Én perturbasjon (§4.4, D8.4 c) — kjøres som et eget fullt søk. */
@@ -124,6 +131,15 @@ export interface WorkerTiming {
   readonly searchMs: number;
   /** Havnefelt + bail-out-profil (kun kontrollen, egen fase). */
   readonly bailoutMs?: number | undefined;
+  /**
+   * `performance.memory.usedJSHeapSize` lest I Worker-konteksten etter søket,
+   * i MB (§6.4, D13.2 a). Ett punkt ETTER søket, ikke toppen under søket —
+   * mellomstrukturer kan være samlet inn; N6 gjelder toppen. `null` når API-et ikke finnes der — da har vi
+   * ikke tallet, og det står slik (N2). Valgfri så eldre Worker-svar tåles.
+   */
+  readonly workerHeapMB?: number | null | undefined;
+  /** Ekko av `PlanRouteMemberRequest.workerSlot`; `null` for kontroll-Workeren. */
+  readonly workerSlot?: number | null | undefined;
 }
 
 export interface PlanRouteMemberError {
@@ -169,6 +185,8 @@ export interface MemberJob {
   readonly noTubBound?: boolean | undefined;
   /** Settes av orkestratoren i perturbasjonsfasen (§4.4). */
   readonly perturbation?: Perturbation | undefined;
+  /** Settes av orkestratoren: pool-plassen jobben kjøres på (§6.4). */
+  readonly workerSlot?: number | undefined;
 }
 
 export type MemberClassification = "feasible" | "infeasible" | "inconclusive";
@@ -391,6 +409,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
       ...(job.sharedField !== undefined ? { sharedField: job.sharedField } : {}),
       ...(job.noTubBound === true ? { noTubBound: true } : {}),
       ...(job.perturbation !== undefined ? { perturbation: job.perturbation } : {}),
+      ...(job.workerSlot !== undefined ? { workerSlot: job.workerSlot } : {}),
     };
     // Én jobb = ett lytterpar, fjernet ved første svar (robusthet.md §4.1:
     // «Lytterne registreres med { once: true } per jobb»). Før lå alle
@@ -557,7 +576,7 @@ async function runPerturbations(
   const runs: (PerturbationRun | undefined)[] = new Array<PerturbationRun | undefined>(entries.length).fill(undefined);
   let next = 0;
   const workers = Array.from({ length: Math.max(1, Math.min(poolSize, entries.length)) }, () => workerFactory());
-  async function drain(worker: WorkerLike): Promise<void> {
+  async function drain(worker: WorkerLike, workerSlot: number): Promise<void> {
     for (;;) {
       const i = next;
       if (i >= entries.length) return;
@@ -572,13 +591,14 @@ async function runPerturbations(
         departEpochS: controlJob.departEpochS,
         ...(controlOutcome.sharedField !== undefined ? { sharedField: controlOutcome.sharedField } : {}),
         perturbation: { kind: entry.kind, factor: entry.factor },
+        workerSlot,
       };
       const outcome = await runMemberWithRerun(worker, job);
       runs[i] = { kind: entry.kind, factor: entry.factor, basis: entry.basis, outcome: toRobustOutcome(outcome) };
     }
   }
   try {
-    await Promise.all(workers.map((w) => drain(w)));
+    await Promise.all(workers.map((w, slot) => drain(w, slot)));
   } finally {
     workers.forEach((w) => w.terminate());
   }
@@ -749,17 +769,17 @@ export async function runEnsemble(
       return job;
     };
 
-    async function drain(worker: WorkerLike): Promise<void> {
+    async function drain(worker: WorkerLike, workerSlot: number): Promise<void> {
       for (;;) {
         const job = takeNext();
         if (job === undefined) return;
-        const outcome = await runMemberWithRerun(worker, job);
+        const outcome = await runMemberWithRerun(worker, { ...job, workerSlot });
         outcomes.push(outcome);
         callbacks.onMemberResult?.(outcome, summarizeEnsemble(outcomes, options.context));
       }
     }
 
-    await Promise.all(workers.map((w) => drain(w)));
+    await Promise.all(workers.map((w, slot) => drain(w, slot)));
     workers.forEach((w) => w.terminate());
   }
 

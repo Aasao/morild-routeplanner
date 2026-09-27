@@ -67,3 +67,7 @@ ensemble 40,8 s (rolig PC) / 73 s (PC med konkurrerende prosesser).
    (`reachesDestination` true for alle).
 8. `periodicBackgroundSyncSupported: false` over http på LAN — input til
    D10.6, men må remåles fra installert PWA over https før det tolkes.
+9. **Ensemble-tallene inkluderer nødhavnprofilen** (funnet i review
+   2026-09-27): `ensembleWallMs` regnes fra kontrollen er ferdig, og
+   nødhavnprofilen (2,2 s) kjører sekvensielt på kontroll-Workeren før
+   medlemmene startes. Selve ensemblet: 56,3 / 58,3 / 58,0 s.

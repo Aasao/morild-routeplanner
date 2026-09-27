@@ -78,6 +78,8 @@ export interface PlanRouteMemberRequest {
   readonly noTubBound?: boolean | undefined;
   /** Perturbasjon (§4.4, D8.4 c): cruising-faktor på båten eller skalering av strømmen. Strukturell kopi av `ensemble.ts`. */
   readonly perturbation?: { readonly kind: "cruising" | "current"; readonly factor: number } | undefined;
+  /** Pool-plassen (robusthet.md §6.4, D13.2 a) — ekkoes i `WorkerTiming.workerSlot`. Strukturell kopi av `ensemble.ts`. */
+  readonly workerSlot?: number | undefined;
 }
 
 /** Strukturell kopi av `ensemble.ts::SharedField` — se toppkommentaren. */
@@ -150,6 +152,15 @@ export interface WorkerTiming {
   readonly fieldMs: number;
   /** `planRoute` alene. */
   readonly searchMs: number;
+  /**
+   * `performance.memory.usedJSHeapSize` i DENNE Worker-konteksten etter
+   * søket, MB med én desimal (§6.4, D13.2 a). `null` når API-et ikke finnes
+   * her — ingen antakelse om at det gjør det (Chromium eksponerer det ikke
+   * nødvendigvis i Workere).
+   */
+  readonly workerHeapMB: number | null;
+  /** Ekko av `PlanRouteMemberRequest.workerSlot`; `null` for kontroll-Workeren. */
+  readonly workerSlot: number | null;
 }
 
 export interface PlanRouteMemberError {
@@ -279,11 +290,18 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
     memberIndex: msg.memberIndex,
     isControl: msg.isControl,
     result,
-    timing: { decodeMs, fieldMs, searchMs },
+    timing: { decodeMs, fieldMs, searchMs, workerHeapMB: workerHeapMB(), workerSlot: msg.workerSlot ?? null },
     ...(msg.isControl && distanceField !== undefined
       ? { sharedField: { key: fieldKey, data: distanceField.data } }
       : {}),
   };
+}
+
+/** Se `WorkerTiming.workerHeapMB`. Ikke-standard, Chromium-only API — derfor den smale strukturelle casten. */
+function workerHeapMB(): number | null {
+  const memory = (performance as unknown as { readonly memory?: { readonly usedJSHeapSize?: unknown } }).memory;
+  const used = memory?.usedJSHeapSize;
+  return typeof used === "number" && Number.isFinite(used) ? Math.round((used / (1024 * 1024)) * 10) / 10 : null;
 }
 
 interface LastControl {

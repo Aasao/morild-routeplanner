@@ -12,7 +12,7 @@ import { defineConfig } from "vitest/config";
 // kommentaren for tidlig og gir en forvirrende parse-feil.)
 export default defineConfig({
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "dev-server/**/*.test.ts"],
     exclude: ["**/node_modules/**", "**/dist/**", "**/dist-tsc/**"],
   },
 });

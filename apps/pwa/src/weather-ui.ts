@@ -283,7 +283,12 @@ export function renderMeasurement(el: HTMLElement, measurement: EnsembleMeasurem
   const wall = measurement.ensembleWallMs !== null ? formatElapsed(measurement.ensembleWallMs) : "–";
   title.textContent =
     `Nettbrett-måling (ADR-0005 port 1): ${measurement.members.length} medlemmer på ${wall}, ` +
-    `${measurement.hardwareConcurrency ?? "?"} kjerner, ${measurement.poolSize} Workere. Kopier og send:`;
+    `${measurement.hardwareConcurrency ?? "?"} kjerner, ${measurement.poolSize} Workere. ` +
+    // D13.2 a: mangler API-et i Workerne, sies det rett ut — ingen null som ser ut som 0.
+    (measurement.workerMemoryApi && measurement.maxWorkerHeapMB !== null
+      ? `Største Worker-heap ${measurement.maxWorkerHeapMB.toFixed(1)} MB. `
+      : "Worker-heap: ikke målbar (performance.memory finnes ikke i Workerne) — analytisk grense §6.2 gjelder. ") +
+    "Kopier og send:";
   const button = document.createElement("button");
   button.type = "button";
   button.textContent = "Kopier måling";

@@ -109,7 +109,7 @@ function windEntries(tile: PointerTileEntry) {
     .sort((a, b) => a.member - b.member);
 }
 
-interface TileFieldEntry {
+export interface TileFieldEntry {
   readonly tile: PointerTileEntry;
   readonly entry: PointerFieldEntry;
 }
@@ -197,7 +197,34 @@ function windEntriesByMember(tiles: readonly PointerTileEntry[]): Map<number, Ti
   return byMember;
 }
 
-export async function runWeatherPipeline(deps: PipelineDeps, callbacks: PipelineCallbacks = {}): Promise<void> {
+/**
+ * Alt ensemblet trenger, hentet og dekodet ÉN gang: jobbliste (kontroll
+ * først), kontekst for avgangssammendraget og nok om pakken til å
+ * identifisere den. Delt mellom appens værflyt (`runWeatherPipeline`) og
+ * måleprogrammet (robusthet.md §6.4), som henter pakken én gang og kjører
+ * mange ensembler på den — samme pipeline, ingen egen vei.
+ *
+ * NB: `jobs[*].tiles[*].windBuffer` overføres (transfer) når de sendes til
+ * en Worker. Den som vil kjøre flere ganger på samme input, må klone
+ * bufferne først (`cloneJobs` i måleprogrammet).
+ */
+export interface EnsembleInputs {
+  readonly jobs: readonly MemberJob[];
+  readonly context: EnsembleContext;
+  /** Antall medlemmer UTEN kontrollen. */
+  readonly memberCount: number;
+  /** Vind-oppføringene per medlem — perturbasjonsfasen leser flisene på nytt herfra. */
+  readonly byMember: ReadonlyMap<number, readonly TileFieldEntry[]>;
+  /** Innholds-hashene (§5) til alle blobber jobbene er bygget av, sortert — pakkens identitet. */
+  readonly blobHashes: readonly string[];
+  /** Pakkens init-tid (ISO) fra kontrollens header. */
+  readonly packageInit: string;
+}
+
+export async function prepareEnsembleInputs(
+  deps: Pick<PipelineDeps, "config" | "fetchImpl" | "cacheStorage" | "nowEpochS">,
+  callbacks: Pick<PipelineCallbacks, "onPointerStatus" | "onTileSelection" | "onFieldStatuses" | "onError"> = {},
+): Promise<EnsembleInputs | null> {
   const pointerResult = await loadWeatherPointer(deps.config, {
     fetchImpl: deps.fetchImpl,
     cacheStorage: deps.cacheStorage,
@@ -209,7 +236,7 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
         ? `Pekeren er ikke kompatibel med denne klienten: ${pointerResult.reason}`
         : pointerResult.reason,
     );
-    return;
+    return null;
   }
 
   const points = [SKJAELOY, SKAGEN];
@@ -234,14 +261,14 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
         ? `Ingen brukbar værflis for Skjæløy–Skagen: ${screened.rejections.length} flis(er) avvist (${screened.rejections[0]!.reason})`
         : "Ingen værflis i pekeren dekker Skjæløy–Skagen",
     );
-    return;
+    return null;
   }
 
   const byMember = windEntriesByMember(tiles);
   const controlSources = byMember.get(0);
   if (controlSources === undefined || controlSources.length === 0) {
     callbacks.onError?.("Pakken mangler et kontrollmedlem (member 0) for vind i noen av rutens fliser");
-    return;
+    return null;
   }
 
   const blobDeps = { fetchImpl: deps.fetchImpl, cacheStorage: deps.cacheStorage };
@@ -290,15 +317,6 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
     })),
   ];
 
-  // MetAlerts hentes PARALLELT med ensemble-beregningen (starter så snart
-  // kontrollruten finnes, blokkerer ikke medlemmene), men pipelinen løser
-  // seg først når også den jobben er ferdig. Før var den fire-and-forget
-  // (`void`), og «pipelinen er ferdig» garanterte da IKKE at `onMetAlerts`
-  // hadde gått — et kappløp mellom `Response.json()`s event-loop-hopp og
-  // ensemblets synkrone `planRoute`: grønt på Node 24 lokalt, rødt på
-  // Node 22 i CI (PR #1). `runMetAlertsForControl` fanger sine egne feil,
-  // så denne await-en kan ikke kaste.
-  let metAlertsDone: Promise<void> = Promise.resolve();
   // Stempelet (§3.6): hva tallene ble regnet på. Maskeversjonen er golden-
   // scenarioets navn til farbarhetsmasken får egen versjon (app-skjelett.md
   // §2); opsjons-hashen er en konstant for motorens standardopsjoner til
@@ -314,10 +332,38 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
     thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
   };
   const context: EnsembleContext = { expectedMembers: memberIndices.length, departEpochS, stamp };
+  const blobHashes = [controlSources, ...memberSourcesByIndex]
+    .flatMap((sources) => sources.map((s) => s.entry.hash))
+    .sort();
+  return {
+    jobs,
+    context,
+    memberCount: memberIndices.length,
+    byMember,
+    blobHashes,
+    packageInit: controlSources[0]!.entry.header.init,
+  };
+}
+
+export async function runWeatherPipeline(deps: PipelineDeps, callbacks: PipelineCallbacks = {}): Promise<void> {
+  const inputs = await prepareEnsembleInputs(deps, callbacks);
+  if (inputs === null) return;
+  const { jobs, context, byMember } = inputs;
+  const blobDeps = { fetchImpl: deps.fetchImpl, cacheStorage: deps.cacheStorage };
+
+  // MetAlerts hentes PARALLELT med ensemble-beregningen (starter så snart
+  // kontrollruten finnes, blokkerer ikke medlemmene), men pipelinen løser
+  // seg først når også den jobben er ferdig. Før var den fire-and-forget
+  // (`void`), og «pipelinen er ferdig» garanterte da IKKE at `onMetAlerts`
+  // hadde gått — et kappløp mellom `Response.json()`s event-loop-hopp og
+  // ensemblets synkrone `planRoute`: grønt på Node 24 lokalt, rødt på
+  // Node 22 i CI (PR #1). `runMetAlertsForControl` fanger sine egne feil,
+  // så denne await-en kan ikke kaste.
+  let metAlertsDone: Promise<void> = Promise.resolve();
 
   const { outcomes } = await runEnsemble(jobs, deps.poolSize, deps.workerFactory, {
     onControlResult: (outcome) => {
-      callbacks.onControlResult?.(outcome, memberIndices.length);
+      callbacks.onControlResult?.(outcome, inputs.memberCount);
       if (outcome.result) {
         metAlertsDone = runMetAlertsForControl(deps, callbacks, outcome.result.steps);
       }
