@@ -37,6 +37,9 @@ jobs:
         run: corepack enable
       - name: Installer avhengigheter
         run: pnpm install --frozen-lockfile
+      # Workspace-pakkene resolves via `dist/` (package.json `main`/`exports`).
+      - name: Bygg workspace-pakkene
+        run: pnpm exec tsc -b
       # Kun pakkeverktøyets tester: rutemotorens tunge tester hører til CI
       # på push og skal ikke kunne stoppe ferske værdata.
       - name: Tester for værpakke-verktøyet

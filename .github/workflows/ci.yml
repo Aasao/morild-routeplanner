@@ -43,5 +43,9 @@ jobs:
         run: corepack enable
       - name: Installer avhengigheter
         run: pnpm install --frozen-lockfile
+      # Workspace-pakkene resolves via `dist/` (package.json `main`/`exports`);
+      # check-jobben får den fra `pnpm check`, denne jobben må bygge selv.
+      - name: Bygg workspace-pakkene
+        run: pnpm exec tsc -b
       - name: Skademåling (delt Tub / delt felt, null flipp)
         run: pnpm test:damage
