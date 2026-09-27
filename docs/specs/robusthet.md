@@ -1172,3 +1172,8 @@ bølge 6 / spak 5. Panel enstemmig m/justeringer tatt inn.
   sent avslag overskrev «sluppet — ferdig», tak på 20 filer i mottaket,
   pakkevakten skilt ut og testet; sammenlignbarhets-notatet i §6.4 (27/9-
   tallene inkluderer nødhavnprofilen, kald/varm JIT, heap etter søket).
+- 2026-09-27: måleprogrammet kjørt på Tab S7 FE (`docs/research/maaleprogram-analyse-2026-09-27.md`):
+  75/75, 0 avbrudd; pool 4/5/6/7 = 58,8/56,1/53,9/53,2 s; solo 34 µs/etikett
+  unimodal; spin-sprang ved k = 2 (36 → 138 µs) ⇒ store kjerner oppbrukt,
+  stream stiger videre ⇒ minnebåndbredde, alloc svak ⇒ ikke GC. Taket på 6
+  Workere beholdes. Worker-heap ikke målbar på nettbrettet heller.
