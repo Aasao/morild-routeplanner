@@ -641,6 +641,81 @@ Sikkerhetskriteriet holdt, men bounden kjøper ingenting: motorens egen
 Tub (ADR-0004) prunes allerede alt den delte bounden ville tatt, og
 redningsveiene koster. Se D9.1.
 
+### 6.4 Skjermlås og måleprogrammet (D13.2, D13.3, D13.5 bolk 1)
+
+**Skjermlås (D13.3 a).** Appen holder en Screen Wake Lock
+(`navigator.wakeLock.request("screen")`) fra værflyten starter til
+ensemble, perturbasjon og nødhavnprofil er ferdige, og slipper den
+deretter. Slippes låsen av systemet (fanen skjult) mens beregningen
+pågår, tas den på nytt ved `visibilitychange` → synlig. Status vises i
+diagnostikken med ærlig tekst: «holdt», «sluppet — beregningen er
+ferdig», «ikke tilgjengelig: krever sikker kontekst (https eller
+localhost)» eller «avslått av nettleseren». Wake Lock krever sikker
+kontekst: over `http://<LAN-IP>` er den utilgjengelig, som Cache
+Storage. For nettbrett-økter settes derfor Chrome-flagget
+`#unsafely-treat-insecure-origin-as-secure` til PC-ens LAN-adresse (ett
+engangssteg, dokumentert i oppskriften) — det åpner også offline-lageret.
+Ren UI/plattform: ingen endring i motor eller robustness.
+
+**Per-Worker heap (D13.2 a).** `weather-routing.worker.ts` legger ved
+`workerHeapMB` (fra `performance.memory.usedJSHeapSize` i Worker-
+konteksten, `null` hvis API-et ikke finnes der) og `workerSlot` (hvilken
+pool-Worker, 0…pool−1) i `WorkerTiming`. Målings-JSON-en får per medlem
+`workerHeapMB` og `workerSlot`, og på toppnivå `workerMemoryApi`
+(true/false) og `maxWorkerHeapMB`. Er API-et fraværende, står det
+eksplisitt i JSON og panel — da gjelder den analytiske grensen (§6.2) og
+en manuell kontroll, ikke et tall vi later som vi har.
+
+**Måleprogrammet (D13.1 c′, D13.5).** Egen modus i PWA-en, åpnet med
+`?maaleprogram=1`. Én knapp starter; programmet kjører uten tilsyn med
+skjermlås, og nettbrettet kan stå på lader. Ingen ny motorlogikk — det
+bruker samme pipeline, pool og Worker som appen. Programmet henter peker
+og pakke én gang ved start og bruker samme pakke gjennom hele
+programmet (pakke-hash i JSON), slik at cron-bytte midt i ikke blander
+data. Kjøringer (defaults, konstanter i én fil):
+
+1. **Poolsveip:** pool ∈ {4, 5, 6, 7}, 5 kjøringer hver, vekselvis
+   rekkefølge (4, 5, 6, 7, 5, 6, 7, 4, …), fullt ensemble uten
+   perturbasjon og nødhavnprofil. Per kjøring: pool, veggklokke,
+   kontrolltid, per medlem `[memberIndex, workerSlot, searchMs,
+   labelsCreated, decodeMs, workerHeapMB]`.
+2. **Solo:** kontrollmedlemmet (medlem 0) alene på én Worker, 10 ganger.
+3. **Solo + dummy-last:** medlem 0 på én Worker mens k = 1…5
+   dummy-Workere går, i tre varianter: `spin` (ren regnesløyfe, ingen
+   minnebruk), `stream` (leser gjennom en `Float64Array` på 64 MB i
+   løkke), `alloc` (lager og kaster små objekter i løkke). 3 kjøringer per
+   (k, variant). Dummy-Workerne startes før og termineres etter
+   målesøket; de gjør ingen ruting.
+4. **Pause** 15 s mellom kjøringer (termisk hvile), ikke medregnet.
+
+Fremdrift lagres etter hver kjøring i `localStorage`
+(`morild-maaleprogram/1`); lastes siden på nytt (fanen forkastet),
+fortsetter programmet fra neste ukjørte konfigurasjon og markerer
+avbruddet i JSON (`interruptions`). Hendelser registreres: skjermlås
+tatt/sluppet, `visibilitychange`, avbrudd. Til slutt: én JSON (skjema
+`morild-maaleprogram/1`) med enhet (UA, `hardwareConcurrency`),
+pakke-hash, alle kjøringer og hendelser. Leveres med **«Lagre på PC»**
+(POST til en dev-only Vite-mellomvare som skriver til
+`docs/research/maaleprogram-raadata/<tidsstempel>.json` på PC-en) og
+«Kopier» som reserve. Mellomvaren finnes kun i `vite dev`, godtar bare
+dette skjemaet og kun under den katalogen.
+
+Grovt tidsbudsjett på Tab S7 FE: poolsveip ~20 × 65 s ≈ 22 min, solo
+10 × 6 s, dummy 45 × 6 s ≈ 5 min, pauser ~19 min ⇒ ~45 min uten tilsyn.
+
+**Analyse (hovedsesjonen, ikke i appen):** makespan per pool (median,
+spredning); µs/etikett per medlem og per `workerSlot`; solo-fordeling
+(bimodal ~44/~110 µs ⇒ OS flytter mellom kjernetyper); dummy-kurver per
+variant (sprang ved k ≥ 2 i `spin` ⇒ store kjerner oppbrukt; glidende kun
+i `stream` ⇒ minnebåndbredde; kun i `alloc` ⇒ GC ⇒ spak 5); maks
+Worker-heap mot N6 (< 500 MB). Tolkningsregler er forhåndsregistrert
+her, før data finnes.
+
+**Tester:** skjemabygging og gjenopptak fra lagret fremdrift (ren
+funksjon, injisert lager); rekkefølgegenerator (vekselvis, deterministisk);
+skjermlås-tilstandsmaskin med injisert `wakeLock`/`document`; mellomvaren
+avviser feil skjema og stier utenfor katalogen.
+
 ## 7. Åpne spørsmål — beslutningspunkter til Magnus (D8.1–D8.13)
 
 Format: alternativer, kort pro/contra, anbefaling, panelets votum.
@@ -958,6 +1033,49 @@ avgang når avgangsvinduet (F4.5) kommer — i dag én avgang.
 bokføring; `checkEpochS` utledes i dag fra ankomst − varighet). (b)
 Behold. **Anbefaling: (a).** Panel enstemmig.
 
+**Nettbrett-målingen (2026-09-27) — beslutningspunkter D13.1–D13.5.
+Vedtatt av Magnus 2026-09-27 som anbefalt.** Måling:
+`docs/research/maaling-nettbrett-2026-09-27.md`; panel:
+`docs/research/ekspertpanel-d13-nettbrett-2026-09-27.md` (grunnlag
+`beslutningsgrunnlag-d13-nettbrett-2026-09-27.md`). Galaxy Tab S7 FE
+(2 store + 6 små kjerner, 6 Workere): kontroll 5–6 s, ensemble 58,5 /
+60,6 / 60,2 s, median søk 10,5 s; 44 µs/etikett solo mot median 95 µs
+med seks samtidige (mekanisme ukjent); etiketter forklarer lite av
+søketiden (r = 0,28).
+
+**D13.1 60 s-grensen.** (c′) Avgjøres ikke på dette tallet: fire
+ukontrollerte konfundere (hello-route, kjernetildeling,
+samtidighetsmekanisme, n = 3 med mulig termisk drift) og et produkt uten
+innhold (vind alene). Remål med måleprogrammet (§6.4), deretter med
+strøm/bølge i pakken; D10.3 vurderes mot det tallet. Panel: 3 GODKJENN,
+matematiker ENDRE (tatt inn: solo-gjentak, dummy-last og poolsveip på
+nettbrettet; n ≥ 5 kaldstart, vekselvis rekkefølge, µs/etikett per
+medlem). (a) og (b) avvist.
+
+**D13.2 Worker-heap (4a-exit).** (a) Sjekk på enheten om
+`performance.memory` finnes i dedikert Worker; finnes den, rapporterer
+hver Worker egen heap i resultatmeldingen; ellers analytisk øvre grense
+fra datastrukturene + én manuell kontroll. COOP/COEP avvist nå. Panel
+enstemmig.
+
+**D13.3 Skjerm-av.** (a) Screen Wake Lock under beregning nå, testet over
+≥ 3 skjerm-av-sykluser; gjenopptakbar beregning (persistert
+`MemberSummary`, eksakt pga. determinisme) i fase 5. Panel 3 av 4;
+meteorolog ville ha begge nå.
+
+**D13.4 hello-route.** (a) Diagnostisert 2026-09-27 i hovedsesjonen:
+søket er ferdig på ~7 s; statusen ble gislet av `await mapReady`, og
+kartet sendte aldri `load` fordi Vites forhåndsbunting mistet
+`maplibre-gl-worker.mjs` (404). Rettet (status før kart;
+`optimizeDeps.exclude: ["maplibre-gl"]`). Hello-route stjal dermed ikke
+CPU under ensemblet. Beholdes som kanarifugl.
+
+**D13.5 Rekkefølge.** (P) Bolk 1 uten nettbrett: Wake Lock, måleprogram
+(§6.4), per-Worker heap. Én nettbrett-økt: måleprogrammet. Bolk 2 uten
+nettbrett: strøm (NorKyst, delt) + punktbølge (Oceanforecast). Én
+nettbrett-økt: remåling + ny gjennomførbarhetsfordeling. Deretter D10.3 /
+bølge 6 / spak 5. Panel enstemmig m/justeringer tatt inn.
+
 ## 8. Endringslogg
 
 - 2026-09-04: første utkast (hovedsesjonen) etter fagagent-panel med to
@@ -1029,3 +1147,8 @@ Behold. **Anbefaling: (a).** Panel enstemmig.
   koster ~20 s på ekte vær og er flyttet til egen fase etter kontroll-
   resultatet (progressiv semantikk); D12.1 må kostnadsmåles på ekte vær
   før bølge 6; `mostSensitive` kun over gjennomførbare kjøringer.
+- 2026-09-27: nettbrett-målingen (Tab S7 FE) og panel D13.1–D13.5;
+  **vedtatt av Magnus som anbefalt samme dag**. D13.4 diagnostisert og
+  rettet i hovedsesjonen (hello-route gislet av kartet; MapLibre-Worker
+  404 i Vite-dev). Ny §6.4: skjermlås, per-Worker heap og måleprogrammet
+  (bolk 1).

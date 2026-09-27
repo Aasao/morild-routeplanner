@@ -15,4 +15,11 @@ export default defineConfig({
   worker: {
     format: "es",
   },
+  // MapLibre 6 laster sin egen kart-Worker relativt til modulen
+  // (`maplibre-gl-worker.mjs`). Vites forhåndsbunting flytter modulen til
+  // `.vite/deps/` uten Worker-filen ⇒ 404, kartet sender aldri `load`, og
+  // alt som venter på `whenMapReady` henger (2026-09-27: hello-route-statusen).
+  optimizeDeps: {
+    exclude: ["maplibre-gl"],
+  },
 });

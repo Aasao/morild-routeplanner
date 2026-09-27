@@ -1,0 +1,4 @@
+run,runAt,hardwareConcurrency,poolSize,jsHeapSizeLimitMB,usedJSHeapSizeMB,periodicBackgroundSyncSupported,ensembleWallMs,controlBailoutMs,controlFieldMs
+1,2026-09-27T10:11:12.316Z,8,6,905,54,false,58494.9,2210.9,54.5
+2,2026-09-27T10:13:08.312Z,8,6,905,54,false,60555.6,2284.4,67.2
+3,2026-09-27T10:15:06.017Z,8,6,905,54,false,60154.8,2198.5,62.4

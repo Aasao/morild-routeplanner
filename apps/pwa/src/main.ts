@@ -283,15 +283,18 @@ function main(): void {
 
   runHelloRoute()
     .then(async (result) => {
+      // Status først: søkeresultatet skal ikke gisles av kartet. Laster
+      // kartet aldri (2026-09-27: MapLibre-Worker 404), sto «Kjører
+      // hello-route …» for alltid selv om søket var ferdig på sekunder.
+      if (statusEl) {
+        statusEl.textContent = formatStatus(result);
+      }
       if (result.type === "hello-route-result") {
         // Rutemotor-Workeren og MapLibres stil-lasting løper parallelt og
         // uavhengig av hverandre — å tegne før stilen er klar feiler helt
         // stille (`getSource` returnerer `undefined`), se map.ts.
         await mapReady;
         drawHelloRoute(map, result.steps);
-      }
-      if (statusEl) {
-        statusEl.textContent = formatStatus(result);
       }
     })
     .catch((err: unknown) => {
