@@ -1486,6 +1486,46 @@ starte.
 
 ---
 
+## 18b. Beslutninger 2026-09-27 — strøm og bølger (D14.1–D14.3)
+
+Vedtatt av Magnus 2026-09-27 som anbefalt, etter panel
+(`docs/research/ekspertpanel-d14-strom-bolge-2026-09-27.md`; grunnlag
+`docs/research/strom-bolge-forarbeid-2026-09-27.md`).
+
+1. **D14.1 Bølgeperiode (a).** Oceanforecast 2.0 har ingen periode
+   (verifisert 2026-09-27). Hs brukes nå. Mangler Tp, brukes en
+   vindsjø-nedre-grense for Tp gitt Hs (kortest plausible periode —
+   aldri et snitt-Tp, som undervurderer bratthet ~3× i Skagerrak). Grensen
+   er **foreløpig og merket usikker** til den er etterprøvd mot
+   NORA3/WAM-data; ingen hardkodet produksjonskonstant før det.
+   Strukturelt Hs-only har egen synlig UI-tilstand («bølgeperiode ukjent,
+   konservativt anslag»); et strekk med Hs over terskel vises aldri rent
+   grønt. Andelen `tpS = undefined` telles i healthcheck. WAM800-spiken
+   får et eksplisitt exit-kriterium (skrives i bolk 2-spec-en). F2.1
+   endres ikke. Tp fra MEPS-vind er et parallelt ADR-spor (endrer
+   derating-semantikk), ikke blokkerende.
+2. **D14.2 Punktbølge (b).** Via Worker-proxy, ikke R2-batch (ADR-0007).
+   Kontrakt `{payload, fetchedAtEpochS, hash}`: hentes og fryses før
+   ensemblet, samme svar for alle medlemmer, aldri nytt kall midt i en
+   kjøring. Klientbuffer for frakoblet bruk; mangler data: «bølgedata
+   krever nett». Hvert bølgesample bærer avstand til nærmeste punkt (grov
+   kategori < 5 / 5–20 / > 20 nm er minimum), vist sammen med
+   tidsstempelet som én degraderingstekst.
+3. **D14.3 Strømgeometri (a′).** NorKyst er polarstereografisk
+   (sentralmeridian 70°Ø ⇒ ~60° gridrotasjon i Skagerrak). Vindens
+   indeksvindu-forenkling er forbudt for strøm. Krav: nearest-neighbour
+   mot kildens egne 2D lat/lon per node; `_FillValue` sjekkes før
+   avskalering og blir `undefined` (aldri {0,0}), maskert før enhver
+   midling (enhetstestet); kystnært usikkerhetspåslag (2–3 celler fra
+   kystlinjen); synlig merking i trange sund («strømdata: 800 m-grid,
+   posisjonsnøyaktighet ikke verifisert her»); `depth`-indeksen for
+   overflaten verifisert. m/s → knop; ingen vektorrotasjon (eastward/
+   northward). Punktstrøm fra Oceanforecast er kun kryssjekk.
+4. **Rekkefølge.** Isolert Drøbaksund-spike (naivt indeksvindu vs NN mot
+   lat/lon) → strøm i pakken → punktbølge via proxy → nettbrett-remåling.
+   Trafikklyset får innhold først når både strøm og bølge er inne
+   (`environmentAt` krever begge).
+
 ## 19. Endringslogg
 
 - **2026-09-04 (2) — koordinering med rutemotor-/klientagenten (bølge 3B):**
@@ -1955,3 +1995,7 @@ starte.
   lagt inn samme dag; publiserer først når secrets finnes (ellers dry-run
   m/advarsel). 7-døgns arkivopprydding (§5, §18 pkt. 4) er fortsatt ikke
   bygget.
+- **2026-09-27 — D14.1–D14.3 vedtatt** (§18b, ADR-0007): Hs nå med foreløpig
+  Tp-nedre-grense og synlig «periode ukjent»; punktbølge via Worker-proxy,
+  fryst per ensemble; NorKyst med nearest-neighbour mot kildens lat/lon
+  (indeksvindu-forenklingen forbudt for strøm); spike før pipeline.

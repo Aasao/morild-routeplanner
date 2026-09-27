@@ -322,6 +322,19 @@ Endringer etter godkjenning skjer som daterte revisjoner.
 
 ## Endringslogg
 
+- **2026-09-27 (D13.1–D13.5 og D14.1–D14.3, Magnus, etter /panel — se
+  `docs/research/ekspertpanel-d13-nettbrett-2026-09-27.md`,
+  `docs/research/ekspertpanel-d14-strom-bolge-2026-09-27.md`,
+  `docs/specs/robusthet.md` §7 og `docs/specs/vaerpakker.md` §18b):**
+  nettbrett-tallet avgjør ikke D10.3 (måleprogram før strøm/bølge);
+  skjermlås under beregning. **F2.1 uendret** — «(med periode!)» står;
+  Oceanforecast mangler periode, så Hs brukes nå med en foreløpig,
+  merket Tp-nedre-grense og synlig «periode ukjent», og WAM800 får en
+  spike med exit-kriterium. **F2.2 presisert** (ADR-0007): regelen om
+  ingen on-demand-subsetting per rute gjelder gridded felt; punktbølge
+  hentes via Worker-proxy som ett fryst, tidsstemplet svar per ensemble.
+  NorKyst-strøm slås opp mot kildens egne lat/lon per node (gridrotasjon
+  ~60° i Skagerrak), aldri vindens indeksvindu-forenkling.
 - **2026-09-07 (D12.1–D12.5, Magnus, etter /panel — se
   `docs/research/ekspertpanel-d12-boelge4-2026-09-05.md` og
   `docs/specs/robusthet.md` §7):** F4.6 nødhavn over ensemblet som tre
