@@ -1,68 +1,54 @@
 name: weather-pack
 
-# Skjelett (docs/specs/vaerpakker.md §7/§13, ADR-0003). Cron-tidspunktene
-# følger MEPS' kjøringsfrekvens (00/06/12/18Z + lagget publisering) —
-# eksakt cron-uttrykk justeres når batch-jobben faktisk kjører live (§16:
-# ingen ekte kall før docs/legal/met-norway-*.md er verifisert).
-#
-# `workflow_dispatch` finnes slik at Magnus kan trigge en dry-run manuelt
-# for å se at pipelinen fortsatt bygger uten å vente på cronen.
+# Værpakke-batchen (docs/specs/vaerpakker.md §5/§7/§16, ADR-0003): bygger en
+# ekte MEPS-vindpakke fra THREDDS (`build-live`, bak §16-gaten i
+# legal-gate.ts) og laster den opp til R2-speilet (`upload-r2`: blober
+# først, peker sist, stikkprøver lest tilbake). Uten Cloudflare-secrets
+# kjører jobben dry-run med en synlig advarsel.
 
 on:
   schedule:
-    # 04, 10, 16, 22 UTC — ca. 4t etter hver MEPS-kjøring (00/06/12/18Z),
-    # samme margin-tankegang som §11s lagged-ensemble-vindu.
-    - cron: "0 4,10,16,22 * * *"
+    # Hver 3. time: lagged-ensemblet publiseres ~2 t etter init og appen
+    # kaller en pakke «for gammel» etter 6 t — 3 t kadens holder alderen
+    # under ~5 t. Ett bygg er ~2 min sekvensielle THREDDS-kall (§16).
+    - cron: "15 */3 * * *"
   workflow_dispatch:
-    inputs:
-      live:
-        description: "Kjør --live (krever verifisert docs/legal/met-norway-*.md)"
-        type: boolean
-        default: false
+
+concurrency:
+  group: weather-pack
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Aktiver pnpm via corepack
         run: corepack enable
-
       - name: Installer avhengigheter
         run: pnpm install --frozen-lockfile
-
-      - name: Typesjekk + lint
-        run: pnpm check
-
-      - name: Enhets- og integrasjonstester
-        run: pnpm test
-
-      # DRY-RUN i CI inntil docs/legal/met-norway-*.md er skrevet og
-      # verifisert (§16) — se tools/weather-pack/README.md. `--live`
-      # nektes uansett av legal-gate.ts hvis filen mangler/ikke er
-      # verifisert, men vi kjører eksplisitt dry-run her for klarhet.
-      - name: Bygg dry-run-pakke (ingen ekte MET-kall)
-        run: pnpm --filter @morild/weather-pack dry-run
-
-      # TODO (når legal-fil finnes + secrets er koblet inn):
-      # - name: Bygg ekte pakke (--live)
-      #   if: github.event.inputs.live == 'true'
-      #   env:
-      #     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      #     R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-      #     HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
-      #   run: pnpm --filter @morild/weather-pack cli -- --live
-      #
-      # - name: Last opp til R2
-      #   if: github.event.inputs.live == 'true'
-      #   env:
-      #     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      #     R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-      #   run: echo "R2-opplasting kommer når live-kjøring er wiret opp — se README 'Hva venter'"
+      # Kun pakkeverktøyets tester: rutemotorens tunge tester hører til CI
+      # på push og skal ikke kunne stoppe ferske værdata.
+      - name: Tester for værpakke-verktøyet
+        run: pnpm exec vitest run tools/weather-pack
+      - name: Mangler secrets — dry-run
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: |
+          echo "::warning::CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID mangler — ingen pakke publisert, kun dry-run."
+          pnpm --filter @morild/weather-pack dry-run
+      - name: Bygg ekte pakke fra THREDDS
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: pnpm --filter @morild/weather-pack build-live
+      - name: Last opp til R2 (blober, så peker) og verifiser
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: pnpm --filter @morild/weather-pack upload-r2

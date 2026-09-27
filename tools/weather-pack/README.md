@@ -168,11 +168,13 @@ gjør nå ekte THREDDS-kall bak denne porten — se "Live-bygging" over.
   `docs/research/pakkestoerrelse-ekte-2026-09-03.md` §4) FØR du antar
   `fetchWindComponents`-mønsteret håndterer det for deg. Det gjør det
   ikke — konvertering er eksplisitt kallerens ansvar, per design.
-- **R2-opplasting**: `.github/workflows/weather-pack.yml` har et
-  kommentert skjelett for opplastingssteget (bak secrets). Selve
-  S3-kompatible PUT-kallet mot R2 er ikke skrevet — `package-writer.ts`
-  gir nøkkel+hash+payload; å sende dem til R2 er gjenstående arbeid når
-  Cloudflare-secrets faktisk skal brukes fra CI.
+- **R2-opplasting fra CI**: selve opplastingen er skrevet
+  (`pnpm --filter @morild/weather-pack upload-r2`, `src/upload-r2.ts`,
+  2026-09-27 — blober først, peker sist, stikkprøver lest tilbake), og
+  `.github/workflows/weather-pack.yml` kjører `build-live` + `upload-r2`
+  hver 3. time. Uten secrets (`CLOUDFLARE_API_TOKEN`,
+  `CLOUDFLARE_ACCOUNT_ID`) blir det dry-run med advarsel. 7-døgns
+  arkivopprydding (spec §5) er ikke bygget.
 - **Kystsone-avstandsoppslag mot ekte kystlinjedata**
   (`tools/chart-pack`s vektordata, §9.4): `grid.ts::classifyCoastalZone`
   tar imot en injisert avstand — selve oppslaget mot chart-pack-geometrien

@@ -79,9 +79,13 @@ describe("delt A*-felt (robusthet.md §5.3, §4.1)", () => {
    * Kjernekravet, i begge ledd på én kjøring per scenario: `RouteResult` er
    * ren data (§4.8), så JSON-likhet ER bit-likhet her — samme
    * sammenligningsregel determinismetestene bruker.
+   *
+   * Én test per scenario (ikke én løkke): tre fulle søk × alle scenarioer i
+   * én test sprengte 180 s under full-suite-parallellitet 2026-09-27
+   * (CPU-konkurranse, ikke regresjon — 4 min alene).
    */
-  it("gir bit-identisk RouteResult med felt, uten felt og etter overføring", () => {
-    for (const { name, input } of scenarios) {
+  for (const { name, input } of scenarios) {
+    it(`gir bit-identisk RouteResult med felt, uten felt og etter overføring — ${name}`, () => {
       const utenFelt: RouteResult = planRoute(input);
       const field = buildFieldForInput(input);
 
@@ -92,7 +96,7 @@ describe("delt A*-felt (robusthet.md §5.3, §4.1)", () => {
       // `provenance` er inngangens, ikke feltets.
       expect(medFelt.provenance, name).toBe("planRoute");
 
-      if (field === undefined) continue;
+      if (field === undefined) return;
       const overfoert = planRoute({
         ...input,
         field: throughWorkerBoundary(field),
@@ -100,8 +104,8 @@ describe("delt A*-felt (robusthet.md §5.3, §4.1)", () => {
       expect(JSON.stringify(overfoert), `${name}: etter worker-hoppet`).toBe(
         JSON.stringify(utenFelt),
       );
-    }
-  }, 180_000);
+    }, 180_000);
+  }
 
   /**
    * Feltet skal kunne deles av **flere** søk uten at det første søket setter

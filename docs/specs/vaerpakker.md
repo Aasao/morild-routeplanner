@@ -1943,3 +1943,15 @@ starte.
     "brede" subflisene fikk uavhengig tilfeldig spredning, og testen leste
     kun én av dem. Rettet ved å redusere til én subflis-rad
     (`nodesLat:32`), verifisert stabil over 8+ gjentatte kjøringer.
+- **2026-09-27 — R2-opplasting skrevet (`tools/weather-pack/src/upload-r2.ts`,
+  `pnpm --filter @morild/weather-pack upload-r2`).** Leser `out/`-pekeren,
+  verifiserer hver blob lokalt mot pekerens SHA-256 (nekter ved avvik eller
+  manglende fil), laster opp alle blober med `wrangler r2 bulk put`, deretter
+  pekeren **sist** (§5: pekeren er det eneste objektet som slår om), og leser
+  tilbake pekeren + tre blober (to tilfeldige + alltid den siste) byte for
+  byte. Første kjøring: init 2026-09-26T21Z, 180 blober, 19,4 MB, alle
+  stikkprøver identiske. Cron-kobling i `.github/workflows/weather-pack.yml`
+  (hver 3. time, secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`)
+  lagt inn samme dag; publiserer først når secrets finnes (ellers dry-run
+  m/advarsel). 7-døgns arkivopprydding (§5, §18 pkt. 4) er fortsatt ikke
+  bygget.

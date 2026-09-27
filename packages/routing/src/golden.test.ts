@@ -237,13 +237,15 @@ describe("golden-ruter", () => {
 });
 
 describe("golden-ruter er deterministiske", () => {
-  it("gir identisk resultat i to kjøringer for hvert scenario", () => {
-    for (const scenario of goldenScenarios()) {
+  // Én test per scenario: løkken i én test sprengte 120 s under
+  // full-suite-parallellitet 2026-09-27 (CPU-konkurranse, ikke regresjon).
+  for (const scenario of goldenScenarios()) {
+    it(`gir identisk resultat i to kjøringer — ${scenario.name}`, () => {
       const first = JSON.stringify(planRoute(scenario.input));
       const second = JSON.stringify(planRoute(scenario.input));
       expect(second, `${scenario.name} er ikke deterministisk`).toBe(first);
-    }
-  }, 120_000);
+    }, 120_000);
+  }
 });
 
 /**
