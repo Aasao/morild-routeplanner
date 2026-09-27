@@ -29,7 +29,8 @@ import { join } from "node:path";
 const OUT_DIR = join(import.meta.dirname, "..", "out");
 const POINTER_FILE = join(OUT_DIR, "pointer-vaer-skandinavia.json");
 const POINTER_KEY = "pointer/vaer-skandinavia.json";
-const BUCKET = process.env["R2_BUCKET_NAME"] ?? "morild-mirror";
+// `||`, ikke `??`: en ikke-satt GitHub-secret kommer inn som tom streng.
+const BUCKET = process.env["R2_BUCKET_NAME"] || "morild-mirror";
 
 interface PointerField {
   key: string;
