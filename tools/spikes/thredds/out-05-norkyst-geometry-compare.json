@@ -1,0 +1,563 @@
+{
+  "generatedAt": "2026-09-27T12:39:51.527Z",
+  "dataset": "https://thredds.met.no/thredds/dodsC/fou-hi/norkystv3_800m_m00_be",
+  "areas": [
+    {
+      "name": "Drøbaksund",
+      "point": {
+        "lat": 59.65,
+        "lon": 10.62
+      },
+      "tile": {
+        "west": 10,
+        "east": 11,
+        "south": 59,
+        "north": 60
+      },
+      "nearestCoarsePoint": {
+        "d": 758.646986027556,
+        "y": 246,
+        "x": 730,
+        "lat": 59.64593661777264,
+        "lon": 10.609153861310656
+      },
+      "tileIndexWindow": {
+        "yMin": 176,
+        "yMax": 307,
+        "xMin": 660,
+        "xMax": 791
+      },
+      "tileWindowDims": {
+        "yCount": 132,
+        "xCount": 132
+      },
+      "localGridRotation": [
+        {
+          "y": 242,
+          "x": 726,
+          "gridEastBearingDeg": 30.58626146184116,
+          "rotationFromTrueEastDeg": -59.41373853815884
+        },
+        {
+          "y": 275,
+          "x": 726,
+          "gridEastBearingDeg": 30.183630121897238,
+          "rotationFromTrueEastDeg": -59.81636987810276
+        },
+        {
+          "y": 209,
+          "x": 726,
+          "gridEastBearingDeg": 30.985561817093924,
+          "rotationFromTrueEastDeg": -59.014438182906076
+        }
+      ],
+      "fillStats": {
+        "fillCount": 15230,
+        "total": 17424,
+        "fillFraction": 0.8740817263544536
+      },
+      "testPoints": [
+        {
+          "label": "vest-i-flis",
+          "testPoint": {
+            "lat": 59.65,
+            "lon": 10.1
+          },
+          "naive": {
+            "index": {
+              "y": 261,
+              "x": 673
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.34765925918965,
+              "lon": 10.02133437393875
+            },
+            "posErrorM": 33910.63707615037,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 277,
+              "x": 712
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.64689616842945,
+              "lon": 10.101482138833186
+            },
+            "posErrorM": 355.0352868656695,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "sameNode": false
+        },
+        {
+          "label": "midt-i-flis (oppgitt punkt)",
+          "testPoint": {
+            "lat": 59.65,
+            "lon": 10.62
+          },
+          "naive": {
+            "index": {
+              "y": 261,
+              "x": 741
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.76854866723908,
+              "lon": 10.5052049540688
+            },
+            "posErrorM": 14670.284318626342,
+            "raw": {
+              "u": 0,
+              "v": -3
+            },
+            "speedKn": 0.005831533477321814,
+            "toDirectionDeg": 180,
+            "filled": false
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 246,
+              "x": 731
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.65210654483232,
+              "lon": 10.61636640819578
+            },
+            "posErrorM": 310.71289907827,
+            "raw": {
+              "u": -19,
+              "v": 29
+            },
+            "speedKn": 0.06739283905409825,
+            "toDirectionDeg": 326.76828893202065,
+            "filled": false
+          },
+          "sameNode": false,
+          "speedDiffKn": 0.061561305576776436,
+          "directionDiffDeg": 146.76828893202065
+        },
+        {
+          "label": "øst-i-flis",
+          "testPoint": {
+            "lat": 59.65,
+            "lon": 10.9
+          },
+          "naive": {
+            "index": {
+              "y": 261,
+              "x": 778
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.997015728681205,
+              "lon": 10.774451277025024
+            },
+            "posErrorM": 39219.27800078743,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 229,
+              "x": 741
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.65138961211214,
+              "lon": 10.895738170642078
+            },
+            "posErrorM": 284.97269093229903,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "sameNode": false
+        }
+      ]
+    },
+    {
+      "name": "Hvaler",
+      "point": {
+        "lat": 59.05,
+        "lon": 11.05
+      },
+      "tile": {
+        "west": 11,
+        "east": 12,
+        "south": 59,
+        "north": 60
+      },
+      "nearestCoarsePoint": {
+        "d": 4128.294948578831,
+        "y": 174,
+        "x": 670,
+        "lat": 59.01297869592764,
+        "lon": 11.044568579350882
+      },
+      "tileIndexWindow": {
+        "yMin": 115,
+        "yMax": 247,
+        "xMin": 611,
+        "xMax": 743
+      },
+      "tileWindowDims": {
+        "yCount": 133,
+        "xCount": 133
+      },
+      "localGridRotation": [
+        {
+          "y": 181,
+          "x": 677,
+          "gridEastBearingDeg": 30.96696055333058,
+          "rotationFromTrueEastDeg": -59.03303944666942
+        },
+        {
+          "y": 214,
+          "x": 677,
+          "gridEastBearingDeg": 30.573086984569954,
+          "rotationFromTrueEastDeg": -59.426913015430046
+        },
+        {
+          "y": 148,
+          "x": 677,
+          "gridEastBearingDeg": 31.35759743061675,
+          "rotationFromTrueEastDeg": -58.64240256938325
+        }
+      ],
+      "fillStats": {
+        "fillCount": 11193,
+        "total": 17689,
+        "fillFraction": 0.6327661258409181
+      },
+      "testPoints": [
+        {
+          "label": "vest-i-flis",
+          "testPoint": {
+            "lat": 59.05,
+            "lon": 11.1
+          },
+          "naive": {
+            "index": {
+              "y": 122,
+              "x": 624
+            },
+            "assignedNodeLatLon": {
+              "lat": 58.539736227495595,
+              "lon": 11.328692867804143
+            },
+            "posErrorM": 58248.24231831852,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 173,
+              "x": 676
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.04602668009386,
+              "lon": 11.099387302952556
+            },
+            "posErrorM": 443.20033930003297,
+            "raw": {
+              "u": -84,
+              "v": -24
+            },
+            "speedKn": 0.1698168181516838,
+            "toDirectionDeg": 254.05460409907715,
+            "filled": false
+          },
+          "sameNode": false
+        },
+        {
+          "label": "midt-i-flis (oppgitt punkt)",
+          "testPoint": {
+            "lat": 59.05,
+            "lon": 11.05
+          },
+          "naive": {
+            "index": {
+              "y": 122,
+              "x": 618
+            },
+            "assignedNodeLatLon": {
+              "lat": 58.50317766036524,
+              "lon": 11.286190840248791
+            },
+            "posErrorM": 62309.268664897325,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 176,
+              "x": 675
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.050974999040456,
+              "lon": 11.056572043865504
+            },
+            "posErrorM": 391.1511795372396,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "sameNode": false
+        },
+        {
+          "label": "øst-i-flis",
+          "testPoint": {
+            "lat": 59.05,
+            "lon": 11.9
+          },
+          "naive": {
+            "index": {
+              "y": 122,
+              "x": 730
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.183856237377924,
+              "lon": 12.096994908685677
+            },
+            "posErrorM": 18653.49093321021,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 124,
+              "x": 707
+            },
+            "assignedNodeLatLon": {
+              "lat": 59.05194468927039,
+              "lon": 11.90388373052622
+            },
+            "posErrorM": 309.9736917895574,
+            "raw": {
+              "u": -32767,
+              "v": -32767
+            },
+            "filled": true
+          },
+          "sameNode": false
+        }
+      ]
+    },
+    {
+      "name": "Skagerrak-åpent",
+      "point": {
+        "lat": 58.3,
+        "lon": 10.3
+      },
+      "tile": {
+        "west": 10,
+        "east": 11,
+        "south": 58,
+        "north": 59
+      },
+      "nearestCoarsePoint": {
+        "d": 3233.468465806438,
+        "y": 168,
+        "x": 560,
+        "lat": 58.31609621642837,
+        "lon": 10.346098796669976
+      },
+      "tileIndexWindow": {
+        "yMin": 104,
+        "yMax": 237,
+        "xMin": 496,
+        "xMax": 629
+      },
+      "tileWindowDims": {
+        "yCount": 134,
+        "xCount": 134
+      },
+      "localGridRotation": [
+        {
+          "y": 171,
+          "x": 563,
+          "gridEastBearingDeg": 30.28577574261783,
+          "rotationFromTrueEastDeg": -59.71422425738217
+        },
+        {
+          "y": 204,
+          "x": 563,
+          "gridEastBearingDeg": 29.898895789868902,
+          "rotationFromTrueEastDeg": -60.1011042101311
+        },
+        {
+          "y": 138,
+          "x": 563,
+          "gridEastBearingDeg": 30.669614925452663,
+          "rotationFromTrueEastDeg": -59.33038507454734
+        }
+      ],
+      "fillStats": {
+        "fillCount": 661,
+        "total": 17956,
+        "fillFraction": 0.0368122076186233
+      },
+      "testPoints": [
+        {
+          "label": "vest-i-flis",
+          "testPoint": {
+            "lat": 58.3,
+            "lon": 10.1
+          },
+          "naive": {
+            "index": {
+              "y": 144,
+              "x": 509
+            },
+            "assignedNodeLatLon": {
+              "lat": 57.916504197044986,
+              "lon": 10.278559085021925
+            },
+            "posErrorM": 43913.96482015886,
+            "raw": {
+              "u": 5,
+              "v": 198
+            },
+            "speedKn": 0.3850039074008815,
+            "toDirectionDeg": 1.4465556865739018,
+            "filled": false
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 183,
+              "x": 549
+            },
+            "assignedNodeLatLon": {
+              "lat": 58.30216838312889,
+              "lon": 10.095705082327967
+            },
+            "posErrorM": 348.0059958725518,
+            "raw": {
+              "u": 155,
+              "v": 227
+            },
+            "speedKn": 0.5343062438442527,
+            "toDirectionDeg": 34.326018779777485,
+            "filled": false
+          },
+          "sameNode": false,
+          "speedDiffKn": 0.14930233644337126,
+          "directionDiffDeg": 32.87946309320358
+        },
+        {
+          "label": "midt-i-flis (oppgitt punkt)",
+          "testPoint": {
+            "lat": 58.3,
+            "lon": 10.3
+          },
+          "naive": {
+            "index": {
+              "y": 144,
+              "x": 536
+            },
+            "assignedNodeLatLon": {
+              "lat": 58.08221748448569,
+              "lon": 10.46145781326223
+            },
+            "posErrorM": 25999.544011525308,
+            "raw": {
+              "u": 103,
+              "v": 349
+            },
+            "speedKn": 0.7073297279931937,
+            "toDirectionDeg": 16.442855249955585,
+            "filled": false
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 170,
+              "x": 556
+            },
+            "assignedNodeLatLon": {
+              "lat": 58.298690518936894,
+              "lon": 10.295397975906551
+            },
+            "posErrorM": 305.7922923943787,
+            "raw": {
+              "u": 194,
+              "v": 170
+            },
+            "speedKn": 0.5014063880211687,
+            "toDirectionDeg": 48.772283609379826,
+            "filled": false
+          },
+          "sameNode": false,
+          "speedDiffKn": 0.20592333997202505,
+          "directionDiffDeg": 32.32942835942424
+        },
+        {
+          "label": "øst-i-flis",
+          "testPoint": {
+            "lat": 58.3,
+            "lon": 10.9
+          },
+          "naive": {
+            "index": {
+              "y": 144,
+              "x": 616
+            },
+            "assignedNodeLatLon": {
+              "lat": 58.57213616406476,
+              "lon": 11.015277287797812
+            },
+            "posErrorM": 30995.108409136752,
+            "raw": {
+              "u": -211,
+              "v": 585
+            },
+            "speedKn": 1.2088556195832634,
+            "toDirectionDeg": 340.1664493701674,
+            "filled": false
+          },
+          "nearestNeighbour": {
+            "index": {
+              "y": 132,
+              "x": 579
+            },
+            "assignedNodeLatLon": {
+              "lat": 58.30194374668679,
+              "lon": 10.89645079052579
+            },
+            "posErrorM": 299.52987837460455,
+            "raw": {
+              "u": 32,
+              "v": 127
+            },
+            "speedKn": 0.25458426756048685,
+            "toDirectionDeg": 14.142346642032692,
+            "filled": false
+          },
+          "sameNode": false,
+          "speedDiffKn": 0.9542713520227766,
+          "directionDiffDeg": 33.97589727186528
+        }
+      ]
+    }
+  ]
+}

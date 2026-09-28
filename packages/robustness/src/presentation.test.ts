@@ -372,7 +372,7 @@ describe("buildFirstPage — rekkefølge §4.7 pkt. 1–6", () => {
     expect(varselTexts[1]).toContain("Horisonten er for kort");
     expect(varselTexts[2]).toContain("Ingen kontrollrute å tegne");
     expect(varselTexts[3]).toContain("feilet i beregningen");
-    expect(varselTexts[4]).toContain("kom fram på vind alene");
+    expect(varselTexts[4]).toContain("kom fram uten fullt værfelt");
   });
 });
 

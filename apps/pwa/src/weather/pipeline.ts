@@ -36,7 +36,13 @@ import { loadWeatherPointer, type PointerLoadResult } from "./pointer-client.js"
 import { loadWeatherBlob } from "./blob-client.js";
 import type { CacheStorageLike } from "./pack-cache.js";
 import { selectTilesForRoute, type TileSelection } from "./tile-select.js";
-import { acceptTileHeader, type TileRejection } from "./tile-certificate.js";
+import {
+  acceptSharedFieldHeader,
+  acceptTileHeader,
+  CURRENT_COASTAL_FIELD,
+  CURRENT_FIELD,
+  type TileRejection,
+} from "./tile-certificate.js";
 import { fieldPresenceStatuses, type FieldPresenceStatus } from "./field-status.js";
 import {
   runEnsemble,
@@ -168,7 +174,34 @@ export function screenTiles(tiles: readonly PointerTileEntry[]): TileScreening {
   const rejections: TileRejection[] = [];
   for (const tile of tiles) {
     let tileOk = true;
+    // Strøm og kystmaske (strom-produsent.md) screenes for seg: et avvist
+    // strømlag fjerner STRØMMEN fra flisen (⇒ `current()` undefined ⇒ delvis
+    // dekning, synlig), ikke hele flisen. Strøm uten kystmaske brukes ikke:
+    // da ville kystnære punkter stille stått umerket (D15.2).
+    const currentEntries = tile.fields.filter((f) => f.field === CURRENT_FIELD || f.field === CURRENT_COASTAL_FIELD);
+    let currentOk = currentEntries.length > 0;
+    for (const entry of currentEntries) {
+      const verdict = acceptSharedFieldHeader(entry.header, entry.field);
+      if (!verdict.accepted) {
+        currentOk = false;
+        rejections.push({ tileId: tile.tileId, field: entry.field, member: entry.member, reason: verdict.reason });
+      }
+    }
+    const hasCurrent = currentEntries.some((f) => f.field === CURRENT_FIELD && f.member === 0);
+    const hasMask = currentEntries.some((f) => f.field === CURRENT_COASTAL_FIELD && f.member === 0);
+    if (currentOk && hasCurrent !== hasMask) {
+      currentOk = false;
+      rejections.push({
+        tileId: tile.tileId,
+        field: hasCurrent ? CURRENT_FIELD : CURRENT_COASTAL_FIELD,
+        member: 0,
+        reason: hasCurrent
+          ? "strømlag uten kystmaske — kystnære strømpunkter kunne ikke merkes (D15.2), strøm brukes ikke"
+          : "kystmaske uten strømlag — ignorert",
+      });
+    }
     for (const entry of tile.fields) {
+      if (entry.field === CURRENT_FIELD || entry.field === CURRENT_COASTAL_FIELD) continue;
       const verdict = acceptTileHeader(entry.header);
       if (!verdict.accepted) {
         tileOk = false;
@@ -180,9 +213,47 @@ export function screenTiles(tiles: readonly PointerTileEntry[]): TileScreening {
         });
       }
     }
-    if (tileOk) accepted.push(tile);
+    if (!tileOk) continue;
+    accepted.push(
+      currentOk || currentEntries.length === 0
+        ? tile
+        : { ...tile, fields: tile.fields.filter((f) => f.field !== CURRENT_FIELD && f.field !== CURRENT_COASTAL_FIELD) },
+    );
   }
   return { tiles: accepted, rejections };
+}
+
+/** Flisens delte strøm + kystmaske, lastet én gang og delt av alle medlemmene. */
+export interface TileCurrentSource {
+  readonly currentHeader: PointerFieldEntry["header"];
+  readonly currentBuffer: ArrayBuffer;
+  readonly coastalBuffer: ArrayBuffer;
+}
+
+/**
+ * Laster strøm og kystmaske (member 0, `docs/specs/strom-produsent.md`) for
+ * hver flis som har begge etter screeningen. Fliser uten strøm mangler i
+ * kartet — `current()` er da `undefined` der, som gir delvis dekning.
+ */
+async function loadCurrentByTile(
+  tiles: readonly PointerTileEntry[],
+  load: (key: string) => Promise<ArrayBuffer>,
+): Promise<ReadonlyMap<string, TileCurrentSource>> {
+  const out = new Map<string, TileCurrentSource>();
+  for (const tile of tiles) {
+    const current = tile.fields.find((f) => f.field === CURRENT_FIELD && f.member === 0);
+    const coastal = tile.fields.find((f) => f.field === CURRENT_COASTAL_FIELD && f.member === 0);
+    if (current === undefined || coastal === undefined) continue;
+    const [currentBuffer, coastalBuffer] = await Promise.all([load(current.key), load(coastal.key)]);
+    out.set(tile.tileId, { currentHeader: current.header, currentBuffer, coastalBuffer });
+  }
+  return out;
+}
+
+/** Legger flisens delte strøm (om den finnes) på en vindkilde. */
+function withCurrent(source: TileWindSource, currentByTile: ReadonlyMap<string, TileCurrentSource>): TileWindSource {
+  const current = currentByTile.get(source.tileId);
+  return current === undefined ? source : { ...source, ...current };
 }
 
 function windEntriesByMember(tiles: readonly PointerTileEntry[]): Map<number, TileFieldEntry[]> {
@@ -219,6 +290,8 @@ export interface EnsembleInputs {
   readonly blobHashes: readonly string[];
   /** Pakkens init-tid (ISO) fra kontrollens header. */
   readonly packageInit: string;
+  /** Delt strøm + kystmaske per flis — perturbasjonsfasen legger dem på igjen. */
+  readonly currentByTile: ReadonlyMap<string, TileCurrentSource>;
 }
 
 export async function prepareEnsembleInputs(
@@ -282,11 +355,13 @@ export async function prepareEnsembleInputs(
   // ekte "velg avgangstidspunkt"-UI er fase 4/5s avgangstabell, ikke denne
   // bølgens ansvar.
   const departEpochS = windMemberLayersFromBytes(new Uint8Array(controlBlobs[0]!.buffer)).u.layer.geometry.t0S;
-  const controlTiles: TileWindSource[] = controlSources.map((s, i) => ({
-    tileId: s.tile.tileId,
-    windHeader: s.entry.header,
-    windBuffer: controlBlobs[i]!.buffer,
-  }));
+  const currentByTile = await loadCurrentByTile(
+    tiles,
+    async (key) => (await loadWeatherBlob(deps.config, key, blobDeps)).buffer,
+  );
+  const controlTiles: TileWindSource[] = controlSources.map((s, i) =>
+    withCurrent({ tileId: s.tile.tileId, windHeader: s.entry.header, windBuffer: controlBlobs[i]!.buffer }, currentByTile),
+  );
 
   const memberIndices = Array.from(byMember.keys())
     .filter((m) => m !== 0)
@@ -308,11 +383,12 @@ export async function prepareEnsembleInputs(
     ...memberIndices.map((memberIndex, i) => ({
       memberIndex,
       isControl: false,
-      tiles: memberSourcesByIndex[i]!.map((s, j) => ({
-        tileId: s.tile.tileId,
-        windHeader: s.entry.header,
-        windBuffer: memberBlobsByIndex[i]![j]!.buffer,
-      })),
+      tiles: memberSourcesByIndex[i]!.map((s, j) =>
+        withCurrent(
+          { tileId: s.tile.tileId, windHeader: s.entry.header, windBuffer: memberBlobsByIndex[i]![j]!.buffer },
+          currentByTile,
+        ),
+      ),
       departEpochS,
     })),
   ];
@@ -332,9 +408,12 @@ export async function prepareEnsembleInputs(
     thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
   };
   const context: EnsembleContext = { expectedMembers: memberIndices.length, departEpochS, stamp };
-  const blobHashes = [controlSources, ...memberSourcesByIndex]
-    .flatMap((sources) => sources.map((s) => s.entry.hash))
-    .sort();
+  const currentHashes = tiles.flatMap((t) =>
+    currentByTile.has(t.tileId)
+      ? t.fields.filter((f) => f.field === CURRENT_FIELD || f.field === CURRENT_COASTAL_FIELD).map((f) => f.hash)
+      : [],
+  );
+  const blobHashes = [...[controlSources, ...memberSourcesByIndex].flatMap((sources) => sources.map((s) => s.entry.hash)), ...currentHashes].sort();
   return {
     jobs,
     context,
@@ -342,13 +421,14 @@ export async function prepareEnsembleInputs(
     byMember,
     blobHashes,
     packageInit: controlSources[0]!.entry.header.init,
+    currentByTile,
   };
 }
 
 export async function runWeatherPipeline(deps: PipelineDeps, callbacks: PipelineCallbacks = {}): Promise<void> {
   const inputs = await prepareEnsembleInputs(deps, callbacks);
   if (inputs === null) return;
-  const { jobs, context, byMember } = inputs;
+  const { jobs, context, byMember, currentByTile } = inputs;
   const blobDeps = { fetchImpl: deps.fetchImpl, cacheStorage: deps.cacheStorage };
 
   // MetAlerts hentes PARALLELT med ensemble-beregningen (starter så snart
@@ -386,11 +466,12 @@ export async function runWeatherPipeline(deps: PipelineDeps, callbacks: Pipeline
               const blobs = await Promise.all(
                 sources.map((s) => loadWeatherBlob(deps.config, s.entry.key, blobDeps)),
               );
-              return sources.map((s, i) => ({
-                tileId: s.tile.tileId,
-                windHeader: s.entry.header,
-                windBuffer: blobs[i]!.buffer,
-              }));
+              return sources.map((s, i) =>
+                withCurrent(
+                  { tileId: s.tile.tileId, windHeader: s.entry.header, windBuffer: blobs[i]!.buffer },
+                  currentByTile,
+                ),
+              );
             },
           },
         }

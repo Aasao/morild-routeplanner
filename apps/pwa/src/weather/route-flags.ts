@@ -93,6 +93,10 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
   SJOEGANG_DATA_MANGLER: "Bølgedata manglet i minst ett punkt — klaringskravet falt tilbake til standardmarginen der",
   VAERDEKNING_BEGRENSET:
     "Ruten er BEGRENSET AV VÆRDEKNING: søket måtte forkaste alternativer fordi en værflis manglet innenfor pakkens tidsvindu — ruten kan være formet av hvilke fliser som var lastet, ikke av været (D7.2)",
+  STROM_DATA_MANGLER: "Strømdata manglet ved sluttetappen inn til målet — den etappen er regnet uten strøm",
+  // Ordlyd låst i docs/specs/strom-produsent.md §4b (D15.2). Aldri en nøyaktighet i meter.
+  STROM_KYSTSONE:
+    "Strøm nær land: verdien er lånt fra nærmeste sjøcelle i 800 m-modellen — retningen kan være upålitelig eller komme fra feil side i trange sund.",
 };
 
 /**
@@ -115,6 +119,8 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
  * | `SJOEGANGS_MARGIN_OVERSKREDET`   | warning | Sjøgangstillegget overskrider maskens statiske klaringsmargin i punktet (`rutemotor.md` §12) — direkte klaring. |
  * | `NEGATIV_VANNSTAND_RISIKO`       | warning | Risiko for negativ vannstand — direkte farbarhet (tørrfall-/grunnstøtingsrisiko). |
  * | `SJOEGANG_DATA_MANGLER`          | warning | Bølgedata manglet i punktet, klaringskravet falt tilbake til statisk margin — eksplisitt datamangel som IKKE later som marginen er dekket (N2). |
+ * | `STROM_DATA_MANGLER`             | warning | Strøm manglet i sluttetappens miljøoppslag (D15.1 d-min) — datamangel, `coverage.weather` er da også `"partial"`. |
+ * | `STROM_KYSTSONE`                 | warning | Strømverdien er kystnær/lånt fra nærmeste sjøcelle (D15.2) — retningen kan være gal i trange sund. Datakvalitet med direkte betydning for om strømbidraget kan stoles på. |
  * | `VAERDEKNING_BEGRENSET`          | warning | **Rute-nivå** (D7.2, `reconstruct.ts`): søket forkastet etiketter fordi værfeltet manglet data i posisjonen INNENFOR pakkens tidsvindu — altså et hull i flisdekningen. Ruten kan være styrt av dekningen i stedet for av været, og `safety.verdict` gulves derfor til minst `"usikkert"`. Datamangel med direkte konsekvens for om ruten kan garanteres — warning. |
  *
  * Ukjente/fremtidige flaggnavn (ikke i tabellen) klassifiseres `"warning"`
@@ -132,6 +138,8 @@ const STEP_FLAG_SEVERITY: Record<string, "info" | "warning"> = {
   NEGATIV_VANNSTAND_RISIKO: "warning",
   SJOEGANG_DATA_MANGLER: "warning",
   VAERDEKNING_BEGRENSET: "warning",
+  STROM_DATA_MANGLER: "warning",
+  STROM_KYSTSONE: "warning",
 };
 
 export function displayFlagsForStepFlag(name: string): DisplayFlag {
@@ -142,15 +150,25 @@ export function displayFlagsForStepFlag(name: string): DisplayFlag {
   };
 }
 
-/** Slår sammen alle tre kildene (§ toppkommentar) til én, sortert liste. */
+/**
+ * Slår sammen alle kildene (§ toppkommentar) til én liste. Et flagg som
+ * finnes både på rute-nivå og på steg (`STROM_KYSTSONE`, D15.2) vises én
+ * gang — første forekomst (rute-nivå) vinner.
+ */
 export function allDisplayFlags(
   result: RouteResult,
   fieldStatuses: readonly FieldPresenceStatus[],
 ): readonly DisplayFlag[] {
-  return [
+  const all = [
     ...collectRouteFlagNames(result).map(displayFlagsForStepFlag),
     ...collectRouteStepFlagNames(result).map(displayFlagsForStepFlag),
     ...missingFieldFlags(fieldStatuses),
     ...coverageFlags(result),
   ];
+  const seen = new Set<string>();
+  return all.filter((f) => {
+    if (seen.has(f.code)) return false;
+    seen.add(f.code);
+    return true;
+  });
 }

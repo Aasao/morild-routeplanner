@@ -179,7 +179,7 @@ export function renderDepartureText(d: DepartureSummary): string {
   const felt = d.members.filter((m) => m.inconclusiveReason === "dekning-felt").length;
   const feltText =
     felt > 0
-      ? ` ${felt} kom fram på vind alene — bølger og strøm mangler i pakken, telles ikke som gjennomførbare (D11.1).`
+      ? ` ${felt} kom fram uten fullt værfelt langs ruten (bølger og/eller strøm mangler), telles ikke som gjennomførbare (D11.1).`
       : "";
   const thin =
     d.light.reason === "tynt-grunnlag"

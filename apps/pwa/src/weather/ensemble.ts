@@ -50,6 +50,16 @@ export interface TileWindSource {
   readonly tileId: string;
   readonly windHeader: PackageHeader;
   readonly windBuffer: ArrayBuffer;
+  /**
+   * Delt NorKyst-strøm for flisen (`docs/specs/strom-produsent.md`, member 0
+   * for alle medlemmer) og kystmasken (D15.2). Valgfrie: mangler de, er
+   * `current()` `undefined` (⇒ delvis dekning) og `currentCoastal` `false`.
+   * Overføres IKKE (transfer) — samme buffer deles av alle jobbene og
+   * kopieres av den strukturerte klonen per melding.
+   */
+  readonly currentHeader?: PackageHeader | undefined;
+  readonly currentBuffer?: ArrayBuffer | undefined;
+  readonly coastalBuffer?: ArrayBuffer | undefined;
 }
 
 export interface PlanRouteMemberRequest {

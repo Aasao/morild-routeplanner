@@ -380,7 +380,7 @@ function buildVarselLines(input: FirstPageInput): readonly FirstPageLine[] {
     lines.push(
       line(
         "varsel",
-        `${dekningFeltCount} kom fram på vind alene — bølger og strøm mangler i pakken.`,
+        `${dekningFeltCount} kom fram uten fullt værfelt langs ruten (bølger og/eller strøm mangler).`,
         "advarsel",
       ),
     );

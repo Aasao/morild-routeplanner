@@ -167,6 +167,74 @@ export function decodeCurrentAt(
   return { u, v };
 }
 
+/**
+ * Deler opp strømblobben (u-lag etterfulgt av v-lag, samme ramming som et
+ * vind-medlem — `tools/weather-pack/src/current-package.ts`) til
+ * `CurrentLayers`. Kun rammedeling og `buildLayerLookup`; nyttelasten
+ * forblir kvantisert (§15).
+ */
+export function currentLayersFromBytes(bytes: Uint8Array): CurrentLayers {
+  const [uLayer, vLayer] = readLayerFrames(bytes, 2);
+  if (uLayer === undefined || vLayer === undefined) {
+    throw new Error("currentLayersFromBytes: forventet to konkatenerte lag (u, v)");
+  }
+  return { u: buildLayerLookup(uLayer), v: buildLayerLookup(vLayer) };
+}
+
+// ------------------------------------------------------------- kystmaske
+
+/**
+ * Kystmasken for strøm (`docs/specs/strom-produsent.md` §3 invariant 6,
+ * D15.2): ett statisk lag (ett tidssteg) på strømmens regulære gitter,
+ * verdier 0/1. 1 ⇒ nodens strømverdi er lånt fra nærmeste sjønode
+ * (kystkant-forlengelse) eller noden ligger nær land i 800 m-modellen.
+ */
+export type CoastalMaskLayer = LayerLookup;
+
+/** Verdier over denne regnes som merket (lagret 0/1, kvantisert 8-bit). */
+export const COASTAL_MASK_THRESHOLD = 0.5;
+
+export function coastalMaskFromBytes(bytes: Uint8Array): CoastalMaskLayer {
+  const [layer] = readLayerFrames(bytes, 1);
+  if (layer === undefined) {
+    throw new Error("coastalMaskFromBytes: forventet ett lag (kystmasken)");
+  }
+  return buildLayerLookup(layer);
+}
+
+/**
+ * **Hjørneregelen** (spec §3 invariant 6): et punkt er kystsone hvis ett av
+ * de bilineære hjørnene er merket — nøyaktig de hjørnene `decodeLayerAt`
+ * ville brukt for strømmen i samme punkt (positiv vekt), slik at merkingen
+ * dekker akkurat de nodene strømverdien faktisk kommer fra. Tid ignoreres
+ * (masken er statisk). Utenfor maskens dekning ⇒ `false` — da er strømmen
+ * der også `undefined`, og det flagges som manglende data, ikke som kyst.
+ * En sentinel i masken (skal ikke forekomme) regnes som merket.
+ */
+export function decodeCoastalMaskAt(mask: CoastalMaskLayer, lat: number, lon: number): boolean {
+  const { layer, layout } = mask;
+  const g = layer.geometry;
+  const fi = (lat - g.latMin) / g.latStepDeg;
+  const fj = (lon - g.lonMin) / g.lonStepDeg;
+  if (!(fi >= 0) || fi > g.nodesLat - 1) return false;
+  if (!(fj >= 0) || fj > g.nodesLon - 1) return false;
+  const i0 = Math.floor(fi);
+  const j0 = Math.floor(fj);
+  const wi = fi - i0;
+  const wj = fj - j0;
+  for (let di = 0; di <= 1; di++) {
+    const iw = di === 0 ? 1 - wi : wi;
+    if (iw === 0) continue;
+    for (let dj = 0; dj <= 1; dj++) {
+      const jw = dj === 0 ? 1 - wj : wj;
+      if (jw === 0) continue;
+      const v = decodeLayerNode(layer, layout, i0 + di, j0 + dj, 0);
+      if (v === undefined || v > COASTAL_MASK_THRESHOLD) return true;
+    }
+  }
+  return false;
+}
+
 // ------------------------------------------------------------------ bølger
 
 export interface WaveLayers {

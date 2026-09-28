@@ -96,7 +96,11 @@ flisene er 27,4 MB, nær hele det opprinnelige 30 MB-budsjettet.
 | `src/quantize.test.ts` | **Ikke lenger en lokal implementasjon.** Testet opprinnelig weather-packs egen (nå slettede) `quantize.ts`/`format-contract.ts`; tester nå `@morild/weather`s tilsvarende produsent-side-API (samme navn, samme scenarioer) — weather-packs egen regresjonsdekning av den delte modulen. |
 | `src/lambert-rotation.ts` | **Nytt, bølge 2A.** MEPS' u/v er griddrelative (Lambert-projeksjonens egne x/y-akser), ikke sann øst/nord — roterer til sann nord FØR kvantisering (§19 2026-09-03-funn, se `docs/research/pakkestoerrelse-ekte-2026-09-03.md` §5). |
 | `src/live-source.ts` | **Nytt, bølge 2A.** Ekte katalog-/DDS-parsing (§11 mot en EKTE `mepslatest`-katalog) og bbox→indeksvindu-probing (to-pass, samme strategi som spiken) — rene funksjoner skilt fra de tynne `fetchImpl`-nettverkskallene. |
-| `src/build-live-package.ts` | Hoved-orkestrator for EKTE THREDDS-bygging — se "Live-bygging" under. IKKE en del av `pnpm test` (gjør ekte nettverkskall). **Bølge 3A:** 1°-fliser fra endepunkt-bbox+margin (D7.2), sertifikat per medlem (D7.4), klippe-assert (`onClip`, hard-feil). |
+| `src/build-live-package.ts` | Hoved-orkestrator for EKTE THREDDS-bygging — se "Live-bygging" under. IKKE en del av `pnpm test` (gjør ekte nettverkskall). **Bølge 3A:** 1°-fliser fra endepunkt-bbox+margin (D7.2), sertifikat per medlem (D7.4), klippe-assert (`onClip`, hard-feil). **2026-09-27:** NorKyst-strøm etter vinden, se "Strøm (NorKyst)" under. |
+| `src/current-geometry.ts` | **Nytt 2026-09-27 (strom-produsent.md).** Ren geometri for strøm: fill-sjekk på rå Int16 før avskalering, sjømaske, regulært ~800 m-gitter per 1°-flis, NN mot kildens 2D lat/lon (haversine) med kystkant-forlengelse ≤ `COAST_EXTENSION_CELLS` = √2 celler, kystmaske (`COAST_FILL_PROXIMITY_CELLS` = 3), tidsmatching, lokalisering av indeksvinduet. Gjenbruker BEVISST ingenting fra vindens `windLayerGeometry`/`sampleFromFetchedGrid`. |
+| `src/norkyst-source.ts` | **Nytt 2026-09-27.** NorKyst-nettverk (sekvensielt, §16): `.dds`/`.das` (koding verifiseres HARDT), `forecast_reference_time`, løpende tidsakse, lat/lon, nærmeste-punkt-lokalisering (spike 05-mønsteret), u/v overflate (depth 0). |
+| `src/current-package.ts` | **Nytt 2026-09-27.** Strøm u/v (knop, MOT) og kystmaske som `Layer` via `buildLayer`/`serializeLayer`, full rundtur fra serialisert nyttelast, sertifikat (uten retningsskranke), pekeroppføringer `current`/`current-coastal`. |
+| `src/current-fixtures.ts` | Syntetiske polarstereografiske gitter (70°Ø sentralmeridian ⇒ ~60° dreid i Skagerrak) for strømtestene. Ikke brukt i produksjon. |
 
 ## `@morild/weather`-integrasjonen (fullført, 2026-09-03)
 
@@ -154,20 +158,53 @@ lisens/vilkår ER verifisert, kun THREDDS' eksakte rate-grense er
 uverifisert, jf. samme dokuments «Gjenstår»-liste). `build-live-package.ts`
 gjør nå ekte THREDDS-kall bak denne porten — se "Live-bygging" over.
 
+## Strøm (NorKyst) — `docs/specs/strom-produsent.md` (2026-09-27)
+
+`build-live` bygger nå NorKyst v3 800 m overflatestrøm
+(`fou-hi/norkystv3_800m_m00_be`) etter vinden, for de samme 1°-flisene:
+
+1. `.dds`/`.das` (koding verifiseres hardt: `_FillValue −32767`,
+   `scale_factor 0.001`, m/s, tid i sekunder siden 1970 — avvik ⇒ bygget
+   feiler), `forecast_reference_time` (⇒ `init`), og de siste 192 verdiene
+   av den løpende tidsaksen. Vindens 49 tidssteg (kontrollens `t0S`, 1 t)
+   matches EKSAKT; det NorKyst ikke har blir sentinel.
+2. Indeksvindu per flis: nærmeste-punkt-søk mot en grov prøve av hele
+   domenet (stride 6×10), så en lokal fulloppløst blokk (±170 celler) og
+   containment mot flisen + margin (0,05° lat / 0,1° lon) KUN der. Vinduet +
+   lat/lon caches i `.norkyst-grid-cache.json` (git-ignorert, eget
+   nøkkelrom — tidsaksen caches ikke).
+3. `u_eastward`/`v_northward` for depth-indeks 0 i ETT kall hver,
+   sekvensielt. Sjømaske: en node er sjø bare hvis den aldri er fill.
+4. Regulært gitter 1/139° × 1/70° (≈ 800 m), NN mot kildens 2D lat/lon
+   (haversine) til nærmeste sjønode innenfor √2 lokale celler, ellers
+   sentinel. Kystmaske: forlenget ELLER ≤ 3 celler fra fill.
+5. `buildLayer` (8-bit, delta, `linear`) + klippe-assert + FULL rundtur
+   (alle noder × tidssteg, sentinel ⇔ sentinel, maske bit for bit) — brudd
+   ⇒ bygget feiler. Pekeroppføringer `current` og `current-coastal`
+   (member 0, delt av alle medlemmer). Kystmaskens header logger
+   `coastalMask.{extensionCells, fillProximityCells, rule}`.
+6. NorKyst nede / flis utenfor domenet ⇒ `missingFields` med årsak for
+   strøm (N2); vinden bygges uansett.
+
+**Byggerapporten** (`out/build-report.json`, `current[]`) har per flis:
+native vindu og fill-andel, antall noder med verdi ved grense 1 og √2,
+andel «sjønære» noder uten verdi ved grense 1 og √2, forlengede noder,
+kystmerket andel av nodene med verdi, sertifikat, rundtur og fasit-punktene
+Drøbaksund/Hvaler/Skagerrak (dekodet pakke vs. NN direkte i kildens
+lat/lon). **NB:** «sjønær» (minst én native sjønode innenfor 2 celler) er en
+NÆRMING til «farbar» — den ekte farbarhetsmasken finnes ikke i
+`tools/weather-pack`. Den ekte farbar-andelen må måles mot masken etter
+første `build-live` (spec §5, målingene som rapporteres).
+
 ## Hva som IKKE er wiret opp ennå (bevisst, ikke glemt)
 
-- **Strøm (NorKyst), bølge (Oceanforecast/WAM800), tidevann, MetAlerts**:
-  samme steg-mønster (`FetchLike` → dap2 → quantize → package-writer)
-  dekker dem alle, men kun VIND er fullt koblet sammen — nå BÅDE i
-  dry-run OG mot ekte THREDDS-data (bølge 2A). `docs/specs/vaerpakker.md`
-  §7 punkt 5 gjør Oceanforecast-punktbølge til en **gyldig
-  førsteleveranse** for fase 3-exit — den er ikke bygget her ennå.
-  **Advarsel til den som bygger strøm/bølge neste:** sjekk kildens
-  enhet (NorKyst er trolig m/s, ikke knop — samme felle som rammet
-  vind, se `pipeline.ts::fetchWindComponents`s dokumentasjon og
-  `docs/research/pakkestoerrelse-ekte-2026-09-03.md` §4) FØR du antar
-  `fetchWindComponents`-mønsteret håndterer det for deg. Det gjør det
-  ikke — konvertering er eksplisitt kallerens ansvar, per design.
+- **Bølge (Oceanforecast/WAM800), tidevann, MetAlerts**: bølge er
+  steg 3 (ADR-0007, punktbølge via Worker-proxy — egen spec). Strøm er
+  bygget, se over. Enheten må sjekkes per kilde (m/s ≠ knop — fellen som
+  rammet vind, `docs/research/pakkestoerrelse-ekte-2026-09-03.md` §4).
+- **Kystflis-geometri §9.6** (0,5–1°-fliser, 1,6 km utaskjærs): strøm
+  bygges i dag i 800 m over HELE 1°-flisen (spec §2). Utløses hvis
+  pakken måles over 40 MB (spec §6).
 - **R2-opplasting fra CI**: selve opplastingen er skrevet
   (`pnpm --filter @morild/weather-pack upload-r2`, `src/upload-r2.ts`,
   2026-09-27 — blober først, peker sist, stikkprøver lest tilbake), og
@@ -300,3 +337,14 @@ padded Int16, §funn 9), OPeNDAP-URL-bygging og "alle medlemmer i ett kall"
 lagged-ensemble-fallback (§11/§18 pkt. 2), kildestatus-ordlyd (§12),
 innholdsadressering + arkivvindu (§5/§18 pkt. 4), healthcheck-`finally`-
 kontrakten (§13) og legal-gaten (§16).
+
+**Strøm (2026-09-27, `current-*.test.ts`, `norkyst-source.test.ts`):** fill
+sjekket på rå Int16 før avskalering (også midt i en gyldig blokk), m/s→knop
+og fortegn, NN mot 2D lat/lon på et ekte polarstereografisk gitter dreid
+~60° (feiler om indeksvindu-forenklingen gjeninnføres — og viser at
+`windLayerGeometry` bommer med > 5 km median på samme gitter), egenskapstest
+over tilfeldig fill (verdier kun fra én sjønode, ingen midling, innenfor √2
+celler, kystmasken som definert), forlengelsesgrensen, lokalisering over et
+buet hårnål-domene der bbox-containment aliaserer, `.das`-verifisering mot
+den ekte NorKyst-`.das`-en fra spiken, sekvensiell henting, full rundtur og
+kystmaskens hjørneregel via klientens dekoder.

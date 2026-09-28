@@ -109,6 +109,19 @@ export interface WeatherField {
   current(lat: number, lon: number, epochS: number): CurrentSample | undefined;
 
   /**
+   * **Kystsone for strøm** (`docs/specs/strom-produsent.md` §4b, D15.2,
+   * vedtatt 2026-09-27). Sant når strømverdien i punktet kommer fra en
+   * kystmerket node i 800 m-modellen: lånt fra nærmeste sjøcelle
+   * (kystkant-forlengelse) eller nær land der retningen kan være upålitelig.
+   *
+   * **Kun rapportering.** Rekonstruksjonen setter `STROM_KYSTSONE` på steg
+   * der den er sann; søk, kost og derating leser den aldri. Valgfri: felt
+   * uten kystmaske (syntetiske, eldre pakker) utelater den, og da settes
+   * flagget aldri.
+   */
+  currentCoastal?(lat: number, lon: number, epochS: number): boolean;
+
+  /**
    * Konservative maksverdier over hele feltet — grunnlag for Vmax/Tub.
    *
    * **Regnes på de DEKODEDE verdiene** (`docs/specs/vaerpakker.md` §9.5):

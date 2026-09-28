@@ -76,6 +76,7 @@ function inputs(members: number): EnsembleInputs {
     byMember: new Map(),
     blobHashes: [],
     packageInit: "2026-09-27T00:00:00Z",
+    currentByTile: new Map(),
   };
 }
 

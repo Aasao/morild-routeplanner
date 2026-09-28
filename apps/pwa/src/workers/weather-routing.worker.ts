@@ -46,7 +46,9 @@ import {
 import { INTERIM_HARBOUR_BOOK } from "@morild/routing/test-fixtures/harbour-book";
 import { goldenScenarios } from "@morild/routing/test-fixtures/golden-scenarios";
 import {
+  coastalMaskFromBytes,
   compositeWeatherField,
+  currentLayersFromBytes,
   toWeatherField,
   windMemberLayersFromBytes,
   type WeatherFieldLike,
@@ -63,6 +65,37 @@ export interface TileWindSource {
   readonly windHeader: PackageHeader;
   /** Transferred — u+v konkatenert, `windMemberLayersFromBytes`-formatet (§15). */
   readonly windBuffer: ArrayBuffer;
+  /** Delt NorKyst-strøm (u+v, `currentLayersFromBytes`) — kopiert, ikke transferred. */
+  readonly currentHeader?: PackageHeader | undefined;
+  readonly currentBuffer?: ArrayBuffer | undefined;
+  /** Kystmasken for strømmen (D15.2, `coastalMaskFromBytes`). */
+  readonly coastalBuffer?: ArrayBuffer | undefined;
+}
+
+/**
+ * Én flis → ett `WeatherFieldLike`: medlemmets vind + flisens delte strøm og
+ * kystmaske når de finnes (`memberIndex` er alltid 0 i DENNE ett-medlems-
+ * pakken — `isControl` overstyres eksplisitt, se `weather-field-adapter.ts::
+ * ToWeatherFieldOptions.isControl`).
+ */
+function tileField(tile: TileWindSource, departEpochS: number, isControl: boolean): WeatherFieldLike {
+  const windMember = windMemberLayersFromBytes(new Uint8Array(tile.windBuffer));
+  // Strøm brukes KUN sammen med kystmasken (D15.2): strøm uten maske ville
+  // gitt kystnære verdier uten `STROM_KYSTSONE`-merking. `screenTiles`
+  // håndhever det samme i hovedtråden; her håndheves det på bruksstedet.
+  const withCurrent = tile.currentBuffer !== undefined && tile.coastalBuffer !== undefined;
+  const pkg: WeatherPackage = {
+    windMembers: [windMember],
+    windHeader: tile.windHeader,
+    ...(withCurrent
+      ? {
+          current: currentLayersFromBytes(new Uint8Array(tile.currentBuffer!)),
+          currentCoastal: coastalMaskFromBytes(new Uint8Array(tile.coastalBuffer!)),
+        }
+      : {}),
+    ...(withCurrent && tile.currentHeader !== undefined ? { currentHeader: tile.currentHeader } : {}),
+  };
+  return toWeatherField(pkg, 0, { departEpochS, isControl });
 }
 
 export interface PlanRouteMemberRequest {
@@ -207,15 +240,7 @@ function decodeWeather(
   departEpochS: number,
   isControl: boolean,
 ): WeatherFieldLike {
-  const tileFields: WeatherFieldLike[] = tiles.map((tile) => {
-    const windMember = windMemberLayersFromBytes(new Uint8Array(tile.windBuffer));
-    const pkg: WeatherPackage = {
-      windMembers: [windMember],
-      windHeader: tile.windHeader,
-    };
-    return toWeatherField(pkg, 0, { departEpochS, isControl });
-  });
-  return compositeWeatherField(tileFields);
+  return compositeWeatherField(tiles.map((tile) => tileField(tile, departEpochS, isControl)));
 }
 
 function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
@@ -224,20 +249,7 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
     throw new Error("plan-route-member: meldingen manglet vinddata for alle fliser");
   }
   const tDecode0 = performance.now();
-  const tileFields: WeatherFieldLike[] = msg.tiles.map((tile) => {
-    const windMember = windMemberLayersFromBytes(new Uint8Array(tile.windBuffer));
-    const pkg: WeatherPackage = {
-      windMembers: [windMember],
-      windHeader: tile.windHeader,
-    };
-    // memberIndex er alltid 0 i DENNE ett-medlems-pakken (§ adapter-
-    // toppkommentar) — `isControl` overstyres eksplisitt fra meldingen, se
-    // `weather-field-adapter.ts::ToWeatherFieldOptions.isControl`.
-    return toWeatherField(pkg, 0, {
-      departEpochS: msg.departEpochS,
-      isControl: msg.isControl,
-    });
-  });
+  const tileFields: WeatherFieldLike[] = msg.tiles.map((tile) => tileField(tile, msg.departEpochS, msg.isControl));
   // Sy sammen per-flis-feltene til ETT felt (funn 2): rutens punkter kan
   // falle i hvilken som helst av rutens fliser, og motoren vet ikke noe om
   // fliser i det hele tatt — den ser bare ett `WeatherField`.

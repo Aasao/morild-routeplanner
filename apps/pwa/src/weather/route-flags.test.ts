@@ -7,7 +7,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { FLAG_NAMES } from "@morild/routing";
-import { displayFlagsForStepFlag } from "./route-flags.js";
+import { allDisplayFlags, displayFlagsForStepFlag } from "./route-flags.js";
+import { fakeResult } from "./test-support/fake-route-result.js";
 
 const SAFETY_FLAGS = [
   "USIKKER_TILLIT",
@@ -16,6 +17,9 @@ const SAFETY_FLAGS = [
   "SJOEGANG_DATA_MANGLER",
   // Rute-nivå (D7.2): søket ble begrenset av manglende flisdekning.
   "VAERDEKNING_BEGRENSET",
+  // D15.1/D15.2 (strom-produsent.md §4b): strøm manglet ved sluttetappen / kystnær strøm.
+  "STROM_DATA_MANGLER",
+  "STROM_KYSTSONE",
 ] as const;
 
 const CONTEXT_FLAGS = ["MOTOR", "NATT", "KRYSS", "VIND_MOT_STROM", "TSS_LANGS"] as const;
@@ -40,5 +44,24 @@ describe("displayFlagsForStepFlag — alvorlighet", () => {
 
   it("ukjent/fremtidig flaggnavn klassifiseres warning som konservativt standardvalg", () => {
     expect(displayFlagsForStepFlag("ET_FREMTIDIG_FLAGG_INGEN_KJENNER").severity).toBe("warning");
+  });
+});
+
+describe("STROM_KYSTSONE (D15.2) — synlig tekst der ruten leses", () => {
+  it("ordlyden fra strom-produsent.md §4b, uten noen nøyaktighet i meter", () => {
+    const flag = displayFlagsForStepFlag("STROM_KYSTSONE");
+    expect(flag.label).toBe(
+      "Strøm nær land: verdien er lånt fra nærmeste sjøcelle i 800 m-modellen — retningen kan være upålitelig eller komme fra feil side i trange sund.",
+    );
+    expect(flag.label).not.toMatch(/\d+\s*m\b(?!-modellen)/);
+    expect(flag.severity).toBe("warning");
+  });
+
+  it("vises én gang selv om flagget står både på ruten og på stegene", () => {
+    const base = fakeResult({});
+    const step = { ...base.steps[0]!, flags: 0, flagNames: ["STROM_KYSTSONE"] };
+    const result = { ...base, flagNames: ["STROM_KYSTSONE"], steps: [step, { ...step }] };
+    const flags = allDisplayFlags(result, []);
+    expect(flags.filter((f) => f.code === "STROM_KYSTSONE")).toHaveLength(1);
   });
 });

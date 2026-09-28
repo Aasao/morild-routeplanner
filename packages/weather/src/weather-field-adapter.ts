@@ -18,10 +18,12 @@ import type { PackageHeader } from "@morild/protocol";
 import { hasCertificate } from "./certificate.js";
 import {
   computeObservedMaxSpeedKn,
+  decodeCoastalMaskAt,
   decodeCurrentAt,
   decodeWavesAt,
   decodeWindAt,
   windLayerMaxDecodeErrorKn,
+  type CoastalMaskLayer,
   type CurrentLayers,
   type WaveLayers,
   type WindMemberLayers,
@@ -33,6 +35,12 @@ export interface WeatherFieldLike {
   wind(lat: number, lon: number, epochS: number): WindSample | undefined;
   waves(lat: number, lon: number, epochS: number): WaveSample | undefined;
   current(lat: number, lon: number, epochS: number): CurrentSample | undefined;
+  /**
+   * Speiling av `WeatherField.currentCoastal?` (`docs/specs/strom-produsent.md`
+   * §4b, D15.2): sant når strømverdien i punktet er kystnær (kystmasken,
+   * hjørneregelen). `false` når masken mangler.
+   */
+  currentCoastal?(lat: number, lon: number, epochS: number): boolean;
   readonly maxTwsKn: number;
   readonly maxCurrentKn: number;
   readonly maxDecodeErrorKn: number;
@@ -59,6 +67,8 @@ export interface WeatherPackage {
   readonly windMembers: readonly WindMemberLayers[];
   /** Medlemsuavhengig (§4.2) — samme instans brukes for alle 30 `WeatherField`. */
   readonly current?: CurrentLayers;
+  /** Kystmasken for strømmen (D15.2) — valgfri; mangler den, er `currentCoastal` alltid `false`. */
+  readonly currentCoastal?: CoastalMaskLayer;
   readonly waves?: WaveLayers;
   readonly windHeader: PackageHeader;
   readonly currentHeader?: PackageHeader;
@@ -129,6 +139,7 @@ export function toWeatherField(
       : Math.max(maxDecodeErrorKn, certifiedMaxDecodeErrorKn);
 
   const current = pkg.current;
+  const coastalMask = pkg.currentCoastal;
   const waves = pkg.waves;
 
   return {
@@ -155,6 +166,11 @@ export function toWeatherField(
     current(lat, lon, epochS) {
       if (current === undefined) return undefined;
       return decodeCurrentAt(current, lat, lon, epochS);
+    },
+    currentCoastal(lat, lon) {
+      // Statisk maske — tiden ignoreres (spec §3 invariant 6).
+      if (coastalMask === undefined) return false;
+      return decodeCoastalMaskAt(coastalMask, lat, lon);
     },
     maxTwsKn,
     maxCurrentKn,
@@ -260,6 +276,14 @@ export function compositeWeatherField(fields: readonly WeatherFieldLike[]): Weat
     },
     current(lat, lon, epochS) {
       return firstDefined((f) => f.current(lat, lon, epochS));
+    },
+    /**
+     * OR over flisene: en flis' maske er `false` utenfor egen dekning, så i
+     * praksis svarer flisen som dekker punktet. På en delt kant er OR den
+     * konservative retningen (heller merket enn umerket).
+     */
+    currentCoastal(lat, lon, epochS) {
+      return fields.some((f) => f.currentCoastal?.(lat, lon, epochS) === true);
     },
     maxTwsKn,
     maxCurrentKn,

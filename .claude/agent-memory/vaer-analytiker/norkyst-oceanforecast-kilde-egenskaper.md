@@ -1,6 +1,6 @@
 ---
 name: norkyst-oceanforecast-kilde-egenskaper
-description: NorKyst v3 (THREDDS) og Oceanforecast 2.0 (api.met.no) kildeegenskaper — enheter, fill-value, grid, manglende Tp-felt
+description: NorKyst v3 (THREDDS) og Oceanforecast 2.0 (api.met.no) kildeegenskaper — enheter, fill-value, buet domene/aliasing-felle, målt gridrotasjon, D14.3-geometrispikens tall, manglende Tp-felt
 metadata:
   type: project
 ---
@@ -52,3 +52,28 @@ dette er huskeliste for neste gang noen bygger produsentsiden i
 - **Punktbølge passer strukturelt IKKE inn i `WaveLayers`/`LayerLookup`**
   (bygget for grid). Anbefalt (ikke besluttet): behandle som tidevann —
   egen worker-proxy-vei, ikke R2-batch-pipelinen (D14.2 i research-dokumentet).
+- **`depth[0] = 0.0`** — overflate-indeksen ER 0, bekreftet direkte (ikke
+  lenger antatt). Verifisert med en firehjørne-`.ascii`-probe av `depth`.
+- **NorKyst-domenet er en LANG, BUET STRIPE langs hele norskekysten**
+  (54–76°N, 8,7°Ø til 37,5°Ø/-4,6°Ø ved de fire hjørnene), ikke en enkel
+  rektangulær utsnitt-projeksjon. `y` OG `x` øker begge langs kystens
+  krumme forløp. **Konsekvens: bbox-containment-søk over en grovt striden
+  prøve av domenet ALIASER** — kan plukke opp et koordinatpar fra et helt
+  annet kyststrekk med tilfeldig overlappende lat/lon-rekkevidde (fant
+  dette konkret for Drøbaksund 2026-09-27, spike 05: første forsøk traff
+  et sørligere strekk, ~1° feil i bredde). **Fiks: nærmeste-punkt-søk
+  (min haversine-avstand) for grov lokalisering, deretter et lokalt,
+  geografisk sammenhengende finoppslag** (±130 native celler var nok til
+  å romme en hel 1°-flis i Skagerrak/Oslofjord-området). Se
+  `docs/research/spike-norkyst-geometri-2026-09-27.md`.
+- **Målt lokal gridrotasjon: konsekvent ~59–60°** (grid-x mot sann øst) i
+  Drøbaksund, Hvaler og åpent Skagerrak — bekrefter spec-antakelsen
+  tallfestet, stabil over hele korridoren.
+- **D14.3 tallfestet**: vindens indeksvindu-forenkling
+  (`windLayerGeometry`/`sampleFromFetchedGrid` i `pipeline.ts`) gir for
+  NorKyst 15–62 km posisjonsfeil, opptil 147° retningsfeil, og treffer
+  land (`_FillValue`) i de fleste forsøk i trange sund (Drøbaksund 87 %,
+  Hvaler 63 % fylt i en 1°-flis) — ALDRI samme node som NN i 9/9
+  testpunkter. NN traff konsekvent 280–450 m fra testpunktet (riktig
+  størrelsesorden for 800 m-grid). Ikke gjenbruk vind-geometrien for strøm
+  i noen form — egen NN-basert funksjon fra bunnen av.

@@ -55,9 +55,12 @@ export function withCurrentScale(weather: WeatherField, factor: number): Weather
     validToS: weather.validToS,
     header: weather.header,
   };
+  // Kystmasken (D15.2) er uavhengig av strømmens størrelse — sendes uendret videre.
+  const coastal = weather.currentCoastal?.bind(weather);
+  const withCoastal: WeatherField = coastal === undefined ? scaled : { ...scaled, currentCoastal: coastal };
   if (weather.maxDecodeErrorKnAt !== undefined) {
     const at = weather.maxDecodeErrorKnAt.bind(weather);
-    return { ...scaled, maxDecodeErrorKnAt: at };
+    return { ...withCoastal, maxDecodeErrorKnAt: at };
   }
-  return scaled;
+  return withCoastal;
 }

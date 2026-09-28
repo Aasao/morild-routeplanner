@@ -32,9 +32,17 @@
  *    sirkelbevis for rotasjonen), kun at kvantisering+lagring+
  *    fart/retningsbudsjettet holder. Rotasjonens PARAMETRE dekkes av
  *    steg 3, IKKE denne rundturen.
- * 6. Skriv pakkefiler + peker til `out/`. Strøm/bølge er IKKE hentet denne
- *    bølgen (D4-beslutning) — flagges eksplisitt som `missingFields`
- *    (§12/N2), ALDRI stille utelatt.
+ * 6. **Strøm (NorKyst, `docs/specs/strom-produsent.md`, 2026-09-27)** etter
+ *    vinden: `.das`-verifisering av koding (hard-feil ved avvik), løpende
+ *    tidsakse matchet mot vindens 49 tidssteg, indeksvindu per 1°-flis via
+ *    nærmeste-punkt-søk (cachet i eget nøkkelrom), u/v overflate hentet
+ *    sekvensielt, NN-regridding mot kildens 2D lat/lon med kystkant-
+ *    forlengelse ≤ √2 celler, kystmaske, `buildLayer` + sertifikat + FULL
+ *    rundtur (brudd ⇒ bygget feiler). NorKyst utilgjengelig ⇒ strøm som
+ *    `missingFields` med årsak (N2), vinden bygges likevel.
+ * 7. Skriv pakkefiler + peker til `out/`. Bølge er IKKE hentet (steg 3,
+ *    egen spec) — flagges eksplisitt som `missingFields` (§12/N2), ALDRI
+ *    stille utelatt.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
@@ -65,6 +73,44 @@ import {
   type FetchedWindComponents,
 } from "./pipeline.js";
 import { buildPointer, type PointerFieldEntry, type PointerMissingFieldEntry, type PointerTileEntry } from "./package-writer.js";
+import {
+  COAST_EXTENSION_CELLS,
+  currentMsToKnots,
+  currentRegularGridForTile,
+  decodeNorkystRaw,
+  haversineM,
+  matchTimeSteps,
+  regridNearestSeaNode,
+  regularComponentValues,
+  seaMaskFromRaw,
+  type LatLonSample,
+  type NativeGrid,
+  type RegridResult,
+} from "./current-geometry.js";
+import {
+  NORKYST_CACHE_NAMESPACE,
+  NORKYST_COARSE_STRIDE,
+  NORKYST_DATASET_URL,
+  fetchCurrentRaw,
+  fetchNorkystLatLon,
+  fetchNorkystMetadata,
+  fetchNorkystReferenceTime,
+  fetchNorkystTimeTail,
+  locateCurrentTile,
+  verifyNorkystComponentAttributes,
+  type LocatedCurrentTile,
+  type NorkystDims,
+  type NorkystRequestContext,
+} from "./norkyst-source.js";
+import {
+  buildCoastalMaskLayer,
+  buildCurrentLayers,
+  currentLayerGeometry,
+  currentPointerEntries,
+  decodeCurrentFromPayload,
+  verifyCurrentRoundTrip,
+  type CurrentRoundTripReport,
+} from "./current-package.js";
 import { fieldMissingEntirely } from "./source-status.js";
 import {
   parseLccAttributesFromDas,
@@ -81,6 +127,8 @@ const REPO_ROOT = join(import.meta.dirname, "..", "..", "..");
 const OUT_DIR = join(import.meta.dirname, "..", "out");
 const BLOB_DIR = join(OUT_DIR, "weather", "1");
 const GRID_CACHE_PATH = join(import.meta.dirname, "..", ".grid-index-cache.json");
+/** Eget nøkkelrom for NorKyst (spec §4 steg 2): tidsaksen er løpende, derfor caches kun Y/X-vinduet + lat/lon. */
+const NORKYST_CACHE_PATH = join(import.meta.dirname, "..", ".norkyst-grid-cache.json");
 
 const THREDDS_MEPSLATEST = "https://thredds.met.no/thredds/dodsC/mepslatest";
 const CATALOG_URL = "https://thredds.met.no/thredds/catalog/mepslatest/catalog.xml";
@@ -90,7 +138,7 @@ const CATALOG_URL = "https://thredds.met.no/thredds/catalog/mepslatest/catalog.x
 // `header.certificate` leser resten av headeren uendret), derfor minor,
 // ikke major (§5s `checkCompatibility` avviser kun ulik MAJOR).
 const FORMAT_VERSION = "1.1.0";
-const TOOL_VERSION = "0.2.0-live-2026-09-04";
+const TOOL_VERSION = "0.3.0-live-2026-09-27";
 const CONTACT_EMAIL = "maasao@gmail.com";
 
 const MEMBER_COUNT = 30; // §9.1 pkt. 4 — kontroll (medlem 0) + 29 øvrige, alle i ensemble_member-dimensjonen
@@ -581,6 +629,323 @@ async function buildTile(
   };
 }
 
+// --- Strøm (NorKyst, docs/specs/strom-produsent.md) -------------------------------
+
+interface PersistedNorkystTileEntry {
+  readonly dims: { readonly yCount: number; readonly xCount: number };
+  readonly window: { readonly yStart: number; readonly yEnd: number; readonly xStart: number; readonly xEnd: number };
+  readonly lat: number[];
+  readonly lon: number[];
+}
+type PersistedNorkystCache = Record<string, PersistedNorkystTileEntry>;
+
+function loadNorkystCache(): PersistedNorkystCache {
+  if (!existsSync(NORKYST_CACHE_PATH)) return {};
+  try {
+    return JSON.parse(readFileSync(NORKYST_CACHE_PATH, "utf8")) as PersistedNorkystCache;
+  } catch {
+    return {};
+  }
+}
+
+function saveNorkystCache(cache: PersistedNorkystCache): void {
+  writeFileSync(NORKYST_CACHE_PATH, JSON.stringify(cache));
+}
+
+/** Hvor mange av den løpende tidsaksens siste verdier som hentes for å matche vindens 49 tidssteg (8 døgn). */
+const CURRENT_TIME_TAIL = 24 * 8;
+
+/**
+ * Fasit-punkter fra geometrispiken (spec §5): dekodet pakke rapporteres mot
+ * NN-oppslaget direkte i kildens lat/lon. Rapport, ikke pass/fail.
+ */
+const CURRENT_FASIT_POINTS = [
+  { name: "Drøbaksund", lat: 59.65, lon: 10.62 },
+  { name: "Hvaler", lat: 59.05, lon: 11.05 },
+  { name: "Skagerrak-åpent", lat: 58.3, lon: 10.3 },
+] as const;
+
+interface CurrentFasitReport {
+  readonly name: string;
+  readonly lat: number;
+  readonly lon: number;
+  readonly epochS: number;
+  readonly decodedKn: { readonly u: number; readonly v: number } | null;
+  readonly nnSourceKn: { readonly u: number; readonly v: number } | null;
+  readonly nnDistanceM: number | null;
+}
+
+interface CurrentTileReport {
+  readonly tileId: string;
+  readonly window: LocatedCurrentTile["window"];
+  readonly nativeNodes: number;
+  readonly nativeFillFraction: number;
+  readonly regularNodes: number;
+  readonly matchedTimeSteps: number;
+  /** Andel «sjønære» regulære noder (proxy for farbar, se README) uten verdi ved grense 1 og √2 celler. */
+  readonly nearSeaUndefinedFractionAtLimit1: number;
+  readonly nearSeaUndefinedFractionAtLimitSqrt2: number;
+  readonly withValueAtLimit1: number;
+  readonly withValueAtLimitSqrt2: number;
+  readonly extendedNodes: number;
+  /** Andel av nodene MED verdi som er kystmerket (D15.2). */
+  readonly coastalFractionOfValued: number;
+  readonly maxDecodeErrorKn: number;
+  readonly roundTrip: CurrentRoundTripReport;
+  readonly rawBytes: number;
+  readonly gzipBytes: number;
+  readonly fasit: readonly CurrentFasitReport[];
+}
+
+type CurrentTileOutcome =
+  | { readonly ok: true; readonly entries: readonly PointerFieldEntry[]; readonly report: CurrentTileReport }
+  | { readonly ok: false; readonly missing: PointerMissingFieldEntry };
+
+function currentMissing(reason: string): PointerMissingFieldEntry {
+  return { field: "current", sourceStatus: { status: "degraded", reason: `NorKyst-strøm mangler for denne flisen: ${reason}` } };
+}
+
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+/** Nærmeste native SJØnode til et punkt, brute force mot kildens lat/lon (fasit-sjekken, samme som spiken). */
+function nearestNativeSea(
+  grid: NativeGrid,
+  sea: Uint8Array,
+  lat: number,
+  lon: number,
+): { readonly idx: number; readonly distM: number } | undefined {
+  let best: { idx: number; distM: number } | undefined;
+  for (let i = 0; i < grid.yCount * grid.xCount; i++) {
+    if (sea[i] !== 1) continue;
+    const d = haversineM(lat, lon, grid.lat[i]!, grid.lon[i]!);
+    if (best === undefined || d < best.distM) best = { idx: i, distM: d };
+  }
+  return best;
+}
+
+/**
+ * Strømlaget for alle mål-fliser (spec §4 normalflyt steg 2–6). Nettverks-
+ * feil (NorKyst nede, flis utenfor domenet) ⇒ strøm som `missingFields`
+ * med årsak (N2) — vinden bygges likevel. Brudd på invariantene
+ * (`.das`-avvik, klipping, rundtur utenfor budsjett) ⇒ bygget feiler.
+ */
+async function buildCurrentTiles(args: {
+  readonly tiles: readonly WeatherTileId[];
+  readonly t0S: number;
+  readonly dtS: number;
+  readonly timeCount: number;
+  readonly producedAt: string;
+  readonly fetchImpl: FetchLike;
+  readonly userAgent: string;
+}): Promise<Map<string, CurrentTileOutcome>> {
+  const out = new Map<string, CurrentTileOutcome>();
+  const allMissing = (reason: string): Map<string, CurrentTileOutcome> => {
+    for (const id of args.tiles) out.set(tileIdToString(id), { ok: false, missing: currentMissing(reason) });
+    return out;
+  };
+  const ctx: NorkystRequestContext = {
+    datasetUrl: NORKYST_DATASET_URL,
+    fetchImpl: args.fetchImpl,
+    userAgent: args.userAgent,
+    backoff: DEFAULT_BACKOFF,
+  };
+  console.log(`\n[strøm] NorKyst: ${NORKYST_DATASET_URL}`);
+
+  let dims: NorkystDims;
+  let dasText: string;
+  let init: string | undefined;
+  let firstIndex: number;
+  let timesS: Float64Array;
+  try {
+    ({ dims, dasText } = await fetchNorkystMetadata(ctx));
+    init = await fetchNorkystReferenceTime(ctx);
+    ({ firstIndex, timesS } = await fetchNorkystTimeTail(ctx, dims.timeCount, CURRENT_TIME_TAIL));
+  } catch (err) {
+    console.error(`  NorKyst utilgjengelig: ${errorText(err)} — strøm merkes manglende (N2), vinden bygges likevel`);
+    return allMissing(`NorKyst utilgjengelig (${errorText(err)})`);
+  }
+  // Koding verifiseres HARDT (som LCC for vind): feil fill/skala ville gitt
+  // stille gale tall, og da skal det ikke bygges et strømlag i det hele tatt.
+  const mismatches = verifyNorkystComponentAttributes(dasText);
+  if (mismatches.length > 0) {
+    throw new Error(`NorKyst-.das stemmer ikke med hardkodet koding (current-geometry.ts): ${mismatches.join("; ")}`);
+  }
+  console.log(`  .das OK (fill −32767, skala 0,001, m/s, tid i s siden 1970). Domene ${dims.yCount}×${dims.xCount}, ${dims.timeCount} tidssteg`);
+
+  const localMatch = matchTimeSteps(timesS, args.t0S, args.dtS, args.timeCount);
+  const matchedGlobal = localMatch.flatMap((l) => (l === undefined ? [] : [firstIndex + l]));
+  if (matchedGlobal.length === 0) {
+    return allMissing("NorKysts tidsakse overlapper ikke vindens tidssteg");
+  }
+  const tMin = Math.min(...matchedGlobal);
+  const tMax = Math.max(...matchedGlobal);
+  const sourceTimeIndex = localMatch.map((l) => (l === undefined ? undefined : firstIndex + l - tMin));
+  console.log(
+    `  Tidsakse: ${matchedGlobal.length}/${args.timeCount} av vindens tidssteg finnes i NorKyst (indeks ${tMin}–${tMax}); resten blir sentinel`,
+  );
+  let headerInit = init;
+  let sourceStatus: PackageHeader["sourceStatus"] = { status: "ok" };
+  if (headerInit === undefined) {
+    const firstEpoch = args.t0S + localMatch.findIndex((l) => l !== undefined) * args.dtS;
+    headerInit = new Date(firstEpoch * 1000).toISOString().replace(".000Z", "Z");
+    sourceStatus = {
+      status: "degraded",
+      reason: "NorKysts forecast_reference_time kunne ikke leses — init satt til første brukte tidssteg",
+    };
+  }
+
+  const cache = loadNorkystCache();
+  let coarse: LatLonSample | undefined;
+  const fetchLatLon = (window: LocatedCurrentTile["window"], stride: { readonly y: number; readonly x: number }) =>
+    fetchNorkystLatLon(ctx, window, stride);
+
+  for (const id of args.tiles) {
+    const tileKey = tileIdToString(id);
+    const bounds = tileBounds(id);
+    const cacheKey = `${NORKYST_CACHE_NAMESPACE}|${tileKey}`;
+    console.log(`\n[strøm] Flis ${tileKey}`);
+
+    let located: LocatedCurrentTile | undefined;
+    let raw: Awaited<ReturnType<typeof fetchCurrentRaw>>;
+    try {
+      const cached = cache[cacheKey];
+      if (cached && cached.dims.yCount === dims.yCount && cached.dims.xCount === dims.xCount) {
+        located = { window: cached.window, lat: Float64Array.from(cached.lat), lon: Float64Array.from(cached.lon) };
+        console.log(`  Indeksvindu CACHET (${NORKYST_CACHE_PATH})`);
+      } else {
+        if (coarse === undefined) {
+          console.log(
+            `  Grov prøve av hele domenet (stride ${NORKYST_COARSE_STRIDE.y}×${NORKYST_COARSE_STRIDE.x}) for nærmeste-punkt-søk...`,
+          );
+          coarse = await fetchLatLon({ yStart: 0, yEnd: dims.yCount - 1, xStart: 0, xEnd: dims.xCount - 1 }, NORKYST_COARSE_STRIDE);
+        }
+        located = await locateCurrentTile({ tileBounds: bounds, dims, coarse, fetchLatLon });
+        if (located !== undefined) {
+          cache[cacheKey] = {
+            dims: { yCount: dims.yCount, xCount: dims.xCount },
+            window: located.window,
+            lat: Array.from(located.lat),
+            lon: Array.from(located.lon),
+          };
+          saveNorkystCache(cache);
+        }
+      }
+      if (located === undefined) {
+        out.set(tileKey, { ok: false, missing: currentMissing("flisen ligger utenfor NorKyst-domenet") });
+        console.log(`  Ingen NorKyst-noder i flisen — strøm merkes manglende`);
+        continue;
+      }
+      const w = located.window;
+      console.log(
+        `  Indeksvindu y=[${w.yStart},${w.yEnd}] x=[${w.xStart},${w.xEnd}] — henter u/v overflate, tidsindeks ${tMin}–${tMax}, SEKVENSIELT (§16)...`,
+      );
+      const t0 = Date.now();
+      raw = await fetchCurrentRaw(ctx, w, tMin, tMax);
+      console.log(`  Hentet på ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+    } catch (err) {
+      console.error(`  Henting feilet: ${errorText(err)} — strøm merkes manglende for flisen`);
+      out.set(tileKey, { ok: false, missing: currentMissing(errorText(err)) });
+      continue;
+    }
+
+    // Fra her: ren beregning. Brudd på invariantene er HARDE feil (ingen halv pakke).
+    const w = located.window;
+    const grid: NativeGrid = { yCount: w.yEnd - w.yStart + 1, xCount: w.xEnd - w.xStart + 1, lat: located.lat, lon: located.lon };
+    const sea = seaMaskFromRaw(raw.uRaw, raw.vRaw, raw.timeCount, raw.nodeCount);
+    let seaCount = 0;
+    for (const s of sea) seaCount += s;
+    const spec = currentRegularGridForTile(bounds);
+    const regrid: RegridResult = regridNearestSeaNode(grid, sea, spec);
+    const regridLimit1 = regridNearestSeaNode(grid, sea, spec, { extensionCells: 1 });
+    const u = regularComponentValues(regrid, raw.uRaw, raw.nodeCount, sourceTimeIndex);
+    const v = regularComponentValues(regrid, raw.vRaw, raw.nodeCount, sourceTimeIndex);
+    const geometry = currentLayerGeometry(spec, args.t0S, args.dtS, args.timeCount);
+    const layers = buildCurrentLayers({ geometry, u, v, onClip: hardFailOnClip(`${tileKey}/strøm`, 0) });
+    const mask = buildCoastalMaskLayer(regrid, args.t0S, args.dtS);
+    const roundTrip = verifyCurrentRoundTrip({ payload: layers.payload, maskPayload: mask.payload, u, v, coastal: regrid.coastal });
+    console.log(
+      `  Rundtur (alle noder × tidssteg): ${roundTrip.checkedSamples} prøver, maks feil u=${roundTrip.maxErrorUKn.toFixed(4)} kn, ` +
+        `v=${roundTrip.maxErrorVKn.toFixed(4)} kn, sentinel-avvik=${roundTrip.sentinelMismatches}, maske-avvik=${roundTrip.maskMismatches}, ` +
+        `sertifikat maxDecodeErrorKn=${layers.maxDecodeErrorKn.toFixed(4)}`,
+    );
+    if (!roundTrip.withinBudget) {
+      throw new Error(`Strøm-rundtur for flis ${tileKey} er UTENFOR budsjett — nekter å skrive pakken: ${JSON.stringify(roundTrip)}`);
+    }
+
+    const entries = currentPointerEntries({
+      formatVersion: FORMAT_VERSION,
+      producedAt: args.producedAt,
+      init: headerInit,
+      sourceStatus,
+      currentPayload: layers.payload,
+      maskPayload: mask.payload,
+      maxDecodeErrorKn: layers.maxDecodeErrorKn,
+      clippedSamples: layers.clippedSamples,
+      regrid,
+    });
+    mkdirSync(BLOB_DIR, { recursive: true });
+    writeFileSync(join(BLOB_DIR, `${entries.currentHash}.bin`), layers.payload);
+    writeFileSync(join(BLOB_DIR, `${entries.coastalHash}.bin`), mask.payload);
+
+    // Fasit-punkter (spec §5): kun de som ligger i denne flisen, første tidssteg med data.
+    const firstK = sourceTimeIndex.findIndex((t) => t !== undefined);
+    const firstT = sourceTimeIndex[firstK];
+    const epochS = args.t0S + firstK * args.dtS;
+    const fasit: CurrentFasitReport[] = CURRENT_FASIT_POINTS.filter(
+      (p) => p.lat >= bounds.south && p.lat <= bounds.north && p.lon >= bounds.west && p.lon <= bounds.east,
+    ).map((p) => {
+      const decoded = decodeCurrentFromPayload(layers.payload, p.lat, p.lon, epochS);
+      const nn = nearestNativeSea(grid, sea, p.lat, p.lon);
+      const nnSourceKn =
+        nn === undefined || firstT === undefined
+          ? null
+          : {
+              u: currentMsToKnots(decodeNorkystRaw(raw.uRaw[firstT * raw.nodeCount + nn.idx]!) ?? Number.NaN),
+              v: currentMsToKnots(decodeNorkystRaw(raw.vRaw[firstT * raw.nodeCount + nn.idx]!) ?? Number.NaN),
+            };
+      return { ...p, epochS, decodedKn: decoded ?? null, nnSourceKn, nnDistanceM: nn?.distM ?? null };
+    });
+    for (const f of fasit) {
+      console.log(
+        `  Fasit ${f.name}: dekodet ${JSON.stringify(f.decodedKn)} vs NN-kilde ${JSON.stringify(f.nnSourceKn)} ` +
+          `(nærmeste sjønode ${f.nnDistanceM === null ? "?" : f.nnDistanceM.toFixed(0)} m unna)`,
+      );
+    }
+
+    const nearSeaFrac = (r: RegridResult): number => (r.stats.nearSea === 0 ? 0 : r.stats.nearSeaWithoutValue / r.stats.nearSea);
+    const report: CurrentTileReport = {
+      tileId: tileKey,
+      window: w,
+      nativeNodes: raw.nodeCount,
+      nativeFillFraction: 1 - seaCount / raw.nodeCount,
+      regularNodes: regrid.stats.nodes,
+      matchedTimeSteps: matchedGlobal.length,
+      nearSeaUndefinedFractionAtLimit1: nearSeaFrac(regridLimit1),
+      nearSeaUndefinedFractionAtLimitSqrt2: nearSeaFrac(regrid),
+      withValueAtLimit1: regridLimit1.stats.withValue,
+      withValueAtLimitSqrt2: regrid.stats.withValue,
+      extendedNodes: regrid.stats.extended,
+      coastalFractionOfValued: regrid.stats.withValue === 0 ? 0 : regrid.stats.coastalWithValue / regrid.stats.withValue,
+      maxDecodeErrorKn: layers.maxDecodeErrorKn,
+      roundTrip,
+      rawBytes: layers.payload.length + mask.payload.length,
+      gzipBytes: gzipSync(layers.payload).length + gzipSync(mask.payload).length,
+      fasit,
+    };
+    console.log(
+      `  Regridding (grense √2=${COAST_EXTENSION_CELLS.toFixed(3)} celler): ${regrid.stats.withValue}/${regrid.stats.nodes} noder med verdi, ` +
+        `${regrid.stats.extended} via forlengelse, kystmerket ${(report.coastalFractionOfValued * 100).toFixed(1)} %; ` +
+        `sjønære uten verdi: ${(report.nearSeaUndefinedFractionAtLimit1 * 100).toFixed(1)} % (grense 1) / ` +
+        `${(report.nearSeaUndefinedFractionAtLimitSqrt2 * 100).toFixed(1)} % (grense √2); ` +
+        `gzip ${(report.gzipBytes / 1e6).toFixed(2)} MB`,
+    );
+    out.set(tileKey, { ok: true, entries: [entries.current, entries.coastal], report });
+  }
+  return out;
+}
+
 /** `fieldMissingEntirely` returnerer alltid `{status:"degraded",...}` — dette gjør det eksplisitt for `PointerMissingFieldEntry`s strammere type. */
 function missingField(field: string, sourceLabel: string): PointerMissingFieldEntry {
   const status = fieldMissingEntirely(sourceLabel);
@@ -591,7 +956,7 @@ function missingField(field: string, sourceLabel: string): PointerMissingFieldEn
 }
 
 async function main(): Promise<void> {
-  console.log("=== weather-pack build-live-package (bølge 2A, 2026-09-03) — VIND-ONLY, EKTE THREDDS-data ===");
+  console.log("=== weather-pack build-live-package — VIND + NorKyst-STRØM, EKTE THREDDS-data ===");
   const gate = checkLegalGate(join(REPO_ROOT, "docs", "legal"));
   if (!gate.ok) {
     console.error(`Nektet: ${gate.reason}`);
@@ -629,13 +994,29 @@ async function main(): Promise<void> {
     summaries.push(summary);
   }
 
+  const currentOutcomes = await buildCurrentTiles({
+    tiles: TARGET_TILES,
+    t0S: Date.parse(run.init) / 1000,
+    dtS: TIME_STEP_H * 3600,
+    timeCount: TIME_COUNT,
+    producedAt: new Date().toISOString(),
+    fetchImpl,
+    userAgent,
+  });
+
   console.log(`\n[6/6] Skriver peker...`);
-  const tiles: PointerTileEntry[] = summaries.map((s) => ({
-    tileId: s.tileId,
-    bbox: s.bbox,
-    fields: s.fields,
-    missingFields: [missingField("current", "NorKyst-strøm"), missingField("waves", "Oceanforecast/WAM800-bølge")],
-  }));
+  const tiles: PointerTileEntry[] = summaries.map((s) => {
+    const current = currentOutcomes.get(s.tileId);
+    return {
+      tileId: s.tileId,
+      bbox: s.bbox,
+      fields: current?.ok === true ? [...s.fields, ...current.entries] : s.fields,
+      missingFields: [
+        ...(current?.ok === true ? [] : [current?.missing ?? missingField("current", "NorKyst-strøm")]),
+        missingField("waves", "Oceanforecast/WAM800-bølge"),
+      ],
+    };
+  });
   const pointer = buildPointer(FORMAT_VERSION, tiles);
   mkdirSync(OUT_DIR, { recursive: true });
   writeFileSync(join(OUT_DIR, "pointer-vaer-skandinavia.json"), JSON.stringify(pointer, null, 2));
@@ -672,7 +1053,16 @@ async function main(): Promise<void> {
       horizonH: HORIZON_H,
       timeStepH: TIME_STEP_H,
     },
-    missingFields: ["current (NorKyst)", "waves (Oceanforecast/WAM800)"],
+    current: TARGET_TILES.map((id) => {
+      const o = currentOutcomes.get(tileIdToString(id));
+      return o?.ok === true ? o.report : { tileId: tileIdToString(id), missing: o?.missing.sourceStatus.reason ?? "ikke forsøkt" };
+    }),
+    missingFields: [
+      ...TARGET_TILES.filter((id) => currentOutcomes.get(tileIdToString(id))?.ok !== true).map(
+        (id) => `current (NorKyst) ${tileIdToString(id)}`,
+      ),
+      "waves (Oceanforecast/WAM800)",
+    ],
   };
   writeFileSync(join(OUT_DIR, "build-report.json"), JSON.stringify(report, null, 2));
 

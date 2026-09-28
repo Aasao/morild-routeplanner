@@ -155,6 +155,21 @@ export const FLAG_SJOEGANG_DATA_MANGLER = 1 << 8;
  * setter den, og den gulver `safety.verdict` til minst `"usikkert"`.
  */
 export const FLAG_VAERDEKNING_BEGRENSET = 1 << 9;
+/**
+ * Strømdata manglet i punktet (`WeatherField.current` ⇒ `undefined`).
+ * Settes i dag KUN på den direkte sluttetappen (`reconstruct.ts`,
+ * `docs/specs/strom-produsent.md` §4b «d-min»): sluttetappen er
+ * etterbehandling, så søkets `weatherPartial` fanger den ikke. Søkets egne
+ * etiketter merkes ikke (full (d) er egen runde).
+ */
+export const FLAG_STROM_DATA_MANGLER = 1 << 10;
+/**
+ * Strømverdien i punktet er kystnær (`WeatherField.currentCoastal`, D15.2):
+ * lånt fra nærmeste sjøcelle i 800 m-modellen eller nær land — retningen kan
+ * være upålitelig. Settes av rekonstruksjonen per steg; rute-flagget er OR
+ * over stegene. Kun rapportering — aldri kost, aldri søk.
+ */
+export const FLAG_STROM_KYSTSONE = 1 << 11;
 
 export const FLAG_NAMES: readonly (readonly [number, string])[] = Object.freeze(
   [
@@ -168,6 +183,8 @@ export const FLAG_NAMES: readonly (readonly [number, string])[] = Object.freeze(
     [FLAG_NEGATIV_VANNSTAND_RISIKO, "NEGATIV_VANNSTAND_RISIKO"],
     [FLAG_SJOEGANG_DATA_MANGLER, "SJOEGANG_DATA_MANGLER"],
     [FLAG_VAERDEKNING_BEGRENSET, "VAERDEKNING_BEGRENSET"],
+    [FLAG_STROM_DATA_MANGLER, "STROM_DATA_MANGLER"],
+    [FLAG_STROM_KYSTSONE, "STROM_KYSTSONE"],
   ] as const,
 );
 

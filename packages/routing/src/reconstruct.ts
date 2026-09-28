@@ -22,7 +22,7 @@ import {
   DEFAULT_CORRIDOR_PARAMS,
   freezeCorridorStats,
 } from "./clearance.js";
-import type { NavigabilityMask } from "./contracts.js";
+import type { NavigabilityMask, WeatherField } from "./contracts.js";
 import type { CostVector, CostWeights } from "./cost.js";
 import {
   costScore,
@@ -30,6 +30,9 @@ import {
   FLAG_KRYSS,
   FLAG_MOTOR,
   FLAG_NATT,
+  FLAG_SJOEGANG_DATA_MANGLER,
+  FLAG_STROM_DATA_MANGLER,
+  FLAG_STROM_KYSTSONE,
   FLAG_USIKKER_TILLIT,
   FLAG_VAERDEKNING_BEGRENSET,
   flagNames,
@@ -188,18 +191,39 @@ export function labelChain(arena: LabelArena, index: number): number[] {
   return chain;
 }
 
+/**
+ * `STROM_KYSTSONE` (D15.2, `docs/specs/strom-produsent.md` §4b): kun
+ * rapportering, lagt på i rekonstruksjonen — søket, kosten og deratingen
+ * ser aldri kystmasken. Felt uten `currentCoastal` gir aldri flagget.
+ */
+function coastalCurrentFlag(
+  weather: WeatherField,
+  lat: number,
+  lon: number,
+  epochS: number,
+): number {
+  return weather.currentCoastal?.(lat, lon, epochS) === true
+    ? FLAG_STROM_KYSTSONE
+    : 0;
+}
+
 function stepFrom(
   arena: LabelArena,
   index: number,
   departEpochS: number,
   isStart: boolean,
+  weather: WeatherField,
 ): RouteStep {
-  const flags = arena.flags[index]!;
+  const lat = arena.lat[index]!;
+  const lon = arena.lon[index]!;
+  const epochS = departEpochS + arena.tS[index]!;
+  const flags =
+    arena.flags[index]! | coastalCurrentFlag(weather, lat, lon, epochS);
   return {
-    lat: arena.lat[index]!,
-    lon: arena.lon[index]!,
+    lat,
+    lon,
     tS: arena.tS[index]!,
-    epochS: departEpochS + arena.tS[index]!,
+    epochS,
     headingDeg: isStart ? null : arena.headingDeg[index]!,
     beatS: arena.beatS[index]!,
     motorS: arena.motorS[index]!,
@@ -517,7 +541,7 @@ export function buildResult(ctx: ResultContext): RouteResult {
   const assemble = (index: number): DirectFinalStep =>
     appendDirectFinalStep(
       labelChain(arena, index).map((i, at) =>
-        stepFrom(arena, i, input.departEpochS, at === 0),
+        stepFrom(arena, i, input.departEpochS, at === 0, input.weather),
       ),
       ctx,
       recheckStats,
@@ -634,12 +658,26 @@ export function buildResult(ctx: ResultContext): RouteResult {
    * `coverage.weather === "partial"` og ADR-0005s inkonklusiv-regel.
    */
   const weatherCoverageLimited = ctx.pruned.noWeatherInWindow > 0;
-  const routeFlags = weatherCoverageLimited ? FLAG_VAERDEKNING_BEGRENSET : 0;
+  /**
+   * `STROM_KYSTSONE` på rute-nivå er OR over stegene (D15.2): ett kystnært
+   * strømpunkt langs ruten er nok til at UI-et skal si det.
+   */
+  let coastalCurrent = 0;
+  for (const s of steps) coastalCurrent |= s.flags & FLAG_STROM_KYSTSONE;
+  const routeFlags =
+    (weatherCoverageLimited ? FLAG_VAERDEKNING_BEGRENSET : 0) | coastalCurrent;
   /**
    * Gulvet: en rute som er beskåret av manglende værdekning kan aldri stå
    * som `"trygt"` (CLAUDE.md §1 «sikkerhet foran optimalitet», N2). Vi hever
    * ikke til `"usikker-rute"` — linjen som faktisk tegnes er sjekket mot
    * masken som ellers; det er *fullstendigheten* av søket som er usikker.
+   *
+   * Bevisst avgrensning (review 2026-09-27, D15.1 d-min): manglende strøm/
+   * bølge — også på sluttetappen — senker IKKE `verdict`; det gir
+   * `coverage.weather === "partial"` og per-steg-flagg (`STROM_DATA_MANGLER`
+   * / `SJOEGANG_DATA_MANGLER`). `verdict` og `coverage.weather` kan derfor
+   * vise ulikt; UI skal lese begge (og flaggene), aldri `verdict` alene.
+   * Om manglende strøm skal senke `verdict`, er en egen beslutning.
    */
   const verdict: RouteResult["safety"]["verdict"] =
     weatherCoverageLimited && finalLegVerdict === "trygt"
@@ -685,7 +723,10 @@ export function buildResult(ctx: ResultContext): RouteResult {
     },
     coverage: {
       mask: maskCoverage,
-      weather: ctx.weatherPartial ? "partial" : "full",
+      // d-min (D15.1, `docs/specs/strom-produsent.md` §4b): sluttetappens
+      // miljøoppslag teller med. Kan bare gjøre klassifiseringen strengere.
+      weather:
+        ctx.weatherPartial || withEnd.weatherPartial ? "partial" : "full",
       fieldUsed: ctx.fieldUsed,
       weatherHeader: input.weather.header,
       chartSources: input.mask?.sources ?? [],
@@ -718,6 +759,14 @@ interface DirectFinalStep {
   readonly steps: RouteStep[];
   readonly hasDirectEnd: boolean;
   readonly finalLeg: RouteFinalLeg;
+  /**
+   * Manglet strøm eller bølge i sluttetappens miljøoppslag (D15.1 d-min)?
+   * Sluttetappen er etterbehandling, så søkets `weatherPartial` ser den
+   * ikke — uten dette ble en sluttetappe uten strøm stille regnet som full
+   * dekning (N2-brudd, `docs/research/ekspertpanel-d15-kystkant-2026-09-27.md`
+   * §5 pkt. 2).
+   */
+  readonly weatherPartial: boolean;
 }
 
 function rejectedFinalLeg(
@@ -725,11 +774,13 @@ function rejectedFinalLeg(
   status: FinalLegStatus,
   reason: string,
   shortfallNm: number,
+  weatherPartial = false,
 ): DirectFinalStep {
   return {
     steps: out,
     hasDirectEnd: false,
     finalLeg: { status, reason, shortfallNm },
+    weatherPartial,
   };
 }
 
@@ -765,6 +816,7 @@ function appendDirectFinalStep(
       steps: out,
       hasDirectEnd: false,
       finalLeg: { status: "ikke-forsokt", reason: null, shortfallNm },
+      weatherPartial: false,
     };
   }
 
@@ -774,6 +826,7 @@ function appendDirectFinalStep(
       steps: out,
       hasDirectEnd: false,
       finalLeg: { status: "ikke-nodvendig", reason: null, shortfallNm: 0 },
+      weatherPartial: false,
     };
   }
 
@@ -816,6 +869,13 @@ function appendDirectFinalStep(
       remainingNm,
     );
   }
+  // d-min (D15.1): mangler strøm eller bølge her, er sluttetappen regnet
+  // uten dem — det skal synes både i dekningen og på steget. Gjelder også
+  // om etappen avvises under: avvisningen kan skyldes nettopp det manglende
+  // feltet, og klassifiseringen skal bare kunne bli strengere.
+  const currentMissing = env.current === undefined;
+  const wavesMissing = env.waves === undefined;
+  const envPartial = currentMissing || wavesMissing;
   const nodeCheck = checkHardNode(env, boat);
   if (!nodeCheck.ok) {
     return rejectedFinalLeg(
@@ -823,6 +883,7 @@ function appendDirectFinalStep(
       "avvist-baatgrenser",
       nodeCheck.reason,
       remainingNm,
+      envPartial,
     );
   }
 
@@ -846,6 +907,7 @@ function appendDirectFinalStep(
       "avvist-farbarhet",
       corridor.check.reason,
       remainingNm,
+      envPartial,
     );
   }
 
@@ -873,6 +935,7 @@ function appendDirectFinalStep(
       "avvist-fart",
       `båten gjør ikke fart på kurs ${steer.headingDeg.toFixed(1)}° mot målet`,
       remainingNm,
+      envPartial,
     );
   }
   // Framdrift *mot målet*: fart over grunn projisert på peilingen. Lot vi
@@ -886,6 +949,7 @@ function appendDirectFinalStep(
       "avvist-fart",
       `ingen framdrift mot målet (${madeGoodKn.toFixed(2)} kn over grunn på peilingen)`,
       remainingNm,
+      envPartial,
     );
   }
 
@@ -915,9 +979,19 @@ function appendDirectFinalStep(
     penaltyS,
     ctx.opts.beatTwaDeg,
   );
-  const flags =
-    contribution.flags | tss.flags | (last.flags & FLAG_USIKKER_TILLIT);
   const tS = last.tS + Math.round(contribution.dtS);
+  const flags =
+    contribution.flags |
+    tss.flags |
+    (last.flags & FLAG_USIKKER_TILLIT) |
+    (currentMissing ? FLAG_STROM_DATA_MANGLER : 0) |
+    (wavesMissing ? FLAG_SJOEGANG_DATA_MANGLER : 0) |
+    coastalCurrentFlag(
+      weather,
+      ctx.input.dest.lat,
+      ctx.input.dest.lon,
+      ctx.input.departEpochS + tS,
+    );
   out.push({
     lat: ctx.input.dest.lat,
     lon: ctx.input.dest.lon,
@@ -938,6 +1012,7 @@ function appendDirectFinalStep(
     steps: out,
     hasDirectEnd: true,
     finalLeg: { status: "lagt-til", reason: null, shortfallNm: 0 },
+    weatherPartial: envPartial,
   };
 }
 
@@ -1007,7 +1082,7 @@ function buildAlternatives(
   const out: RouteAlternative[] = [];
   for (const index of ranked.slice(0, limit)) {
     const steps = labelChain(ctx.arena, index).map((i, at) =>
-      stepFrom(ctx.arena, i, ctx.input.departEpochS, at === 0),
+      stepFrom(ctx.arena, i, ctx.input.departEpochS, at === 0, ctx.input.weather),
     );
     const legs = legsFrom(
       consolidateSteps(steps, ctx.input.mask, ctx.opts.tssParams, corridor),

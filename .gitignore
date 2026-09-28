@@ -19,6 +19,8 @@ tools/weather-pack/.dry-run-output/
 # distribusjonsveien, ikke git). Grid-indeks-cachen ligger her også.
 tools/weather-pack/out/
 tools/weather-pack/.grid-index-cache.json
+# NorKysts indeksvindu + lat/lon per flis (eget nøkkelrom, strom-produsent.md §4).
+tools/weather-pack/.norkyst-grid-cache.json
 
 # apps/worker: wrangler dev sitt lokale build-/runtime-cache.
 .wrangler/

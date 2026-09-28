@@ -1854,6 +1854,31 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- **2026-09-27 — strøm: sluttetappens dekning og `STROM_KYSTSONE`**
+  (`docs/specs/strom-produsent.md` §4b; D15.1 d-min og D15.2, vedtatt
+  2026-09-27 etter panel `docs/research/ekspertpanel-d15-kystkant-2026-09-27.md`).
+  - **Sluttetappen (§5.8) teller i værdekningen.** Mangler strøm eller bølge
+    i sluttetappens miljøoppslag, blir `coverage.weather` `"partial"` og
+    sluttsteget får `STROM_DATA_MANGLER` (ny bit, `1 << 10`) og/eller
+    `SJOEGANG_DATA_MANGLER`. Gjelder også når etappen avvises etter
+    oppslaget (avvisningen kan skyldes nettopp det manglende feltet). Lukker
+    et stille N2-brudd: sluttetappen er etterbehandling, så søkets
+    `weatherPartial` så den aldri. Kan bare gjøre klassifiseringen
+    strengere; søkets `weatherPartial` er uendret (full (d) er egen runde).
+  - **`WeatherField.currentCoastal?(lat, lon, epochS)`** (valgfri) og ny
+    bit `STROM_KYSTSONE` (`1 << 11`): rekonstruksjonen setter den per steg
+    der kystmasken er sann; `RouteResult.flags` får den som OR over stegene
+    (unntak fra «rute-flagg handler om søket», dokumentert i `result.ts`).
+    Kun rapportering — søk, kost, derating og sikkerhetsdom leser den aldri.
+  - **Golden-regresjon:** golden-feltene har verken kystmaske eller hull i
+    strøm/bølge ved sluttetappen — `pnpm test:golden` er uendret. Ny test
+    (`strom-sluttetappe-kystsone.test.ts`) kjører tre golden-scenarier med
+    og uten en kystmaske som er sann overalt: identiske steg, tid, etapper,
+    totaler, dom, dekning og iterasjoner; bare `STROM_KYSTSONE`-biten
+    legges til.
+  - `@morild/robustness::withCurrentScale` sender `currentCoastal` uendret
+    videre (masken avhenger ikke av strømmens størrelse).
+
 - **2026-09-05 — fase 4a bølge 4: havnebok, havnefelt og bail-out-profil**
   (`docs/specs/robusthet.md` §3.5, §4.5, §5.6 og §7 D8.6 (b), D8.10, D11.2).
   - **Ny §5.14** med tre rene moduler i `packages/routing`:

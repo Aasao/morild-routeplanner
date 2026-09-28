@@ -373,6 +373,10 @@ export interface RouteResult {
    * beskriver noe som skjedde med *søket*, ikke med et punkt på linjen, og
    * kan derfor ikke bo på et steg: `VAERDEKNING_BEGRENSET` handler nettopp om
    * etiketter som ble forkastet og altså aldri ble til et steg.
+   *
+   * Unntak (D15.2, `docs/specs/strom-produsent.md` §4b): `STROM_KYSTSONE`
+   * står BÅDE per steg og her, som OR over stegene — så UI-et kan si det om
+   * ruten uten å lete gjennom stegene.
    */
   readonly flags: number;
   /** Flaggnavn i `FLAG_NAMES`-rekkefølge — determinisme også i rapporteringen. */

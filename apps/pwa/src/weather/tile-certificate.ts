@@ -134,6 +134,43 @@ export function acceptTileHeader(header: PackageHeader): TileAcceptance {
   return { accepted: true, certificate };
 }
 
+/** Felt som deles av alle medlemmer og har eget sertifikatkrav (`docs/specs/strom-produsent.md`). */
+export const CURRENT_FIELD = "current";
+export const CURRENT_COASTAL_FIELD = "current-coastal";
+
+/**
+ * Sertifikatkravet for strøm og kystmaske. Vindens `parseCertificate`
+ * krever `maxDirectionErrorDeg`, som strøm bevisst IKKE har (spec §3: strøm
+ * lagres kun som komponenter) — vindregelen ville avvist hver strømflis.
+ * Kravene her er likevel ikke svakere der de betyr noe:
+ * - begge: `referenceInit`, `verifiedAt` og et TALL for `clippedSamples`
+ *   (fravær = ugyldig, §9.10) som må være 0;
+ * - strøm i tillegg: endelig `maxDecodeErrorKn ≥ 0`.
+ */
+export type SharedFieldAcceptance =
+  | { readonly accepted: true }
+  | { readonly accepted: false; readonly reason: string };
+
+export function acceptSharedFieldHeader(header: PackageHeader, field: string): SharedFieldAcceptance {
+  const raw = (header as unknown as Record<string, unknown>)["certificate"];
+  const reject = (reason: string): SharedFieldAcceptance => ({ accepted: false, reason });
+  if (!isRecord(raw)) return reject(`${field}-lag uten sertifikat (§9.10) — brukes ikke`);
+  const referenceInit = nonEmptyString(raw["referenceInit"]);
+  const verifiedAt = nonEmptyString(raw["verifiedAt"]);
+  const clippedSamples = finiteNumber(raw["clippedSamples"]);
+  if (referenceInit === undefined || verifiedAt === undefined || clippedSamples === undefined) {
+    return reject(`${field}-lag med ufullstendig sertifikat (mangler referenceInit/verifiedAt/clippedSamples) — brukes ikke`);
+  }
+  if (clippedSamples > 0 || raw["clipped"] === true) {
+    return reject(`${field}-lag rapporterer klipping — dekodefeilen er ikke begrenset av sertifikatet`);
+  }
+  const maxDecodeErrorKn = finiteNumber(raw["maxDecodeErrorKn"]);
+  if (field === CURRENT_FIELD && (maxDecodeErrorKn === undefined || maxDecodeErrorKn < 0)) {
+    return reject("strømlag uten gyldig maxDecodeErrorKn i sertifikatet — brukes ikke");
+  }
+  return { accepted: true };
+}
+
 export interface TileRejection {
   readonly tileId: string;
   readonly field: string;
