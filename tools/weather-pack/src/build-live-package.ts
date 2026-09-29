@@ -22,7 +22,10 @@
  *    pakke med feil rotasjon skal ikke bygges i det hele tatt).
  * 4. For hver mål-flis (§7, 2°×2°, delt origo): probe grid-indeksvindu
  *    (cached til disk, §7 punkt 1), hent x_wind_10m/y_wind_10m for ALLE
- *    30 medlemmer i ETT kall hver (§7 punkt 2), roter griddrelativt→sann
+ *    30 medlemmer i ETT kall hver (§7 punkt 2), merk fyllverdi/ikke-endelig/
+ *    fysisk umulig som manglende (NaN ⇒ sentinel) og utelat medlemmer med
+ *    > 50 % mangler fra pekeren (kontrollen uten data ⇒ bygget feiler;
+ *    §19 2026-09-29), roter griddrelativt→sann
  *    nord (`lambert-rotation.ts`, §19 2026-09-03-funnet), kvantiser+skriv
  *    hvert medlem (`pipeline.ts`), mål rått/gzip/delta+gzip.
  * 5. Verifiser rundtur (dekode fra SERIALISERT payload, ikke fra
@@ -65,12 +68,17 @@ import {
 } from "./live-source.js";
 import {
   applyLccRotationToWindComponents,
+  assessWindMembers,
   buildWindMemberPackage,
   convertWindComponentsToKnots,
   fetchWindComponents,
   flatIndex,
+  maskMissingWindValues,
+  parseWindMissingValuesFromDas,
   resolveEnsembleSourceStatus,
+  type ExcludedWindMember,
   type FetchedWindComponents,
+  type WindMissingValueSpec,
 } from "./pipeline.js";
 import { buildPointer, type PointerFieldEntry, type PointerMissingFieldEntry, type PointerTileEntry } from "./package-writer.js";
 import {
@@ -111,7 +119,7 @@ import {
   verifyCurrentRoundTrip,
   type CurrentRoundTripReport,
 } from "./current-package.js";
-import { fieldMissingEntirely } from "./source-status.js";
+import { combineSourceStatuses, fieldMissingEntirely } from "./source-status.js";
 import {
   parseLccAttributesFromDas,
   verifyLccDasAttributes,
@@ -466,11 +474,17 @@ interface TileBuildSummary {
   readonly fields: PointerFieldEntry[];
   /** Sertifikatet skrevet for medlem 0 (D7.4) — representativt (alle medlemmer på samme flis sertifiseres, se `pipeline.ts::buildWindMemberPackage`). */
   readonly certificateSample: FieldCertificate;
+  /** Medlemmer utelatt fra pekeren fordi vinddataene mangler (§19 2026-09-29) — med grunn. */
+  readonly excludedWindMembers: readonly ExcludedWindMember[];
+  /** Vindfeltets status for flisen (kjøringsvalg + utelatte medlemmer). */
+  readonly windSourceStatus: PackageHeader["sourceStatus"];
 }
 
 async function buildTile(
   id: WeatherTileId,
   run: ResolvedRun,
+  runSourceStatus: PackageHeader["sourceStatus"],
+  windMissing: WindMissingValueSpec,
   fetchImpl: FetchLike,
   userAgent: string,
   gridCache: PersistedGridCache,
@@ -499,6 +513,21 @@ async function buildTile(
   });
   console.log(`  Hentet på ${((Date.now() - t0) / 1000).toFixed(1)} s: ${components.u.length} verdier per komponent`);
 
+  // §19 2026-09-29: fyllverdi/ikke-endelig/fysisk umulig ⇒ NaN (sentinel),
+  // på RÅ m/s FØR konvertering og rotasjon. Medlem med > 50 % mangler
+  // skrives ikke til pekeren; kontrollen uten data ⇒ kast (bygget stopper).
+  const missingStats = maskMissingWindValues(components, windMissing);
+  const assessment = assessWindMembers(missingStats);
+  const partialMissing = missingStats.filter((s) => s.missing > 0 && assessment.included.includes(s.member));
+  if (assessment.excluded.length > 0) {
+    console.warn(`  [mangler] ${assessment.included.length} av ${MEMBER_COUNT} medlemmer har vinddata i flisen. Utelatt:`);
+    for (const e of assessment.excluded) console.warn(`    - ${e.reason}`);
+  }
+  for (const s of partialMissing) {
+    console.warn(`  [mangler] medlem ${s.member}: ${s.missing}/${s.total} verdier mangler — skrevet som sentinel (under grensen)`);
+  }
+  const windSourceStatus = combineSourceStatuses([runSourceStatus, assessment.sourceStatus]);
+
   console.log(`  Konverterer m/s→knop (§19 2026-09-03-funn: THREDDS gir m/s, §3 krever knop)...`);
   convertWindComponentsToKnots(components);
 
@@ -517,7 +546,7 @@ async function buildTile(
   let firstMemberVerification: VerificationSample[] = [];
   let certificateSample: FieldCertificate | undefined;
 
-  for (let memberIndex = 0; memberIndex < MEMBER_COUNT; memberIndex++) {
+  for (const memberIndex of assessment.included) {
     const result = buildWindMemberPackage({
       formatVersion: FORMAT_VERSION,
       producedAt: new Date().toISOString(),
@@ -529,6 +558,7 @@ async function buildTile(
       tileId: tileKey,
       t0S,
       dtS,
+      sourceStatusOverride: windSourceStatus,
       onClip: hardFailOnClip(tileKey, memberIndex),
     });
     const plainU = result.payload; // deltaCoded=true already (default) — see rawPayloadBytes note below
@@ -551,8 +581,8 @@ async function buildTile(
         dtS,
         deltaCoded: false,
       });
-      gzipNoDeltaTotal = gzipSync(plainVariant.payload).length * MEMBER_COUNT; // ekstrapolert, dokumentert i loggen
-      console.log(`  (baseline uten delta målt kun for medlem 0, ekstrapolert ×${MEMBER_COUNT} for sum-linja)`);
+      gzipNoDeltaTotal = gzipSync(plainVariant.payload).length * assessment.included.length; // ekstrapolert, dokumentert i loggen
+      console.log(`  (baseline uten delta målt kun for medlem 0, ekstrapolert ×${assessment.included.length} for sum-linja)`);
 
       const verification = verifyRoundTrip(
         result.payload,
@@ -610,7 +640,7 @@ async function buildTile(
   }
 
   console.log(
-    `  Flis ${tileKey} sum (${MEMBER_COUNT} medlemmer, u+v): rått=${(rawBytesTotal / 1e6).toFixed(2)} MB, ` +
+    `  Flis ${tileKey} sum (${assessment.included.length} av ${MEMBER_COUNT} medlemmer, u+v): rått=${(rawBytesTotal / 1e6).toFixed(2)} MB, ` +
       `gzip(delta)=${(gzipDeltaTotal / 1e6).toFixed(2)} MB (faktor ${(rawBytesTotal / gzipDeltaTotal).toFixed(2)}×)`,
   );
 
@@ -625,7 +655,9 @@ async function buildTile(
     maxDecodeErrorKnObserved,
     verification: firstMemberVerification,
     fields,
-    certificateSample: certificateSample!, // satt i medlem-0-grenen over, som ALLTID kjører (memberIndex===0 er alltid første iterasjon)
+    certificateSample: certificateSample!, // satt i medlem-0-grenen over, som ALLTID kjører (kontrollen er alltid inkludert — ellers kaster assessWindMembers)
+    excludedWindMembers: assessment.excluded,
+    windSourceStatus,
   };
 }
 
@@ -976,7 +1008,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const { verification: lccVerification } = await verifyLccProjection(run.datasetUrl, fetchImpl, userAgent);
+  const { verification: lccVerification, dasText } = await verifyLccProjection(run.datasetUrl, fetchImpl, userAgent);
   if (!lccVerification.ok) {
     for (const m of lccVerification.mismatches) console.error(`    - ${m}`);
     console.error(
@@ -987,10 +1019,14 @@ async function main(): Promise<void> {
     return;
   }
 
+  // §19 2026-09-29: fyll-/manglende-verdier for vindkomponentene fra samme .das.
+  const windMissing = parseWindMissingValuesFromDas(dasText);
+  console.log(`  Vindens fyllverdier fra .das: x_wind_10m=[${windMissing.x.join(", ")}], y_wind_10m=[${windMissing.y.join(", ")}]`);
+
   const gridCache = loadGridCache();
   const summaries: TileBuildSummary[] = [];
   for (const id of TARGET_TILES) {
-    const summary = await buildTile(id, run, fetchImpl, userAgent, gridCache);
+    const summary = await buildTile(id, run, sourceStatus, windMissing, fetchImpl, userAgent, gridCache);
     summaries.push(summary);
   }
 
@@ -1012,6 +1048,14 @@ async function main(): Promise<void> {
       bbox: s.bbox,
       fields: current?.ok === true ? [...s.fields, ...current.entries] : s.fields,
       missingFields: [
+        // Utelatte vindmedlemmer (§19 2026-09-29): per medlem, så klienten kan telle nevneren.
+        ...s.excludedWindMembers.map(
+          (e): PointerMissingFieldEntry => ({
+            field: "wind",
+            member: e.member,
+            sourceStatus: { status: "degraded", reason: e.reason },
+          }),
+        ),
         ...(current?.ok === true ? [] : [current?.missing ?? missingField("current", "NorKyst-strøm")]),
         missingField("waves", "Oceanforecast/WAM800-bølge"),
       ],
@@ -1044,6 +1088,8 @@ async function main(): Promise<void> {
       maxDecodeErrorKnObserved: s.maxDecodeErrorKnObserved,
       verification: s.verification,
       certificateSample: s.certificateSample,
+      windSourceStatus: s.windSourceStatus,
+      excludedWindMembers: s.excludedWindMembers,
     })),
     totals: {
       rawBytesTotal: totalRaw,
@@ -1068,6 +1114,13 @@ async function main(): Promise<void> {
 
   console.log(`\n=== FERDIG ===`);
   console.log(`Kjøring: ${run.runName} (init ${run.init})`);
+  for (const s of summaries) {
+    if (s.excludedWindMembers.length > 0) {
+      console.warn(
+        `Flis ${s.tileId}: ${MEMBER_COUNT - s.excludedWindMembers.length} av ${MEMBER_COUNT} vindmedlemmer har data — utelatt ${s.excludedWindMembers.map((e) => e.member).join(", ")}`,
+      );
+    }
+  }
   console.log(`Rått (alle fliser, ${MEMBER_COUNT} medlemmer, u+v): ${(totalRaw / 1e6).toFixed(2)} MB`);
   console.log(`Etter delta+gzip: ${(totalGzipDelta / 1e6).toFixed(2)} MB (faktor ${(totalRaw / totalGzipDelta).toFixed(2)}×)`);
   console.log(`Skrev pakke-blober til ${BLOB_DIR}, peker til ${join(OUT_DIR, "pointer-vaer-skandinavia.json")}`);

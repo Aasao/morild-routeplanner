@@ -254,6 +254,14 @@ function buildLysLine(summary: DepartureSummary): FirstPageLine {
         "Gult lys — grunnlaget er usikkert (for mange inkonklusive/feilede utfall til å stole på andelen).",
         "advarsel",
       );
+    case "bolgeperiode-ukjent":
+      // punktbolge.md §4.1: ville vært grønt, men taket slo inn. Tallet er
+      // stempelets, og det står at det er foreløpig.
+      return line(
+        "lys",
+        `Gult lys — bølger over ${formatDecimalComma(summary.stamp.waveGreenCap.hsM, 1)} m (maks ${formatDecimalComma(summary.maxHsM, 1)} m langs rutene) og bølgeperioden er ukjent: kort, bratt sjø kan ikke utelukkes (grense ${summary.stamp.waveGreenCap.status}).`,
+        "advarsel",
+      );
     default:
       return line("lys", "Gult lys.", "advarsel");
   }
@@ -280,10 +288,18 @@ function buildRegelLine(advice: DecisionAdvice | null, timeZone: string): FirstP
 
 /** Item 4 (§4.7): fast linje. */
 function buildDekningLine(summary: DepartureSummary): FirstPageLine {
+  const wind = summary.stamp.windMembers;
+  const incomplete = wind !== undefined && wind.withData < wind.nominal;
+  // §19 2026-09-29: utelatte vindmedlemmer vises som «n av N», aldri stille.
+  const vind = incomplete
+    ? `Vindanslag (MEPS, ${wind.withData} av ${wind.nominal} medlemmer har vinddata — ${wind.missing.length} utelatt)`
+    : `Vindanslag (MEPS, ${summary.expectedMembers} medlemmer)`;
   return line(
     "dekning",
-    `Vindanslag (MEPS, ${summary.expectedMembers} medlemmer) · bølge og strøm er ikke usikkerhetsberegnet.`,
-    "info",
+    summary.stamp.wavePoints === null
+      ? `${vind} · bølge mangler i beregningen · strøm er ikke usikkerhetsberegnet.`
+      : `${vind} · bølge (punktvarsel, periode ukjent) og strøm er ikke usikkerhetsberegnet.`,
+    incomplete ? "advarsel" : "info",
   );
 }
 
@@ -424,6 +440,16 @@ function buildBehindTap(input: FirstPageInput): readonly { readonly label: strin
   entries.push({
     label: "Stempel",
     text: `Maske ${summary.stamp.maskVersion} · pakke ${summary.stamp.packageId} init ${summary.stamp.packageInitEpochS} · estimator ${summary.stamp.estimator} · provisoriske terskler.`,
+  });
+  const wp = summary.stamp.wavePoints;
+  entries.push({
+    label: "Bølge",
+    text:
+      (wp === null
+        ? "Ingen punktbølge i denne kjøringen."
+        : `Punktbølge ${wp.hash.slice(0, 12)} hentet ${wp.fetchedAtEpochS}.`) +
+      ` Bølge-tak ${formatDecimalComma(summary.stamp.waveGreenCap.hsM, 1)} m (${summary.stamp.waveGreenCap.status})` +
+      `${summary.stamp.wavePeriodKnown ? "" : ", periode ukjent"} · maks Hs ${formatDecimalComma(summary.maxHsM, 1)} m.`,
   });
   const ages = summary.stamp.memberAgesS;
   entries.push({

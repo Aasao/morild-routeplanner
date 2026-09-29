@@ -24,6 +24,10 @@ describe("resolveRoute", () => {
     expect(resolveRoute("/proxy/metalerts")).toEqual({ kind: "metalerts" });
   });
 
+  it("kjenner igjen /proxy/oceanforecast (punktbolge.md §3)", () => {
+    expect(resolveRoute("/proxy/oceanforecast")).toEqual({ kind: "oceanforecast" });
+  });
+
   it("gir not-found for ukjente stier", () => {
     expect(resolveRoute("/ukjent")).toEqual({ kind: "not-found" });
     expect(resolveRoute("/")).toEqual({ kind: "not-found" });

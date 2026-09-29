@@ -94,6 +94,40 @@ describe("classifyMember — tabellen i §3.2 (rekkefølgen er bindende)", () =>
     expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning" });
   });
 
+  it("verktøyfeil maskeres ikke av partial dekning (§19 2026-09-29: fyllverdi-medlem, startnode avvist av båtgrenser)", () => {
+    const result = makeRouteResult({
+      abortReason: "noExpandableLabels",
+      coverage: { weather: "partial" },
+      safety: { reachesDestination: false },
+      diagnostics: {
+        iterations: 1,
+        termination: { kind: "exhausted" },
+        pruned: { hardConstraintBoatLimits: 1, hardConstraint: 1, noWeather: 0, bound: 0 },
+      },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "error" });
+  });
+
+  it("ekte dekning uendret: partial + noWeather > 0 + noExpandableLabels ⇒ fortsatt «dekning»", () => {
+    const result = makeRouteResult({
+      abortReason: "noExpandableLabels",
+      coverage: { weather: "partial" },
+      safety: { reachesDestination: false },
+      diagnostics: { pruned: { noWeather: 4, noWeatherInWindow: 0 } },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning" });
+  });
+
+  it("ventilen uendret: verktøygrunn + partial + bound-beskjæring ⇒ ikke error (dekning først, som før)", () => {
+    const result = makeRouteResult({
+      abortReason: "noExpandableLabels",
+      coverage: { weather: "partial" },
+      safety: { reachesDestination: false },
+      diagnostics: { pruned: { bound: 2 } },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning" });
+  });
+
   it("outsideDomain uten mål ⇒ error (D9.2)", () => {
     const result = makeRouteResult({ abortReason: "outsideDomain", safety: { reachesDestination: false } });
     expect(classifyMember(result).kind).toBe("error");

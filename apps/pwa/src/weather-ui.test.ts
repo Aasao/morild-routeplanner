@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatElapsed, renderControlResult, renderEnsembleSummary } from "./weather-ui.js";
+import { summarizeDeparture, WAVE_GREEN_CAP_STAMP, type RobustnessStamp } from "@morild/robustness";
+import { formatElapsed, renderControlResult, renderDepartureText, renderEnsembleSummary } from "./weather-ui.js";
 import { summarizeEnsemble, type MemberOutcome } from "./weather/ensemble.js";
 
 /** Minimal element-attrapp — render-funksjonene setter bare `textContent`. */
@@ -52,5 +53,41 @@ describe("renderEnsembleSummary med tidsmåling", () => {
     const control = el();
     renderControlResult(control, outcomes[0]!);
     expect(control.textContent).not.toContain("Beregnet på");
+  });
+});
+
+describe("renderDepartureText — utelatte vindmedlemmer (vaerpakker.md §19 2026-09-29)", () => {
+  const stamp: RobustnessStamp = {
+    maskVersion: "m",
+    packageId: "p",
+    packageInitEpochS: 0,
+    memberAgesS: [],
+    optionsHash: "o",
+    estimator: "naermeste-rang-v1",
+    thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
+    waveGreenCap: WAVE_GREEN_CAP_STAMP,
+    wavePeriodKnown: false,
+    wavePoints: null,
+  };
+  function departure(s: RobustnessStamp) {
+    return summarizeDeparture({
+      departEpochS: 0,
+      control: { memberIndex: 0, kind: "error", summary: null, error: "x" },
+      members: [],
+      expectedMembers: 23,
+      thresholds: [],
+      stamp: s,
+    });
+  }
+
+  it("sier «n av N» og hvilke medlemmer som mangler", () => {
+    const text = renderDepartureText(
+      departure({ ...stamp, windMembers: { withData: 24, nominal: 30, missing: [9, 10, 11, 24, 25, 26] } }),
+    );
+    expect(text).toContain("Vinddata: 24 av 30 medlemmer — utelatt uten brukbare data: 9, 10, 11, 24, 25, 26.");
+  });
+
+  it("ingen tekst når alle har data", () => {
+    expect(renderDepartureText(departure(stamp))).not.toContain("Vinddata:");
   });
 });

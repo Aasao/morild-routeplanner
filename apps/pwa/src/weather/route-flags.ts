@@ -49,12 +49,19 @@ export function collectRouteStepFlagNames(result: RouteResult): readonly string[
  * el.l.) — det ville vist seg som en feilet kjøring, ikke som "et flagg på
  * en ellers vellykket rute".
  */
-export function missingFieldFlags(fieldStatuses: readonly FieldPresenceStatus[]): readonly DisplayFlag[] {
+export function missingFieldFlags(
+  fieldStatuses: readonly FieldPresenceStatus[],
+  opts: { readonly wavePointsInUse?: boolean } = {},
+): readonly DisplayFlag[] {
   const nonWind = (f: FieldPresenceStatus): f is FieldPresenceStatus & { readonly field: Exclude<KnownField, "wind"> } =>
     f.field !== "wind";
   return fieldStatuses
     .filter(nonWind)
     .filter((f) => !f.present)
+    // Punktbølge (punktbolge.md): bølge kommer da fra proxyen, ikke pakken —
+    // «bølger mangler i pakken» ville vært utdatert. Punktbølgens egen status
+    // (buffer, mangler, degradert) vises av `wave-text.ts`.
+    .filter((f) => !(f.field === "waves" && opts.wavePointsInUse === true))
     .map((f) => ({
       code: `${f.field.toUpperCase()}_DATA_MANGLER`,
       label: `${FIELD_LABEL_NO[f.field]}-data mangler i pakken (ingen felt lastet ned for dette området/tidsvinduet)`,
@@ -62,14 +69,31 @@ export function missingFieldFlags(fieldStatuses: readonly FieldPresenceStatus[])
     }));
 }
 
+/**
+ * `coverage.weather === "partial"` har to ulike årsaker som ikke må blandes
+ * (§19 2026-09-29): (a) søket forkastet etiketter fordi værfeltet tok slutt
+ * i tid eller manglet i rom (`diagnostics.pruned.noWeather > 0`) — horisont/
+ * tidsvindu; (b) strøm og/eller bølge manglet i deler av søkeområdet eller
+ * langs ruten, uten at noe ble forkastet for manglende vær. Før fikk (b)
+ * teksten for (a), som er usant — det var ingen horisont som tok slutt.
+ */
 export function coverageFlags(result: RouteResult): readonly DisplayFlag[] {
   const flags: DisplayFlag[] = [];
   if (result.coverage.weather === "partial") {
-    flags.push({
-      code: "VAER_DEKNING_PARTIAL",
-      label: "Værfeltet tok slutt før ruten var ferdig beregnet — inkonklusiv, ikke ugjennomførbar (ADR-0005)",
-      severity: "warning",
-    });
+    flags.push(
+      result.diagnostics.pruned.noWeather > 0
+        ? {
+            code: "VAER_DEKNING_PARTIAL",
+            label: "Værfeltet tok slutt før ruten var ferdig beregnet — inkonklusiv, ikke ugjennomførbar (ADR-0005)",
+            severity: "warning",
+          }
+        : {
+            code: "VAER_DEKNING_DELVIS_FELT",
+            label:
+              "Strøm og/eller bølge mangler i deler av søkeområdet eller langs ruten — inkonklusiv, ikke ugjennomførbar (ADR-0005)",
+            severity: "warning",
+          },
+    );
   }
   if (result.coverage.mask !== "full") {
     flags.push({
@@ -97,6 +121,12 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
   // Ordlyd låst i docs/specs/strom-produsent.md §4b (D15.2). Aldri en nøyaktighet i meter.
   STROM_KYSTSONE:
     "Strøm nær land: verdien er lånt fra nærmeste sjøcelle i 800 m-modellen — retningen kan være upålitelig eller komme fra feil side i trange sund.",
+  // punktbolge.md §4: avstandskategori til nærmeste bølge-varselpunkt.
+  BOLGE_PUNKT_KATEGORI_UNDER_5NM: "Bølge fra punktvarsel: nærmeste varselpunkt under 5 nm unna",
+  BOLGE_PUNKT_KATEGORI_5_20NM:
+    "Bølge fra punktvarsel: nærmeste varselpunkt 5–20 nm unna et sted langs ruten — bølgen der er et anslag fra et annet sted",
+  BOLGE_PUNKT_KATEGORI_OVER_20NM:
+    "Bølge fra punktvarsel: nærmeste varselpunkt over 20 nm unna et sted langs ruten — bølgen der er ikke representativ",
 };
 
 /**
@@ -121,6 +151,9 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
  * | `SJOEGANG_DATA_MANGLER`          | warning | Bølgedata manglet i punktet, klaringskravet falt tilbake til statisk margin — eksplisitt datamangel som IKKE later som marginen er dekket (N2). |
  * | `STROM_DATA_MANGLER`             | warning | Strøm manglet i sluttetappens miljøoppslag (D15.1 d-min) — datamangel, `coverage.weather` er da også `"partial"`. |
  * | `STROM_KYSTSONE`                 | warning | Strømverdien er kystnær/lånt fra nærmeste sjøcelle (D15.2) — retningen kan være gal i trange sund. Datakvalitet med direkte betydning for om strømbidraget kan stoles på. |
+ * | `BOLGE_PUNKT_KATEGORI_UNDER_5NM` | info    | Bølgen kommer fra et varselpunkt under 5 nm unna — normaltilstanden for punktbølge (punktbolge.md §4). Periodens ukjenthet sies i bølgeteksten, ikke her. |
+ * | `BOLGE_PUNKT_KATEGORI_5_20NM`    | warning | Varselpunktet er 5–20 nm unna: bølgen i steget er lånt fra et annet sted — datakvalitet med betydning for bølgebidraget. |
+ * | `BOLGE_PUNKT_KATEGORI_OVER_20NM` | warning | Som over, lenger unna. (Med D16.2s 10 nm-grense blir bølgen da `undefined`; kategorien vises likevel.) |
  * | `VAERDEKNING_BEGRENSET`          | warning | **Rute-nivå** (D7.2, `reconstruct.ts`): søket forkastet etiketter fordi værfeltet manglet data i posisjonen INNENFOR pakkens tidsvindu — altså et hull i flisdekningen. Ruten kan være styrt av dekningen i stedet for av været, og `safety.verdict` gulves derfor til minst `"usikkert"`. Datamangel med direkte konsekvens for om ruten kan garanteres — warning. |
  *
  * Ukjente/fremtidige flaggnavn (ikke i tabellen) klassifiseres `"warning"`
@@ -140,6 +173,9 @@ const STEP_FLAG_SEVERITY: Record<string, "info" | "warning"> = {
   VAERDEKNING_BEGRENSET: "warning",
   STROM_DATA_MANGLER: "warning",
   STROM_KYSTSONE: "warning",
+  BOLGE_PUNKT_KATEGORI_UNDER_5NM: "info",
+  BOLGE_PUNKT_KATEGORI_5_20NM: "warning",
+  BOLGE_PUNKT_KATEGORI_OVER_20NM: "warning",
 };
 
 export function displayFlagsForStepFlag(name: string): DisplayFlag {
@@ -158,11 +194,13 @@ export function displayFlagsForStepFlag(name: string): DisplayFlag {
 export function allDisplayFlags(
   result: RouteResult,
   fieldStatuses: readonly FieldPresenceStatus[],
+  opts: { readonly wavePointsInUse?: boolean; readonly extra?: readonly DisplayFlag[] } = {},
 ): readonly DisplayFlag[] {
   const all = [
     ...collectRouteFlagNames(result).map(displayFlagsForStepFlag),
     ...collectRouteStepFlagNames(result).map(displayFlagsForStepFlag),
-    ...missingFieldFlags(fieldStatuses),
+    ...missingFieldFlags(fieldStatuses, opts),
+    ...(opts.extra ?? []),
     ...coverageFlags(result),
   ];
   const seen = new Set<string>();

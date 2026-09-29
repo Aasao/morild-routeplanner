@@ -122,6 +122,18 @@ export interface WeatherField {
   currentCoastal?(lat: number, lon: number, epochS: number): boolean;
 
   /**
+   * **Avstand til nærmeste bølge-varselpunkt** i nm (`docs/specs/
+   * punktbolge.md` §3, D16.2), for punktbølge fra Oceanforecast via
+   * Worker-proxyen. Avstanden gjelder uansett om punktet er innenfor
+   * oppslagsgrensen — den er diagnostikk, ikke data. `undefined` når feltet
+   * ikke har punktbølge eller ingen punkter med data.
+   *
+   * **Kun rapportering.** Rekonstruksjonen setter
+   * `BOLGE_PUNKT_KATEGORI_*` per steg; søk, kost og derating leser den aldri.
+   */
+  wavePointDistanceNm?(lat: number, lon: number): number | undefined;
+
+  /**
    * Konservative maksverdier over hele feltet — grunnlag for Vmax/Tub.
    *
    * **Regnes på de DEKODEDE verdiene** (`docs/specs/vaerpakker.md` §9.5):

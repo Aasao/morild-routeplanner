@@ -10,6 +10,7 @@ export type Route =
   | { readonly kind: "pointer"; readonly name: string }
   | { readonly kind: "blob"; readonly key: string }
   | { readonly kind: "metalerts" }
+  | { readonly kind: "oceanforecast" }
   | { readonly kind: "not-found" };
 
 const POINTER_PREFIX = "/pointer/";
@@ -27,6 +28,9 @@ export function resolveRoute(pathname: string): Route {
   }
   if (pathname === "/proxy/metalerts") {
     return { kind: "metalerts" };
+  }
+  if (pathname === "/proxy/oceanforecast") {
+    return { kind: "oceanforecast" };
   }
   return { kind: "not-found" };
 }

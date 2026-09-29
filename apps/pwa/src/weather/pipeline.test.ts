@@ -399,7 +399,12 @@ describe("runWeatherPipeline — pointer→cache→dekode→planRoute, ende til 
     // Bølgedata mangler helt i pakken ⇒ ruten viser også motorens EGET
     // per-punkt-flagg for at klaringskravet falt tilbake til standardmarginen.
     expect(flags.some((f) => f.code === "SJOEGANG_DATA_MANGLER")).toBe(true);
-    expect(flags.some((f) => f.code === "VAER_DEKNING_PARTIAL")).toBe(true);
+    // §19 2026-09-29: ingen etikett forkastet for manglende vær (feltet tok
+    // ikke slutt) — partial skyldes strøm/bølge, og teksten sier det, ikke
+    // «værfeltet tok slutt».
+    expect(control.result!.diagnostics.pruned.noWeather).toBe(0);
+    expect(flags.some((f) => f.code === "VAER_DEKNING_DELVIS_FELT")).toBe(true);
+    expect(flags.some((f) => f.code === "VAER_DEKNING_PARTIAL")).toBe(false);
 
     expect(captured.metalerts?.relevant).toEqual([]);
 

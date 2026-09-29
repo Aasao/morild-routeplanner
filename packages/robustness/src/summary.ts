@@ -10,8 +10,11 @@
 import { computeFeasibleEstimates } from "./estimators.js";
 import type { MemberOutcome, MemberSummary } from "./outcome.js";
 import {
+  capForUnknownPeriod,
   computeFeasibleShareBounds,
   computeTrafficLight,
+  WAVE_GREEN_CAP_HS_M,
+  WAVE_GREEN_CAP_STATUS,
   type Certificate,
   type FeasibleShareBounds,
   type ThresholdRate,
@@ -30,7 +33,34 @@ export interface RobustnessStamp {
   readonly estimator: "naermeste-rang-v1";
   /** Provisoriske (DA6) — se §4.2.3, §5.4. */
   readonly thresholds: { readonly gronn: 0.9; readonly rod: 0.7; readonly inkonklusiv: 0.2; readonly konkordans: 0.75 };
+  /**
+   * Bølge-taket (`docs/specs/punktbolge.md` §4.1): 1,0 m, stemplet
+   * «foreløpig, ikke verifisert mot NORA3» — samme status som tersklene
+   * over, men bevisst ikke en av dem (ikke en rad i tabellen).
+   */
+  readonly waveGreenCap: { readonly hsM: typeof WAVE_GREEN_CAP_HS_M; readonly status: typeof WAVE_GREEN_CAP_STATUS };
+  /** Har bølgekilden periode? Oceanforecast: nei (D14.1). Styrer taket. */
+  readonly wavePeriodKnown: boolean;
+  /**
+   * Det fryste punktbølgesettet kjøringen brukte (ADR-0007): samme `hash`
+   * for kontroll, alle medlemmer og perturbasjon. `null` = ingen punktbølge
+   * (frakoblet uten buffer, proxy feilet, eller ikke hentet).
+   */
+  readonly wavePoints: { readonly hash: string; readonly fetchedAtEpochS: number } | null;
+  /**
+   * Vindmedlemmer med brukbare data av det produsenten kjente til, kontrollen
+   * inkludert (`docs/specs/vaerpakker.md` §19 2026-09-29: fyllverdi-medlemmer
+   * utelates). `expectedMembers` er nevneren for skrankene (medlemmer MED
+   * data); dette feltet gjør «n av N» synlig. Utelatt = ukjent (eldre kallere).
+   */
+  readonly windMembers?: { readonly withData: number; readonly nominal: number; readonly missing: readonly number[] };
 }
+
+/** Stempelets bølge-tak (§4.1) — én konstant, så ingen kaller skriver tallet selv. */
+export const WAVE_GREEN_CAP_STAMP: RobustnessStamp["waveGreenCap"] = Object.freeze({
+  hsM: WAVE_GREEN_CAP_HS_M,
+  status: WAVE_GREEN_CAP_STATUS,
+});
 
 export interface DepartureSummary {
   readonly departEpochS: number;
@@ -71,6 +101,8 @@ export interface DepartureSummary {
   readonly thresholds: readonly { readonly id: string; readonly k: number; readonly n: number }[];
   readonly light: TrafficLight;
   readonly certificate: Certificate | null;
+  /** Maks Hs over kontrollens steg og alle gjennomførbare medlemmer — grunnlaget for bølge-taket (§4.1). */
+  readonly maxHsM: number;
   readonly stamp: RobustnessStamp;
 }
 
@@ -125,7 +157,7 @@ export function summarizeDeparture(input: SummarizeDepartureInput): DepartureSum
   }));
   const thresholdRates: readonly ThresholdRate[] = thresholds;
 
-  const { light, certificate } = computeTrafficLight({
+  const table = computeTrafficLight({
     complete,
     expectedMembers: input.expectedMembers,
     nF,
@@ -136,6 +168,19 @@ export function summarizeDeparture(input: SummarizeDepartureInput): DepartureSum
     inconclusiveShare,
     thresholdRates,
   });
+  // Bølge-taket (punktbolge.md §4.1) ETTER §4.2.3-tabellen og D10.4-
+  // sertifikatene: kan bare hindre grønt. `maxHsM` over kontrollens steg
+  // og alle gjennomførbare medlemmer.
+  const maxHsM = Math.max(
+    input.control.summary?.maxHsM ?? 0,
+    ...feasible.map((m) => m.summary?.maxHsM ?? 0),
+  );
+  const light = capForUnknownPeriod(table.light, {
+    maxHsM,
+    periodKnown: input.stamp.wavePeriodKnown,
+    capHsM: input.stamp.waveGreenCap.hsM,
+  });
+  const certificate = table.certificate;
 
   return {
     departEpochS: input.departEpochS,
@@ -162,6 +207,7 @@ export function summarizeDeparture(input: SummarizeDepartureInput): DepartureSum
     thresholds,
     light,
     certificate,
+    maxHsM,
     stamp: input.stamp,
   };
 }

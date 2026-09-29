@@ -16,6 +16,9 @@ const STAMP: RobustnessStamp = {
   optionsHash: "test-hash",
   estimator: "naermeste-rang-v1",
   thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
+  waveGreenCap: { hsM: 1.0, status: "foreløpig, ikke verifisert mot NORA3" },
+  wavePeriodKnown: false,
+  wavePoints: null,
 };
 
 function makeSummary(overrides: Partial<MemberSummary> = {}): MemberSummary {
@@ -35,6 +38,7 @@ function makeSummary(overrides: Partial<MemberSummary> = {}): MemberSummary {
     safetyVerdict: "trygt",
     coverageWeather: "full",
     prunedBound: 0,
+    maxHsM: 0,
     tubBoundS: null,
     hourlyTrack: [],
     ...overrides,

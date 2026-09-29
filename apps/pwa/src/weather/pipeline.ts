@@ -30,7 +30,7 @@ import {
   OPEN_EDGE_GATE,
   type DistanceField,
 } from "@morild/routing";
-import { windMemberLayersFromBytes } from "@morild/weather";
+import { WAVE_POINTS_MAX, windMemberLayersFromBytes } from "@morild/weather";
 import type { AppConfig } from "./config.js";
 import { loadWeatherPointer, type PointerLoadResult } from "./pointer-client.js";
 import { loadWeatherBlob } from "./blob-client.js";
@@ -41,6 +41,7 @@ import {
   acceptTileHeader,
   CURRENT_COASTAL_FIELD,
   CURRENT_FIELD,
+  windMemberRejectionText,
   type TileRejection,
 } from "./tile-certificate.js";
 import { fieldPresenceStatuses, type FieldPresenceStatus } from "./field-status.js";
@@ -53,7 +54,9 @@ import {
   type WorkerFactory,
   type EnsembleContext,
 } from "./ensemble.js";
-import type { RobustnessStamp } from "@morild/robustness";
+import { WAVE_GREEN_CAP_STAMP, type RobustnessStamp } from "@morild/robustness";
+import { wavePointGrid, type WavePointGrid } from "./wave-point-grid.js";
+import { frozenSet, loadWavePoints, type WavePointLoad } from "./wave-points-client.js";
 import { fetchMetAlerts, type MetAlertsLoadResult } from "./metalerts-client.js";
 import { filterAlertsForRoute, type RelevantAlert } from "./metalerts.js";
 import type { PointerFieldEntry, PointerTileEntry } from "./pointer-types.js";
@@ -78,6 +81,12 @@ export interface PipelineDeps {
   /** Be om bail-out-profil etter kontrollen (§4.5). Av i tester uten havnebok. */
   readonly bailout?: boolean | undefined;
   readonly nowEpochS: number;
+  /**
+   * Er `cacheStorage` ekte Cache Storage (overlever sideinnlasting)? `false`
+   * når appen kjører på minnecachen (usikker kontekst) — punktbølgens
+   * klientbuffer sier det da ærlig. Udefinert ⇒ antatt `true`.
+   */
+  readonly persistentCache?: boolean | undefined;
 }
 
 export interface PipelineCallbacks {
@@ -95,6 +104,12 @@ export interface PipelineCallbacks {
     statuses: readonly FieldPresenceStatus[],
     tiles: readonly PointerTileEntry[],
   ) => void;
+  /**
+   * Punktbølgen (`docs/specs/punktbolge.md`): hentet ÉN gang før kontrollen
+   * og fryst for hele kjøringen. Kalles også når bølge mangler — da med
+   * grunnen (`kind: "mangler"`), aldri stille.
+   */
+  readonly onWavePoints?: (load: WavePointLoad, grid: WavePointGrid) => void;
   /** `memberCount` = antall ensemblemedlemmer UTEN kontrollen som skal kjøres etterpå (nettbrett-målingens nevner). */
   readonly onControlResult?: (outcome: MemberOutcome, memberCount: number) => void;
   readonly onMemberResult?: EnsembleCallbacks["onMemberResult"];
@@ -154,9 +169,14 @@ function routeDistanceField(): DistanceField | undefined {
 }
 
 export interface TileScreening {
-  /** Fliser der ALLE vind-oppføringer har gyldig sertifikat uten klipping. */
+  /**
+   * Fliser der kontrollens vind har gyldig sertifikat uten klipping. Avviste
+   * vindmedlemmer (≠ 0) er fjernet fra ALLE fliser — se `excludedWindMembers`.
+   */
   readonly tiles: readonly PointerTileEntry[];
   readonly rejections: readonly TileRejection[];
+  /** Vindmedlemmer (≠ 0) avvist av sertifikat-/plausibilitetssjekken, stigende. */
+  readonly excludedWindMembers: readonly number[];
 }
 
 /**
@@ -165,15 +185,22 @@ export interface TileScreening {
  * klipping — brukes ikke. Avvisningen skjer FØR nedlasting, og grunnen
  * bæres ut til UI-et; en flis forsvinner aldri stille.
  *
- * Avvisningen er per felt-oppføring (flis × felt × medlem), men rammer hele
- * flisen: motoren får ett sammensydd felt, og en flis der ett medlem ikke er
- * sertifisert er ikke en flis vi kan si noe verifisert om.
+ * Avvisningen er per felt-oppføring (flis × felt × medlem). **Vind avvises
+ * per medlem** (§19 2026-09-29): et ikke-kontroll-medlem med ugyldig/umulig
+ * sertifikat tas ut av ensemblet i ALLE fliser (et medlem er ett sammensydd
+ * felt — halvt medlem finnes ikke), og nevneren blir synlig færre. Før ble
+ * hele flisen avvist, slik at seks fyllverdi-medlemmer ville tatt med seg
+ * alle de 24 friske. **Kontrollens** avvisning fjerner fortsatt flisen: uten
+ * kontroll finnes ingen referanse å si noe verifisert om i den flisen.
+ * Andre felt enn vind/strøm avviser også hele flisen, som før.
  */
 export function screenTiles(tiles: readonly PointerTileEntry[]): TileScreening {
   const accepted: PointerTileEntry[] = [];
   const rejections: TileRejection[] = [];
+  const excludedWind = new Set<number>();
   for (const tile of tiles) {
     let tileOk = true;
+    const tileExcludedWind: number[] = [];
     // Strøm og kystmaske (strom-produsent.md) screenes for seg: et avvist
     // strømlag fjerner STRØMMEN fra flisen (⇒ `current()` undefined ⇒ delvis
     // dekning, synlig), ikke hele flisen. Strøm uten kystmaske brukes ikke:
@@ -204,23 +231,63 @@ export function screenTiles(tiles: readonly PointerTileEntry[]): TileScreening {
       if (entry.field === CURRENT_FIELD || entry.field === CURRENT_COASTAL_FIELD) continue;
       const verdict = acceptTileHeader(entry.header);
       if (!verdict.accepted) {
-        tileOk = false;
+        const memberOnly = entry.field === "wind" && entry.member !== 0;
+        if (memberOnly) tileExcludedWind.push(entry.member);
+        else tileOk = false;
         rejections.push({
           tileId: tile.tileId,
           field: entry.field,
           member: entry.member,
-          reason: verdict.reason,
+          reason: memberOnly ? windMemberRejectionText(entry.member, verdict.reason) : verdict.reason,
         });
       }
     }
     if (!tileOk) continue;
+    for (const m of tileExcludedWind) excludedWind.add(m);
     accepted.push(
       currentOk || currentEntries.length === 0
         ? tile
         : { ...tile, fields: tile.fields.filter((f) => f.field !== CURRENT_FIELD && f.field !== CURRENT_COASTAL_FIELD) },
     );
   }
-  return { tiles: accepted, rejections };
+  const tilesOut =
+    excludedWind.size === 0
+      ? accepted
+      : accepted.map((tile) => ({
+          ...tile,
+          fields: tile.fields.filter((f) => !(f.field === "wind" && excludedWind.has(f.member))),
+        }));
+  return { tiles: tilesOut, rejections, excludedWindMembers: [...excludedWind].sort((a, b) => a - b) };
+}
+
+/** «n av N» for vind (§19 2026-09-29), kontrollen inkludert i begge tall. */
+export interface WindMemberCensus {
+  /** Medlemmer produsenten kjente til: i pekeren ELLER meldt utelatt i `missingFields`. */
+  readonly nominal: number;
+  /** Medlemmer med brukbare vinddata etter screeningen. */
+  readonly withData: number;
+  /** Medlemmer uten brukbare data (produsent-utelatt eller klient-avvist), stigende. */
+  readonly missingMembers: readonly number[];
+}
+
+/**
+ * Teller vindmedlemmene ærlig: nevneren er det produsenten kjente til
+ * (`selected`, før screening — inkl. `missingFields` med `member`), ikke
+ * bare det som overlevde. Da blir «24 av 30» synlig i stedet for «24».
+ */
+export function windMemberCensus(
+  selected: readonly PointerTileEntry[],
+  screened: readonly PointerTileEntry[],
+): WindMemberCensus {
+  const known = new Set<number>();
+  for (const tile of selected) {
+    for (const f of tile.fields) if (f.field === "wind") known.add(f.member);
+    for (const m of tile.missingFields ?? []) if (m.field === "wind" && m.member !== undefined) known.add(m.member);
+  }
+  const withData = new Set<number>();
+  for (const tile of screened) for (const f of tile.fields) if (f.field === "wind") withData.add(f.member);
+  const missingMembers = [...known].filter((m) => !withData.has(m)).sort((a, b) => a - b);
+  return { nominal: known.size, withData: withData.size, missingMembers };
 }
 
 /** Flisens delte strøm + kystmaske, lastet én gang og delt av alle medlemmene. */
@@ -292,11 +359,19 @@ export interface EnsembleInputs {
   readonly packageInit: string;
   /** Delt strøm + kystmaske per flis — perturbasjonsfasen legger dem på igjen. */
   readonly currentByTile: ReadonlyMap<string, TileCurrentSource>;
+  /** Punktbølgen slik den ble hentet — settet (om noe) ligger fryst på hver jobb. */
+  readonly waveLoad: WavePointLoad;
+  readonly waveGrid: WavePointGrid;
+  /** «n av N» vindmedlemmer med brukbare data (§19 2026-09-29). */
+  readonly windMembers: WindMemberCensus;
 }
 
 export async function prepareEnsembleInputs(
-  deps: Pick<PipelineDeps, "config" | "fetchImpl" | "cacheStorage" | "nowEpochS">,
-  callbacks: Pick<PipelineCallbacks, "onPointerStatus" | "onTileSelection" | "onFieldStatuses" | "onError"> = {},
+  deps: Pick<PipelineDeps, "config" | "fetchImpl" | "cacheStorage" | "nowEpochS" | "persistentCache">,
+  callbacks: Pick<
+    PipelineCallbacks,
+    "onPointerStatus" | "onTileSelection" | "onFieldStatuses" | "onWavePoints" | "onError"
+  > = {},
 ): Promise<EnsembleInputs | null> {
   const pointerResult = await loadWeatherPointer(deps.config, {
     fetchImpl: deps.fetchImpl,
@@ -316,11 +391,8 @@ export async function prepareEnsembleInputs(
   // D7.2: flissettet kommer fra A*-feltets rekkevidde, ikke fra
   // endepunkt-bboksen. `selectTilesForRoute` faller selv tilbake på
   // bbox + 0,5° hvis feltet ikke kunne bygges.
-  const selection = selectTilesForRoute(
-    pointerResult.pointer,
-    points,
-    routeDistanceField(),
-  );
+  const field = routeDistanceField();
+  const selection = selectTilesForRoute(pointerResult.pointer, points, field);
   const screened = screenTiles(selection.tiles);
   callbacks.onTileSelection?.(selection, screened.rejections);
 
@@ -337,6 +409,7 @@ export async function prepareEnsembleInputs(
     return null;
   }
 
+  const windMembers = windMemberCensus(selection.tiles, tiles);
   const byMember = windEntriesByMember(tiles);
   const controlSources = byMember.get(0);
   if (controlSources === undefined || controlSources.length === 0) {
@@ -349,12 +422,16 @@ export async function prepareEnsembleInputs(
   const controlBlobs = await Promise.all(
     controlSources.map((s) => loadWeatherBlob(deps.config, s.entry.key, blobDeps)),
   );
-  // Pragmatisk MVP-valg (fase 3 bølge 2C, ikke spec-låst): avgangstidspunktet
-  // settes til feltets FØRSTE tidssteg — lest fra FØRSTE flis' kontroll-
-  // buffer (fliser fra samme pakkebygg deler `t0S` i praksis, §7/§5). En
-  // ekte "velg avgangstidspunkt"-UI er fase 4/5s avgangstabell, ikke denne
-  // bølgens ansvar.
-  const departEpochS = windMemberLayersFromBytes(new Uint8Array(controlBlobs[0]!.buffer)).u.layer.geometry.t0S;
+  // Pragmatisk MVP-valg (fase 3 bølge 2C, ikke spec-låst): avgang = den
+  // SENESTE av feltets første tidssteg (lest fra første flis' kontrollbuffer;
+  // fliser fra samme bygg deler `t0S`, §7/§5) og nåtid rundet opp til hel
+  // time. Før 2026-09-29 var avgangen alltid `t0S` — typisk 3–8 t i fortiden
+  // når pakken er noen timer gammel. Med punktbølge (Oceanforecast starter
+  // ved nåtid) ga det bølgeløse første timer og dermed «partial» for ALLE
+  // medlemmer. Ingen planlegger en avgang i fortiden. En ekte «velg
+  // avgangstidspunkt»-UI er fase 4/5s avgangstabell.
+  const windT0S = windMemberLayersFromBytes(new Uint8Array(controlBlobs[0]!.buffer)).u.layer.geometry.t0S;
+  const departEpochS = Math.max(windT0S, Math.ceil(deps.nowEpochS / 3600) * 3600);
   const currentByTile = await loadCurrentByTile(
     tiles,
     async (key) => (await loadWeatherBlob(deps.config, key, blobDeps)).buffer,
@@ -373,12 +450,27 @@ export async function prepareEnsembleInputs(
     ),
   );
 
+  // Punktbølgen (punktbolge.md §3, ADR-0007): ÉN henting, FØR kontrollen,
+  // over samme korridor som flisvalget (samme A*-felt). Settet fryses her og
+  // legges som samme objekt på hver jobb — kontroll, medlemmer, orakel og
+  // (via kontrolljobben) perturbasjon. Ingen nye kall under kjøringen.
+  const waveGrid = wavePointGrid(field, points);
+  const waveLoad = await loadWavePoints(deps.config, waveGrid.points, WAVE_POINTS_MAX, {
+    fetchImpl: deps.fetchImpl,
+    cacheStorage: deps.cacheStorage,
+    persistentBuffer: deps.persistentCache !== false,
+  });
+  callbacks.onWavePoints?.(waveLoad, waveGrid);
+  const wavePoints = frozenSet(waveLoad);
+  const waveJobPart = wavePoints === undefined ? {} : { wavePoints };
+
   const jobs: MemberJob[] = [
     {
       memberIndex: 0,
       isControl: true,
       tiles: controlTiles,
       departEpochS,
+      ...waveJobPart,
     },
     ...memberIndices.map((memberIndex, i) => ({
       memberIndex,
@@ -390,6 +482,7 @@ export async function prepareEnsembleInputs(
         ),
       ),
       departEpochS,
+      ...waveJobPart,
     })),
   ];
 
@@ -406,6 +499,14 @@ export async function prepareEnsembleInputs(
     optionsHash: "route-options-default-v1",
     estimator: "naermeste-rang-v1",
     thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
+    // punktbolge.md §4.1: taket 1,0 m stemplet «foreløpig»; Oceanforecast har
+    // ingen periode (D14.1). Settets hash/tid stemples (fryseregelen).
+    waveGreenCap: WAVE_GREEN_CAP_STAMP,
+    wavePeriodKnown: false,
+    wavePoints: wavePoints === undefined ? null : { hash: wavePoints.hash, fetchedAtEpochS: wavePoints.fetchedAtEpochS },
+    // Nevneren «expectedMembers» under er medlemmene MED data; stempelet
+    // bærer i tillegg hvor mange produsenten kjente til, så UI kan si «n av N».
+    windMembers: { withData: windMembers.withData, nominal: windMembers.nominal, missing: windMembers.missingMembers },
   };
   const context: EnsembleContext = { expectedMembers: memberIndices.length, departEpochS, stamp };
   const currentHashes = tiles.flatMap((t) =>
@@ -422,6 +523,9 @@ export async function prepareEnsembleInputs(
     blobHashes,
     packageInit: controlSources[0]!.entry.header.init,
     currentByTile,
+    waveLoad,
+    waveGrid,
+    windMembers,
   };
 }
 

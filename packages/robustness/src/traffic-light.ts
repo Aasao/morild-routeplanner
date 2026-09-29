@@ -34,6 +34,13 @@ export type TrafficLightReason =
    * ikke fram — for få til å tallfeste».
    */
   | "tynt-grunnlag"
+  /**
+   * Bølge-taket (`docs/specs/punktbolge.md` §4.1, D16.3/D14.1): ville vært
+   * grønt, men Hs over `WAVE_GREEN_CAP_HS_M` og bølgeperioden er ukjent —
+   * kort, bratt vindsjø kan ikke utelukkes. Settes kun av
+   * `capForUnknownPeriod`, aldri av tabellen i §4.2.3.
+   */
+  | "bolgeperiode-ukjent"
   | null;
 
 export interface TrafficLight {
@@ -236,4 +243,41 @@ export function computeTrafficLight(input: TrafficLightInput): TrafficLightResul
     return { light: mkLight(certificate.color, certificate.reason, kOfN), certificate };
   }
   return { light: mkLight("beregner", null, kOfN), certificate: null };
+}
+
+/**
+ * Hs-grensen for bølge-taket (D16.3 (t1), vedtatt 2026-09-29). **Foreløpig,
+ * ikke verifisert mot NORA3** — samme status som 0,9/0,7/0,2, og stemplet
+ * slik i `RobustnessStamp.waveGreenCap`. Ikke en rad i terskeltabellen
+ * (D11.4-lærdommen): taket er en egen, etterfølgende cap.
+ */
+export const WAVE_GREEN_CAP_HS_M = 1.0;
+export const WAVE_GREEN_CAP_STATUS = "foreløpig, ikke verifisert mot NORA3" as const;
+
+export interface UnknownPeriodCapInput {
+  /** Maks Hs over alle steg i kontrollen og alle gjennomførbare medlemmer. */
+  readonly maxHsM: number;
+  /** Har bølgekilden periode? Oceanforecast har det ikke (D14.1) ⇒ `false`. */
+  readonly periodKnown: boolean;
+  /** Taket, normalt `WAVE_GREEN_CAP_HS_M` (lest fra stempelet). */
+  readonly capHsM: number;
+}
+
+/**
+ * **Bølge-taket på trafikklyset** (`docs/specs/punktbolge.md` §4.1).
+ * Anvendes ETTER §4.2.3-tabellen og D10.4-sertifikatene:
+ * `farge = strengeste(farge, tak)`, der taket er gult når
+ * `maxHsM > capHsM` og perioden er ukjent — ellers ingen begrensning.
+ *
+ * Kan bare hindre grønt: gult og rødt returneres uendret (rødt mykes
+ * aldri), og «beregner» røres ikke (taket gjelder en ferdig farge).
+ * `maxHsM` som ikke er et endelig tall behandles konservativt som over
+ * taket — et tall vi ikke kan lese, skal ikke gi grønt.
+ */
+export function capForUnknownPeriod(light: TrafficLight, input: UnknownPeriodCapInput): TrafficLight {
+  if (light.color !== "gronn") return light;
+  if (input.periodKnown) return light;
+  const over = !Number.isFinite(input.maxHsM) || input.maxHsM > input.capHsM;
+  if (!over) return light;
+  return mkLight("gul", "bolgeperiode-ukjent", light.kOfN);
 }

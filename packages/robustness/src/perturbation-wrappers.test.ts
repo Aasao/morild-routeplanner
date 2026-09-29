@@ -59,4 +59,17 @@ describe("withCurrentScale (§4.4)", () => {
     expect(w.maxDecodeErrorKnAt?.(58, 10, 0)).toBe(0.07);
     expect(withCurrentScale(field(), 1).maxDecodeErrorKnAt).toBeUndefined();
   });
+  it("punktbølgen (samme fryste sett) og dens avstand går uendret gjennom (punktbolge.md §3)", () => {
+    const f: WeatherField = {
+      ...field(),
+      waves: () => ({ hsM: 1.3, fromDeg: 240 }),
+      wavePointDistanceNm: () => 4.2,
+      currentCoastal: () => true,
+    };
+    const w = withCurrentScale(f, 0.8);
+    expect(w.waves(58, 10, 0)).toEqual({ hsM: 1.3, fromDeg: 240 });
+    expect(w.wavePointDistanceNm?.(58, 10)).toBe(4.2);
+    expect(w.currentCoastal?.(58, 10, 0)).toBe(true);
+    expect(withCurrentScale(field(), 1).wavePointDistanceNm).toBeUndefined();
+  });
 });

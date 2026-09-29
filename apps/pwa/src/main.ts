@@ -15,8 +15,13 @@ import {
   browserMeasurementEnvironment,
   buildEnsembleMeasurement,
   memberMeasurement,
+  waveMeasurement,
   type MemberMeasurement,
 } from "./weather/measurement.js";
+import type { WavePointLoad } from "./weather/wave-points-client.js";
+import type { WavePointGrid } from "./weather/wave-point-grid.js";
+import { waveDegradationText, waveDiagnosticsText, waveSourceFlags } from "./weather/wave-text.js";
+import type { RouteResult } from "@morild/routing";
 import { runWeatherPipeline } from "./weather/pipeline.js";
 import { allDisplayFlags } from "./weather/route-flags.js";
 import type { FieldPresenceStatus } from "./weather/field-status.js";
@@ -32,6 +37,7 @@ import {
   renderSensitivity,
   renderDecision,
   renderBailout,
+  renderWaveText,
 } from "./weather-ui.js";
 import {
   FALLBACK,
@@ -86,6 +92,34 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
   const firstPageEl = document.querySelector<HTMLDivElement>("#weather-firstpage");
   const fanEl = document.querySelector<HTMLDivElement>("#weather-fan");
   const receiptEl = document.querySelector<HTMLDivElement>("#weather-receipt");
+  const wavesEl = document.querySelector<HTMLDivElement>("#weather-waves");
+  const waveDiagnosticsEl = document.querySelector<HTMLDivElement>("#weather-wave-diagnostics");
+
+  // Punktbølgen (punktbolge.md §4): hentet én gang før kontrollen; teksten
+  // skrives på nytt når kontrollruten (avstandskategori, kystmaske) finnes.
+  let waveLoad: WavePointLoad | null = null;
+  let waveGrid: WavePointGrid | null = null;
+  let controlRoute: RouteResult | null = null;
+  function refreshWaves(): void {
+    if (waveLoad === null) return;
+    const steps = controlRoute?.steps ?? null;
+    if (wavesEl) renderWaveText(wavesEl, waveDegradationText(waveLoad, steps));
+    if (waveDiagnosticsEl && waveGrid !== null) {
+      waveDiagnosticsEl.textContent = waveDiagnosticsText(waveLoad, waveGrid, steps);
+    }
+    if (flagsEl && controlRoute !== null) {
+      renderFlags(flagsEl, allDisplayFlags(controlRoute, lastFieldStatuses, waveFlagOpts()));
+    }
+    if (fieldStatusEl && lastFieldStatuses.length > 0) {
+      renderFieldStatuses(fieldStatusEl, lastFieldStatuses, waveFlagOpts());
+    }
+  }
+  function waveFlagOpts(): { readonly wavePointsInUse: boolean; readonly extra: ReturnType<typeof waveSourceFlags> } {
+    return {
+      wavePointsInUse: waveLoad !== null && waveLoad.kind !== "mangler",
+      extra: waveLoad === null ? [] : waveSourceFlags(waveLoad),
+    };
+  }
 
   // Førstesiden (§4.7) bygges på nytt ved hver ny bit informasjon — alt
   // kommer ferdig fra @morild/robustness; her holdes bare siste tilstand.
@@ -190,6 +224,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       bailout: true,
       worstFirst: true,
       nowEpochS: Math.floor(Date.now() / 1000),
+      persistentCache: persistent !== undefined,
     },
     {
       onPointerStatus: (status) => {
@@ -200,8 +235,13 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
       },
       onFieldStatuses: (statuses) => {
         lastFieldStatuses = statuses;
-        if (fieldStatusEl) renderFieldStatuses(fieldStatusEl, statuses);
+        if (fieldStatusEl) renderFieldStatuses(fieldStatusEl, statuses, waveFlagOpts());
         refreshFirstPage();
+      },
+      onWavePoints: (load, grid) => {
+        waveLoad = load;
+        waveGrid = grid;
+        refreshWaves();
       },
       onControlResult: (outcome, memberCount) => {
         ensembleStartMs = performance.now();
@@ -214,9 +254,11 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
         refreshFirstPage();
         const result = outcome.result;
         if (result === undefined) return;
+        controlRoute = result;
         if (flagsEl) {
-          renderFlags(flagsEl, allDisplayFlags(result, lastFieldStatuses));
+          renderFlags(flagsEl, allDisplayFlags(result, lastFieldStatuses, waveFlagOpts()));
         }
+        refreshWaves();
         if (result.steps.length > 0) {
           mapReady
             .then(() => drawWeatherRoute(map, result.steps))
@@ -271,6 +313,7 @@ function runWeatherFlow(mapReady: Promise<void>, map: ReturnType<typeof createMa
               control: controlMeasurement,
               ensembleWallMs: wallMs ?? null,
               members: memberMeasurements,
+              wavePoints: waveLoad === null ? null : waveMeasurement(waveLoad),
             }),
           );
         }

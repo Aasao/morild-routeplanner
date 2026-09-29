@@ -385,6 +385,18 @@ Tersklene 0,9/0,7/0,2 er **provisoriske, syntetisk kalibrert** og bærer
 stempelet i `RobustnessStamp`; de remåles under ADR-0005 port 3. Ingen
 hysterese. Prosent vises aldri; `kOfN` vises.
 
+**Bølge-tak (D16.3, `docs/specs/punktbolge.md` §4.1).** Etter tabellen og
+sertifikatene over anvendes `capForUnknownPeriod`: `farge =
+strengeste(farge, tak)`, der taket er gult (`reason: "bolgeperiode-ukjent"`)
+når `maxHsM > 1,0 m` og bølgeperioden er ukjent (Oceanforecast har ingen
+periode, D14.1). Kan bare hindre grønt — gult, rødt og `beregner` røres
+ikke. `maxHsM` er maks `RouteStep.hsM` over kontrollens steg og alle
+gjennomførbare medlemmer (`MemberSummary.maxHsM`, `DepartureSummary.maxHsM`).
+Taket er **ikke en rad i tabellen** (D11.4-lærdommen); 1,0 m står i
+`RobustnessStamp.waveGreenCap` som «foreløpig, ikke verifisert mot NORA3»,
+sammen med `wavePeriodKnown` og det fryste punktbølgesettets
+`wavePoints: {hash, fetchedAtEpochS}` (ADR-0007).
+
 **Sertifikater (deterministiske, kun i advarselsretning):** før
 `complete` kan `rod/andel` bevises når `nInf > 0,3 · 30`, og `gul/tid`
 når antall gjennomførbare som bryter terskelen allerede er
@@ -1177,3 +1189,17 @@ bølge 6 / spak 5. Panel enstemmig m/justeringer tatt inn.
   unimodal; spin-sprang ved k = 2 (36 → 138 µs) ⇒ store kjerner oppbrukt,
   stream stiger videre ⇒ minnebåndbredde, alloc svak ⇒ ikke GC. Taket på 6
   Workere beholdes. Worker-heap ikke målbar på nettbrettet heller.
+- 2026-09-29: **punktbølge levert** (`docs/specs/punktbolge.md`, D16.1–D16.3):
+  bølge-taket `capForUnknownPeriod` (§4.2.3, ny avsnitt) i
+  `traffic-light.ts`, anvendt i `summarizeDeparture` etter tabellen og
+  D10.4; ny `TrafficLightReason` `"bolgeperiode-ukjent"` med egen
+  førstesidetekst; `MemberSummary.maxHsM`/`DepartureSummary.maxHsM`;
+  `RobustnessStamp` utvidet med `waveGreenCap` (1,0 m, foreløpig),
+  `wavePeriodKnown` og `wavePoints` (hash + hentetid, fryseregelen).
+  `withCurrentScale` sender `wavePointDistanceNm` videre (bølgen går
+  uendret gjennom perturbasjonen, samme fryste sett). Målings-JSON fikk
+  `wavePoints {source, hash, fetchedAtEpochS, sourceStatus, points}` uten
+  skjemabump (samme regel som §6.4). Måleprogrammets pakkefingeravtrykk
+  inkluderer bevisst IKKE bølge-hashen (gjenopptak etter omlasting skal
+  ikke stoppe fordi MET har oppdatert punktvarselet) — hashen står i
+  stempelet per kjøring.

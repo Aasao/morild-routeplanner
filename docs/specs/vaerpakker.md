@@ -1999,3 +1999,40 @@ Vedtatt av Magnus 2026-09-27 som anbefalt, etter panel
   Tp-nedre-grense og synlig «periode ukjent»; punktbølge via Worker-proxy,
   fryst per ensemble; NorKyst med nearest-neighbour mot kildens lat/lon
   (indeksvindu-forenklingen forbudt for strøm); spike før pipeline.
+- **2026-09-29 — D16.1–D16.3 vedtatt** (`docs/specs/punktbolge.md` §7): punktbølge 10 nm
+  spacing og maksavstand; D14.1-taket som cap-funksjon, 1,0 m foreløpig;
+  WAM800-exit med fem vilkår.
+- **2026-09-29 — fyllverdi i MEPS-vind (sikkerhetsfeil, rettet).** Diagnose
+  med ekte data: medlemmene 9, 10, 11, 24, 25, 26 i lagged-ensemblet var
+  float-`_FillValue` (≈ 9,969e36) i alle fliser/noder/tidssteg. Produsenten
+  hadde ingen fyllhåndtering for vind (kun NorKyst), kvantiserte fyllverdien
+  (skala ~1,5e33), og sertifikatet fikk `maxDecodeErrorKn` ~1e33 med
+  `clippedSamples` 0 — som klientens `acceptTileHeader` godtok. I motoren
+  ble startnoden avvist av båtgrensene (⇒ «exhausted» etter én iterasjon),
+  maskert som «inkonklusiv/dekning» fordi strøm/bølge manglet i deler av
+  søkeområdet. Rettelser: **(1) produsent** (`tools/weather-pack/src/
+  pipeline.ts`, `build-live-package.ts`): `_FillValue`/`missing_value` leses
+  fra `.das`; fyll, ikke-endelig og `|u|/|v|` > 150 m/s er «mangler» ⇒ NaN ⇒
+  sentinel (aldri et tall); medlem med > 50 % mangler i flisen skrives ikke
+  til pekeren men meldes i `missingFields` med `member`; vindens
+  `sourceStatus` blir `degraded` «n av 30 medlemmer har vinddata»;
+  kontrollen uten data ⇒ bygget feiler; byggerapporten logger utelatte
+  medlemmer med grunn. **(2) klient** (`apps/pwa/src/weather/
+  tile-certificate.ts`, `pipeline.ts::screenTiles`):
+  `MAX_PLAUSIBLE_DECODE_ERROR_KN` = 1 kn (observert 0,07–0,12 kn, groveste
+  målte variant 0,35 kn; 1 kn ≈ 360 kn kanalspenn i én subflis — umulig) ⇒
+  avvis; vind avvises **per medlem** (medlemmet tas ut av alle fliser,
+  flisen beholdes, «medlem N uten brukbare vinddata (fyllverdi/umulig
+  sertifikat) — utelatt»); kontrollens avvisning fjerner flisen som før.
+  `windMemberCensus` teller nevneren fra pekeren inkl. `missingFields`, og
+  `RobustnessStamp.windMembers` bærer «n av N» til dekningslinjen og
+  avgangsteksten. **(3) klassifisering** (`packages/robustness/src/
+  outcome.ts`): verktøysgrunn (`ERROR_ABORT_REASONS`) uten
+  `pruned.noWeather` og uten bound-beskjæring ⇒ `error`, også ved
+  `partial`; ekte dekning (`noWeatherAtStart`, `pruned.noWeather > 0`) og
+  ventilen er uendret. **(4) UI** (`route-flags.ts::coverageFlags`):
+  «Værfeltet tok slutt …» kun når `pruned.noWeather > 0`; ellers
+  `VAER_DEKNING_DELVIS_FELT` «Strøm og/eller bølge mangler i deler av
+  søkeområdet eller langs ruten — inkonklusiv, ikke ugjennomførbar
+  (ADR-0005)». Pekerskjemaet: `PointerMissingFieldEntry.member?` (additivt,
+  valgfritt — eldre klienter leser ikke `missingFields`).

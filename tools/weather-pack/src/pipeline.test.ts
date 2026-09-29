@@ -1,17 +1,24 @@
 import { gzipSync } from "node:zlib";
-import { decodeLayerNode, computeSubtileLayout, deserializeLayer, serializeLayer } from "@morild/weather";
+import { decodeLayerNode, computeSubtileLayout, decodeWindAt, deserializeLayer, serializeLayer, windMemberLayersFromBytes } from "@morild/weather";
 import { describe, expect, it } from "vitest";
 import { createDryRunFetch } from "./dry-run-fixtures.js";
 import type { IndexWindow } from "./grid.js";
 import {
   applyLccRotationToWindComponents,
+  assessWindMembers,
   buildWindMemberLayers,
   buildWindMemberPackage,
   convertWindComponentsToKnots,
   fetchWindComponents,
   flatIndex,
+  maskMissingWindValues,
   METERS_PER_SECOND_TO_KNOTS,
+  parseWindMissingValuesFromDas,
   resolveEnsembleSourceStatus,
+  windValueMissingCause,
+  WIND_MEMBER_MAX_MISSING_FRACTION,
+  WIND_PLAUSIBLE_MAX_MS,
+  type FetchedWindComponents,
 } from "./pipeline.js";
 
 /** [west, south, east, north] — vilkårlig for testene, geometrien er en dokumentert forenkling (se `pipeline.ts::windLayerGeometry`). */
@@ -267,5 +274,167 @@ describe("resolveEnsembleSourceStatus (§11 + §12 sammen)", () => {
     );
     expect(result.sourceStatus.status).toBe("degraded");
     expect(result.selection.outcome).toBe("no-usable-ensemble");
+  });
+});
+
+// --- §19 2026-09-29: fyllverdi i MEPS-vind --------------------------------
+
+/** NetCDF-standard float-fyllverdi slik den kommer ut av Float32-dekodingen. */
+const NC_FILL_F32 = Math.fround(9.969209968386869e36);
+
+/** Syntetisk 2 t × 3 medlemmer × 4×4 i m/s; medlem 2 er ren fyllverdi (funnets mønster). */
+function componentsWithFillMember(): FetchedWindComponents {
+  const dims = { timeCount: 2, memberCount: 3, yCount: 4, xCount: 4 };
+  const n = dims.timeCount * dims.memberCount * dims.yCount * dims.xCount;
+  const u = new Float64Array(n);
+  const v = new Float64Array(n);
+  for (let t = 0; t < dims.timeCount; t++)
+    for (let m = 0; m < dims.memberCount; m++)
+      for (let y = 0; y < dims.yCount; y++)
+        for (let x = 0; x < dims.xCount; x++) {
+          const i = flatIndex(dims, t, m, y, x);
+          u[i] = m === 2 ? NC_FILL_F32 : 3 + 0.5 * x;
+          v[i] = m === 2 ? NC_FILL_F32 : -2 + 0.25 * y;
+        }
+  return { dims, u, v };
+}
+
+const MEPS_DAS_EXCERPT = `Attributes {
+    x_wind_10m {
+        String standard_name "x_wind";
+        String units "m/s";
+        Float32 _FillValue 9.96921e+36;
+        String grid_mapping "projection_lambert";
+    }
+    y_wind_10m {
+        String standard_name "y_wind";
+        String units "m/s";
+        Float32 _FillValue 9.96921e+36;
+        Float32 missing_value -999.0;
+    }
+}`;
+
+describe("fyllverdi i MEPS-vind (§19 2026-09-29)", () => {
+  it("parseWindMissingValuesFromDas leser _FillValue og missing_value per komponent", () => {
+    const spec = parseWindMissingValuesFromDas(MEPS_DAS_EXCERPT);
+    expect(spec.x).toEqual([9.96921e36]);
+    expect(spec.y).toEqual([9.96921e36, -999]);
+    expect(() => parseWindMissingValuesFromDas("Attributes { }")).toThrow(/x_wind_10m/);
+  });
+
+  it("windValueMissingCause: fyll (Float32-lik med .das' 6 sifre), ikke-endelig, fysisk umulig, ellers gyldig", () => {
+    const fills = [9.96921e36];
+    expect(windValueMissingCause(NC_FILL_F32, fills)).toBe("fill");
+    expect(windValueMissingCause(Number.NaN, fills)).toBe("nonFinite");
+    expect(windValueMissingCause(Number.POSITIVE_INFINITY, fills)).toBe("nonFinite");
+    expect(windValueMissingCause(WIND_PLAUSIBLE_MAX_MS + 1, fills)).toBe("implausible");
+    expect(windValueMissingCause(-(WIND_PLAUSIBLE_MAX_MS + 1), [])).toBe("implausible");
+    expect(windValueMissingCause(NC_FILL_F32, [])).toBe("implausible"); // uten .das-fyll fanger grensen den likevel
+    expect(windValueMissingCause(35, fills)).toBeUndefined();
+    expect(windValueMissingCause(-WIND_PLAUSIBLE_MAX_MS, fills)).toBeUndefined();
+  });
+
+  it("maskMissingWindValues setter u OG v til NaN der én mangler, og teller per medlem", () => {
+    const c = componentsWithFillMember();
+    // Ett enkelt hull i medlem 1: bare v mangler — hele vektoren skal bli NaN.
+    const hole = flatIndex(c.dims, 1, 1, 2, 3);
+    c.v[hole] = Number.NaN;
+    const stats = maskMissingWindValues(c, parseWindMissingValuesFromDas(MEPS_DAS_EXCERPT));
+    expect(stats.map((s) => s.missing)).toEqual([0, 1, 32]);
+    expect(stats[2]!.causes.fill).toBe(32);
+    expect(stats[1]!.causes.nonFinite).toBe(1);
+    expect(Number.isNaN(c.u[hole]!)).toBe(true);
+    expect(Number.isNaN(c.v[hole]!)).toBe(true);
+    expect(Number.isNaN(c.u[flatIndex(c.dims, 0, 2, 0, 0)]!)).toBe(true);
+    expect(c.u[flatIndex(c.dims, 0, 0, 0, 0)]).toBe(3);
+  });
+
+  it("assessWindMembers: medlem > 50 % mangler utelates med grunn; status «n av N»; enkelthull beholdes", () => {
+    const c = componentsWithFillMember();
+    c.u[flatIndex(c.dims, 0, 1, 0, 0)] = Number.NaN;
+    const a = assessWindMembers(maskMissingWindValues(c, { x: [9.96921e36], y: [9.96921e36] }));
+    expect(a.included).toEqual([0, 1]);
+    expect(a.excluded.map((e) => e.member)).toEqual([2]);
+    expect(a.excluded[0]!.reason).toMatch(/medlem 2: 100\.0 % .*fyllverdi.*utelatt/);
+    expect(a.sourceStatus).toEqual({
+      status: "degraded",
+      reason: expect.stringMatching(/^2 av 3 medlemmer har vinddata — utelatt: 2 \(fyllverdi\)/),
+    });
+  });
+
+  it("assessWindMembers: grensen er «mer enn» 50 %, og uten utelatte er status ok", () => {
+    const stats = [
+      { member: 0, missing: 0, total: 10, causes: { fill: 0, nonFinite: 0, implausible: 0 } },
+      { member: 1, missing: 5, total: 10, causes: { fill: 5, nonFinite: 0, implausible: 0 } },
+    ];
+    const a = assessWindMembers(stats);
+    expect(a.included).toEqual([0, 1]);
+    expect(a.sourceStatus).toEqual({ status: "ok" });
+    expect(WIND_MEMBER_MAX_MISSING_FRACTION).toBe(0.5);
+  });
+
+  it("kontrollen uten data ⇒ kaster høylytt (bygget feiler)", () => {
+    const stats = [{ member: 0, missing: 10, total: 10, causes: { fill: 10, nonFinite: 0, implausible: 0 } }];
+    expect(() => assessWindMembers(stats)).toThrow(/Kontrollen \(medlem 0\).*bygget stoppes/);
+  });
+
+  it("enkeltvise manglende verdier blir sentinel i pakken — aldri et tall, og sertifikatet forblir lite", () => {
+    const c = componentsWithFillMember();
+    const hole = { t: 1, y: 2, x: 1 };
+    c.u[flatIndex(c.dims, hole.t, 0, hole.y, hole.x)] = NC_FILL_F32;
+    maskMissingWindValues(c, { x: [9.96921e36], y: [9.96921e36] });
+    convertWindComponentsToKnots(c);
+    const bbox: readonly [number, number, number, number] = [10, 58, 10.3, 58.3];
+    const pkg = buildWindMemberPackage({
+      formatVersion: "1.1.0",
+      producedAt: "2026-09-29T00:00:00Z",
+      init: "2026-09-29T00:00:00Z",
+      resolution: "2.5km",
+      components: c,
+      memberIndex: 0,
+      bbox,
+      tileId: "t",
+      t0S: 0,
+      dtS: 3600,
+    });
+    expect(pkg.maxDecodeErrorKn).toBeLessThan(1);
+    expect(pkg.header.certificate.clippedSamples).toBe(0);
+    const layers = windMemberLayersFromBytes(pkg.payload);
+    const lat = 58 + hole.y * (0.3 / 3);
+    const lon = 10 + hole.x * (0.3 / 3);
+    expect(decodeWindAt(layers, lat, lon, hole.t * 3600)).toBeUndefined();
+    expect(decodeWindAt(layers, lat, lon, 0)).toBeDefined();
+  });
+
+  it("uten maskering ville fyllverdien gitt et umulig sertifikat — regresjonsvakt for funnet", () => {
+    const c = componentsWithFillMember();
+    convertWindComponentsToKnots(c);
+    const pkg = buildWindMemberPackage({
+      formatVersion: "1.1.0",
+      producedAt: "2026-09-29T00:00:00Z",
+      init: "2026-09-29T00:00:00Z",
+      resolution: "2.5km",
+      components: c,
+      memberIndex: 2,
+      bbox: [10, 58, 10.3, 58.3],
+      tileId: "t",
+    });
+    // Fyllverdi alene i subflisen gir spenn 0 ⇒ skala 0; blandet med ett gyldig
+    // tall eksploderer skalaen. Poenget: sertifikatet alene er ikke et vern.
+    const mixed = componentsWithFillMember();
+    mixed.u[flatIndex(mixed.dims, 0, 2, 0, 0)] = 5;
+    convertWindComponentsToKnots(mixed);
+    const pkgMixed = buildWindMemberPackage({
+      formatVersion: "1.1.0",
+      producedAt: "2026-09-29T00:00:00Z",
+      init: "2026-09-29T00:00:00Z",
+      resolution: "2.5km",
+      components: mixed,
+      memberIndex: 2,
+      bbox: [10, 58, 10.3, 58.3],
+      tileId: "t",
+    });
+    expect(pkg.header.certificate.clippedSamples).toBe(0);
+    expect(pkgMixed.maxDecodeErrorKn).toBeGreaterThan(1e30);
   });
 });

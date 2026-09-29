@@ -75,6 +75,32 @@ mye dårligere enn antatt** (delta+gzip-faktor 1,06×, mot spec-ens antatte
 1,5–2,5× og det syntetiske feltets 7,29×) — vind alene for de to nødvendige
 flisene er 27,4 MB, nær hele det opprinnelige 30 MB-budsjettet.
 
+### Manglende vinddata: fyllverdi og utelatte medlemmer (2026-09-29)
+
+Funn med ekte data: i MEPS' lagged-ensemble var medlemmene 9, 10, 11, 24,
+25, 26 NetCDF-fyllverdi (`_FillValue` ≈ 9,969e36) i alle fliser, noder og
+tidssteg. Uten håndtering ble fyllverdien kvantisert som tall og fikk et
+sertifikat med `maxDecodeErrorKn` ≈ 1e33 og `clippedSamples` 0. Nå
+(`pipeline.ts`, kalt fra `build-live-package.ts::buildTile`):
+
+1. `_FillValue`/`missing_value` for `x_wind_10m`/`y_wind_10m` leses fra
+   den samme `.das` som LCC-sjekken (`parseWindMissingValuesFromDas`).
+2. På RÅ m/s, FØR knop-konvertering og rotasjon: en verdi som er fyll,
+   ikke-endelig eller fysisk umulig (`|u|` eller `|v|` > 150 m/s,
+   `WIND_PLAUSIBLE_MAX_MS`) er «mangler» — u OG v settes til NaN
+   (`maskMissingWindValues`), som blir sentinel i pakken, aldri et tall.
+3. Et medlem der **mer enn 50 %** (`WIND_MEMBER_MAX_MISSING_FRACTION`) av
+   noder × tidssteg i flisen mangler, skrives ikke til pekeren
+   (`assessWindMembers`); det føres i flisens `missingFields` som
+   `{ field: "wind", member, sourceStatus }` så klienten kan telle nevneren.
+   Vindens `sourceStatus` blir `degraded` med «n av 30 medlemmer har
+   vinddata — utelatt: …». Kontrollen (medlem 0) uten data ⇒ bygget feiler.
+4. Byggerapporten (`build-report.json`, `tiles[].excludedWindMembers`) og
+   konsollen logger hvilke medlemmer som ble utelatt og hvorfor.
+
+`lagged-ensemble.ts` teller fortsatt medlemmer fra DDS-dimensjonen — det er
+et nominelt tall; datanivåets sjekk skjer per flis etter hentingen.
+
 ## Struktur
 
 | Fil | Ansvar |

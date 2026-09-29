@@ -35,6 +35,9 @@ const STAMP: RobustnessStamp = {
   optionsHash: "s9-test-hash",
   estimator: "naermeste-rang-v1",
   thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
+  waveGreenCap: { hsM: 1.0, status: "foreløpig, ikke verifisert mot NORA3" },
+  wavePeriodKnown: false,
+  wavePoints: null,
 };
 
 /**

@@ -1854,6 +1854,27 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 
 ## 10. Endringslogg
 
+- **2026-09-29 — punktbølge: `wavePointDistanceNm` og `BOLGE_PUNKT_KATEGORI_*`**
+  (`docs/specs/punktbolge.md` §3–§4, D16.1–D16.3 vedtatt 2026-09-29; ADR-0007).
+  - **`WeatherField.wavePointDistanceNm?(lat, lon)`** (valgfri): avstand i nm
+    til nærmeste bølge-varselpunkt med data, uansett oppslagsgrensen —
+    diagnostikk, ikke data. Levert av `@morild/weather`s `withWavePoints`
+    (fryst `WavePointSet`, nærmeste punkt ≤ 10 nm, lineær tid,
+    sirkelinterpolasjon av retning, `tpS` aldri satt, `null` ⇒ `undefined`).
+  - **Nye bits** `BOLGE_PUNKT_KATEGORI_UNDER_5NM` (`1 << 12`),
+    `BOLGE_PUNKT_KATEGORI_5_20NM` (`1 << 13`),
+    `BOLGE_PUNKT_KATEGORI_OVER_20NM` (`1 << 14`), grenser < 5 / 5–20 / > 20
+    nm (5 og 20 i midtkategorien, `wavePointCategoryFlag`). Samme mønster
+    som `STROM_KYSTSONE`: rekonstruksjonen setter dem per steg (også
+    sluttsteget); `RouteResult.flags` får dem som OR over stegene. Kun
+    rapportering — søk, kost, derating og sikkerhetsdom leser dem aldri.
+    Felt uten punktbølge gir aldri bitene.
+  - **Regresjon:** `bolge-punkt-kategori.test.ts` kjører
+    `skjaeloy-skagen-apent` med og uten avstandsfunksjon: identiske steg,
+    tid, totaler, etapper, dom, dekning og iterasjoner; bare
+    kategoribitene legges til. `arena.flags` (Uint16) berøres ikke — bitene
+    legges på i `stepFrom`, ikke i søket.
+
 - **2026-09-27 — strøm: sluttetappens dekning og `STROM_KYSTSONE`**
   (`docs/specs/strom-produsent.md` §4b; D15.1 d-min og D15.2, vedtatt
   2026-09-27 etter panel `docs/research/ekspertpanel-d15-kystkant-2026-09-27.md`).

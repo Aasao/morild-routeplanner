@@ -42,4 +42,11 @@ export interface Env {
    * grense vi ikke har) i stedet for å feile.
    */
   readonly METALERTS_RATE_LIMITER?: RateLimit;
+  /**
+   * Misbruksvern på `/proxy/oceanforecast` (`docs/specs/punktbolge.md` §3),
+   * samme mønster som `METALERTS_RATE_LIMITER`: valgfri, fast nøkkel,
+   * aggregert for hele appen. Ett kall kan gi opptil `WAVE_POINTS_MAX`
+   * MET-kall, så grensen er per kall til proxyen, ikke per MET-kall.
+   */
+  readonly OCEANFORECAST_RATE_LIMITER?: RateLimit;
 }

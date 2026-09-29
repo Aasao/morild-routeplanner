@@ -114,6 +114,209 @@ export async function fetchWindComponents(args: {
   return { dims: outDims, u, v };
 }
 
+// --- Manglende vindverdier: fyllverdi, ikke-endelig, fysisk umulig ---------
+//
+// Funn 2026-09-29 (vaerpakker.md §19): i MEPS' lagged-ensemble var
+// medlemmene 9, 10, 11, 24, 25, 26 fyllverdi (float `_FillValue` ≈ 9,969e36)
+// i ALLE fliser/noder/tidssteg. Uten håndtering ble fyllverdien kvantisert
+// som et tall (skala ~1,5e33), sertifikatet fikk `maxDecodeErrorKn` ~1e33
+// med `clippedSamples` 0, og klienten slapp det gjennom. Reglene under gjør
+// en manglende verdi til NaN (⇒ sentinel i `encodeLinear`, aldri et tall),
+// og et medlem som i hovedsak mangler skrives ikke til pekeren.
+
+/**
+ * Fysisk plausibilitetsgrense for én vindkomponent, m/s. Høyeste målte
+ * vindkast på jorden er ~113 m/s (Barrow Island 1996); 10 m-middelvind i
+ * MEPS kommer aldri i nærheten. 150 m/s er dermed «umulig», ikke «sterk» —
+ * grensen skal fange fyll-/søppelverdier, ikke klippe ekstremvær.
+ */
+export const WIND_PLAUSIBLE_MAX_MS = 150;
+
+/**
+ * Et medlem der MER ENN denne andelen av nodene × tidsstegene i flisen
+ * mangler, skrives ikke til pekeren. Begrunnelse: et medlem som stort sett
+ * er hull, er ikke en representativ trekning fra ensemblet — søket i det
+ * ville vært formet av dekningshullene, og medlemmet ville tatt plass i
+ * nevneren som «inkonklusiv/feil» uten å bære værinformasjon. Under grensen
+ * blir enkeltvise hull sentinel, som motoren ser som `noWeatherInWindow`
+ * (synlig `VAERDEKNING_BEGRENSET`). Det observerte feilmønsteret er 100 %
+ * mangler, så valget er ikke følsomt for det; 50 % er «flertallet mangler».
+ */
+export const WIND_MEMBER_MAX_MISSING_FRACTION = 0.5;
+
+/** Fyll-/manglende-verdier fra `.das` (`_FillValue` og `missing_value`) per vindkomponent. */
+export interface WindMissingValueSpec {
+  readonly x: readonly number[];
+  readonly y: readonly number[];
+}
+
+function dasVariableBlock(dasText: string, variable: string): string {
+  const start = dasText.search(new RegExp(`(^|\\n)\\s*${variable}\\s*\\{`));
+  if (start < 0) throw new Error(`MEPS-.das mangler variabelen "${variable}"`);
+  const end = dasText.indexOf("}", start);
+  return dasText.slice(start, end < 0 ? undefined : end);
+}
+
+function dasNumericAttribute(block: string, attr: string): number[] {
+  const m = new RegExp(`\\b${attr}\\s+([^;]+);`).exec(block);
+  if (!m || m[1] === undefined) return [];
+  return m[1]
+    .split(",")
+    .map((s) => Number(s.trim()))
+    .filter((n) => !Number.isNaN(n));
+}
+
+/**
+ * Leser `_FillValue`/`missing_value` for `x_wind_10m`/`y_wind_10m` fra
+ * `.das`. Fravær av attributtene er lov (tom liste) — plausibilitetsgrensen
+ * fanger NetCDF-standardfyllverdien uansett; mangler selve variabelen i
+ * `.das`, er noe grunnleggende galt, og det kastes.
+ */
+export function parseWindMissingValuesFromDas(dasText: string): WindMissingValueSpec {
+  const read = (variable: string): number[] => {
+    const block = dasVariableBlock(dasText, variable);
+    return [...dasNumericAttribute(block, "_FillValue"), ...dasNumericAttribute(block, "missing_value")];
+  };
+  return { x: read("x_wind_10m"), y: read("y_wind_10m") };
+}
+
+export type WindMissingCause = "fill" | "nonFinite" | "implausible";
+
+/**
+ * Er en rå kildeverdi (m/s, Float32 dekodet til Float64) «mangler»?
+ * Fyllverdien sammenlignes i Float32-presisjon: `.das` skriver den med
+ * 6 sifre (`9.96921e+36`), dataene bærer den eksakte Float32-verdien.
+ */
+export function windValueMissingCause(value: number, fills: readonly number[]): WindMissingCause | undefined {
+  if (!Number.isFinite(value)) return "nonFinite";
+  const f32 = Math.fround(value);
+  if (fills.some((f) => Math.fround(f) === f32)) return "fill";
+  if (Math.abs(value) > WIND_PLAUSIBLE_MAX_MS) return "implausible";
+  return undefined;
+}
+
+export interface WindMemberMissingStats {
+  readonly member: number;
+  /** Noder × tidssteg der u ELLER v mangler. */
+  readonly missing: number;
+  readonly total: number;
+  readonly causes: Readonly<Record<WindMissingCause, number>>;
+}
+
+/**
+ * **Må kalles på RÅ m/s-verdier, FØR `convertWindComponentsToKnots` og
+ * LCC-rotasjonen** (fyllverdien er bare gjenkjennelig uskalert, og
+ * rotasjonen blander u og v). Setter u OG v til NaN i-place der én av dem
+ * mangler — en halv vektor er ingen vektor. NaN overlever skalering og
+ * rotasjon og blir sentinel i `encodeLinear` (§9.6). Returnerer tellinger
+ * per medlem.
+ */
+export function maskMissingWindValues(
+  components: FetchedWindComponents,
+  spec: WindMissingValueSpec,
+): WindMemberMissingStats[] {
+  const { timeCount, memberCount, yCount, xCount } = components.dims;
+  const stats = Array.from({ length: memberCount }, (_, member) => ({
+    member,
+    missing: 0,
+    total: timeCount * yCount * xCount,
+    causes: { fill: 0, nonFinite: 0, implausible: 0 } as Record<WindMissingCause, number>,
+  }));
+  for (let t = 0; t < timeCount; t++) {
+    for (let m = 0; m < memberCount; m++) {
+      const s = stats[m]!;
+      for (let y = 0; y < yCount; y++) {
+        for (let x = 0; x < xCount; x++) {
+          const idx = flatIndex(components.dims, t, m, y, x);
+          const causeU = windValueMissingCause(components.u[idx] ?? Number.NaN, spec.x);
+          const causeV = windValueMissingCause(components.v[idx] ?? Number.NaN, spec.y);
+          const cause = causeU ?? causeV;
+          if (cause === undefined) continue;
+          s.missing++;
+          s.causes[cause]++;
+          components.u[idx] = Number.NaN;
+          components.v[idx] = Number.NaN;
+        }
+      }
+    }
+  }
+  return stats;
+}
+
+export interface ExcludedWindMember {
+  readonly member: number;
+  readonly missingFraction: number;
+  readonly reason: string;
+}
+
+export interface WindMemberAssessment {
+  /** Medlemmer som skrives til pekeren, stigende (0 = kontroll, alltid med). */
+  readonly included: readonly number[];
+  readonly excluded: readonly ExcludedWindMember[];
+  /** `ok` når ingen er utelatt; ellers `degraded` med «n av N medlemmer har data». */
+  readonly sourceStatus: PackageHeader["sourceStatus"];
+}
+
+function describeCauses(causes: Readonly<Record<WindMissingCause, number>>): string {
+  const parts: string[] = [];
+  if (causes.fill > 0) parts.push("fyllverdi");
+  if (causes.nonFinite > 0) parts.push("ikke-endelig");
+  if (causes.implausible > 0) parts.push(`fysisk umulig (|u|/|v| > ${WIND_PLAUSIBLE_MAX_MS} m/s)`);
+  return parts.join("/");
+}
+
+/**
+ * Hvilke medlemmer har brukbare vinddata i denne flisen? Kontrollen
+ * (medlem 0) uten data ⇒ **kaster**: uten kontroll finnes ingen pakke å
+ * bygge, og det skal aldri se ut som et vellykket bygg (N2).
+ */
+export function assessWindMembers(
+  stats: readonly WindMemberMissingStats[],
+  maxMissingFraction: number = WIND_MEMBER_MAX_MISSING_FRACTION,
+): WindMemberAssessment {
+  const included: number[] = [];
+  const excluded: ExcludedWindMember[] = [];
+  for (const s of stats) {
+    const missingFraction = s.total === 0 ? 1 : s.missing / s.total;
+    if (missingFraction > maxMissingFraction) {
+      excluded.push({
+        member: s.member,
+        missingFraction,
+        reason:
+          `medlem ${s.member}: ${(missingFraction * 100).toFixed(1)} % av noder × tidssteg mangler ` +
+          `(${describeCauses(s.causes)}) — over grensen ${(maxMissingFraction * 100).toFixed(0)} %, utelatt`,
+      });
+    } else {
+      included.push(s.member);
+    }
+  }
+  const control = excluded.find((e) => e.member === 0);
+  if (control !== undefined) {
+    throw new Error(`Kontrollen (medlem 0) har ikke brukbare vinddata — bygget stoppes: ${control.reason}`);
+  }
+  const sourceStatus: PackageHeader["sourceStatus"] =
+    excluded.length === 0
+      ? STATUS_OK
+      : {
+          status: "degraded",
+          reason:
+            `${included.length} av ${stats.length} medlemmer har vinddata — utelatt: ` +
+            excluded.map((e) => e.member).join(", ") +
+            ` (${describeCauses(mergeCauses(stats.filter((s) => excluded.some((e) => e.member === s.member))))})`,
+        };
+  return { included, excluded, sourceStatus };
+}
+
+function mergeCauses(stats: readonly WindMemberMissingStats[]): Record<WindMissingCause, number> {
+  const out: Record<WindMissingCause, number> = { fill: 0, nonFinite: 0, implausible: 0 };
+  for (const s of stats) {
+    out.fill += s.causes.fill;
+    out.nonFinite += s.causes.nonFinite;
+    out.implausible += s.causes.implausible;
+  }
+  return out;
+}
+
 /**
  * m/s → knop. 1 knop = 1852 m / 3600 s (definisjonen av det internasjonale
  * nautiske mil) ⇒ 1 m/s = 3600/1852 knop ≈ 1,9438 knop.
@@ -250,7 +453,10 @@ function sampleFromFetchedGrid(
     if (t < 0 || t >= dims.timeCount || y < 0 || y >= dims.yCount || x < 0 || x >= dims.xCount) {
       return undefined;
     }
-    return values[flatIndex(dims, t, memberIndex, y, x)];
+    const value = values[flatIndex(dims, t, memberIndex, y, x)];
+    // Manglende (NaN fra `maskMissingWindValues`) eller ikke-endelig ⇒
+    // `undefined` ⇒ sentinel. Aldri et tall inn i skala/offset (§19 2026-09-29).
+    return value !== undefined && Number.isFinite(value) ? value : undefined;
   };
 }
 
@@ -317,7 +523,7 @@ function* windMemberSpeedsKn(components: FetchedWindComponents, memberIndex: num
         const idx = flatIndex(components.dims, t, memberIndex, y, x);
         const u = components.u[idx];
         const v = components.v[idx];
-        if (u === undefined || v === undefined) continue;
+        if (u === undefined || v === undefined || !Number.isFinite(u) || !Number.isFinite(v)) continue;
         yield Math.hypot(u, v);
       }
     }

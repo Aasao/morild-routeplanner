@@ -25,6 +25,7 @@ function makeSummary(hourlyTrack: readonly LatLon[], overrides: Partial<MemberSu
     safetyVerdict: "trygt",
     coverageWeather: "full",
     prunedBound: 0,
+    maxHsM: 0,
     tubBoundS: null,
     hourlyTrack,
     ...overrides,

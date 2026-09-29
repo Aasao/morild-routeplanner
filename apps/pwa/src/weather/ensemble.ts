@@ -15,6 +15,7 @@
  */
 import type { BailoutProfile, DistanceFieldData, LatLon, RouteResult } from "@morild/routing";
 import type { PackageHeader } from "@morild/protocol";
+import type { WavePointSet } from "@morild/weather";
 import {
   classifyMember as classifyRobust,
   nextAction,
@@ -87,6 +88,13 @@ export interface PlanRouteMemberRequest {
    * som går alene før poolen startes.
    */
   readonly workerSlot?: number | undefined;
+  /**
+   * Det fryste punktbølgesettet (ADR-0007, `docs/specs/punktbolge.md` §3):
+   * hentet ÉN gang før kontrollen, og SAMME objekt (samme `hash`) går til
+   * kontroll, alle medlemmer, orakelet og perturbasjonen. Udefinert ⇒ ingen
+   * punktbølge (bølge mangler, delvis dekning — synlig i UI).
+   */
+  readonly wavePoints?: WavePointSet | undefined;
 }
 
 /** Én perturbasjon (§4.4, D8.4 c) — kjøres som et eget fullt søk. */
@@ -170,6 +178,8 @@ export interface EvaluateControlRequest {
   readonly tiles: readonly TileWindSource[];
   readonly departEpochS: number;
   readonly waypoints: readonly LatLon[];
+  /** Samme fryste punktbølgesett som søkene (ADR-0007). */
+  readonly wavePoints?: WavePointSet | undefined;
 }
 
 export interface EvaluateControlResult {
@@ -197,6 +207,8 @@ export interface MemberJob {
   readonly perturbation?: Perturbation | undefined;
   /** Settes av orkestratoren: pool-plassen jobben kjøres på (§6.4). */
   readonly workerSlot?: number | undefined;
+  /** Det fryste punktbølgesettet — samme objekt i alle jobbene (ADR-0007). */
+  readonly wavePoints?: WavePointSet | undefined;
 }
 
 export type MemberClassification = "feasible" | "infeasible" | "inconclusive";
@@ -420,6 +432,7 @@ function runOnWorker(worker: WorkerLike, job: MemberJob): Promise<MemberOutcome>
       ...(job.noTubBound === true ? { noTubBound: true } : {}),
       ...(job.perturbation !== undefined ? { perturbation: job.perturbation } : {}),
       ...(job.workerSlot !== undefined ? { workerSlot: job.workerSlot } : {}),
+      ...(job.wavePoints !== undefined ? { wavePoints: job.wavePoints } : {}),
     };
     // Én jobb = ett lytterpar, fjernet ved første svar (robusthet.md §4.1:
     // «Lytterne registreres med { once: true } per jobb»). Før lå alle
@@ -602,6 +615,9 @@ async function runPerturbations(
         ...(controlOutcome.sharedField !== undefined ? { sharedField: controlOutcome.sharedField } : {}),
         perturbation: { kind: entry.kind, factor: entry.factor },
         workerSlot,
+        // Fryseregelen (ADR-0007): perturbasjonen henter aldri på nytt — den
+        // bruker kontrolljobbens sett, som er det alle medlemmene fikk.
+        ...(controlJob.wavePoints !== undefined ? { wavePoints: controlJob.wavePoints } : {}),
       };
       const outcome = await runMemberWithRerun(worker, job);
       runs[i] = { kind: entry.kind, factor: entry.factor, basis: entry.basis, outcome: toRobustOutcome(outcome) };
@@ -655,6 +671,7 @@ function evaluateOnWorker(
         tiles: job.tiles,
         departEpochS: job.departEpochS,
         waypoints,
+        ...(job.wavePoints !== undefined ? { wavePoints: job.wavePoints } : {}),
       },
       [],
     );

@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { FLAG_NAMES } from "@morild/routing";
-import { allDisplayFlags, displayFlagsForStepFlag } from "./route-flags.js";
+import { allDisplayFlags, coverageFlags, displayFlagsForStepFlag } from "./route-flags.js";
 import { fakeResult } from "./test-support/fake-route-result.js";
 
 const SAFETY_FLAGS = [
@@ -20,9 +20,20 @@ const SAFETY_FLAGS = [
   // D15.1/D15.2 (strom-produsent.md §4b): strøm manglet ved sluttetappen / kystnær strøm.
   "STROM_DATA_MANGLER",
   "STROM_KYSTSONE",
+  // punktbolge.md §4: bølgen lånt fra et varselpunkt 5–20 / over 20 nm unna.
+  "BOLGE_PUNKT_KATEGORI_5_20NM",
+  "BOLGE_PUNKT_KATEGORI_OVER_20NM",
 ] as const;
 
-const CONTEXT_FLAGS = ["MOTOR", "NATT", "KRYSS", "VIND_MOT_STROM", "TSS_LANGS"] as const;
+const CONTEXT_FLAGS = [
+  "MOTOR",
+  "NATT",
+  "KRYSS",
+  "VIND_MOT_STROM",
+  "TSS_LANGS",
+  // Normaltilstanden for punktbølge; periodens ukjenthet står i bølgeteksten.
+  "BOLGE_PUNKT_KATEGORI_UNDER_5NM",
+] as const;
 
 describe("displayFlagsForStepFlag — alvorlighet", () => {
   it.each(SAFETY_FLAGS)("%s er warning (berører farbarhet/klaring/datamangel)", (name) => {
@@ -44,6 +55,33 @@ describe("displayFlagsForStepFlag — alvorlighet", () => {
 
   it("ukjent/fremtidig flaggnavn klassifiseres warning som konservativt standardvalg", () => {
     expect(displayFlagsForStepFlag("ET_FREMTIDIG_FLAGG_INGEN_KJENNER").severity).toBe("warning");
+  });
+});
+
+describe("coverageFlags — horisont vs. delvis felt (§19 2026-09-29)", () => {
+  function partial(noWeather: number) {
+    const base = fakeResult({ weatherCoverage: "partial" });
+    return { ...base, diagnostics: { ...base.diagnostics, pruned: { ...base.diagnostics.pruned, noWeather } } };
+  }
+
+  it("«Værfeltet tok slutt» KUN når søket faktisk forkastet etiketter for manglende vær", () => {
+    const flags = coverageFlags(partial(3));
+    expect(flags.map((f) => f.code)).toEqual(["VAER_DEKNING_PARTIAL"]);
+    expect(flags[0]!.label).toMatch(/^Værfeltet tok slutt før ruten var ferdig beregnet/);
+  });
+
+  it("partial uten noWeather ⇒ egen tekst: strøm/bølge mangler, inkonklusiv — ikke ugjennomførbar", () => {
+    const flags = coverageFlags(partial(0));
+    expect(flags.map((f) => f.code)).toEqual(["VAER_DEKNING_DELVIS_FELT"]);
+    expect(flags[0]!.label).toBe(
+      "Strøm og/eller bølge mangler i deler av søkeområdet eller langs ruten — inkonklusiv, ikke ugjennomførbar (ADR-0005)",
+    );
+    expect(flags[0]!.label).not.toMatch(/tok slutt/);
+    expect(flags[0]!.severity).toBe("warning");
+  });
+
+  it("full dekning ⇒ ingen værdekningsflagg", () => {
+    expect(coverageFlags(fakeResult({ weatherCoverage: "full" }))).toEqual([]);
   });
 });
 

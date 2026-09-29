@@ -41,6 +41,12 @@ export interface WeatherFieldLike {
    * hjørneregelen). `false` når masken mangler.
    */
   currentCoastal?(lat: number, lon: number, epochS: number): boolean;
+  /**
+   * Speiling av `WeatherField.wavePointDistanceNm?` (`docs/specs/
+   * punktbolge.md` §3): avstand i nm til nærmeste bølge-varselpunkt. Kun
+   * felt med punktbølge (`withWavePoints`) har den.
+   */
+  wavePointDistanceNm?(lat: number, lon: number): number | undefined;
   readonly maxTwsKn: number;
   readonly maxCurrentKn: number;
   readonly maxDecodeErrorKn: number;
@@ -284,6 +290,14 @@ export function compositeWeatherField(fields: readonly WeatherFieldLike[]): Weat
      */
     currentCoastal(lat, lon, epochS) {
       return fields.some((f) => f.currentCoastal?.(lat, lon, epochS) === true);
+    },
+    /**
+     * Punktbølge (`punktbolge.md`) legges normalt på ETTER sammensyingen
+     * (`withWavePoints`), men bærer et flisfelt den likevel, sendes første
+     * definerte avstand videre — samme regel som `waves()` over.
+     */
+    wavePointDistanceNm(lat, lon) {
+      return firstDefined((f) => f.wavePointDistanceNm?.(lat, lon));
     },
     maxTwsKn,
     maxCurrentKn,

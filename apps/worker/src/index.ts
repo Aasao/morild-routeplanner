@@ -18,6 +18,7 @@ import { handleHealthz } from "./routes/healthz.js";
 import { handlePointer } from "./routes/pointer.js";
 import { handleBlob } from "./routes/blob.js";
 import { handleMetAlerts } from "./routes/metalerts.js";
+import { handleOceanForecast } from "./routes/oceanforecast.js";
 
 function notFound(): Response {
   return new Response(JSON.stringify({ error: "not found" }), {
@@ -54,6 +55,8 @@ export default {
         return withCors(await handleBlob(route.key, env, request, ctx), env);
       case "metalerts":
         return withCors(await handleMetAlerts(request, env, ctx), env);
+      case "oceanforecast":
+        return withCors(await handleOceanForecast(request, env, ctx), env);
       case "not-found":
         return withCors(notFound(), env);
     }

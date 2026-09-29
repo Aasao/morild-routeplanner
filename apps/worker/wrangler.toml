@@ -53,7 +53,8 @@ INTERIM_CORS_ANY_ORIGIN = "true"
 # ikke et eget betalt produkt; antatt gratisplan-kompatibel, bekreftes ved
 # faktisk `wrangler deploy` (se rapport til Magnus). `namespace_id` er en
 # fritt valgt streng-kodet heltalls-ID, kun brukt til å skille flere
-# ratelimit-bindinger fra hverandre i samme Worker — vi har bare én.
+# ratelimit-bindinger fra hverandre i samme Worker (to: MetAlerts og
+# Oceanforecast, under).
 # `simple.period` må være 10 eller 60 (Cloudflares eneste to gyldige
 # verdier); 20 forespørsler / 10 s er romslig nok for to enheter (telefon +
 # nettbrett) med normal periodisk oppdatering + noen få manuelle retries,
@@ -68,6 +69,19 @@ namespace_id = "1"
 [ratelimits.simple]
 limit = 20
 period = 10
+
+# docs/specs/punktbolge.md §3: misbruksvern på `/proxy/oceanforecast`, samme
+# mønster som over (fast nøkkel, aggregert for hele appen). Ett kall hit
+# kan gi opptil WAVE_POINTS_MAX = 48 MET-kall (src/routes/oceanforecast.ts),
+# så grensen settes per proxy-kall: 10 per 60 s ⇒ høyst 480 MET-kall/min
+# (8/s) selv i verste fall — under METs 20 req/s, og langt over normal
+# bruk (én henting per ny plan, ADR-0007s fryseregel).
+[[ratelimits]]
+name = "OCEANFORECAST_RATE_LIMITER"
+namespace_id = "2"
+[ratelimits.simple]
+limit = 10
+period = 60
 
 # ADR-0006 pkt. 3: Worker skal eksponeres under Pages-domenet (`/api/*`),
 # ikke et eget *.workers.dev-opphav, slik at CORS `*` kan bortfalle helt

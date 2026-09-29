@@ -55,9 +55,16 @@ export function withCurrentScale(weather: WeatherField, factor: number): Weather
     validToS: weather.validToS,
     header: weather.header,
   };
-  // Kystmasken (D15.2) er uavhengig av strømmens størrelse — sendes uendret videre.
+  // Kystmasken (D15.2) og punktbølgens avstand (punktbolge.md §3) er
+  // uavhengige av strømmens størrelse — sendes uendret videre. Bølgen selv
+  // går allerede uendret gjennom `waves` over (samme fryste punktsett).
   const coastal = weather.currentCoastal?.bind(weather);
-  const withCoastal: WeatherField = coastal === undefined ? scaled : { ...scaled, currentCoastal: coastal };
+  const wavePointDistance = weather.wavePointDistanceNm?.bind(weather);
+  const withCoastal: WeatherField = {
+    ...scaled,
+    ...(coastal !== undefined ? { currentCoastal: coastal } : {}),
+    ...(wavePointDistance !== undefined ? { wavePointDistanceNm: wavePointDistance } : {}),
+  };
   if (weather.maxDecodeErrorKnAt !== undefined) {
     const at = weather.maxDecodeErrorKnAt.bind(weather);
     return { ...withCoastal, maxDecodeErrorKnAt: at };

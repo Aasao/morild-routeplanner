@@ -18,6 +18,7 @@ import type { EnsembleMeasurement } from "./weather/measurement.js";
 import type { DecisionAdvice, DepartureSummary, SensitivityReport } from "@morild/robustness";
 import type { BailoutProfile } from "@morild/routing";
 import type { RelevantAlert } from "./weather/metalerts.js";
+import type { WaveText } from "./weather/wave-text.js";
 
 export function renderPointerStatus(el: HTMLElement, status: PointerLoadResult): void {
   if (status.status === "ok") {
@@ -71,12 +72,19 @@ export function renderTileSelection(
   el.appendChild(list);
 }
 
-export function renderFieldStatuses(el: HTMLElement, statuses: readonly FieldPresenceStatus[]): void {
+export function renderFieldStatuses(
+  el: HTMLElement,
+  statuses: readonly FieldPresenceStatus[],
+  opts: { readonly wavePointsInUse?: boolean } = {},
+): void {
   el.replaceChildren();
   const list = document.createElement("ul");
   for (const s of statuses) {
     const li = document.createElement("li");
-    if (!s.present) {
+    if (!s.present && s.field === "waves" && opts.wavePointsInUse === true) {
+      // punktbolge.md: bølge kommer fra punktvarselet via proxyen, ikke pakken.
+      li.textContent = `${FIELD_LABEL_NO[s.field]}: ikke i pakken — punktvarsel via proxy (se bølgelinjen)`;
+    } else if (!s.present) {
       li.textContent = `${FIELD_LABEL_NO[s.field]}: MANGLER i pakken`;
     } else {
       const ageH = s.ageS !== undefined ? (s.ageS / 3600).toFixed(1) : "?";
@@ -102,6 +110,11 @@ export function renderFlags(el: HTMLElement, flags: readonly DisplayFlag[]): voi
     list.appendChild(li);
   }
   el.appendChild(list);
+}
+
+/** Punktbølgens degraderingstekst (punktbolge.md §4) — én linje, alltid synlig. */
+export function renderWaveText(el: HTMLElement, wave: WaveText): void {
+  el.textContent = `${wave.severity === "advarsel" ? "⚠" : "ℹ"} ${wave.text}`;
 }
 
 export function renderControlResult(el: HTMLElement, outcome: MemberOutcome): void {
@@ -175,6 +188,12 @@ export function renderDepartureText(d: DepartureSummary): string {
       ? ` Regn med inntil ${(d.durationWorstS / 3600).toFixed(1)} t, typisk ${(d.durationP50S / 3600).toFixed(1)} t` +
         `${d.nF < 12 ? ` (tynt utvalg: verste av ${d.nF} gjennomførbare)` : ""}.`
       : "";
+  const wind = d.stamp.windMembers;
+  // §19 2026-09-29: nevneren over er medlemmer MED vinddata — si ærlig hvor mange som mangler.
+  const windText =
+    wind !== undefined && wind.withData < wind.nominal
+      ? ` Vinddata: ${wind.withData} av ${wind.nominal} medlemmer — utelatt uten brukbare data: ${wind.missing.join(", ")}.`
+      : "";
   const horizon = d.horizonTooShort ? " ADVARSEL: >20 % inkonklusive — medlemshorisonten er trolig for kort." : "";
   const felt = d.members.filter((m) => m.inconclusiveReason === "dekning-felt").length;
   const feltText =
@@ -185,7 +204,7 @@ export function renderDepartureText(d: DepartureSummary): string {
     d.light.reason === "tynt-grunnlag"
       ? ` Av ${d.nF + d.nInf} avgjorte kom ${d.nInf} ikke fram — for få til å tallfeste andelen.`
       : "";
-  return `Ensemble (ADR-0005/§4.2): ${counts}${light}${thin}${times}${horizon}${feltText}`;
+  return `Ensemble (ADR-0005/§4.2): ${counts}${windText}${light}${thin}${times}${horizon}${feltText}`;
 }
 
 export function renderEnsembleSummary(

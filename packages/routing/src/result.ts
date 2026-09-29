@@ -376,7 +376,8 @@ export interface RouteResult {
    *
    * Unntak (D15.2, `docs/specs/strom-produsent.md` §4b): `STROM_KYSTSONE`
    * står BÅDE per steg og her, som OR over stegene — så UI-et kan si det om
-   * ruten uten å lete gjennom stegene.
+   * ruten uten å lete gjennom stegene. Samme for `BOLGE_PUNKT_KATEGORI_*`
+   * (`docs/specs/punktbolge.md` §4).
    */
   readonly flags: number;
   /** Flaggnavn i `FLAG_NAMES`-rekkefølge — determinisme også i rapporteringen. */

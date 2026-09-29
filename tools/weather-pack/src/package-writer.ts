@@ -47,7 +47,13 @@ export interface PointerFieldEntry {
  * fravær av oppføring betyr "alt er ok".
  */
 export interface PointerMissingFieldEntry {
-  readonly field: string; // "current" | "waves" | ...
+  readonly field: string; // "current" | "waves" | "wind" | ...
+  /**
+   * Satt når ETT ensemblemedlem mangler, ikke hele feltet (§19 2026-09-29:
+   * vindmedlem uten brukbare data utelates, men skal telles i nevneren —
+   * klienten viser «n av N medlemmer har vinddata»). Utelatt ⇒ hele feltet.
+   */
+  readonly member?: number;
   readonly sourceStatus: Extract<SourceStatus, { status: "degraded" }>;
 }
 

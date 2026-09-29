@@ -33,6 +33,8 @@ import {
   FLAG_SJOEGANG_DATA_MANGLER,
   FLAG_STROM_DATA_MANGLER,
   FLAG_STROM_KYSTSONE,
+  FLAG_BOLGE_PUNKT_KATEGORI,
+  wavePointCategoryFlag,
   FLAG_USIKKER_TILLIT,
   FLAG_VAERDEKNING_BEGRENSET,
   flagNames,
@@ -207,6 +209,20 @@ function coastalCurrentFlag(
     : 0;
 }
 
+/**
+ * `BOLGE_PUNKT_KATEGORI_*` (`docs/specs/punktbolge.md` §4): avstanden til
+ * nærmeste bølge-varselpunkt, i kategori. Samme mønster som
+ * `coastalCurrentFlag` — kun rapportering, lagt på i rekonstruksjonen.
+ */
+function wavePointFlag(weather: WeatherField, lat: number, lon: number): number {
+  return wavePointCategoryFlag(weather.wavePointDistanceNm?.(lat, lon));
+}
+
+/** Rapporteringsflaggene rekonstruksjonen legger på et steg (strøm-kystsone + bølgepunkt). */
+function reportingFlags(weather: WeatherField, lat: number, lon: number, epochS: number): number {
+  return coastalCurrentFlag(weather, lat, lon, epochS) | wavePointFlag(weather, lat, lon);
+}
+
 function stepFrom(
   arena: LabelArena,
   index: number,
@@ -218,7 +234,7 @@ function stepFrom(
   const lon = arena.lon[index]!;
   const epochS = departEpochS + arena.tS[index]!;
   const flags =
-    arena.flags[index]! | coastalCurrentFlag(weather, lat, lon, epochS);
+    arena.flags[index]! | reportingFlags(weather, lat, lon, epochS);
   return {
     lat,
     lon,
@@ -659,13 +675,16 @@ export function buildResult(ctx: ResultContext): RouteResult {
    */
   const weatherCoverageLimited = ctx.pruned.noWeatherInWindow > 0;
   /**
-   * `STROM_KYSTSONE` på rute-nivå er OR over stegene (D15.2): ett kystnært
-   * strømpunkt langs ruten er nok til at UI-et skal si det.
+   * `STROM_KYSTSONE` (D15.2) og `BOLGE_PUNKT_KATEGORI_*` (punktbolge.md §4)
+   * på rute-nivå er OR over stegene: ett kystnært strømpunkt, eller ett steg
+   * i en gitt avstandskategori, er nok til at UI-et skal si det.
    */
-  let coastalCurrent = 0;
-  for (const s of steps) coastalCurrent |= s.flags & FLAG_STROM_KYSTSONE;
+  let reportedOr = 0;
+  for (const s of steps) {
+    reportedOr |= s.flags & (FLAG_STROM_KYSTSONE | FLAG_BOLGE_PUNKT_KATEGORI);
+  }
   const routeFlags =
-    (weatherCoverageLimited ? FLAG_VAERDEKNING_BEGRENSET : 0) | coastalCurrent;
+    (weatherCoverageLimited ? FLAG_VAERDEKNING_BEGRENSET : 0) | reportedOr;
   /**
    * Gulvet: en rute som er beskåret av manglende værdekning kan aldri stå
    * som `"trygt"` (CLAUDE.md §1 «sikkerhet foran optimalitet», N2). Vi hever
@@ -986,7 +1005,7 @@ function appendDirectFinalStep(
     (last.flags & FLAG_USIKKER_TILLIT) |
     (currentMissing ? FLAG_STROM_DATA_MANGLER : 0) |
     (wavesMissing ? FLAG_SJOEGANG_DATA_MANGLER : 0) |
-    coastalCurrentFlag(
+    reportingFlags(
       weather,
       ctx.input.dest.lat,
       ctx.input.dest.lon,

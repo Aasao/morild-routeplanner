@@ -23,6 +23,7 @@ export * from "./weather-field-adapter.js";
 export * from "./age.js";
 export * from "./budget.js";
 export * from "./certificate.js";
+export * from "./wave-points.js";
 
 // ---------------------------------------------------------------------------
 // Kompatibilitetsaliaser mot `tools/weather-pack/src/{format-contract,quantize}.ts`

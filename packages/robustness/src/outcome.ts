@@ -65,6 +65,13 @@ export interface MemberSummary {
   readonly tubBoundS: number | null;
   /** Posisjon per hele time fra avgang, for viften og D8.5. Maks 48 punkter. */
   readonly hourlyTrack: readonly LatLon[];
+  /**
+   * Største Hs (m) over rutens steg — grunnlaget for bølge-taket på
+   * trafikklyset (`docs/specs/punktbolge.md` §4.1, `capForUnknownPeriod`).
+   * Steg uten bølgedata bærer `hsM = 0` og løfter derfor aldri tallet;
+   * manglende bølge er i stedet synlig som `coverage.weather === "partial"`.
+   */
+  readonly maxHsM: number;
 }
 
 export interface MemberOutcome {
@@ -171,6 +178,7 @@ export function summarizeMember(result: RouteResult): MemberSummary {
     prunedBound: result.diagnostics.pruned.bound,
     tubBoundS: result.diagnostics.tubBoundS,
     hourlyTrack: hourlyTrackFromSteps(result.steps),
+    maxHsM: result.steps.reduce((m, s) => (s.hsM > m ? s.hsM : m), 0),
   };
 }
 
@@ -205,10 +213,33 @@ const BUDGET_ABORT_REASONS: ReadonlySet<AbortReason> = new Set(["stagnation", "c
  * likevel først: tok værfeltet slutt, er svaret «ikke bevist» uansett
  * bound, og en omkjøring ville bare gjenta det. Presisering til
  * robusthet.md §3.2 (D9.2) — se spec-ens §7.
+ *
+ * **Verktøyfeil før dekning (presisert 2026-09-29, vaerpakker.md §19):** et
+ * medlem som stoppet på en verktøysgrunn (`ERROR_ABORT_REASONS`) UTEN at en
+ * eneste etikett ble forkastet for manglende vær (`pruned.noWeather === 0`)
+ * og uten bound-beskjæring, er `error` — også når `coverage.weather` er
+ * `"partial"`. Funnet: et fyllverdi-medlem der startnoden ble avvist av
+ * båtgrensene (`hardConstraintBoatLimits`) ga «exhausted» etter én
+ * iterasjon, men `partial` (strøm/bølge manglet i deler av søkeområdet)
+ * maskerte det som «inkonklusiv/dekning». Dekning kan ikke ha forårsaket et
+ * søk som aldri forkastet noe for manglende vær. Ekte dekning er uendret:
+ * `noWeatherAtStart` er ikke en verktøysgrunn, og `pruned.noWeather > 0`
+ * (feltet tok slutt / flis manglet) går fortsatt til «dekning». Ventilen er
+ * også uendret (`pruned.bound > 0` slipper ikke inn her).
  */
 export function classifyMember(result: RouteResult): MemberClassification {
   assertProvenance(result);
   const reached = result.safety.reachesDestination;
+
+  if (
+    !reached &&
+    result.abortReason !== null &&
+    ERROR_ABORT_REASONS.has(result.abortReason) &&
+    result.diagnostics.pruned.noWeather === 0 &&
+    result.diagnostics.pruned.bound === 0
+  ) {
+    return { kind: "error" };
+  }
 
   // Datahorisont: feltet tok slutt underveis, eller manglet allerede i
   // avgangspunktet (`noWeatherAtStart` settes før `environmentAt` kalles,

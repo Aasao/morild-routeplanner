@@ -16,6 +16,14 @@
 export interface EnsembleRun {
   /** ISO 8601 init-tidspunkt for kjøringen (nyest først forventes i input-lista). */
   readonly init: string;
+  /**
+   * **Nominelt** antall — lest fra DDS-dimensjonen `ensemble_member`, IKKE
+   * fra faktiske data. Funn 2026-09-29 (§19): dimensjonen sa 30 mens seks
+   * medlemmer var ren fyllverdi. Kjøringsvalget kan ikke se data uten å
+   * hente dem; datanivåets sjekk skjer derfor per flis etter hentingen
+   * (`pipeline.ts::maskMissingWindValues`/`assessWindMembers`), og
+   * utelatte medlemmer flagges der — ikke her.
+   */
   readonly memberCount: number;
   /** Har kontrollmedlemmet (medlem 0) i det hele tatt data, uavhengig av ensemblets fullstendighet? */
   readonly hasControlMember: boolean;

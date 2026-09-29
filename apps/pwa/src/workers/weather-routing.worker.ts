@@ -51,6 +51,8 @@ import {
   currentLayersFromBytes,
   toWeatherField,
   windMemberLayersFromBytes,
+  withWavePoints,
+  type WavePointSet,
   type WeatherFieldLike,
   type WeatherPackage,
 } from "@morild/weather";
@@ -113,6 +115,8 @@ export interface PlanRouteMemberRequest {
   readonly perturbation?: { readonly kind: "cruising" | "current"; readonly factor: number } | undefined;
   /** Pool-plassen (robusthet.md §6.4, D13.2 a) — ekkoes i `WorkerTiming.workerSlot`. Strukturell kopi av `ensemble.ts`. */
   readonly workerSlot?: number | undefined;
+  /** Fryst punktbølge (ADR-0007) — samme sett for alle jobbene i kjøringen. Strukturell kopi av `ensemble.ts`. */
+  readonly wavePoints?: WavePointSet | undefined;
 }
 
 /** Strukturell kopi av `ensemble.ts::SharedField` — se toppkommentaren. */
@@ -135,6 +139,8 @@ export interface EvaluateControlRequest {
   readonly departEpochS: number;
   /** Kontrollrutens steg som veipunkter (`steps[0]` = avgang). */
   readonly waypoints: readonly { readonly lat: number; readonly lon: number }[];
+  /** Fryst punktbølge (ADR-0007). */
+  readonly wavePoints?: WavePointSet | undefined;
 }
 
 export interface EvaluateControlResult {
@@ -218,7 +224,7 @@ function evaluateControl(msg: EvaluateControlRequest): EvaluateControlResult {
   if (msg.tiles.length === 0 || msg.waypoints.length < 2) {
     throw new Error("evaluate-control: mangler vinddata eller veipunkter");
   }
-  const weather = decodeWeather(msg.tiles, msg.departEpochS, false);
+  const weather = decodeWeather(msg.tiles, msg.departEpochS, false, msg.wavePoints);
   const evaluation = evaluateRoute({
     waypoints: msg.waypoints,
     departEpochS: msg.departEpochS,
@@ -235,12 +241,19 @@ function evaluateControl(msg: EvaluateControlRequest): EvaluateControlResult {
   };
 }
 
+/**
+ * Flisene sydd sammen, med punktbølgen lagt på ETTER sammensyingen
+ * (`docs/specs/punktbolge.md` §3): punktene er ikke flisbundet, og samme
+ * fryste sett skal gjelde uansett hvilken flis et punkt havner i.
+ */
 function decodeWeather(
   tiles: readonly TileWindSource[],
   departEpochS: number,
   isControl: boolean,
+  wavePoints: WavePointSet | undefined,
 ): WeatherFieldLike {
-  return compositeWeatherField(tiles.map((tile) => tileField(tile, departEpochS, isControl)));
+  const composite = compositeWeatherField(tiles.map((tile) => tileField(tile, departEpochS, isControl)));
+  return wavePoints === undefined ? composite : withWavePoints(composite, wavePoints);
 }
 
 function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
@@ -249,11 +262,11 @@ function runMember(msg: PlanRouteMemberRequest): PlanRouteMemberOk {
     throw new Error("plan-route-member: meldingen manglet vinddata for alle fliser");
   }
   const tDecode0 = performance.now();
-  const tileFields: WeatherFieldLike[] = msg.tiles.map((tile) => tileField(tile, msg.departEpochS, msg.isControl));
   // Sy sammen per-flis-feltene til ETT felt (funn 2): rutens punkter kan
   // falle i hvilken som helst av rutens fliser, og motoren vet ikke noe om
-  // fliser i det hele tatt — den ser bare ett `WeatherField`.
-  const composite = compositeWeatherField(tileFields);
+  // fliser i det hele tatt — den ser bare ett `WeatherField`. Punktbølgen
+  // (fryst, ADR-0007) legges på etter sammensyingen.
+  const composite = decodeWeather(msg.tiles, msg.departEpochS, msg.isControl, msg.wavePoints);
   const decodeMs = performance.now() - tDecode0;
   // Perturbasjon (§4.4): rene dekoratorer rundt båt/vær — samme fulle søk
   // med samme opsjoner, bare en annen båt eller et annet hav.

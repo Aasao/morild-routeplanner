@@ -170,6 +170,37 @@ export const FLAG_STROM_DATA_MANGLER = 1 << 10;
  * over stegene. Kun rapportering — aldri kost, aldri søk.
  */
 export const FLAG_STROM_KYSTSONE = 1 << 11;
+/**
+ * **Avstandskategori til nærmeste bølge-varselpunkt** (`docs/specs/
+ * punktbolge.md` §4, D16.2): punktbølgen fra Oceanforecast er et punkt-API,
+ * og steget arver Hs fra nærmeste punkt. Kategoriene sier hvor langt unna
+ * det punktet er (`WeatherField.wavePointDistanceNm`): under 5 nm, 5–20 nm,
+ * over 20 nm. Settes av rekonstruksjonen per steg (samme mønster som
+ * `STROM_KYSTSONE`); rute-flagget er OR over stegene. **Kun rapportering** —
+ * søk, kost og derating leser dem aldri. Felt uten punktbølge (ingen
+ * `wavePointDistanceNm`) gir aldri noen av dem.
+ */
+export const FLAG_BOLGE_PUNKT_UNDER_5NM = 1 << 12;
+export const FLAG_BOLGE_PUNKT_5_20NM = 1 << 13;
+export const FLAG_BOLGE_PUNKT_OVER_20NM = 1 << 14;
+/** Alle tre avstandskategoriene — maske for rute-OR og tester. */
+export const FLAG_BOLGE_PUNKT_KATEGORI =
+  FLAG_BOLGE_PUNKT_UNDER_5NM | FLAG_BOLGE_PUNKT_5_20NM | FLAG_BOLGE_PUNKT_OVER_20NM;
+
+/**
+ * Kategorigrensene i nm (spec §4-tabellen: «< 5 / 5–20 / > 20 nm»). 5 og 20
+ * hører til midtkategorien.
+ */
+export const WAVE_POINT_CATEGORY_NEAR_NM = 5;
+export const WAVE_POINT_CATEGORY_FAR_NM = 20;
+
+/** Avstand til nærmeste bølgepunkt → kategoriflagg. `undefined` ⇒ 0 (ingen kategori). */
+export function wavePointCategoryFlag(distanceNm: number | undefined): number {
+  if (distanceNm === undefined || !Number.isFinite(distanceNm)) return 0;
+  if (distanceNm < WAVE_POINT_CATEGORY_NEAR_NM) return FLAG_BOLGE_PUNKT_UNDER_5NM;
+  if (distanceNm <= WAVE_POINT_CATEGORY_FAR_NM) return FLAG_BOLGE_PUNKT_5_20NM;
+  return FLAG_BOLGE_PUNKT_OVER_20NM;
+}
 
 export const FLAG_NAMES: readonly (readonly [number, string])[] = Object.freeze(
   [
@@ -185,6 +216,9 @@ export const FLAG_NAMES: readonly (readonly [number, string])[] = Object.freeze(
     [FLAG_VAERDEKNING_BEGRENSET, "VAERDEKNING_BEGRENSET"],
     [FLAG_STROM_DATA_MANGLER, "STROM_DATA_MANGLER"],
     [FLAG_STROM_KYSTSONE, "STROM_KYSTSONE"],
+    [FLAG_BOLGE_PUNKT_UNDER_5NM, "BOLGE_PUNKT_KATEGORI_UNDER_5NM"],
+    [FLAG_BOLGE_PUNKT_5_20NM, "BOLGE_PUNKT_KATEGORI_5_20NM"],
+    [FLAG_BOLGE_PUNKT_OVER_20NM, "BOLGE_PUNKT_KATEGORI_OVER_20NM"],
   ] as const,
 );
 

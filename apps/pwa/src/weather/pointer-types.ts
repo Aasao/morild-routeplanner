@@ -23,10 +23,23 @@ export interface PointerFieldEntry {
   readonly header: PackageHeader;
 }
 
+/**
+ * Et felt (eller ETT ensemblemedlem av et felt, når `member` er satt) som
+ * produsenten bevisst IKKE skrev — med grunn. Brukes i dag til å telle
+ * vindmedlemmer som ble utelatt for manglende data (§19 2026-09-29), slik at
+ * nevneren «n av N» er ærlig også når medlemmet aldri kom i pekeren.
+ */
+export interface PointerMissingFieldEntry {
+  readonly field: string;
+  readonly member?: number;
+  readonly sourceStatus: { readonly status: "degraded"; readonly reason: string };
+}
+
 export interface PointerTileEntry {
   readonly tileId: string;
   readonly bbox: readonly [west: number, south: number, east: number, north: number];
   readonly fields: readonly PointerFieldEntry[];
+  readonly missingFields?: readonly PointerMissingFieldEntry[];
 }
 
 export interface WeatherPointer {

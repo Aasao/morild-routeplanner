@@ -19,6 +19,9 @@ const STAMP: RobustnessStamp = {
   optionsHash: "test-hash",
   estimator: "naermeste-rang-v1",
   thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
+  waveGreenCap: { hsM: 1.0, status: "foreløpig, ikke verifisert mot NORA3" },
+  wavePeriodKnown: false,
+  wavePoints: null,
 };
 
 function makeSummary(overrides: Partial<MemberSummary> = {}): MemberSummary {
@@ -38,6 +41,7 @@ function makeSummary(overrides: Partial<MemberSummary> = {}): MemberSummary {
     safetyVerdict: "trygt",
     coverageWeather: "full",
     prunedBound: 0,
+    maxHsM: 0,
     tubBoundS: null,
     hourlyTrack: [],
     ...overrides,
@@ -533,5 +537,37 @@ describe("buildFanBand — syntetiske spor (§4.7 pkt. 7)", () => {
     });
     const page = buildFirstPage(baseInput(summary));
     expect(page.fan?.hours.length).toBe(HOURS + 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// §19 2026-09-29 (vaerpakker.md): utelatte vindmedlemmer vises som «n av N»
+// ---------------------------------------------------------------------------
+describe("buildFirstPage — dekningslinjen med utelatte vindmedlemmer", () => {
+  function dekning(stamp: RobustnessStamp): FirstPageLine {
+    const members = buildMembers({ nF: 20, nInf: 0, nInc: 0, nErr: 0 });
+    const summary = summarizeDeparture({
+      departEpochS: DEPART_EPOCH_S,
+      control: outcome(0, "feasible"),
+      members,
+      expectedMembers: members.length,
+      thresholds: [],
+      stamp,
+    });
+    return buildFirstPage(baseInput(summary)).lines.find((l) => l.kind === "dekning")!;
+  }
+
+  it("medlemmer mangler ⇒ «n av N medlemmer har vinddata — k utelatt», som advarsel", () => {
+    const line = dekning({ ...STAMP, windMembers: { withData: 24, nominal: 30, missing: [9, 10, 11, 24, 25, 26] } });
+    expect(line.text).toContain("Vindanslag (MEPS, 24 av 30 medlemmer har vinddata — 6 utelatt)");
+    expect(line.severity).toBe("advarsel");
+  });
+
+  it("alle har data (eller ukjent) ⇒ uendret tekst og info", () => {
+    for (const stamp of [STAMP, { ...STAMP, windMembers: { withData: 30, nominal: 30, missing: [] } }]) {
+      const line = dekning(stamp);
+      expect(line.text).toMatch(/^Vindanslag \(MEPS, 20 medlemmer\)/);
+      expect(line.severity).toBe("info");
+    }
   });
 });

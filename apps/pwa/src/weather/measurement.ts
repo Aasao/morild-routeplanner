@@ -13,6 +13,33 @@
  * nettbrett-JSON-ene «foreldet» uten at noe i dem var blitt feil.
  */
 import type { MemberOutcome } from "./ensemble.js";
+import type { WavePointLoad } from "./wave-points-client.js";
+
+/**
+ * Punktbølgen kjøringen var fryst på (ADR-0007, `docs/specs/punktbolge.md`
+ * §3): `hash` og `fetchedAtEpochS` så to målinger kan sammenlignes på
+ * samme bølge. Lagt til uten skjemabump (samme regel som over).
+ */
+export interface WavePointsMeasurement {
+  readonly source: WavePointLoad["kind"];
+  readonly hash: string | null;
+  readonly fetchedAtEpochS: number | null;
+  readonly sourceStatus: "ok" | "degraded" | "failed" | null;
+  readonly points: number | null;
+}
+
+export function waveMeasurement(load: WavePointLoad): WavePointsMeasurement {
+  if (load.kind === "mangler") {
+    return { source: "mangler", hash: null, fetchedAtEpochS: null, sourceStatus: null, points: null };
+  }
+  return {
+    source: load.kind,
+    hash: load.set.hash,
+    fetchedAtEpochS: load.set.fetchedAtEpochS,
+    sourceStatus: load.set.sourceStatus,
+    points: load.set.points.length,
+  };
+}
 
 export interface MemberMeasurement {
   readonly memberIndex: number;
@@ -67,6 +94,8 @@ export interface EnsembleMeasurement {
    */
   readonly ensembleWallMs: number | null;
   readonly members: readonly MemberMeasurement[];
+  /** Punktbølgen (ADR-0007); `null` = ikke kjent for denne målingen. */
+  readonly wavePoints: WavePointsMeasurement | null;
 }
 
 export function memberMeasurement(outcome: MemberOutcome, arrivalOrder: number): MemberMeasurement {
@@ -134,6 +163,7 @@ export function buildEnsembleMeasurement(args: {
   readonly control: MemberMeasurement | null;
   readonly ensembleWallMs: number | null;
   readonly members: readonly MemberMeasurement[];
+  readonly wavePoints?: WavePointsMeasurement | null | undefined;
 }): EnsembleMeasurement {
   const toMB = (b: number | undefined): number | null =>
     b === undefined ? null : Math.round(b / (1024 * 1024));
@@ -152,5 +182,6 @@ export function buildEnsembleMeasurement(args: {
     control: args.control,
     ensembleWallMs: args.ensembleWallMs,
     members: [...args.members].sort((a, b) => a.memberIndex - b.memberIndex),
+    wavePoints: args.wavePoints ?? null,
   };
 }

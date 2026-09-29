@@ -100,6 +100,19 @@ export function parseCertificate(header: PackageHeader): TileCertificate | undef
   };
 }
 
+/**
+ * **Plausibilitetsgrense for sertifikatet** (§19 2026-09-29). Et sertifikat
+ * kan være formelt gyldig og likevel umulig: MEPS-medlemmer som var ren
+ * NetCDF-fyllverdi (≈ 9,97e36) ble kvantisert som tall og fikk
+ * `maxDecodeErrorKn` ≈ 1e33 med `clippedSamples` 0. Observerte verdier for
+ * ekte vind er 0,07–0,12 kn (8 bit), og den groveste varianten som er målt
+ * (`docs/research/kompresjonsmaaling-2026-09-03.md`) er 0,35 kn. 1 kn gir
+ * ~3× margin over det, og er samtidig så stort at det svarer til et
+ * kanalspenn på ~360 kn innen én subflis — fysisk umulig. Over grensen er
+ * vaktbåndet ikke lenger en skranke, men et symptom på søppeldata.
+ */
+export const MAX_PLAUSIBLE_DECODE_ERROR_KN = 1;
+
 /** Rapporterer sertifikatet klipping i kvantiseringen? */
 export function reportsClipping(cert: TileCertificate): boolean {
   return cert.clipped === true || (cert.clippedSamples ?? 0) > 0;
@@ -129,6 +142,14 @@ export function acceptTileHeader(header: PackageHeader): TileAcceptance {
       reason:
         "flis rapporterer klipping — kvantiseringen har mettet, og dekodefeilen " +
         "er da ikke lenger begrenset av sertifikatet (D7.2)",
+    };
+  }
+  if (certificate.maxDecodeErrorKn > MAX_PLAUSIBLE_DECODE_ERROR_KN) {
+    return {
+      accepted: false,
+      reason:
+        `umulig sertifikat — maxDecodeErrorKn ${certificate.maxDecodeErrorKn.toExponential(2)} kn ` +
+        `> ${MAX_PLAUSIBLE_DECODE_ERROR_KN} kn (fyllverdi eller søppeldata kvantisert som tall)`,
     };
   }
   return { accepted: true, certificate };
@@ -168,7 +189,20 @@ export function acceptSharedFieldHeader(header: PackageHeader, field: string): S
   if (field === CURRENT_FIELD && (maxDecodeErrorKn === undefined || maxDecodeErrorKn < 0)) {
     return reject("strømlag uten gyldig maxDecodeErrorKn i sertifikatet — brukes ikke");
   }
+  if (field === CURRENT_FIELD && maxDecodeErrorKn !== undefined && maxDecodeErrorKn > MAX_PLAUSIBLE_DECODE_ERROR_KN) {
+    return reject(
+      `strømlag med umulig sertifikat (maxDecodeErrorKn ${maxDecodeErrorKn.toExponential(2)} kn > ${MAX_PLAUSIBLE_DECODE_ERROR_KN} kn) — brukes ikke`,
+    );
+  }
   return { accepted: true };
+}
+
+/**
+ * Synlig tekst når ETT vindmedlem avvises (§19 2026-09-29): medlemmet tas ut
+ * av ensemblet (nevneren blir synlig færre), flisen beholdes.
+ */
+export function windMemberRejectionText(member: number, detail: string): string {
+  return `medlem ${member} uten brukbare vinddata (fyllverdi/umulig sertifikat) — utelatt (${detail})`;
 }
 
 export interface TileRejection {

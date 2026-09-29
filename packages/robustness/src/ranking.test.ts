@@ -18,6 +18,7 @@ function makeMemberSummary(overrides: Partial<MemberSummary> = {}): MemberSummar
     safetyVerdict: "trygt",
     coverageWeather: "full",
     prunedBound: 0,
+    maxHsM: 0,
     tubBoundS: null,
     departEpochS: 1_700_000_000,
     hourlyTrack: [],
@@ -37,6 +38,9 @@ const STAMP: RobustnessStamp = {
   optionsHash: "test-hash",
   estimator: "naermeste-rang-v1",
   thresholds: { gronn: 0.9, rod: 0.7, inkonklusiv: 0.2, konkordans: 0.75 },
+  waveGreenCap: { hsM: 1.0, status: "foreløpig, ikke verifisert mot NORA3" },
+  wavePeriodKnown: false,
+  wavePoints: null,
 };
 
 interface DepartureOverrides {
@@ -76,6 +80,7 @@ function makeDeparture(overrides: DepartureOverrides): DepartureSummary {
     thresholds: [],
     light: { color: "beregner", reason: null, kOfN: { k: nF, n: 30 }, provisionalThresholds: true },
     certificate: null,
+    maxHsM: 0,
     stamp: STAMP,
   };
 }
