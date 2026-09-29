@@ -189,3 +189,11 @@ WAM800 Oceanforecast som primær bølgekilde og Hs-only-grenen fjernes.
   medlem) teller som «ukjent Hs», ikke 0 — taket i §4.1 slår inn (aldri grønt).
   Innstramming av D16.3 etter code-reviewer-funn (kontrollens `maxHsM` telte hull
   i punktvarselet som 0 m).
+- 2026-09-29: **Vedtak A implementert** (se robusthet.md §8 og rutemotor.md §10,
+  sammen med ADR-0008). Motoren setter `SJOEGANG_DATA_MANGLER` på hvert steg regnet
+  med et miljø uten bølge (også uten maske); `MemberSummary.maxHsM` og
+  `DepartureSummary.maxHsM` er `number | null`, `null` = minst ett steg uten
+  bølgedata. `null` i kontrollen eller et gjennomførbart medlem ⇒ gult med grunn
+  `bolgedata-mangler` (egen tekst: «bølgedata manglet … ukjent sjø kan ikke gi
+  grønt»), også når perioden er kjent. `maxHs` i §4.1 leses dermed som «maks over
+  stegene, ukjent hvis ett steg er ukjent».

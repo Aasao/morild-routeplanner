@@ -10,6 +10,7 @@
     "failingSegmentCount": 0,
     "maskCoverage": "full",
     "weatherCoverage": "full",
+    "searchWeatherCoverage": "full",
     "fieldUsed": true,
     "daylightArrival": true,
     "finalLegStatus": "lagt-til",

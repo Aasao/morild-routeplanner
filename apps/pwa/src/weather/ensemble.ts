@@ -7,10 +7,12 @@
  * over ferdige `RouteResult`-er — testbar uten en eneste ekte Worker (se
  * `WorkerLike`/`WorkerFactory`-injeksjonen under).
  *
- * **Inkonklusiv-regelen (ADR-0005, lagt til 2026-09-02):** et medlem der
- * `coverage.weather === "partial"` (feltet tok slutt før seilasen, §9.1
- * pkt. 4s 48 t-medlemshorisont) telles ALDRI som gjennomførbart eller
- * ugjennomførbart — kun som inkonklusivt. > 20 % inkonklusive på en avgang
+ * **Inkonklusiv-regelen (ADR-0005, lagt til 2026-09-02; ADR-0008):** et
+ * medlem uten full dekning — rutens steg (`coverage.weather`) når det nådde
+ * målet, hele søket (`coverage.searchWeather`, f.eks. feltet tok slutt før
+ * seilasen, §9.1 pkt. 4s 48 t-medlemshorisont) når det ikke gjorde det —
+ * telles ALDRI som gjennomførbart eller ugjennomførbart — kun som
+ * inkonklusivt (`classifyMember` i `@morild/robustness`). > 20 % inkonklusive på en avgang
  * er horisont-porten (ADR-0005 punkt 4): et flagg, ikke en feil.
  */
 import type { BailoutProfile, DistanceFieldData, LatLon, RouteResult } from "@morild/routing";
@@ -335,6 +337,10 @@ export function summarizeEnsemble(
   const infeasibleCount = outcomes.filter((o) => o.classification === "infeasible").length;
   const inconclusiveCount = outcomes.filter((o) => o.classification === "inconclusive").length;
   const errorCount = outcomes.filter((o) => o.classification === "error").length;
+  // ADR-0005 horisont-port: bare «dekning» (tid/horisont), ikke «dekning-felt» (ADR-0008, 2026-09-29).
+  const horizonCount = outcomes.filter(
+    (o) => o.classification === "inconclusive" && (o.inconclusiveReason ?? "dekning") === "dekning",
+  ).length;
   const durations = feasible
     .map((o) => o.result?.totals.durationS)
     .filter((d): d is number => d !== undefined)
@@ -349,7 +355,7 @@ export function summarizeEnsemble(
     errorCount,
     feasibleFraction: total > 0 ? feasible.length / total : 0,
     inconclusiveFraction: total > 0 ? inconclusiveCount / total : 0,
-    horizonTooShortWarning: total > 0 && inconclusiveCount / total > 0.2,
+    horizonTooShortWarning: total > 0 && horizonCount / total > 0.2,
     ...(p50 !== undefined ? { durationP50S: p50 } : {}),
     ...(p90 !== undefined ? { durationP90S: p90 } : {}),
     departure,

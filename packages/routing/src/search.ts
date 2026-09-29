@@ -42,6 +42,7 @@ import {
   checkSegment,
   checkTssStep,
   environmentAt,
+  environmentDataFlags,
   softContribution,
   stepKinematics,
 } from "./expand.js";
@@ -598,6 +599,13 @@ class RouteSearch implements Search {
   /**
    * Miljøoppslaget deles med evaluatoren og sluttetappen (`expand.ts`); det
    * eneste søket legger på er bokføringen av delvis værdekning.
+   *
+   * `weatherPartial` er **søksbred** (`coverage.searchWeather`, ADR-0008):
+   * den settes av ethvert oppslag — også den grådige forhåndsruten, dominerte
+   * etiketter og noder langt fra den leverte ruten. Den er grunnlaget for
+   * ugjennomførbar-sertifikatet, der en beskjæring gjort av en etikett uten
+   * fullt felt kan ha brutt beviset. Rutens egen dekning leses av stegenes
+   * flagg (`environmentDataFlags`), ikke herfra.
    */
   private environmentAt(
     pos: LatLon,
@@ -888,7 +896,12 @@ class RouteSearch implements Search {
       }
     }
 
-    let flags = contribution.flags;
+    // ADR-0008 (D17.1): steget regnes med forelderens miljø — startnoden,
+    // det eneste oppslaget motoren bruker for steget. Manglet strøm eller
+    // bølge der, bærer steget det selv; det er dette `coverage.weather` for
+    // den leverte ruten leses av. Kun rapportering: flaggene inngår verken i
+    // dominans, utkasting eller kost, så søket er uendret.
+    let flags = contribution.flags | environmentDataFlags(env);
     const mask = this.input.mask;
 
     // 12: punkt-test.

@@ -26,6 +26,8 @@ import {
   FLAG_KRYSS,
   FLAG_MOTOR,
   FLAG_NATT,
+  FLAG_SJOEGANG_DATA_MANGLER,
+  FLAG_STROM_DATA_MANGLER,
   FLAG_TSS_LANGS,
   FLAG_VIND_MOT_STROM,
 } from "./cost.js";
@@ -97,7 +99,9 @@ export function resolveGuardBandKn(
  * samme oppslagsrekkefølge og samme natt-/vind-mot-strøm-avledning.
  *
  * Ren: ingen sideeffekter. Kalleren avgjør selv hva det betyr at `waves` eller
- * `current` mangler (søket setter da `weatherPartial`).
+ * `current` mangler: søket setter da den søksbrede `weatherPartial`
+ * (`coverage.searchWeather`), og steget som regnes med miljøet får
+ * `environmentDataFlags(env)` (`coverage.weather`, ADR-0008).
  */
 export function environmentAt(
   weather: WeatherField,
@@ -125,6 +129,22 @@ export function environmentAt(
     windAgainstCurrent: isWindAgainstCurrent(wind, current),
     maxDecodeErrorKn: resolveGuardBandKn(weather, pos.lat, pos.lon, epochS),
   };
+}
+
+/**
+ * **Hvilke miljøfelt manglet i dette oppslaget?** (ADR-0008, D17.1.)
+ *
+ * Returnerer `STROM_DATA_MANGLER` og/eller `SJOEGANG_DATA_MANGLER` for et
+ * steg regnet med `env`. Én funksjon for søkets etiketter og sluttetappen,
+ * slik at «steget manglet strøm/bølge» betyr nøyaktig det samme begge steder
+ * — og slik at rutens `coverage.weather` kan leses rett av stegenes flagg.
+ * Ren: bare rapportering, aldri kost eller avvisning.
+ */
+export function environmentDataFlags(env: NodeEnvironment): number {
+  return (
+    (env.current === undefined ? FLAG_STROM_DATA_MANGLER : 0) |
+    (env.waves === undefined ? FLAG_SJOEGANG_DATA_MANGLER : 0)
+  );
 }
 
 /**

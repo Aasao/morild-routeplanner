@@ -110,10 +110,13 @@ interface MemberSummary {
   readonly daylightArrival: boolean;
   readonly flags: number;                // FLAG_* fra cost.ts, rute-nivå
   readonly safetyVerdict: "trygt" | "usikkert" | "usikker-rute";
-  readonly coverageWeather: "full" | "partial";
+  readonly coverageWeather: "full" | "partial";   // rutens steg (ADR-0008)
   readonly prunedBound: number;          // for §4.1-ventilen
   /** Posisjon per hele time fra avgang, for viften og D8.5. */
   readonly hourlyTrack: readonly LatLon[];
+  /** Maks Hs over rutens steg; null = et steg manglet bølgedata
+   *  («ukjent Hs», vedtak A, punktbolge.md §8) — aldri lest som 0. */
+  readonly maxHsM: number | null;
 }
 ```
 
@@ -122,8 +125,8 @@ Klassifisering (`classifyMember`, ren funksjon, erstatter dagens i
 
 | Vilkår | kind |
 |---|---|
-| `coverage.weather === "partial"` **eller** `abortReason === "noWeatherAtStart"`, og ikke `safety.reachesDestination` | `inconclusive`, grunn `dekning` (ADR-0005) |
-| `coverage.weather === "partial"` og `safety.reachesDestination` (nådd målet, men et felt manglet — bølger/strøm) | `inconclusive`, grunn `dekning-felt` (D11.1, vedtatt 2026-09-05) |
+| `coverage.searchWeather === "partial"` **eller** `abortReason === "noWeatherAtStart"`, og ikke `safety.reachesDestination` | `inconclusive`, grunn `dekning` (ADR-0005; søksnivået, ADR-0008) |
+| `coverage.weather === "partial"` og `safety.reachesDestination` (nådd målet, men et rutesteg manglet strøm/bølge) | `inconclusive`, grunn `dekning-felt` (D11.1, vedtatt 2026-09-05; rutenivået, ADR-0008) |
 | `pruned.bound > 0` og ikke `reachesDestination` | **ikke klassifiserbar** — søket kjøres om uten bound (§4.1), maks én gang per medlem (D9.4) |
 | kastet/`abortReason` ∈ {labelCap, iterationCap, noExpandableLabels, outsideDomain} uten mål | `error` |
 | `abortReason` ∈ {stagnation, callerStopped} uten mål | `inconclusive`, grunn `budsjett` (D9.2) |
@@ -136,6 +139,19 @@ bærer alltid `prunedBound` og `tubBoundS` (motorens egen horisont, `null`
 når den grådige forhåndsruten ikke nådde målet) — rapportert som
 *horisont*, ikke sertifikat (D9.3). Testvakt: intet medlem klassifiseres
 `infeasible` med `pruned.bound > 0`.
+
+**ADR-0008 (D17.1, vedtatt 2026-09-29):** to dekningsfelt. Et medlem som
+**nådde** målet leses på `coverage.weather` — den leverte rutens steg
+(start-sampling, inkl. sluttetappens start); ruten er et vitne, og hull i
+søket utenfor den teller ikke. Et medlem som **ikke** nådde målet leses på
+`coverage.searchWeather` — søkets globale bit — fordi et
+ugjennomførbar-sertifikat krever at ingen beskjæring ble gjort på et
+ufullstendig felt. Verktøyfeil-regelen (`ERROR_ABORT_REASONS` uten
+`pruned.noWeather`/`pruned.bound`, vaerpakker.md §19) står fortsatt
+**før** dekning. Et rutesteg uten strøm gjør fortsatt medlemmet inkonklusivt
+(D17.2 u) til egen runde etter Kartverket-masken; D11.1s «øvre skranke»
+holder for bølge, **ikke** for strøm (strøm 0 er verken øvre eller nedre
+skranke).
 
 **D11.1 (vedtatt 2026-09-05):** all `partial` dekning er inkonklusiv —
 også når målet ble nådd (grunn `dekning-felt`): en andel regnet uten
@@ -1203,3 +1219,29 @@ bølge 6 / spak 5. Panel enstemmig m/justeringer tatt inn.
   inkluderer bevisst IKKE bølge-hashen (gjenopptak etter omlasting skal
   ikke stoppe fordi MET har oppdatert punktvarselet) — hashen står i
   stempelet per kjøring.
+- 2026-09-29: **ADR-0008 (D17.1) og vedtak A implementert.**
+  `RouteCoverage` har to felt: `weather` (den leverte rutens steg, start-
+  sampling inkl. sluttetappens start) og `searchWeather` (søkets globale
+  bit, det `weather` var før). `classifyMember`: ikke nådd ⇒
+  `searchWeather`, nådd ⇒ `weather`; verktøyfeil-regelen står fortsatt
+  først. Resultater uten `searchWeather` (JSON fra før ADR-0008) leses på
+  den gamle `weather`; ugyldig verdi ⇒ `partial` (aldri et sertifikat).
+  Motoren setter `STROM_DATA_MANGLER`/`SJOEGANG_DATA_MANGLER` på hvert
+  rutesteg der feltet manglet, og rute-flagget `STROM_UKJENT_VED_ANKOMST`
+  når strømmen mangler i målet (teller ikke som dekning) — se
+  rutemotor.md §10. **Vedtak A:** `MemberSummary.maxHsM` og
+  `DepartureSummary.maxHsM` er `number | null`; `null` når et steg bærer
+  `SJOEGANG_DATA_MANGLER` (ukjent Hs, ikke 0). `null` i kontrollen eller et
+  gjennomførbart medlem ⇒ `capForUnknownPeriod` gir gult med ny grunn
+  `bolgedata-mangler` — **også når perioden er kjent** (vedtaket sier
+  «aldri grønt» uten forbehold; en kjent periode hjelper ikke der Hs selv
+  er ukjent). Førstesiden sier «maks Hs ukjent», aldri «0,0 m». Valgt
+  `number | null` framfor et eget boolsk felt: typen tvinger hver leser til
+  å ta stilling. Regresjon: 22 kjøringer (golden + S-1/S-2/S-8) bit-
+  identiske før/etter bortsett fra flagg/dekning; golden `weatherCoverage`
+  uendret. Tester: `outcome.test.ts`, `wave-cap.test.ts`,
+  `vaerdekning-klassifisering.test.ts` (ekte `planRoute` → klassifisering).
+  PWA: dekningsflaggene følger samme felt som klassifiseringen, nytt
+  info-flagg «søket møtte hull utenfor ruten», tekst for per-steg strøm og
+  «strøm ukjent ved ankomst»; kontrollens diagnostikk viser «Værdekning:
+  rute …, søk …».

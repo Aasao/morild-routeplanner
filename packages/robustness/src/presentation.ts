@@ -127,6 +127,13 @@ function formatDecimalComma(n: number, digits: number): string {
   return n.toFixed(digits).replace(".", ",");
 }
 
+/** Maks Hs med enhet; `null` (vedtak A) sies ut, aldri som «0,0 m». */
+function formatMaxHs(maxHsM: number | null): string {
+  return maxHsM === null
+    ? "ukjent (bølgedata manglet på minst ett steg)"
+    : `${formatDecimalComma(maxHsM, 1)} m`;
+}
+
 /** «N 58°12,3′ Ø 10°45,6′» — grader og desimalminutter, sjømannsformat (valg 5). */
 function formatLatLon(p: LatLon): string {
   const formatOne = (value: number, positiveLabel: string, negativeLabel: string): string => {
@@ -233,7 +240,9 @@ function buildLysLine(summary: DepartureSummary): FirstPageLine {
       }
       return line(
         "lys",
-        "Gult lys — horisonten er for kort for hele seilasen (dekningen tar slutt for tidlig).",
+        summary.horizonTooShort
+          ? "Gult lys — horisonten er for kort for hele seilasen (dekningen tar slutt for tidlig)."
+          : "Gult lys — over 20 % av utfallene er ikke avgjort (se årsakene under).",
         "advarsel",
       );
     case "tynt-utvalg":
@@ -259,7 +268,14 @@ function buildLysLine(summary: DepartureSummary): FirstPageLine {
       // stempelets, og det står at det er foreløpig.
       return line(
         "lys",
-        `Gult lys — bølger over ${formatDecimalComma(summary.stamp.waveGreenCap.hsM, 1)} m (maks ${formatDecimalComma(summary.maxHsM, 1)} m langs rutene) og bølgeperioden er ukjent: kort, bratt sjø kan ikke utelukkes (grense ${summary.stamp.waveGreenCap.status}).`,
+        `Gult lys — bølger over ${formatDecimalComma(summary.stamp.waveGreenCap.hsM, 1)} m (maks ${formatMaxHs(summary.maxHsM)} langs rutene) og bølgeperioden er ukjent: kort, bratt sjø kan ikke utelukkes (grense ${summary.stamp.waveGreenCap.status}).`,
+        "advarsel",
+      );
+    case "bolgedata-mangler":
+      // Vedtak A (punktbolge.md §8): ukjent Hs er ikke 0 m.
+      return line(
+        "lys",
+        "Gult lys — bølgedata manglet på minst ett steg langs rutene (kontrollen eller et gjennomførbart medlem): bølgehøyden er ukjent der, og ukjent sjø kan ikke gi grønt.",
         "advarsel",
       );
     default:
@@ -449,7 +465,7 @@ function buildBehindTap(input: FirstPageInput): readonly { readonly label: strin
         ? "Ingen punktbølge i denne kjøringen."
         : `Punktbølge ${wp.hash.slice(0, 12)} hentet ${wp.fetchedAtEpochS}.`) +
       ` Bølge-tak ${formatDecimalComma(summary.stamp.waveGreenCap.hsM, 1)} m (${summary.stamp.waveGreenCap.status})` +
-      `${summary.stamp.wavePeriodKnown ? "" : ", periode ukjent"} · maks Hs ${formatDecimalComma(summary.maxHsM, 1)} m.`,
+      `${summary.stamp.wavePeriodKnown ? "" : ", periode ukjent"} · maks Hs ${formatMaxHs(summary.maxHsM)}.`,
   });
   const ages = summary.stamp.memberAgesS;
   entries.push({

@@ -29,10 +29,10 @@ import {
   dominates,
   FLAG_KRYSS,
   FLAG_MOTOR,
+  FLAG_MILJOE_DATA_MANGLER,
   FLAG_NATT,
-  FLAG_SJOEGANG_DATA_MANGLER,
-  FLAG_STROM_DATA_MANGLER,
   FLAG_STROM_KYSTSONE,
+  FLAG_STROM_UKJENT_VED_ANKOMST,
   FLAG_BOLGE_PUNKT_KATEGORI,
   wavePointCategoryFlag,
   FLAG_USIKKER_TILLIT,
@@ -47,6 +47,7 @@ import {
   checkSegment,
   checkTssStep,
   environmentAt,
+  environmentDataFlags,
   MIN_SPEED_KN,
   softContribution,
   stepKinematics,
@@ -99,6 +100,12 @@ export interface ResultContext {
   readonly reachRadiusNm: number;
   readonly directDistanceNm: number;
   readonly isochrones: readonly IsochroneSnapshot[];
+  /**
+   * Søkets **globale** delvis-dekning-bit (`coverage.searchWeather`,
+   * ADR-0008): satt av ethvert miljøoppslag uten strøm/bølge og av enhver
+   * etikett forkastet for manglende vind. Rutens egen dekning
+   * (`coverage.weather`) leses ikke herfra, men av stegenes flagg.
+   */
   readonly weatherPartial: boolean;
   readonly fieldUsed: boolean;
   readonly fieldCells: number;
@@ -671,7 +678,7 @@ export function buildResult(ctx: ResultContext): RouteResult {
    *
    * Merk at horisont-slutt (`epochS > validToS`) bevisst IKKE utløser
    * flagget: at prognosen tar slutt er forventet og allerede dekket av
-   * `coverage.weather === "partial"` og ADR-0005s inkonklusiv-regel.
+   * `coverage.searchWeather === "partial"` og ADR-0005s inkonklusiv-regel.
    */
   const weatherCoverageLimited = ctx.pruned.noWeatherInWindow > 0;
   /**
@@ -680,21 +687,40 @@ export function buildResult(ctx: ResultContext): RouteResult {
    * i en gitt avstandskategori, er nok til at UI-et skal si det.
    */
   let reportedOr = 0;
+  /**
+   * ADR-0008 (D17.1): rutens værdekning er OR over stegenes
+   * `STROM_DATA_MANGLER`/`SJOEGANG_DATA_MANGLER` — start-sampling per steg,
+   * satt av søket ved ekspansjon og av sluttetappen. Startsteget (indeks 0)
+   * har ikke noe eget miljøoppslag og bærer aldri bitene.
+   */
+  let routeFieldMissing = 0;
   for (const s of steps) {
     reportedOr |= s.flags & (FLAG_STROM_KYSTSONE | FLAG_BOLGE_PUNKT_KATEGORI);
+    routeFieldMissing |= s.flags & FLAG_MILJOE_DATA_MANGLER;
   }
+  /**
+   * «Strøm ukjent ved ankomst» (ADR-0008): målet slås opp for seg, ved
+   * rutens faktiske ankomsttid, og bare når ruten ender der. Teller ikke som
+   * dekning — motoren brukte aldri miljøet i målet.
+   */
+  const currentUnknownAtArrival =
+    endsAtDest &&
+    input.weather.current(input.dest.lat, input.dest.lon, arrivalEpochS) ===
+      undefined;
   const routeFlags =
-    (weatherCoverageLimited ? FLAG_VAERDEKNING_BEGRENSET : 0) | reportedOr;
+    (weatherCoverageLimited ? FLAG_VAERDEKNING_BEGRENSET : 0) |
+    reportedOr |
+    (currentUnknownAtArrival ? FLAG_STROM_UKJENT_VED_ANKOMST : 0);
   /**
    * Gulvet: en rute som er beskåret av manglende værdekning kan aldri stå
    * som `"trygt"` (CLAUDE.md §1 «sikkerhet foran optimalitet», N2). Vi hever
    * ikke til `"usikker-rute"` — linjen som faktisk tegnes er sjekket mot
    * masken som ellers; det er *fullstendigheten* av søket som er usikker.
    *
-   * Bevisst avgrensning (review 2026-09-27, D15.1 d-min): manglende strøm/
-   * bølge — også på sluttetappen — senker IKKE `verdict`; det gir
+   * Bevisst avgrensning (review 2026-09-27, D15.1 d-min; ADR-0008): manglende
+   * strøm/bølge på rutens steg senker IKKE `verdict`; det gir
    * `coverage.weather === "partial"` og per-steg-flagg (`STROM_DATA_MANGLER`
-   * / `SJOEGANG_DATA_MANGLER`). `verdict` og `coverage.weather` kan derfor
+   * / `SJOEGANG_DATA_MANGLER`) på hvert berørt steg. `verdict` og `coverage.weather` kan derfor
    * vise ulikt; UI skal lese begge (og flaggene), aldri `verdict` alene.
    * Om manglende strøm skal senke `verdict`, er en egen beslutning.
    */
@@ -742,9 +768,13 @@ export function buildResult(ctx: ResultContext): RouteResult {
     },
     coverage: {
       mask: maskCoverage,
-      // d-min (D15.1, `docs/specs/strom-produsent.md` §4b): sluttetappens
-      // miljøoppslag teller med. Kan bare gjøre klassifiseringen strengere.
+      // ADR-0008: rutens steg. `withEnd.weatherPartial` dekker sluttetappens
+      // start også når etappen ble avvist (D15.1 d-min) — oppslaget ble gjort,
+      // og avvisningen kan skyldes nettopp det manglende feltet.
       weather:
+        routeFieldMissing !== 0 || withEnd.weatherPartial ? "partial" : "full",
+      // Dagens søksbrede bit, uendret (inkl. sluttetappen, d-min).
+      searchWeather:
         ctx.weatherPartial || withEnd.weatherPartial ? "partial" : "full",
       fieldUsed: ctx.fieldUsed,
       weatherHeader: input.weather.header,
@@ -892,9 +922,7 @@ function appendDirectFinalStep(
   // uten dem — det skal synes både i dekningen og på steget. Gjelder også
   // om etappen avvises under: avvisningen kan skyldes nettopp det manglende
   // feltet, og klassifiseringen skal bare kunne bli strengere.
-  const currentMissing = env.current === undefined;
-  const wavesMissing = env.waves === undefined;
-  const envPartial = currentMissing || wavesMissing;
+  const envPartial = environmentDataFlags(env) !== 0;
   const nodeCheck = checkHardNode(env, boat);
   if (!nodeCheck.ok) {
     return rejectedFinalLeg(
@@ -1003,8 +1031,7 @@ function appendDirectFinalStep(
     contribution.flags |
     tss.flags |
     (last.flags & FLAG_USIKKER_TILLIT) |
-    (currentMissing ? FLAG_STROM_DATA_MANGLER : 0) |
-    (wavesMissing ? FLAG_SJOEGANG_DATA_MANGLER : 0) |
+    environmentDataFlags(env) |
     reportingFlags(
       weather,
       ctx.input.dest.lat,

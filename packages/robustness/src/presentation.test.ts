@@ -350,8 +350,10 @@ describe("buildFirstPage — rekkefølge §4.7 pkt. 1–6", () => {
       ...buildMembers({ nF: 8, nInf: 1, nInc: 0, nErr: 0 }), // nF < 12 ⇒ tynt-utvalg
       outcome(20, "inconclusive", {}, "dekning"), // løfter nInc for horisont
       outcome(21, "inconclusive", {}, "dekning"),
-      outcome(22, "inconclusive", {}, "dekning-felt"),
-      outcome(23, "inconclusive", {}, "dekning-felt"),
+      outcome(22, "inconclusive", {}, "dekning"), // ADR-0008: bare «dekning» teller for horisonten
+      outcome(23, "inconclusive", {}, "dekning"),
+      outcome(26, "inconclusive", {}, "dekning-felt"),
+      outcome(27, "inconclusive", {}, "dekning-felt"),
       errorOutcome(24),
       errorOutcome(25),
     ];

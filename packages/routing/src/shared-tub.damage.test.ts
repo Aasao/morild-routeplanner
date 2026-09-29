@@ -104,7 +104,8 @@ function classifyMember(r: RouteResult): MemberKind {
   if (!reached && r.abortReason !== null && SEARCH_ABORTS.has(r.abortReason)) {
     return "error";
   }
-  if (!reached && r.coverage.weather === "partial") return "inconclusive";
+  // ADR-0008: ikke nådd ⇒ søkets dekning (samme bit som før ADR-0008).
+  if (!reached && r.coverage.searchWeather === "partial") return "inconclusive";
   if (!reached && r.diagnostics.pruned.bound > 0) return "kjor-om";
   return reached ? "feasible" : "infeasible";
 }

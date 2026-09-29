@@ -12,7 +12,7 @@
  *     `"trygt"` (CLAUDE.md §1, N2).
  *
  * Horisont-slutt (`epochS > validToS`) skal derimot **ikke** utløse flagget:
- * at prognosen tar slutt er forventet, og dekkes av `coverage.weather =
+ * at prognosen tar slutt er forventet, og dekkes av `coverage.searchWeather =
  * "partial"` + ADR-0005s inkonklusiv-regel.
  */
 import { describe, expect, it } from "vitest";
@@ -51,8 +51,9 @@ describe("flagget «rute begrenset av værdekning» (D7.2)", () => {
   it("full dekning: ingen flagg, verdikten står som den er", () => {
     const result = planRoute(baseInput());
     expect(result.diagnostics.pruned.noWeatherInWindow).toBe(0);
-    expect(result.flagNames).toEqual([]);
-    expect(result.flags).toBe(0);
+    // Feltet har ingen strøm i det hele tatt, så målet mangler strøm ved
+    // ankomst (ADR-0008) — det eneste rute-flagget. Ingen værdekningsflagg.
+    expect(result.flagNames).toEqual(["STROM_UKJENT_VED_ANKOMST"]);
     expect(result.safety.verdict).toBe("trygt");
   });
 
@@ -74,7 +75,7 @@ describe("flagget «rute begrenset av værdekning» (D7.2)", () => {
     ).toBeGreaterThan(0);
     expect(result.flagNames).toContain("VAERDEKNING_BEGRENSET");
     expect(result.safety.verdict).not.toBe("trygt");
-    expect(result.coverage.weather).toBe("partial");
+    expect(result.coverage.searchWeather).toBe("partial");
     // Masken er full og ingen segmenter feiler — uten D7.2-gulvet hadde
     // dette vært et «trygt».
     expect(result.safety.failingSegments).toEqual([]);
@@ -95,7 +96,7 @@ describe("flagget «rute begrenset av værdekning» (D7.2)", () => {
     expect(result.diagnostics.pruned.noWeather).toBeGreaterThan(0);
     expect(result.diagnostics.pruned.noWeatherInWindow).toBe(0);
     expect(result.flagNames).not.toContain("VAERDEKNING_BEGRENSET");
-    expect(result.coverage.weather).toBe("partial");
+    expect(result.coverage.searchWeather).toBe("partial");
   });
 
   it("flagget er rute-nivå: det dukker ikke opp på noe enkeltsteg", () => {

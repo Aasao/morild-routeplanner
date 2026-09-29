@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { FLAG_SJOEGANG_DATA_MANGLER, FLAG_STROM_DATA_MANGLER } from "@morild/routing";
 import { makeRouteResult, makeStep } from "../test-fixtures/route-result-factory.js";
-import { classifyMember, hourlyTrackFromSteps, summarizeMember } from "./outcome.js";
+import { classifyMember, hourlyTrackFromSteps, maxHsOverSteps, summarizeMember } from "./outcome.js";
 
 describe("provenance-avvisning (§3.1 pkt. 1 / §5.1)", () => {
   it("summarizeMember kaster på RouteResult uten provenance", () => {
@@ -173,6 +174,100 @@ describe("classifyMember — tabellen i §3.2 (rekkefølgen er bindende)", () =>
       coverage: { weather: "full" },
     });
     expect(classifyMember(result).kind).toBe("infeasible");
+  });
+});
+
+describe("classifyMember — to dekningsfelt (ADR-0008, D17.1)", () => {
+  it("hull kun utenfor ruten (weather full, searchWeather partial) + nådd mål ⇒ feasible", () => {
+    const result = makeRouteResult({
+      coverage: { weather: "full", searchWeather: "partial" },
+      safety: { reachesDestination: true },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "feasible" });
+  });
+
+  it("ikke nådd med hull i søket (searchWeather partial) forblir inkonklusiv, selv om rutens steg var dekket", () => {
+    const result = makeRouteResult({
+      coverage: { weather: "full", searchWeather: "partial" },
+      safety: { reachesDestination: false },
+      diagnostics: { pruned: { noWeather: 3 } },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning" });
+  });
+
+  it("ikke nådd, hull bare i strøm/bølge i søket (ingen forkastet for vind) ⇒ fortsatt «dekning», aldri infeasible", () => {
+    const result = makeRouteResult({
+      coverage: { weather: "full", searchWeather: "partial" },
+      safety: { reachesDestination: false },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning" });
+  });
+
+  it("rutesteg uten strøm (weather partial) + nådd mål ⇒ inconclusive «dekning-felt» (D17.2 u)", () => {
+    const result = makeRouteResult({
+      coverage: { weather: "partial", searchWeather: "partial" },
+      safety: { reachesDestination: true },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "inconclusive", reason: "dekning-felt" });
+  });
+
+  it("verktøyfeil-regelen står fortsatt FØR dekningen (searchWeather partial maskerer ikke error)", () => {
+    const result = makeRouteResult({
+      abortReason: "labelCap",
+      coverage: { weather: "full", searchWeather: "partial" },
+      safety: { reachesDestination: false },
+      diagnostics: { pruned: { noWeather: 0, bound: 0 } },
+    });
+    expect(classifyMember(result)).toEqual({ kind: "error" });
+  });
+
+  it("resultat fra før ADR-0008 (uten searchWeather) leses på den gamle søksbrede `weather`", () => {
+    const base = makeRouteResult({
+      coverage: { weather: "partial" },
+      safety: { reachesDestination: false },
+    });
+    const { searchWeather: _omit, ...legacyCoverage } = base.coverage;
+    void _omit;
+    const legacy = { ...base, coverage: legacyCoverage } as unknown as typeof base;
+    expect(classifyMember(legacy)).toEqual({ kind: "inconclusive", reason: "dekning" });
+  });
+
+  it("ugyldig searchWeather leses konservativt som partial — aldri et infeasible-sertifikat", () => {
+    const base = makeRouteResult({ safety: { reachesDestination: false } });
+    const broken = {
+      ...base,
+      coverage: { ...base.coverage, searchWeather: "kanskje" },
+    } as unknown as typeof base;
+    expect(classifyMember(broken).kind).toBe("inconclusive");
+  });
+});
+
+describe("summarizeMember — maxHsM med ukjent Hs (vedtak A, punktbolge.md §8)", () => {
+  it("alle steg med bølge ⇒ største Hs", () => {
+    const steps = [
+      makeStep({ tS: 0, hsM: 0 }),
+      makeStep({ tS: 1800, hsM: 0.7 }),
+      makeStep({ tS: 3600, hsM: 1.3 }),
+    ];
+    expect(summarizeMember(makeRouteResult({ steps })).maxHsM).toBeCloseTo(1.3);
+  });
+
+  it("ett steg uten bølgedata (SJOEGANG_DATA_MANGLER) ⇒ null, ikke 0 — og ikke det kjente maksimumet", () => {
+    const steps = [
+      makeStep({ tS: 0, hsM: 0 }),
+      makeStep({ tS: 1800, hsM: 0.4 }),
+      makeStep({ tS: 3600, hsM: 0, flags: FLAG_SJOEGANG_DATA_MANGLER, flagNames: ["SJOEGANG_DATA_MANGLER"] }),
+    ];
+    expect(summarizeMember(makeRouteResult({ steps })).maxHsM).toBeNull();
+    expect(maxHsOverSteps(steps)).toBeNull();
+  });
+
+  it("strøm mangler, bølge finnes ⇒ Hs er kjent (bare bølgemangel gjør Hs ukjent)", () => {
+    const steps = [
+      makeStep({ tS: 0, hsM: 0 }),
+      makeStep({ tS: 1800, hsM: 0.6, flags: FLAG_STROM_DATA_MANGLER, flagNames: ["STROM_DATA_MANGLER"] }),
+    ];
+    expect(maxHsOverSteps(steps)).toBeCloseTo(0.6);
   });
 });
 

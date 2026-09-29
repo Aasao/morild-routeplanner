@@ -192,6 +192,35 @@ export interface MissingTileBox {
 }
 
 /**
+ * Et felt der **strøm og/eller bølge** mangler i en boks, mens vinden står
+ * (ADR-0008-fiksturen). Signaturen til NorKysts fyllverdier nær land eller
+ * et bølgepunkt utenfor rekkevidde: søket ekspanderer som før, men
+ * miljøoppslaget i boksen gir `current`/`waves === undefined`.
+ */
+export function withMissingEnvFields(
+  base: WeatherField,
+  box: MissingTileBox,
+  fields: { readonly current?: boolean; readonly waves?: boolean },
+): WeatherField {
+  const inHole = (lat: number, lon: number): boolean =>
+    lat >= box.latMin &&
+    lat <= box.latMax &&
+    lon >= box.lonMin &&
+    lon <= box.lonMax;
+  return {
+    ...base,
+    waves: (lat, lon, epochS) =>
+      fields.waves === true && inHole(lat, lon)
+        ? undefined
+        : base.waves(lat, lon, epochS),
+    current: (lat, lon, epochS) =>
+      fields.current === true && inHole(lat, lon)
+        ? undefined
+        : base.current(lat, lon, epochS),
+  };
+}
+
+/**
  * Et felt der ÉN flis mangler (D7.2-fiksturen).
  *
  * Innenfor boksen svarer feltet `undefined` på alt, mens `validFromS`/

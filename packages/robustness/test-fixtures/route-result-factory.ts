@@ -140,10 +140,18 @@ function makeSafety(overrides?: Partial<RouteSafety>): RouteSafety {
   };
 }
 
+/**
+ * `searchWeather` følger `weather` når den ikke er oppgitt: for et ekte
+ * søk er den søksbrede biten alltid minst like streng som rutens (ADR-0008),
+ * så eldre tester som bare setter `weather` beholder sin betydning. Tester
+ * for skillet (hull kun utenfor ruten) setter begge eksplisitt.
+ */
 function makeCoverage(overrides?: Partial<RouteCoverage>): RouteCoverage {
+  const weather = overrides?.weather ?? "full";
   return {
     mask: "full",
-    weather: "full",
+    weather,
+    searchWeather: weather,
     fieldUsed: false,
     weatherHeader: {
       formatVersion: "1.1.0",

@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import type { MemberOutcome, MemberSummary, OutcomeKind } from "./outcome.js";
 import { buildFirstPage } from "./presentation.js";
-import { summarizeDeparture, WAVE_GREEN_CAP_STAMP, type RobustnessStamp } from "./summary.js";
+import { combineMaxHsM, summarizeDeparture, WAVE_GREEN_CAP_STAMP, type RobustnessStamp } from "./summary.js";
 import {
   capForUnknownPeriod,
   WAVE_GREEN_CAP_HS_M,
@@ -177,5 +177,79 @@ describe("summarizeDeparture med bølge-taket", () => {
     const bolge = page.behindTap.find((e) => e.label === "Bølge")!;
     expect(bolge.text).toContain("Punktbølge h hentet");
     expect(bolge.text).toContain("periode ukjent");
+  });
+});
+
+/**
+ * Vedtak A (punktbolge.md §8, Magnus 2026-09-29): manglende bølgedata på et
+ * steg er «ukjent Hs», ikke 0. Code-reviewer-funnet som utløste vedtaket:
+ * kontrollens `maxHsM` telte hull i punktvarselet som 0 m, og en kontroll
+ * med manglende bølge kunne dermed gi grønt.
+ */
+describe("vedtak A: ukjent Hs (maxHsM = null) gir aldri grønt", () => {
+  const unknownHs = (memberIndex: number, kind: OutcomeKind = "feasible"): MemberOutcome => ({
+    memberIndex,
+    kind,
+    summary: summary({ maxHsM: null }),
+  });
+
+  it("capForUnknownPeriod: null ⇒ gult «bolgedata-mangler», også når perioden er kjent", () => {
+    const out = capForUnknownPeriod(light("gronn"), { ...CAP, maxHsM: null });
+    expect(out.color).toBe("gul");
+    expect(out.reason).toBe("bolgedata-mangler");
+    expect(capForUnknownPeriod(light("gronn"), { ...CAP, maxHsM: null, periodKnown: true }).color).toBe("gul");
+  });
+
+  it("null mildner aldri gult/rødt og rører ikke «beregner»", () => {
+    const rod = light("rod", "andel");
+    expect(capForUnknownPeriod(rod, { ...CAP, maxHsM: null })).toBe(rod);
+    expect(capForUnknownPeriod(light("beregner"), { ...CAP, maxHsM: null }).color).toBe("beregner");
+  });
+
+  it("kontrollen manglet bølge på ett steg ⇒ ikke grønt, selv med 30 lave, gjennomførbare medlemmer", () => {
+    const d = depart(allFeasible(() => 0.3), unknownHs(0));
+    expect(d.maxHsM).toBeNull();
+    expect(d.light.color).toBe("gul");
+    expect(d.light.reason).toBe("bolgedata-mangler");
+  });
+
+  it("et gjennomførbart medlem med ukjent Hs ⇒ ikke grønt", () => {
+    const members = [...allFeasible(() => 0.3).slice(0, 29), unknownHs(30)];
+    const d = depart(members);
+    expect(d.maxHsM).toBeNull();
+    expect(d.light.color).toBe("gul");
+  });
+
+  it("ukjent Hs hos et IKKE-gjennomførbart medlem teller ikke (samme grunnlag som taket ellers)", () => {
+    const members = [...allFeasible(() => 0.3).slice(0, 29), unknownHs(30, "infeasible")];
+    const d = depart(members);
+    expect(d.maxHsM).toBeCloseTo(0.3);
+    expect(d.light.color).toBe("gronn");
+  });
+
+  it("combineMaxHsM: én null smitter maksimumet; NaN beholdes som uleselig", () => {
+    expect(combineMaxHsM([0.2, 1.1, 0.4])).toBeCloseTo(1.1);
+    expect(combineMaxHsM([0.2, null, 3])).toBeNull();
+    expect(combineMaxHsM([])).toBe(0);
+    expect(combineMaxHsM([0.2, Number.NaN, 0.1])).toBeNaN();
+  });
+
+  it("førstesiden sier «ukjent», aldri «0,0 m»", () => {
+    const d = depart(allFeasible(() => 0.3), unknownHs(0));
+    const page = buildFirstPage({
+      summary: d,
+      advice: null,
+      sensitivity: "ikke-beregnet",
+      bailout: null,
+      packageAgeS: 0,
+      staleAfterS: 6 * 3600,
+      thresholds: [],
+    });
+    const lys = page.lines.find((l) => l.kind === "lys")!;
+    expect(lys.text).toContain("Gult lys");
+    expect(lys.text).toContain("bølgedata manglet");
+    const bolge = page.behindTap.find((e) => e.label === "Bølge")!;
+    expect(bolge.text).toContain("maks Hs ukjent");
+    expect(bolge.text).not.toContain("0,0 m");
   });
 });

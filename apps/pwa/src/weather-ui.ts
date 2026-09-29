@@ -128,7 +128,10 @@ export function renderControlResult(el: HTMLElement, outcome: MemberOutcome): vo
   el.textContent =
     `Kontroll (ekte vær): ${r.safety.reachesDestination ? "nådde målet" : "nådde IKKE målet"} — ` +
     `ankomst ${arrival}, ${r.totals.distanceNm.toFixed(1)} nm, ` +
-    `${(r.totals.durationS / 3600).toFixed(1)} t. Værdekning: ${r.coverage.weather}. Kartdekning: ${r.coverage.mask}.` +
+    // ADR-0008: to dekningsfelt — rutens steg (klassifiserer et nådd mål) og
+    // hele søket (klassifiserer et ikke-nådd). Begge vises, aldri bare ett.
+    `${(r.totals.durationS / 3600).toFixed(1)} t. Værdekning: rute ${r.coverage.weather}, søk ${r.coverage.searchWeather}. ` +
+    `Kartdekning: ${r.coverage.mask}.` +
     elapsed;
 }
 

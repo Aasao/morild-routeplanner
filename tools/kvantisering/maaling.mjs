@@ -417,7 +417,10 @@ function p1(konfigurasjoner) {
           reachesDestination: r.safety.reachesDestination,
           recheckPassed: r.safety.recheckPassed,
           failingSegments: r.safety.failingSegments.length,
-          weatherCoverage: r.coverage.weather,
+          // ADR-0008 (2026-09-29): `weather` gjelder nå rutens steg; den søksbrede
+          // biten (dagens betydning i historiske målinger) er `searchWeather`.
+          weatherCoverage: r.coverage.searchWeather ?? r.coverage.weather,
+          routeWeatherCoverage: r.coverage.weather,
           fieldUsed: r.coverage.fieldUsed,
           finalLegStatus: r.finalLeg.status,
           daylightArrival: r.totals.daylightArrival,

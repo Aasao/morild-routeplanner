@@ -201,7 +201,7 @@ describe("ærlig degradering (§6)", () => {
       }),
     );
     expect(result.reached).toBe(false);
-    expect(result.coverage.weather).toBe("partial");
+    expect(result.coverage.searchWeather).toBe("partial");
     expect(result.abortReason).toBe("noExpandableLabels");
   });
 

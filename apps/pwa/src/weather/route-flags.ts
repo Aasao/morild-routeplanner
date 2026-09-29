@@ -10,8 +10,9 @@
  * 2. Pakke-nivå "feltet finnes ikke i det hele tatt i denne pakken"
  *    (`field-status.ts` — f.eks. dagens vind-only dry-run-pakke: INGEN
  *    strøm- eller bølgefelt lastet ned overhodet).
- * 3. Rute-nivå dekningsflagg (`RouteResult.coverage` — vær tok slutt
- *    (partial, ADR-0005s inkonklusiv-regel) eller kartdekning er
+ * 3. Rute-nivå dekningsflagg (`RouteResult.coverage` — rutens steg manglet
+ *    strøm/bølge (`weather`) eller søket møtte hull/horisont
+ *    (`searchWeather`), ADR-0005/ADR-0008; eller kartdekning er
  *    ufullstendig).
  * 4. Rute-nivå MOTOR-flagg (`RouteResult.flagNames`, D7.2) — flagg om selve
  *    SØKET, ikke om et punkt på linjen. `VAERDEKNING_BEGRENSET` er det
@@ -70,16 +71,40 @@ export function missingFieldFlags(
 }
 
 /**
- * `coverage.weather === "partial"` har to ulike årsaker som ikke må blandes
- * (§19 2026-09-29): (a) søket forkastet etiketter fordi værfeltet tok slutt
- * i tid eller manglet i rom (`diagnostics.pruned.noWeather > 0`) — horisont/
- * tidsvindu; (b) strøm og/eller bølge manglet i deler av søkeområdet eller
- * langs ruten, uten at noe ble forkastet for manglende vær. Før fikk (b)
- * teksten for (a), som er usant — det var ingen horisont som tok slutt.
+ * Dekningsflaggene følger klassifiseringen (ADR-0008): en rute som **nådde**
+ * målet vurderes på sine egne steg (`coverage.weather`), en som **ikke**
+ * nådde det på hele søket (`coverage.searchWeather`). Samme felt som
+ * `classifyMember` leser, så teksten kan aldri si noe annet enn dommen.
+ *
+ * Søksnivået har to årsaker som ikke må blandes (§19 2026-09-29): (a) søket
+ * forkastet etiketter fordi værfeltet tok slutt i tid eller manglet i rom
+ * (`diagnostics.pruned.noWeather > 0`) — horisont/tidsvindu; (b) strøm
+ * og/eller bølge manglet i deler av søkeområdet, uten at noe ble forkastet
+ * for manglende vær.
+ *
+ * En nådd rute med fullt dekkede steg, men hull i søket utenfor, får et
+ * info-flagg: ruten er regnet med full fysikk, men søket så ikke alt.
  */
 export function coverageFlags(result: RouteResult): readonly DisplayFlag[] {
   const flags: DisplayFlag[] = [];
-  if (result.coverage.weather === "partial") {
+  const reached = result.safety.reachesDestination;
+  if (reached) {
+    if (result.coverage.weather === "partial") {
+      flags.push({
+        code: "VAER_DEKNING_DELVIS_FELT",
+        label:
+          "Strøm og/eller bølge manglet på rutens egne steg — de stegene er regnet uten dem; inkonklusiv, telles verken som gjennomførbar eller ugjennomførbar (ADR-0005/ADR-0008)",
+        severity: "warning",
+      });
+    } else if (result.coverage.searchWeather === "partial") {
+      flags.push({
+        code: "VAER_DEKNING_SOK_UTENFOR_RUTE",
+        label:
+          "Søket møtte hull i værfeltet utenfor den leverte ruten — rutens egne steg er regnet med fullt felt (ADR-0008)",
+        severity: "info",
+      });
+    }
+  } else if (result.coverage.searchWeather === "partial") {
     flags.push(
       result.diagnostics.pruned.noWeather > 0
         ? {
@@ -88,9 +113,9 @@ export function coverageFlags(result: RouteResult): readonly DisplayFlag[] {
             severity: "warning",
           }
         : {
-            code: "VAER_DEKNING_DELVIS_FELT",
+            code: "VAER_DEKNING_SOK_DELVIS_FELT",
             label:
-              "Strøm og/eller bølge mangler i deler av søkeområdet eller langs ruten — inkonklusiv, ikke ugjennomførbar (ADR-0005)",
+              "Strøm og/eller bølge manglet i deler av søkeområdet — inkonklusiv, ikke ugjennomførbar (ADR-0005/ADR-0008)",
             severity: "warning",
           },
     );
@@ -114,10 +139,15 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
   TSS_LANGS: "Ruten følger en TSS-led et sted",
   SJOEGANGS_MARGIN_OVERSKREDET: "Sjøgangsmargin overskredet et sted langs ruten",
   NEGATIV_VANNSTAND_RISIKO: "Risiko for negativ vannstand et sted langs ruten",
-  SJOEGANG_DATA_MANGLER: "Bølgedata manglet i minst ett punkt — klaringskravet falt tilbake til standardmarginen der",
+  SJOEGANG_DATA_MANGLER:
+    "Bølgedata manglet på minst ett steg langs ruten — bølgehøyden er ukjent der (ikke 0 m), steget er regnet uten bølgedemping og klaringskravet falt tilbake til standardmarginen",
   VAERDEKNING_BEGRENSET:
     "Ruten er BEGRENSET AV VÆRDEKNING: søket måtte forkaste alternativer fordi en værflis manglet innenfor pakkens tidsvindu — ruten kan være formet av hvilke fliser som var lastet, ikke av været (D7.2)",
-  STROM_DATA_MANGLER: "Strømdata manglet ved sluttetappen inn til målet — den etappen er regnet uten strøm",
+  STROM_DATA_MANGLER:
+    "Strømdata manglet på minst ett steg langs ruten — de stegene er regnet uten strøm, og tiden der kan være feil i begge retninger",
+  // ADR-0008: målet slås opp for seg; teller ikke som dekning, men skal synes.
+  STROM_UKJENT_VED_ANKOMST:
+    "Strøm ukjent ved ankomst: strømmodellen har ingen verdi i målet — innseilingen er din egen vurdering (tverrstrøm i innløpet kan forekomme)",
   // Ordlyd låst i docs/specs/strom-produsent.md §4b (D15.2). Aldri en nøyaktighet i meter.
   STROM_KYSTSONE:
     "Strøm nær land: verdien er lånt fra nærmeste sjøcelle i 800 m-modellen — retningen kan være upålitelig eller komme fra feil side i trange sund.",
@@ -148,8 +178,9 @@ const STEP_FLAG_LABEL_NO: Record<string, string> = {
  * | `TSS_LANGS`                      | info    | Ren trafikkinformasjon (§ rutemotor.md: `tssAlongCostS` er 0 i v2.0, ingen kostnad, ingen farbarhetseffekt). |
  * | `SJOEGANGS_MARGIN_OVERSKREDET`   | warning | Sjøgangstillegget overskrider maskens statiske klaringsmargin i punktet (`rutemotor.md` §12) — direkte klaring. |
  * | `NEGATIV_VANNSTAND_RISIKO`       | warning | Risiko for negativ vannstand — direkte farbarhet (tørrfall-/grunnstøtingsrisiko). |
- * | `SJOEGANG_DATA_MANGLER`          | warning | Bølgedata manglet i punktet, klaringskravet falt tilbake til statisk margin — eksplisitt datamangel som IKKE later som marginen er dekket (N2). |
- * | `STROM_DATA_MANGLER`             | warning | Strøm manglet i sluttetappens miljøoppslag (D15.1 d-min) — datamangel, `coverage.weather` er da også `"partial"`. |
+ * | `SJOEGANG_DATA_MANGLER`          | warning | Bølgedata manglet i stegets miljøoppslag (ADR-0008: hvert steg), klaringskravet falt tilbake til statisk margin og Hs er ukjent (vedtak A) — eksplisitt datamangel som IKKE later som marginen er dekket (N2). |
+ * | `STROM_DATA_MANGLER`             | warning | Strøm manglet i stegets miljøoppslag (ADR-0008: hvert steg, ikke bare sluttetappen) — datamangel, `coverage.weather` er da også `"partial"`. |
+ * | `STROM_UKJENT_VED_ANKOMST`       | warning | **Rute-nivå** (ADR-0008): strømmodellen har ingen verdi i selve målet. Ikke dekning, men innseilingen er uten strømgrunnlag — skipperen skal se det. |
  * | `STROM_KYSTSONE`                 | warning | Strømverdien er kystnær/lånt fra nærmeste sjøcelle (D15.2) — retningen kan være gal i trange sund. Datakvalitet med direkte betydning for om strømbidraget kan stoles på. |
  * | `BOLGE_PUNKT_KATEGORI_UNDER_5NM` | info    | Bølgen kommer fra et varselpunkt under 5 nm unna — normaltilstanden for punktbølge (punktbolge.md §4). Periodens ukjenthet sies i bølgeteksten, ikke her. |
  * | `BOLGE_PUNKT_KATEGORI_5_20NM`    | warning | Varselpunktet er 5–20 nm unna: bølgen i steget er lånt fra et annet sted — datakvalitet med betydning for bølgebidraget. |
@@ -172,6 +203,7 @@ const STEP_FLAG_SEVERITY: Record<string, "info" | "warning"> = {
   SJOEGANG_DATA_MANGLER: "warning",
   VAERDEKNING_BEGRENSET: "warning",
   STROM_DATA_MANGLER: "warning",
+  STROM_UKJENT_VED_ANKOMST: "warning",
   STROM_KYSTSONE: "warning",
   BOLGE_PUNKT_KATEGORI_UNDER_5NM: "info",
   BOLGE_PUNKT_KATEGORI_5_20NM: "warning",

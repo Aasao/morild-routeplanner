@@ -36,7 +36,8 @@ const POOLS = [3, 5, 6];
 
 function kind(r) {
   if (r.safety.reachesDestination) return "feasible";
-  if (r.coverage.weather === "partial") return "inconclusive";
+  // ADR-0008: ikke nådd ⇒ søkets dekning (samme bit som coverage.weather før ADR-0008).
+  if ((r.coverage.searchWeather ?? r.coverage.weather) === "partial") return "inconclusive";
   if (r.diagnostics.pruned.bound > 0) return "rerun";
   return r.abortReason ?? "infeasible";
 }

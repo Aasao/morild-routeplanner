@@ -135,9 +135,19 @@ export const FLAG_TSS_LANGS = 1 << 5;
 export const FLAG_SJOEGANGS_MARGIN_OVERSKREDET = 1 << 6;
 export const FLAG_NEGATIV_VANNSTAND_RISIKO = 1 << 7;
 /**
- * Nytt i v2: sjøgangstillegget i klaringstallet kunne ikke beregnes fordi
- * bølgedata mangler i punktet. Klaringskravet falt da tilbake til den
- * statiske `minOffingNm`. Vi later ikke som marginen er dekket (N2).
+ * **Bølgedata manglet i miljøoppslaget steget ble regnet med**
+ * (`WeatherField.waves` ⇒ `undefined`). Følgene: steget er regnet uten
+ * bølgederating (`waveFactor = 1`), `RouteStep.hsM` er 0 uten å bety flatt
+ * hav, og sjøgangstillegget i klaringskravet kunne ikke beregnes — kravet
+ * falt tilbake til den statiske `minOffingNm`. Vi later ikke som marginen er
+ * dekket (N2).
+ *
+ * Fra ADR-0008 (2026-09-29) settes den på **hvert** steg — søkets etiketter
+ * og sluttetappen — uansett om kystbufferen er i bruk; før ble den bare satt
+ * av korridorsjekken (dvs. kun med maske og `minOffingNm > 0`). Steget
+ * bærer flagget fra **startnodens** miljø: etiketten ble til ved å ekspandere
+ * forelderen med forelderens vær, og det er det oppslaget motoren brukte.
+ * Robusthetslaget leser den som «ukjent Hs» (vedtak A, punktbolge.md §8).
  */
 export const FLAG_SJOEGANG_DATA_MANGLER = 1 << 8;
 /**
@@ -156,11 +166,15 @@ export const FLAG_SJOEGANG_DATA_MANGLER = 1 << 8;
  */
 export const FLAG_VAERDEKNING_BEGRENSET = 1 << 9;
 /**
- * Strømdata manglet i punktet (`WeatherField.current` ⇒ `undefined`).
- * Settes i dag KUN på den direkte sluttetappen (`reconstruct.ts`,
- * `docs/specs/strom-produsent.md` §4b «d-min»): sluttetappen er
- * etterbehandling, så søkets `weatherPartial` fanger den ikke. Søkets egne
- * etiketter merkes ikke (full (d) er egen runde).
+ * **Strømdata manglet i miljøoppslaget steget ble regnet med**
+ * (`WeatherField.current` ⇒ `undefined`); steget er regnet med strøm 0.
+ *
+ * Settes på **hvert** rutesteg der det skjedde (ADR-0008, D17.1, vedtatt
+ * 2026-09-29) — søkets etiketter ved ekspansjon og den direkte sluttetappen.
+ * Før ADR-0008 bare på sluttetappen (D15.1 d-min). Samme start-sampling som
+ * `SJOEGANG_DATA_MANGLER`: flagget på et steg gjelder forelderens
+ * (startnodens) miljø. `coverage.weather` er `"partial"` hviss minst ett
+ * rutesteg bærer dette flagget eller `SJOEGANG_DATA_MANGLER`.
  */
 export const FLAG_STROM_DATA_MANGLER = 1 << 10;
 /**
@@ -183,6 +197,27 @@ export const FLAG_STROM_KYSTSONE = 1 << 11;
 export const FLAG_BOLGE_PUNKT_UNDER_5NM = 1 << 12;
 export const FLAG_BOLGE_PUNKT_5_20NM = 1 << 13;
 export const FLAG_BOLGE_PUNKT_OVER_20NM = 1 << 14;
+/**
+ * **Rute-nivå, ikke punktvis** (ADR-0008, D17.1): ruten ender i målet, men
+ * strømfeltet har ingen verdi *i selve målet* ved ankomsttiden. Målet er et
+ * punkt motoren aldri slår opp (sluttetappen regnes med miljøet i sin
+ * startnode), så dette er **ikke** dekning og gjør aldri `coverage.weather`
+ * partial — det er et synlig varsel om at innseilingen er skipperens egen
+ * vurdering (tverrstrøm i innløpet kan forekomme). Settes kun på
+ * `RouteResult.flags`, aldri på et steg. Kun rapportering — aldri søk, kost
+ * eller klassifisering. (Siste ledige bit i arenaens `Uint16Array`, men den
+ * lagres aldri der.)
+ */
+export const FLAG_STROM_UKJENT_VED_ANKOMST = 1 << 15;
+
+/**
+ * Bitene som sier at et rutesteg er regnet uten et helt miljøfelt (strøm
+ * eller bølge). `coverage.weather` er `"partial"` hviss et steg bærer en av
+ * dem (ADR-0008).
+ */
+export const FLAG_MILJOE_DATA_MANGLER =
+  FLAG_STROM_DATA_MANGLER | FLAG_SJOEGANG_DATA_MANGLER;
+
 /** Alle tre avstandskategoriene — maske for rute-OR og tester. */
 export const FLAG_BOLGE_PUNKT_KATEGORI =
   FLAG_BOLGE_PUNKT_UNDER_5NM | FLAG_BOLGE_PUNKT_5_20NM | FLAG_BOLGE_PUNKT_OVER_20NM;
@@ -219,6 +254,7 @@ export const FLAG_NAMES: readonly (readonly [number, string])[] = Object.freeze(
     [FLAG_BOLGE_PUNKT_UNDER_5NM, "BOLGE_PUNKT_KATEGORI_UNDER_5NM"],
     [FLAG_BOLGE_PUNKT_5_20NM, "BOLGE_PUNKT_KATEGORI_5_20NM"],
     [FLAG_BOLGE_PUNKT_OVER_20NM, "BOLGE_PUNKT_KATEGORI_OVER_20NM"],
+    [FLAG_STROM_UKJENT_VED_ANKOMST, "STROM_UKJENT_VED_ANKOMST"],
   ] as const,
 );
 

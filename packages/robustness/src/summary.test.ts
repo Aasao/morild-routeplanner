@@ -112,6 +112,18 @@ describe("summarizeDeparture — telling (§3.3, bølge 1-skjelett)", () => {
     expect(summary.feasibleShare).toBeNull();
   });
 
+  it("horizonTooShort teller ikke «dekning-felt» (ADR-0008): strøm/bølge-hull er ikke horisont", () => {
+    const felt = (i: number) => ({ ...makeOutcome(i, "inconclusive"), inconclusiveReason: "dekning-felt" as const });
+    const members = [
+      ...Array.from({ length: 22 }, (_, i) => makeOutcome(i + 1, "feasible")),
+      ...Array.from({ length: 7 }, (_, i) => felt(i + 23)),
+      makeOutcome(30, "infeasible"),
+    ];
+    const summary = summarizeDeparture(baseInput(members));
+    expect(summary.inconclusiveShare).toBeCloseTo(7 / 30);
+    expect(summary.horizonTooShort).toBe(false);
+  });
+
   it("horizonTooShort er sann når inconclusiveShare > 0,20", () => {
     const members = [
       ...Array.from({ length: 22 }, (_, i) => makeOutcome(i + 1, "feasible")),

@@ -142,7 +142,9 @@ describe("sluttetappen (D15.1 d-min): manglende strøm/bølge ⇒ partial + per-
     expect(r.coverage.weather).toBe("partial");
     const last = r.steps[r.steps.length - 1]!;
     expect(last.flagNames).toContain("STROM_DATA_MANGLER");
-    // Bare sluttsteget — søkets etiketter merkes ikke (full (d) er egen runde).
+    // Bare sluttsteget: den håndbygde arenaen her har etiketter med flagg 0.
+    // At søkets egne etiketter også merkes (ADR-0008), låses i
+    // `vaerdekning-rute.test.ts`.
     for (const s of r.steps.slice(0, -1)) expect(s.flags & FLAG_STROM_DATA_MANGLER).toBe(0);
   });
 
@@ -152,9 +154,18 @@ describe("sluttetappen (D15.1 d-min): manglende strøm/bølge ⇒ partial + per-
     expect(r.steps[r.steps.length - 1]!.flagNames).toContain("SJOEGANG_DATA_MANGLER");
   });
 
-  it("søkets partial overstyres aldri til full", () => {
+  it("søkets partial overstyres aldri til full — det bor i searchWeather (ADR-0008)", () => {
     const ctx = { ...context(weather()), weatherPartial: true };
-    expect(buildResult(ctx).coverage.weather).toBe("partial");
+    const r = buildResult(ctx);
+    expect(r.coverage.searchWeather).toBe("partial");
+    // Rutens steg (og sluttetappens start) hadde fullt felt.
+    expect(r.coverage.weather).toBe("full");
+  });
+
+  it("sluttetappens manglende strøm teller i BEGGE dekningsfeltene (d-min bevart)", () => {
+    const r = buildResult(context(weather({ noCurrent: true })));
+    expect(r.coverage.weather).toBe("partial");
+    expect(r.coverage.searchWeather).toBe("partial");
   });
 
   it("avvist sluttetappe etter miljøoppslaget teller også (strengere, aldri mildere)", () => {
@@ -162,6 +173,7 @@ describe("sluttetappen (D15.1 d-min): manglende strøm/bølge ⇒ partial + per-
     const r = buildResult(context(weather({ speedKn: 80, noCurrent: true })));
     expect(r.finalLeg.status).toBe("avvist-baatgrenser");
     expect(r.coverage.weather).toBe("partial");
+    expect(r.coverage.searchWeather).toBe("partial");
   });
 });
 
@@ -208,6 +220,7 @@ describe("regresjon på golden-rutene: kystmasken endrer verken steg eller tid",
       expect(coastal.legs).toEqual(plain.legs);
       expect(coastal.safety).toEqual(plain.safety);
       expect(coastal.coverage.weather).toBe(plain.coverage.weather);
+      expect(coastal.coverage.searchWeather).toBe(plain.coverage.searchWeather);
       expect(coastal.finalLeg).toEqual(plain.finalLeg);
       expect(coastal.diagnostics.iterations).toBe(plain.diagnostics.iterations);
       expect(coastal.flags).toBe(plain.flags | FLAG_STROM_KYSTSONE);

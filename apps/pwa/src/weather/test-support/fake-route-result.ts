@@ -18,6 +18,8 @@ export const HEADER: PackageHeader = {
 /** Minimal, gyldig `RouteResult` — kun feltene klassifiseringen/aggregeringen faktisk ser er variert per test. */
 export function fakeResult(overrides: {
   readonly weatherCoverage?: "full" | "partial";
+  /** Søksbred dekning (ADR-0008). Utelatt ⇒ lik `weatherCoverage` (søket er aldri mildere enn ruten). */
+  readonly searchWeatherCoverage?: "full" | "partial";
   readonly reachesDestination?: boolean;
   readonly durationS?: number;
   /** Antall syntetiske steg (orakelet krever ≥ 2 veipunkter). */
@@ -64,6 +66,7 @@ export function fakeResult(overrides: {
     coverage: {
       mask: "full",
       weather: overrides.weatherCoverage ?? "full",
+      searchWeather: overrides.searchWeatherCoverage ?? overrides.weatherCoverage ?? "full",
       fieldUsed: true,
       weatherHeader: HEADER,
       chartSources: [],

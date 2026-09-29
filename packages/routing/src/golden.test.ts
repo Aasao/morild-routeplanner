@@ -61,7 +61,10 @@ interface GoldenSnapshot {
     readonly recheckPassed: boolean;
     readonly failingSegmentCount: number;
     readonly maskCoverage: string;
+    /** ADR-0008: dekning over rutens steg. */
     readonly weatherCoverage: string;
+    /** ADR-0008: søkets globale bit (det `weatherCoverage` var før 2026-09-29). */
+    readonly searchWeatherCoverage: string;
     readonly fieldUsed: boolean;
     readonly daylightArrival: boolean;
     /** §5.8 — endres denne, har sluttetappens semantikk endret seg. */
@@ -100,6 +103,7 @@ function snapshotOf(result: RouteResult, purpose: string): GoldenSnapshot {
       failingSegmentCount: result.safety.failingSegments.length,
       maskCoverage: result.coverage.mask,
       weatherCoverage: result.coverage.weather,
+      searchWeatherCoverage: result.coverage.searchWeather,
       fieldUsed: result.coverage.fieldUsed,
       daylightArrival: result.totals.daylightArrival,
       finalLegStatus: result.finalLeg.status,

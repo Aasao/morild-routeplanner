@@ -505,7 +505,17 @@ interface RouteResult {
 
   readonly coverage: {
     readonly mask: "full" | "partial" | "none";
+    /** ADR-0008: den LEVERTE RUTENS steg. "partial" hviss et rutesteg —
+     *  inkl. sluttetappens start, også ved avvist sluttetappe — manglet
+     *  strøm eller bølge i miljøoppslaget motoren brukte (startnoden per
+     *  steg; stegets STROM_DATA_MANGLER/SJOEGANG_DATA_MANGLER). Målet teller
+     *  ikke (se STROM_UKJENT_VED_ANKOMST). Leses for et medlem som NÅDDE målet. */
     readonly weather: "full" | "partial";
+    /** ADR-0008: SØKETS globale bit (det `weather` var før 2026-09-29):
+     *  ethvert oppslag uten strøm/bølge (også forhåndsruten og dominerte
+     *  etiketter) og enhver etikett forkastet for manglende vind (horisont,
+     *  flishull). Leses for et medlem som IKKE nådde målet. */
+    readonly searchWeather: "full" | "partial";
     readonly fieldUsed: boolean;
     readonly weatherHeader: PackageHeader;
     readonly chartSources: readonly { name: string; datum: string }[];
@@ -1439,8 +1449,12 @@ faktisk produserer nettopp den aborten.
 
 ```
 kind === "exhausted" && boundSource === null && prunedBound === 0
-&& coverage.weather === "full" && !safety.reachesDestination
+&& coverage.searchWeather === "full" && !safety.reachesDestination
 ```
+
+(`searchWeather` fra ADR-0008: `coverage.weather` gjelder nå bare den
+leverte ruten, og sertifikatet handler om søket — en beskjæring gjort av en
+etikett uten fullt felt kan ha brutt beviset.)
 
 Alt annet er «ikke avgjort» (robusthet.md §3.2, «Konsekvens for nevneren»).
 Kravet `boundSource === null` er strengere enn strengt nødvendig når en
@@ -1579,8 +1593,9 @@ fulle R2-søk**, 128 kandidater silt bort av feltet, 8 havnefelt bygget på
 | `mask.coverage === "partial"` | Søket kjører normalt. `coverage.mask = "partial"`; alle segmenter i udekket område får `tillit: "usikkert"` og flagges. |
 | Vind mangler i en node | Noden ekspanderes ikke (`pruned.noWeather++`). Mangler vind allerede i startpunktet: `abortReason: "noWeatherAtStart"`, tom rute, forklarende resultat. |
 | Vind mangler i rommet **innenfor** pakkens tidsvindu (manglende værflis) | `pruned.noWeatherInWindow++`, ruten får flagget `VAERDEKNING_BEGRENSET` og `safety.verdict` gulves til minst `"usikkert"` (D7.2). Ruten kan være formet av flisdekningen i stedet for av været — det skal aldri kunne skje stille. Klientens flisvalgregel (`app-skjelett.md` §5.4b) skal gjøre situasjonen usannsynlig; flagget gjør den umulig å skjule. |
-| Vind mangler et stykke ut i tid | Søket stopper naturlig der feltet slutter; `reached: false` med `abortReason` og `coverage.weather = "partial"`. Vi ekstrapolerer aldri utenfor `validToS`. |
-| Bølger/strøm mangler | Best effort: `waveFactor = 1`, strøm = 0. Segmentene flagges ikke som feil, men `coverage.weather = "partial"` og feltets header viser hva som manglet (F2.4). |
+| Vind mangler et stykke ut i tid | Søket stopper naturlig der feltet slutter; `reached: false` med `abortReason` og `coverage.searchWeather = "partial"` (søksnivå, ADR-0008). Vi ekstrapolerer aldri utenfor `validToS`. |
+| Bølger/strøm mangler | Best effort: `waveFactor = 1`, strøm = 0. Segmentene avvises ikke, men **hvert** rutesteg regnet med et miljø uten feltet får `STROM_DATA_MANGLER`/`SJOEGANG_DATA_MANGLER` (start-sampling: stegets startnode), og `coverage.weather = "partial"` når minst ett rutesteg er berørt (ADR-0008). Hull bare utenfor ruten gir kun `coverage.searchWeather = "partial"`. Feltets header viser hva som manglet (F2.4). |
+| Strøm mangler i selve målet ved ankomst | Rute-flagget `STROM_UKJENT_VED_ANKOMST` (ADR-0008). Ikke dekning — motoren slår aldri opp målet — men innseilingen er uten strømgrunnlag, og UI skal si det. |
 | A\*-felt kan ikke bygges / start utilgjengelig | `fieldUsed: false`; ingen blindvei-pruning, ingen Tub-bound. Kjøringen blir tregere — det rapporteres, ikke skjules. |
 | Målet ikke nådd | `reached: false` + `abortReason`. Beste delrute returneres slik at brukeren ser hvor langt motoren kom og hvorfor den stoppet. |
 | Etikett-taket nås | `abortReason: "labelCap"`. Dette er *ikke* en stille kvalitetsforringelse — det står i resultatet og skal vises. |
@@ -1853,6 +1868,57 @@ determinisme håndhevet strukturelt (ADR-0004 «Bekreftelse» punkt 6).
 ---
 
 ## 10. Endringslogg
+
+- **2026-09-29 — værdekning over rutens steg (ADR-0008, D17.1)**
+  (`docs/decisions/ADR-0008-vaerdekning-over-rutens-steg.md`; panel
+  `docs/research/ekspertpanel-d17-dekning-2026-09-29.md` §1.1, §5).
+  - **To dekningsfelt.** `coverage.weather` gjelder nå den leverte ruten:
+    `"partial"` hviss et rutesteg manglet strøm eller bølge i oppslaget
+    motoren brukte for steget (startnoden — stykkevis konstant miljø),
+    inkludert sluttetappens start (også når sluttetappen ble avvist, d-min
+    bevart). Nytt felt `coverage.searchWeather` er den gamle søksbrede
+    biten, uendret (`search.ts::environmentAt`, forhåndsruten, horisont/
+    flishull, sluttetappen). For et fullt søk er `searchWeather` alltid
+    minst like streng som `weather`. Sertifikatet i §5.13 leser nå
+    `searchWeather`.
+  - **Per-steg-bæring:** `tryHeading` legger `environmentDataFlags(env)`
+    (ny, `expand.ts`) på etiketten ved innsetting — forelderens miljø, samme
+    mønster som korridorsjekkens `SJOEGANG_DATA_MANGLER`. Sluttetappen
+    bruker samme funksjon. Rekonstruksjonen leser `coverage.weather` som OR
+    over stegenes `FLAG_MILJOE_DATA_MANGLER` (= `STROM_DATA_MANGLER |
+    SJOEGANG_DATA_MANGLER`). Ingen ny arena-kolonne: bitene bor i den
+    eksisterende `flags` (Uint16).
+  - **Semantikkendring på to bits:** `STROM_DATA_MANGLER` settes på alle
+    rutesteg der strøm manglet, ikke bare sluttetappen.
+    `SJOEGANG_DATA_MANGLER` settes på alle steg der bølge manglet, også uten
+    maske/kystbuffer (før kun via korridorsjekken) — den betyr nå «bølgedata
+    manglet i stegets miljø» og leses av robusthetslaget som ukjent Hs
+    (vedtak A, `punktbolge.md` §8).
+  - **Målet slås opp for seg:** ny rute-bit `STROM_UKJENT_VED_ANKOMST`
+    (`1 << 15`, aldri på et steg eller i arenaen) når ruten ender i målet og
+    `weather.current(dest, ankomsttid)` er `undefined`. Teller ikke som
+    dekning.
+  - **Horisont/vindhull** (`pruned.noWeather`, `noWeatherInWindow`) er
+    fortsatt søksnivå og påvirker bare `searchWeather`.
+  - **Regresjon (målt, ikke antatt):** før/etter-dump av hele
+    `RouteResult` minus `flags`/`flagNames`/`coverage` — steg, etapper,
+    totaler, dom, sluttetappe, alternativer, isokroner og diagnostikk — for
+    de sju golden-scenarioene pluss kontroll + fire medlemmer av S-1, S-2 og
+    S-8 (22 kjøringer): **bit-identisk**. Golden-filene fikk bare
+    `searchWeatherCoverage` (lik gammel `weatherCoverage` i alle sju);
+    `weatherCoverage` er uendret i alle sju (de fire partial-scenarioene har
+    felt uten strøm/bølge langs selve ruten). Flaggene inngår verken i
+    dominans, utkasting eller kost.
+  - **Tester:** `vaerdekning-rute.test.ts` (hull kun utenfor ruten ⇒ full/
+    partial; belte over ruten ⇒ flagget på nøyaktig stegene som startet i
+    beltet, strøm og bølge hver for seg; mangel bare i målet ⇒
+    ankomst-flagg og full dekning; ikke nådd ⇒ ingen ankomst-flagg);
+    `strom-sluttetappe-kystsone.test.ts` oppdatert (søkets bit bor i
+    `searchWeather`); `weather-coverage.test.ts`/`search.test.ts` leser
+    horisont og flishull på `searchWeather`.
+  - **Ikke gjort:** evaluatoren (`evaluate.ts`, §5.11) setter ikke de nye
+    per-steg-bitene og har ingen dekningsfelt — den inngår ikke i
+    robusthetstallene. Egen runde hvis den skal.
 
 - **2026-09-29 — punktbølge: `wavePointDistanceNm` og `BOLGE_PUNKT_KATEGORI_*`**
   (`docs/specs/punktbolge.md` §3–§4, D16.1–D16.3 vedtatt 2026-09-29; ADR-0007).

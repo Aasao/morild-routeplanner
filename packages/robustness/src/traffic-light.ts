@@ -41,6 +41,14 @@ export type TrafficLightReason =
    * `capForUnknownPeriod`, aldri av tabellen i §4.2.3.
    */
   | "bolgeperiode-ukjent"
+  /**
+   * Vedtak A (punktbolge.md §8, Magnus 2026-09-29): ville vært grønt, men
+   * minst ett steg i kontrollen eller et gjennomførbart medlem manglet
+   * bølgedata — Hs er ukjent der, ikke 0. Settes kun av
+   * `capForUnknownPeriod`. Egen grunn (ikke `bolgeperiode-ukjent`) fordi
+   * teksten ellers ville påstått «bølger over 1,0 m», som ingen vet.
+   */
+  | "bolgedata-mangler"
   | null;
 
 export interface TrafficLight {
@@ -255,8 +263,12 @@ export const WAVE_GREEN_CAP_HS_M = 1.0;
 export const WAVE_GREEN_CAP_STATUS = "foreløpig, ikke verifisert mot NORA3" as const;
 
 export interface UnknownPeriodCapInput {
-  /** Maks Hs over alle steg i kontrollen og alle gjennomførbare medlemmer. */
-  readonly maxHsM: number;
+  /**
+   * Maks Hs over alle steg i kontrollen og alle gjennomførbare medlemmer.
+   * `null` = minst ett av de stegene manglet bølgedata — «ukjent Hs»
+   * (vedtak A), aldri lest som 0.
+   */
+  readonly maxHsM: number | null;
   /** Har bølgekilden periode? Oceanforecast har det ikke (D14.1) ⇒ `false`. */
   readonly periodKnown: boolean;
   /** Taket, normalt `WAVE_GREEN_CAP_HS_M` (lest fra stempelet). */
@@ -273,9 +285,16 @@ export interface UnknownPeriodCapInput {
  * aldri), og «beregner» røres ikke (taket gjelder en ferdig farge).
  * `maxHsM` som ikke er et endelig tall behandles konservativt som over
  * taket — et tall vi ikke kan lese, skal ikke gi grønt.
+ *
+ * **Vedtak A** (punktbolge.md §8, 2026-09-29): `maxHsM === null` — et steg
+ * uten bølgedata — gir gult (`bolgedata-mangler`) **uavhengig av om
+ * perioden er kjent**. Vedtaket sier «aldri grønt» uten forbehold, og en
+ * kjent periode hjelper ikke der Hs selv er ukjent (steget er da også regnet
+ * uten bølgederating). Sjekken står derfor foran `periodKnown`.
  */
 export function capForUnknownPeriod(light: TrafficLight, input: UnknownPeriodCapInput): TrafficLight {
   if (light.color !== "gronn") return light;
+  if (input.maxHsM === null) return mkLight("gul", "bolgedata-mangler", light.kOfN);
   if (input.periodKnown) return light;
   const over = !Number.isFinite(input.maxHsM) || input.maxHsM > input.capHsM;
   if (!over) return light;

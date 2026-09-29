@@ -77,7 +77,10 @@ export type AbortReason =
  * et medlem er bevist ugjennomførbart bare når
  *
  *     kind === "exhausted" && boundSource === null && prunedBound === 0
- *     && coverage.weather === "full" && !safety.reachesDestination
+ *     && coverage.searchWeather === "full" && !safety.reachesDestination
+ *
+ * (`searchWeather`, ikke `weather`: fra ADR-0008 gjelder `weather` bare den
+ * leverte ruten, og et sertifikat for ugjennomførbarhet handler om søket.)
  *
  * Alt annet er «ikke avgjort». Merk at regelen krever `boundSource === null`
  * — altså at ingen Tub-bound i det hele tatt var i spill (`noTubBound`, §4.7,
@@ -261,7 +264,34 @@ export interface RouteSafety {
 
 export interface RouteCoverage {
   readonly mask: "full" | "partial" | "none";
+  /**
+   * **Dekning over den leverte rutens steg** (ADR-0008, D17.1, vedtatt
+   * 2026-09-29). `"partial"` hviss minst ett rutesteg — inkludert
+   * sluttetappens start, også når sluttetappen ble avvist — manglet strøm
+   * eller bølge i miljøoppslaget motoren faktisk brukte for steget
+   * (startnoden; stegets `STROM_DATA_MANGLER`/`SJOEGANG_DATA_MANGLER`).
+   *
+   * Målet selv teller ikke (motoren slår det aldri opp); manglende strøm
+   * der gir rute-flagget `STROM_UKJENT_VED_ANKOMST` i stedet. Hull i søket
+   * utenfor ruten teller ikke — de står i `searchWeather`.
+   *
+   * Robusthetslaget leser dette feltet for et medlem som **nådde** målet:
+   * ruten er da et vitne, og alle dens steg er regnet med full fysikk.
+   */
   readonly weather: "full" | "partial";
+  /**
+   * **Søksbred dekning** — den globale biten som før ADR-0008 het
+   * `coverage.weather`. `"partial"` så snart **et hvilket som helst**
+   * miljøoppslag i søket (inkl. den grådige forhåndsruten og sluttetappen)
+   * manglet strøm eller bølge, eller en etikett ble forkastet fordi vinden
+   * manglet (horisont eller flishull, `pruned.noWeather`).
+   *
+   * Robusthetslaget leser dette feltet for et medlem som **ikke** nådde
+   * målet: et ugjennomførbar-sertifikat krever at ingen beskjæring var gjort
+   * på et ufullstendig felt. Alltid minst like streng som `weather` for et
+   * resultat fra et fullt søk.
+   */
+  readonly searchWeather: "full" | "partial";
   readonly fieldUsed: boolean;
   readonly weatherHeader: PackageHeader;
   readonly chartSources: readonly ChartSourceRef[];
@@ -378,6 +408,9 @@ export interface RouteResult {
    * står BÅDE per steg og her, som OR over stegene — så UI-et kan si det om
    * ruten uten å lete gjennom stegene. Samme for `BOLGE_PUNKT_KATEGORI_*`
    * (`docs/specs/punktbolge.md` §4).
+   *
+   * `STROM_UKJENT_VED_ANKOMST` (ADR-0008) står KUN her: strømfeltet har
+   * ingen verdi i selve målet ved ankomst. Ikke dekning, bare varsel.
    */
   readonly flags: number;
   /** Flaggnavn i `FLAG_NAMES`-rekkefølge — determinisme også i rapporteringen. */

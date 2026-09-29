@@ -101,8 +101,12 @@ export interface DepartureSummary {
   readonly thresholds: readonly { readonly id: string; readonly k: number; readonly n: number }[];
   readonly light: TrafficLight;
   readonly certificate: Certificate | null;
-  /** Maks Hs over kontrollens steg og alle gjennomførbare medlemmer — grunnlaget for bølge-taket (§4.1). */
-  readonly maxHsM: number;
+  /**
+   * Maks Hs over kontrollens steg og alle gjennomførbare medlemmer —
+   * grunnlaget for bølge-taket (§4.1). `null` = minst ett av stegene manglet
+   * bølgedata: Hs er ukjent, og lyset kan ikke bli grønt (vedtak A).
+   */
+  readonly maxHsM: number | null;
   readonly stamp: RobustnessStamp;
 }
 
@@ -114,6 +118,20 @@ export interface SummarizeDepartureInput {
   readonly expectedMembers: number;
   readonly thresholds: readonly ThresholdSpec[];
   readonly stamp: RobustnessStamp;
+}
+
+/**
+ * Maks over medlemmenes `maxHsM`, der én `null` («ukjent Hs», vedtak A)
+ * gjør hele svaret `null`: et maksimum over et sett med et ukjent element
+ * er ukjent. Tom liste ⇒ 0 (ingen steg å vurdere).
+ */
+export function combineMaxHsM(values: readonly (number | null)[]): number | null {
+  let max = 0;
+  for (const v of values) {
+    if (v === null) return null;
+    if (v > max || Number.isNaN(v)) max = v;
+  }
+  return max;
 }
 
 /** Predikat-argumentet en `ThresholdSpec.passes` faktisk trenger fra `MemberSummary`. */
@@ -136,7 +154,15 @@ export function summarizeDeparture(input: SummarizeDepartureInput): DepartureSum
 
   const feasibleShare = nF + nInf === 0 ? null : nF / (nF + nInf);
   const inconclusiveShare = input.expectedMembers === 0 ? 0 : nInc / input.expectedMembers;
-  const horizonTooShort = inconclusiveShare > 0.2;
+  // ADR-0005 horisont-port: bare inkonklusive fordi DEKNINGEN (tid/horisont)
+  // tok slutt teller her. Etter ADR-0008 skilles «dekning-felt» (strøm/bølge
+  // mangler langs ruten) ut — de sier ingenting om horisonten, og ble før
+  // feilaktig rapportert som «horisonten er for kort» (2026-09-29).
+  // Uten registrert årsak (eldre sammendrag) telles medlemmet som horisont — som før.
+  const nHorizon = members.filter(
+    (m) => m.kind === "inconclusive" && (m.inconclusiveReason ?? "dekning") === "dekning",
+  ).length;
+  const horizonTooShort = input.expectedMembers === 0 ? false : nHorizon / input.expectedMembers > 0.2;
   const complete = members.length === input.expectedMembers;
 
   const feasibleShareBounds = computeFeasibleShareBounds({
@@ -170,11 +196,12 @@ export function summarizeDeparture(input: SummarizeDepartureInput): DepartureSum
   });
   // Bølge-taket (punktbolge.md §4.1) ETTER §4.2.3-tabellen og D10.4-
   // sertifikatene: kan bare hindre grønt. `maxHsM` over kontrollens steg
-  // og alle gjennomførbare medlemmer.
-  const maxHsM = Math.max(
-    input.control.summary?.maxHsM ?? 0,
-    ...feasible.map((m) => m.summary?.maxHsM ?? 0),
-  );
+  // og alle gjennomførbare medlemmer; `null` (et steg uten bølgedata) er
+  // «ukjent Hs» og smitter hele maksimumet (vedtak A) — aldri lest som 0.
+  // NB: ikke `?? 0` på selve `maxHsM` — det ville gjort `null` til 0.
+  // Bare et manglende sammendrag (feilet kontroll) gir 0: ingen steg å vurdere.
+  const hsOf = (m: MemberOutcome): number | null => (m.summary === null ? 0 : m.summary.maxHsM);
+  const maxHsM = combineMaxHsM([hsOf(input.control), ...feasible.map(hsOf)]);
   const light = capForUnknownPeriod(table.light, {
     maxHsM,
     periodKnown: input.stamp.wavePeriodKnown,

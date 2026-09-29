@@ -10,6 +10,7 @@
  */
 import type { LatLon } from "@morild/geo";
 import type { AbortReason, RouteResult, RouteStep } from "@morild/routing";
+import { FLAG_SJOEGANG_DATA_MANGLER } from "@morild/routing";
 
 /** Bakoverkompatibelt alias — `provenance` er nå et påkrevd felt på `RouteResult` (rutemotor.md §4.8). */
 export type ProvenancedRouteResult = RouteResult;
@@ -53,6 +54,7 @@ export interface MemberSummary {
   /** Rute-nivå flagg — FLAG_* fra `@morild/routing`s `cost.ts`. */
   readonly flags: number;
   readonly safetyVerdict: "trygt" | "usikkert" | "usikker-rute";
+  /** Rutens dekning — `coverage.weather`, over den leverte rutens steg (ADR-0008). */
   readonly coverageWeather: "full" | "partial";
   /** For §4.1-ventilen: `pruned.bound > 0 && !reachesDestination` ⇒ ikke bevist ugjennomførbart. */
   readonly prunedBound: number;
@@ -68,10 +70,16 @@ export interface MemberSummary {
   /**
    * Største Hs (m) over rutens steg — grunnlaget for bølge-taket på
    * trafikklyset (`docs/specs/punktbolge.md` §4.1, `capForUnknownPeriod`).
-   * Steg uten bølgedata bærer `hsM = 0` og løfter derfor aldri tallet;
-   * manglende bølge er i stedet synlig som `coverage.weather === "partial"`.
+   *
+   * **`null` = minst ett steg manglet bølgedata** (vedtak A, punktbolge.md
+   * §8, Magnus 2026-09-29): «ukjent Hs», ikke 0. Et slikt steg bærer
+   * `hsM = 0` og `SJOEGANG_DATA_MANGLER`; før vedtaket løftet det aldri
+   * tallet, slik at en kontroll med hull i punktvarselet kunne gi grønt.
+   * `null` i kontrollen eller et gjennomførbart medlem gjør lyset maks gult.
+   * Valgt framfor et eget boolsk felt fordi typen da tvinger hver leser til
+   * å ta stilling — et tall som ser ut som 0 m kan ikke leses ved et uhell.
    */
-  readonly maxHsM: number;
+  readonly maxHsM: number | null;
 }
 
 export interface MemberOutcome {
@@ -178,8 +186,37 @@ export function summarizeMember(result: RouteResult): MemberSummary {
     prunedBound: result.diagnostics.pruned.bound,
     tubBoundS: result.diagnostics.tubBoundS,
     hourlyTrack: hourlyTrackFromSteps(result.steps),
-    maxHsM: result.steps.reduce((m, s) => (s.hsM > m ? s.hsM : m), 0),
+    maxHsM: maxHsOverSteps(result.steps),
   };
+}
+
+/**
+ * Maks Hs over stegene, eller `null` hvis ett av dem manglet bølgedata
+ * (`SJOEGANG_DATA_MANGLER` — satt av motoren på hvert steg regnet med et
+ * miljø uten bølge, ADR-0008). Vedtak A: ukjent Hs er ikke 0.
+ */
+export function maxHsOverSteps(steps: readonly RouteStep[]): number | null {
+  let max = 0;
+  for (const s of steps) {
+    if ((s.flags & FLAG_SJOEGANG_DATA_MANGLER) !== 0) return null;
+    if (s.hsM > max) max = s.hsM;
+  }
+  return max;
+}
+
+/**
+ * Søkets dekning (ADR-0008). Typen krever feltet, men robusthetstall skal
+ * ikke stole på typen alene (samme regel som `assertProvenance`): et
+ * JSON-deserialisert resultat fra før ADR-0008 mangler det. Da er
+ * `coverage.weather` nettopp den gamle søksbrede biten, og den brukes. Alt
+ * annet ugyldig leses konservativt som `"partial"` — ikke-nådd blir da
+ * inkonklusivt, aldri et sertifikat for ugjennomførbarhet.
+ */
+function searchCoverageOf(result: RouteResult): "full" | "partial" {
+  const raw: unknown = (result.coverage as { readonly searchWeather?: unknown }).searchWeather;
+  if (raw === "full" || raw === "partial") return raw;
+  if (raw === undefined) return result.coverage.weather === "full" ? "full" : "partial";
+  return "partial";
 }
 
 const ERROR_ABORT_REASONS: ReadonlySet<AbortReason> = new Set([
@@ -217,9 +254,9 @@ const BUDGET_ABORT_REASONS: ReadonlySet<AbortReason> = new Set(["stagnation", "c
  * **Verktøyfeil før dekning (presisert 2026-09-29, vaerpakker.md §19):** et
  * medlem som stoppet på en verktøysgrunn (`ERROR_ABORT_REASONS`) UTEN at en
  * eneste etikett ble forkastet for manglende vær (`pruned.noWeather === 0`)
- * og uten bound-beskjæring, er `error` — også når `coverage.weather` er
- * `"partial"`. Funnet: et fyllverdi-medlem der startnoden ble avvist av
- * båtgrensene (`hardConstraintBoatLimits`) ga «exhausted» etter én
+ * og uten bound-beskjæring, er `error` — også når dekningen
+ * (`coverage.searchWeather`, ADR-0008) er `"partial"`. Funnet: et
+ * fyllverdi-medlem der startnoden ble avvist av båtgrensene (`hardConstraintBoatLimits`) ga «exhausted» etter én
  * iterasjon, men `partial` (strøm/bølge manglet i deler av søkeområdet)
  * maskerte det som «inkonklusiv/dekning». Dekning kan ikke ha forårsaket et
  * søk som aldri forkastet noe for manglende vær. Ekte dekning er uendret:
@@ -243,18 +280,27 @@ export function classifyMember(result: RouteResult): MemberClassification {
 
   // Datahorisont: feltet tok slutt underveis, eller manglet allerede i
   // avgangspunktet (`noWeatherAtStart` settes før `environmentAt` kalles,
-  // så `coverage.weather` er da fortsatt "full" — D9.2).
-  if (!reached && (result.coverage.weather === "partial" || result.abortReason === "noWeatherAtStart")) {
+  // så dekningen er da fortsatt "full" — D9.2).
+  //
+  // ADR-0008: et medlem som IKKE nådde målet leses på SØKETS dekning
+  // (`searchWeather`). Et ugjennomførbar-sertifikat krever at ingen
+  // beskjæring ble gjort på et ufullstendig felt, uansett hvor i søket.
+  if (!reached && (searchCoverageOf(result) === "partial" || result.abortReason === "noWeatherAtStart")) {
     return { kind: "inconclusive", reason: "dekning" };
   }
 
   // D11.1 (vedtatt 2026-09-05): nådde målet, men dekningen var partial —
-  // i praksis et helt felt (bølger/strøm) manglet i pakken. Bølger kan bare
-  // fjerne gjennomførbare, aldri legge til; en andel regnet uten dem er en
-  // øvre skranke presentert som estimat. Telles derfor inkonklusivt med
-  // egen grunn, så UI kan si «kom fram på vind alene — bølger og strøm
-  // mangler i pakken». (c) — skille horisont fra manglende felt i motoren —
-  // kommer når bølger/strøm er i pakken.
+  // et helt felt (bølger/strøm) manglet. Bølger kan bare fjerne
+  // gjennomførbare, aldri legge til; en andel regnet uten dem er en øvre
+  // skranke presentert som estimat. Telles derfor inkonklusivt med egen
+  // grunn, så UI kan si «kom fram uten fullt værfelt langs ruten».
+  //
+  // ADR-0008: et medlem som NÅDDE målet leses på RUTENS dekning
+  // (`coverage.weather`, start-sampling per steg inkl. sluttetappens
+  // start). Ruten er et vitne; hull i søket utenfor den teller ikke. Et
+  // rutesteg uten strøm gjør fortsatt medlemmet inkonklusivt (D17.2 u) —
+  // og D11.1s «øvre skranke»-argument holder ikke for strøm, så en senere
+  // lempning for strøm kan ikke lene seg på det.
   if (reached && result.coverage.weather === "partial") {
     return { kind: "inconclusive", reason: "dekning-felt" };
   }
